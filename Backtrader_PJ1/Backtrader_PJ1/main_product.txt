@@ -1,0 +1,5 @@
+,htsc_code,name,end_date,currency,product_code,product_name,product_eng_name,main_product_income,main_product_income_ratio,main_product_profit,main_product_profit_ratio,product_level
+0,300750.SZ,宁德时代,2023-06-30 00:00:00,人民币,EC00100113020105,动力型锂离子电池,Power Lithium Ion Batteries,139418216100.0,0.762106,28378104700.0,0.770397,6
+1,300750.SZ,宁德时代,2023-06-30 00:00:00,人民币,EC00100113020106,储能型锂离子电池,Energy Storage Lithium-Ion Batteries,27985137100.0,0.152976,5967105200.0,0.161993,6
+2,300750.SZ,宁德时代,2023-06-30 00:00:00,人民币,MM004009,其他金属与采矿,Other Metals and Mining,2852372800.0,0.015592,340246300.0,0.009237,2
+3,300750.SZ,宁德时代,2023-06-30 00:00:00,人民币,PS00201709,废旧电池回收利用,Used Battery Recycling,12682274800.0,0.069326,2150225900.0,0.058373,4
