@@ -4,8 +4,10 @@ from insight_python.com.insight.query import *
 from insight_python.com.insight.market_service import market_service
 from datetime import datetime
 
-import dataprepare_properties
-import dataprepare_utils
+# import dataprepare_properties
+# import dataprepare_utils
+import datas_prepare.dataprepare_properties as dataprepare_properties
+import datas_prepare.dataprepare_utils as dataprepare_utils
 
 # ************************************************************************
 # 本代码的作用是下载一些数据,本地保存,用于后续分析
