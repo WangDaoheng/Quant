@@ -19,7 +19,7 @@ def save_out_filename(filehead, file_type):
 def get_latest_filename(filename_dir):
     """
     返回时间戳最新的filename   file_name: stocks_codes_all_2024070818.txt
-    :param filename_dir: F:\Quant\insight_A\chouma\chouma
+    :param filename_dir: F:\Quant\insight_A\chouma\stock_codes
     :return:
     """
     file_names = os.listdir(filename_dir)

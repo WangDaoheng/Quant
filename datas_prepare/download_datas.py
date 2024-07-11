@@ -3,6 +3,7 @@ from insight_python.com.insight import common
 from insight_python.com.insight.query import *
 from insight_python.com.insight.market_service import market_service
 from datetime import datetime
+import time
 
 # import dataprepare_properties
 # import dataprepare_utils
@@ -30,7 +31,7 @@ class SaveData:
         self.stock_all_list = []
         self.stock_all_dict = {}
 
-        ## 可以获取筹码的stock
+        ## 可以获取筹码的股票数据
         self.stock_chouma_available = ""
 
 
@@ -58,7 +59,7 @@ class SaveData:
         stock_codes_listed_dir = os.path.join(self.dir_stock_codes_base, stock_codes_listed_filename)
         with open(stock_codes_listed_dir, 'w') as f:
             f.write(str(stock_all_list))
-
+        ## 获取当日"上市交易"状态的所有股票代码
         self.stock_all_list = stock_all_list
 
 
@@ -69,6 +70,9 @@ class SaveData:
         :return:
         """
         print("----------------- get_chouma_datas() 开始执行 ------------------")
+
+        start_time = time.time()  # 记录开始时间
+
         dt = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
         formatted_date = dt.strftime('%Y%m%d')
 
@@ -78,21 +82,19 @@ class SaveData:
         latest_stock_codes_file = os.path.join(self.dir_stock_codes_base, dataprepare_utils.get_latest_filename(self.dir_stock_codes_base))
         with open(latest_stock_codes_file, 'r') as f:
             content = f.readlines()
-
+        ##  取出当日 上市交易  的股票代码
         list_stock = eval(content[0].strip())
-        print(r'   在 {} 日，共有 {} 个已上市stocks'.format(formatted_date,len(list_stock)))
+        print(r'   在 {} 日，共有 {} 个已上市stocks'.format(formatted_date, len(list_stock)))
 
         ############################  准备记录能够查到筹码数据的结果list  ###########################
-        list_res = []  # 用于存放遍历时不发生报错的 enum
+        list_suc_res = []  # 用于存放遍历时不发生报错的 enum
         err_dict = {}  # 用于存放发生报错的 enum 和具体的报错原因
-        ttflag = 0
 
         ## 存放拼接结果
         chouma_total_df = pd.DataFrame()
 
         # 获取在指定时间范围的筹码分布数据
         for enum in list_stock:
-            ttflag = ttflag + 1
             try:
                 chouma_df = get_chip_distribution(htsc_code=enum, trading_day=[dt])
                 # print("     =======  拉取第{}条筹码数据：{}返回的结果条数为{}".format(ttflag, enum, chouma_df.shape[0]))
@@ -102,7 +104,8 @@ class SaveData:
                 err_dict[enum] = str(e)
 
             else:
-                list_res.append(enum)
+                ##  成功获取筹码数据的股票代码
+                list_suc_res.append(enum)
 
         #################  记录有异常，不能找到筹码数据的codes   ###########################
         chouma_err_filename = dataprepare_utils.save_out_filename(filehead='chouma_err', file_type='txt')
@@ -113,13 +116,16 @@ class SaveData:
 
         #################  记录无异常，能够找到筹码数据的codes   ###########################
         chouma_filename = dataprepare_utils.save_out_filename(filehead=f"chouma_data", file_type='xlsx')
-        chouma_data_file = os.path.join(self.dir_chouma_base, 'chouma_data', chouma_filename)
+        chouma_data_file = os.path.join(self.dir_chouma_base, 'suc_chouma_data', chouma_filename)
         chouma_total_df.to_excel(chouma_data_file, float_format='%.0f', index=False)
 
-        print("-------------  {} 可获得筹码数据的股票   共有{}个元素：, 不能获得筹码数据的股票有 {} 个".format(data_date, len(list_res), len(err_dict)))
+        print("-------------  {} 日股票筹码数据获取完毕，获得{}个股票的筹码数据".format(formatted_date, len(list_suc_res)))
 
         self.stock_chouma_available = chouma_total_df
 
+        end_time = time.time()  # 记录结束时间
+        elapsed_time = end_time - start_time  # 计算时间差
+        print(f"获取筹码数据的get_chouma_datas() 代码执行时间: {elapsed_time} 秒")
 
 
     def setup(self):
