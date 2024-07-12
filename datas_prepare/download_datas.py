@@ -7,7 +7,7 @@ import time
 
 # import dataprepare_properties
 # import dataprepare_utils
-import datas_prepare.dataprepare_properties as dataprepare_properties
+import CommonProperties.Base_Properties as dataprepare_properties
 import datas_prepare.dataprepare_utils as dataprepare_utils
 
 # ************************************************************************
