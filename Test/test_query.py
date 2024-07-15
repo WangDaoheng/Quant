@@ -1,20 +1,14 @@
-
-import os
 from insight_python.com.insight import common
 from insight_python.com.insight.query import *
 from insight_python.com.insight.market_service import market_service
 from datetime import datetime
-import time
 import requests
 
 
 import yfinance as yf
 from yahoo_fin.stock_info import *
-import requests_html
 
 import CommonProperties.Base_Properties as dataprepare_properties
-import datas_prepare.dataprepare_utils as dataprepare_utils
-
 
 
 def login():
@@ -89,6 +83,17 @@ def use_vantage():
         print(f'Error fetching TSLA data: {response.status_code} - {response.text}')
 
 
+def insight_bangs():
+
+    result = get_billboard(type="inc_list", market=["sz_a_share", "sh_a_share"])
+    print(result)
+
+
+
+
+
+
+
 # def get_yahoo_data():
 #     import yfinance as yf
 #
@@ -158,12 +163,12 @@ def use_vantage():
 
 if __name__ =="__main__":
 
-    # login()
+    login()
     # get_dollar_index_yahoo()
     # get_yahoo()
     # get_yahoo_data()
     # get_kline_demo()
-    use_vantage()
-
+    # use_vantage()
+    insight_bangs()
 
     pass

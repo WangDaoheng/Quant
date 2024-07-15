@@ -8,7 +8,7 @@ import time
 # import dataprepare_properties
 # import dataprepare_utils
 import CommonProperties.Base_Properties as dataprepare_properties
-import datas_prepare.dataprepare_utils as dataprepare_utils
+import CommonProperties.Base_utils as dataprepare_utils
 
 # ************************************************************************
 # 本代码的作用是下载一些数据,本地保存,用于后续分析
@@ -61,6 +61,26 @@ class SaveData:
             f.write(str(stock_all_list))
         ## 获取当日"上市交易"状态的所有股票代码
         self.stock_all_list = stock_all_list
+
+    def get_limit_up(self):
+        """
+        limit-up 池子
+        Returns:
+
+        """
+
+        pass
+
+
+    def get_limit_down(self):
+        """
+        limit-down 池子
+        Returns:
+
+        """
+
+        pass
+
 
 
     def get_chouma_datas(self):

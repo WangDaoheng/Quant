@@ -28,7 +28,7 @@ class ReviewDaily:
         外部市场指标: US市场风格
         类型:       外部因素大盘
         Returns:
-            USDX: 美元指数
+            USDX: 美元指数   参考 get_US_stocks.get_vantage_DXY  手动计算了美元指数，仅供参考
 
 
         """
