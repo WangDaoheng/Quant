@@ -9,6 +9,8 @@ import time
 # import dataprepare_utils
 import CommonProperties.Base_Properties as base_properties
 import CommonProperties.Base_utils as base_utils
+from CommonProperties.DateUtility import DateUtility
+
 
 # ************************************************************************
 # 本代码的作用是下午收盘后下载 insight 行情源数据, 本地保存,用于后续分析
@@ -23,16 +25,25 @@ import CommonProperties.Base_utils as base_utils
 class SaveData:
 
     def __init__(self):
-        ## 文件保存路径
+        #  文件路径_____insight文件基础路径
         self.dir_insight_base = base_properties.dir_insight_base
-        self.dir_chouma_base = os.path.join(self.dir_insight_base, 'chouma')
+
+        #  文件路径_____上市交易股票codes
         self.dir_stock_codes_base = os.path.join(self.dir_insight_base, 'stock_codes')
 
-        ## 当日处于上市状态的stock   list:全量股票   dict:按前三位分组
-        self.stock_code_df = pd.DataFrame()
-        self.stock_all_dict = {}
+        #  文件路径_____筹码数据
+        self.dir_chouma_base = os.path.join(self.dir_insight_base, 'chouma')
 
-        ## 可以获取筹码的股票数据
+        #  文件路径_____涨跌停数量
+        self.dir_limit_summary_base = os.path.join(self.dir_insight_base, 'limit_summary')
+
+        #  当日处于上市状态的stock
+        self.stock_code_df = pd.DataFrame()
+
+        #  大盘涨跌停数量
+        self.limit_summary_df = pd.DataFrame()
+
+        #  可以获取筹码的股票数据
         self.stock_chouma_available = ""
 
 
@@ -49,15 +60,16 @@ class SaveData:
         :return:
         """
 
-        dt = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-        formatted_date = dt.strftime('%Y%m%d')
+        # dt = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        # formatted_date = dt.strftime('%Y%m%d')
+        formatted_date = DateUtility.today()
+
 
         ##  获取所有已上市codes
         stock_all_df = get_all_stocks_info(listing_state="上市交易")
         stock_all_df = stock_all_df[['htsc_code', 'name', 'exchange']]
         stock_all_df.insert(0, 'ymd', formatted_date)
         filtered_df = stock_all_df[~stock_all_df['name'].str.contains('ST|退|B')]
-
 
         ## 导出当日上市交易的股票信息 ymd  htsc_code  name  exchange
         filehead = 'stocks_codes_all'
@@ -68,28 +80,51 @@ class SaveData:
         self.stock_code_df = filtered_df
 
 
-
-    def get_limit_up(self):
+    def get_limit_summary(self):
         """
-        获取当日的涨停池，需要在15:00  之后执行
-        Returns:
+        大盘涨跌停分析数据
+        Args:
+            market:
+                1	sh_a_share	上海A股
+                2	sz_a_share	深圳A股
+                3	a_share	A股
+                4	a_share	B股
+                5	gem	创业
+                6	sme	中小板
+                7	star	科创板
+            trading_day: List<datetime>	交易日期范围，[start_date, end_date]
+
+        Returns: ups_downs_limit_count_up_limits
+                 ups_downs_limit_count_down_limits
+                 ups_downs_limit_count_pre_up_limits
+                 ups_downs_limit_count_pre_down_limits
+                 ups_downs_limit_count_pre_up_limits_average_change_percent
         """
-        start_date = '2021-01-13'
-        end_date = '2021-12-27'
-        # 转为时间格式
-        start_date = datetime.strptime(start_date, '%Y-%m-%d')
-        end_date = datetime.strptime(end_date, '%Y-%m-%d')
 
-        result = get_change_summary(market=["sh_a_share", "sz_a_share","a_share"], trading_day=[start_date, end_date])
-        print(result)
+        start_date = DateUtility.first_day_of_year()
+        end_date = DateUtility.today()
 
+        # 转为时间格式  get_change_summary 强制要求的
+        start_date = datetime.strptime(start_date, '%Y%m%d')
+        end_date = datetime.strptime(end_date, '%Y%m%d')
 
+        result_df = get_change_summary(market=["a_share"], trading_day=[start_date, end_date])
 
+        filter_limit_df = result_df[['time',
+                                     'name',
+                                     'ups_downs_limit_count_up_limits',
+                                     'ups_downs_limit_count_down_limits',
+                                     'ups_downs_limit_count_pre_up_limits',
+                                     'ups_downs_limit_count_pre_down_limits',
+                                     'ups_downs_limit_count_pre_up_limits_average_change_percent']]
+        filter_limit_df.columns = ['time', 'name', '今日涨停', '今日跌停', '昨日涨停', '昨日跌停', '昨日涨停表现']
 
+        test_summary_filename = base_utils.save_out_filename(filehead='stock_limit_summary', file_type='csv')
+        test_summary_dir = os.path.join(self.dir_limit_summary_base, test_summary_filename)
+        filter_limit_df.to_csv(test_summary_dir)
 
-
-
-
+        #  大盘涨跌停数量情况，默认是从年初到今天
+        self.limit_summary_df = filter_limit_df
 
 
     def get_chouma_datas(self):
@@ -108,7 +143,8 @@ class SaveData:
         ##  所有已上市股票
         # list_stock = self.stock_all_list
 
-        latest_stock_codes_file = os.path.join(self.dir_stock_codes_base, base_utils.get_latest_filename(self.dir_stock_codes_base))
+        latest_stock_codes_file = os.path.join(self.dir_stock_codes_base,
+                                               base_utils.get_latest_filename(self.dir_stock_codes_base))
         with open(latest_stock_codes_file, 'r') as f:
             content = f.readlines()
         ##  取出当日 上市交易  的股票代码
@@ -142,7 +178,6 @@ class SaveData:
         with open(chouma_err_file, 'w') as f:
             f.write(str(err_dict))
 
-
         #################  记录无异常，能够找到筹码数据的codes   ###########################
         chouma_filename = base_utils.save_out_filename(filehead=f"chouma_data", file_type='xlsx')
         chouma_data_file = os.path.join(self.dir_chouma_base, 'suc_chouma_data', chouma_filename)
@@ -156,10 +191,10 @@ class SaveData:
         elapsed_time = end_time - start_time  # 计算时间差
         print(f"获取筹码数据的get_chouma_datas() 代码执行时间: {elapsed_time} 秒")
 
-
     def setup(self):
         self.login()
         self.get_all_stocks()
+        self.get_limit_summary()
         # self.get_chouma_datas()
 
 
