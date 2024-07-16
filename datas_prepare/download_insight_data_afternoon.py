@@ -56,18 +56,17 @@ class SaveData:
         stock_all_df = get_all_stocks_info(listing_state="上市交易")
         stock_all_df = stock_all_df[['htsc_code', 'name', 'exchange']]
         stock_all_df.insert(0, 'ymd', formatted_date)
+        filtered_df = stock_all_df[~stock_all_df['name'].str.contains('ST|退|B')]
 
-
-        stock_all_code_list = stock_all_df['htsc_code'].to_list()
 
         ## 导出当日上市交易的股票信息 ymd  htsc_code  name  exchange
         filehead = 'stocks_codes_all'
         stock_codes_listed_filename = base_utils.save_out_filename(filehead=filehead, file_type='csv')
         stock_codes_listed_dir = os.path.join(self.dir_stock_codes_base, stock_codes_listed_filename)
-
         stock_all_df.to_csv(stock_codes_listed_dir, index=False)
 
-        self.stock_code_df = stock_all_df
+        self.stock_code_df = filtered_df
+
 
 
     def get_limit_up(self):
@@ -75,22 +74,21 @@ class SaveData:
         获取当日的涨停池，需要在15:00  之后执行
         Returns:
         """
+        start_date = '2021-01-13'
+        end_date = '2021-12-27'
+        # 转为时间格式
+        start_date = datetime.strptime(start_date, '%Y-%m-%d')
+        end_date = datetime.strptime(end_date, '%Y-%m-%d')
+
+        result = get_change_summary(market=["sh_a_share", "sz_a_share","a_share"], trading_day=[start_date, end_date])
+        print(result)
 
 
 
 
 
-        pass
 
 
-    def get_limit_down(self):
-        """
-        limit-down 池子
-        Returns:
-
-        """
-
-        pass
 
 
 
