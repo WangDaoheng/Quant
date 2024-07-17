@@ -28,6 +28,16 @@ def get_kline_demo():
     :param frequency: 频率，分钟K（‘1min’，’5min’，’15min’，’60min’），日K（‘daily’），周K（‘weekly’），月K（‘monthly’）
     :param fq: 复权，默认前复权”pre”，后复权为”post”，不复权“none”
     :return:pandas.DataFrame
+
+    000001.SH    上证指数
+    000016.SH    上证50
+    000300.SH    沪深300
+    000849.SH    沪深300非银行金融指数
+    000905.SH	 中证500
+    000688.SH    科创50
+    港交所  .HK
+    外汇   .CFE
+
     """
 
     # time_start_date = "2022-12-31 15:10:11"
@@ -40,10 +50,93 @@ def get_kline_demo():
     time_start_date = datetime.strptime(time_start_date, '%Y-%m-%d')
     time_end_date = datetime.strptime(time_end_date, '%Y-%m-%d')
 
-    result = get_kline(htsc_code=["00883.HKG"], time=[time_start_date, time_end_date],
+    result01 = get_kline(htsc_code=["DX0W.CF"], time=[time_start_date, time_end_date],
                        frequency="daily", fq="none")
-    result.to_csv('./DINIW.txt', sep=',')
-    print(result)
+
+    result02 = get_kline(htsc_code=["DX0W.CFE"], time=[time_start_date, time_end_date],
+                       frequency="daily", fq="none")
+
+    result011 = get_kline(htsc_code=["DX0W.CNI"], time=[time_start_date, time_end_date],
+                       frequency="daily", fq="none")
+
+    result022 = get_kline(htsc_code=["DX0W.CSI"], time=[time_start_date, time_end_date],
+                       frequency="daily", fq="none")
+
+    result023 = get_kline(htsc_code=["DX0W.HT"], time=[time_start_date, time_end_date],
+                       frequency="daily", fq="none")
+
+    result03 = get_kline(htsc_code=["DX0Y.CF"], time=[time_start_date, time_end_date],
+                         frequency="daily", fq="none")
+
+    result04 = get_kline(htsc_code=["DX0Y.CFE"], time=[time_start_date, time_end_date],
+                         frequency="daily", fq="none")
+
+
+    result011 = get_kline(htsc_code=["DX0Y.CNI"], time=[time_start_date, time_end_date],
+                       frequency="daily", fq="none")
+
+    result022 = get_kline(htsc_code=["DX0Y.CSI"], time=[time_start_date, time_end_date],
+                       frequency="daily", fq="none")
+
+    result023 = get_kline(htsc_code=["DX0Y.HT"], time=[time_start_date, time_end_date],
+                       frequency="daily", fq="none")
+
+
+
+    result05 = get_kline(htsc_code=["DXY.CF"], time=[time_start_date, time_end_date],
+                         frequency="daily", fq="none")
+
+    result06 = get_kline(htsc_code=["DXY.CFE"], time=[time_start_date, time_end_date],
+                         frequency="daily", fq="none")
+
+    result011 = get_kline(htsc_code=["DXY.CNI"], time=[time_start_date, time_end_date],
+                       frequency="daily", fq="none")
+
+    result022 = get_kline(htsc_code=["DXY.CSI"], time=[time_start_date, time_end_date],
+                       frequency="daily", fq="none")
+
+    result023 = get_kline(htsc_code=["DXY.HT"], time=[time_start_date, time_end_date],
+                       frequency="daily", fq="none")
+
+
+
+    result07 = get_kline(htsc_code=["USDIND.CF"], time=[time_start_date, time_end_date],
+                         frequency="daily", fq="none")
+
+    result08 = get_kline(htsc_code=["USDIND.CFE"], time=[time_start_date, time_end_date],
+                         frequency="daily", fq="none")
+
+
+    result011 = get_kline(htsc_code=["USDIND.CNI"], time=[time_start_date, time_end_date],
+                       frequency="daily", fq="none")
+
+    result022 = get_kline(htsc_code=["USDIND.CSI"], time=[time_start_date, time_end_date],
+                       frequency="daily", fq="none")
+
+    result023 = get_kline(htsc_code=["USDIND.HT"], time=[time_start_date, time_end_date],
+                       frequency="daily", fq="none")
+
+
+    result07 = get_kline(htsc_code=["USD.CF"], time=[time_start_date, time_end_date],
+                         frequency="daily", fq="none")
+
+    result08 = get_kline(htsc_code=["USD.CFE"], time=[time_start_date, time_end_date],
+                         frequency="daily", fq="none")
+
+
+    result011 = get_kline(htsc_code=["USD.CNI"], time=[time_start_date, time_end_date],
+                       frequency="daily", fq="none")
+
+    result022 = get_kline(htsc_code=["USD.CSI"], time=[time_start_date, time_end_date],
+                       frequency="daily", fq="none")
+
+    result023 = get_kline(htsc_code=["USD.HT"], time=[time_start_date, time_end_date],
+                       frequency="daily", fq="none")
+
+
+    print("------------- hello world ---------------------")
+    # result.to_csv('./cfe.txt', sep=',')
+    # print(result)
 
 
 def insight_billboard(function_type='inc_list', market=['sh_a_share', 'sz_a_share']):
@@ -116,9 +209,9 @@ def get_change_summary_demo():
 
 if __name__ == "__main__":
     login()
-    # get_kline_demo()
+    get_kline_demo()
     # insight_billboard()
-    get_change_summary_demo()
+    # get_change_summary_demo()
 
 
 

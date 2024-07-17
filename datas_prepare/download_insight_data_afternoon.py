@@ -54,6 +54,19 @@ class SaveData:
         password = base_properties.password
         common.login(market_service, user, password)
 
+
+    def get_a_share_index(self):
+        """
+        全A主要指数
+        Returns:
+        """
+
+
+
+        pass
+
+
+
     def get_all_stocks(self):
         """
         获取当日的stock代码合集
@@ -76,7 +89,7 @@ class SaveData:
         stock_codes_listed_filename = base_utils.save_out_filename(filehead=filehead, file_type='csv')
         stock_codes_listed_dir = os.path.join(self.dir_stock_codes_base, stock_codes_listed_filename)
         stock_all_df.to_csv(stock_codes_listed_dir, index=False)
-
+        #  已上市状态stock_codes
         self.stock_code_df = filtered_df
 
 
@@ -125,6 +138,12 @@ class SaveData:
 
         #  大盘涨跌停数量情况，默认是从年初到今天
         self.limit_summary_df = filter_limit_df
+
+
+
+
+
+
 
 
     def get_chouma_datas(self):
