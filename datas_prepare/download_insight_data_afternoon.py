@@ -25,6 +25,17 @@ from CommonProperties.DateUtility import DateUtility
 class SaveData:
 
     def __init__(self):
+
+        self.init_dirs()
+
+        self.init_variant()
+
+
+
+    def init_dirs(self):
+        """
+        关键路径初始化
+        """
         #  文件路径_____insight文件基础路径
         self.dir_insight_base = base_properties.dir_insight_base
 
@@ -37,7 +48,16 @@ class SaveData:
         #  文件路径_____涨跌停数量
         self.dir_limit_summary_base = os.path.join(self.dir_insight_base, 'limit_summary')
 
-        #  当日处于上市状态的stock
+        #  文件路径_____关键大盘指数
+        self.dir_index_a_share_base = os.path.join(self.dir_insight_base, 'a_share_index')
+
+
+
+
+    def init_variant(self):
+        """
+        结果变量初始化
+        """
         self.stock_code_df = pd.DataFrame()
 
         #  大盘涨跌停数量
@@ -45,6 +65,10 @@ class SaveData:
 
         #  可以获取筹码的股票数据
         self.stock_chouma_available = ""
+
+
+
+
 
 
     def login(self):
@@ -55,15 +79,42 @@ class SaveData:
         common.login(market_service, user, password)
 
 
-    def get_a_share_index(self):
+    def get_index_a_share(self):
         """
-        全A主要指数
-        Returns:
+        000001.SH    上证指数
+        399006.SZ	 创业板指
+        000016.SH    上证50
+        000300.SH    沪深300
+        000849.SH    沪深300非银行金融指数
+        000905.SH	 中证500
+        399852.SZ    中证1000
+        000688.SH    科创50
         """
 
+        time_start_date = DateUtility.first_day_of_month()
+        time_end_date = DateUtility.today()
 
+        time_start_date = datetime.strptime(time_start_date, '%Y%m%d')
+        time_end_date = datetime.strptime(time_end_date, '%Y%m%d')
 
-        pass
+        index_list = ["000001.SH", "399006.SZ", "000016.SH", "000300.SH", "000849.SH", "000905.SH", "399852.SZ",
+                      "000688.SH", ""]
+        index_df = pd.DataFrame()
+
+        for index in index_list:
+            res = get_kline(htsc_code=[index], time=[time_start_date, time_end_date],
+                            frequency="daily", fq="none")
+
+            index_df = pd.concat([index_df, res], ignore_index=True)
+
+        ## 文件输出模块
+        index_filename = base_utils.save_out_filename(filehead='index_a_share', file_type='csv')
+        index_filedir = os.path.join(self.dir_index_a_share_base, index_filename)
+
+        print("------------- get_kline_for_Ashare_index_demo ---------------------")
+
+        index_df.to_csv(index_filedir)
+
 
 
 
