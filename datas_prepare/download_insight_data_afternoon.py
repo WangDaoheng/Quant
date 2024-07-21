@@ -49,7 +49,7 @@ class SaveData:
         self.dir_limit_summary_base = os.path.join(self.dir_insight_base, 'limit_summary')
 
         #  文件路径_____关键大盘指数
-        self.dir_index_a_share_base = os.path.join(self.dir_insight_base, 'a_share_index')
+        self.dir_index_a_share_base = os.path.join(self.dir_insight_base, 'index_a_share')
 
 
 
@@ -58,15 +58,20 @@ class SaveData:
         """
         结果变量初始化
         """
+        #  获得A股市场的股指 [htsc_code 	time	frequency	open	close	high	low	volume	value]
+        self.index_a_share = pd.DataFrame()
+
+        #  除去 ST|退|B 的五要素   [ymd	htsc_code	name	exchange]
         self.stock_code_df = pd.DataFrame()
 
-        #  大盘涨跌停数量
+        #  大盘涨跌停数量          [time	name	今日涨停	今日跌停	昨日涨停	昨日跌停	昨日涨停表现]
         self.limit_summary_df = pd.DataFrame()
+
+        #  期货市场数据    原油  贵金属  有色
+        self.future_index = pd.DataFrame()
 
         #  可以获取筹码的股票数据
         self.stock_chouma_available = ""
-
-
 
 
 
@@ -89,6 +94,9 @@ class SaveData:
         000905.SH	 中证500
         399852.SZ    中证1000
         000688.SH    科创50
+
+        Returns:
+             index_a_share   [htsc_code 	time	frequency	open	close	high	low	volume	value]
         """
 
         time_start_date = DateUtility.first_day_of_month()
@@ -111,9 +119,10 @@ class SaveData:
         index_filename = base_utils.save_out_filename(filehead='index_a_share', file_type='csv')
         index_filedir = os.path.join(self.dir_index_a_share_base, index_filename)
 
-        print("------------- get_kline_for_Ashare_index_demo ---------------------")
+        print("------------- get_index_a_share ---------------------")
 
         index_df.to_csv(index_filedir)
+        self.index_a_share = index_df
 
 
 
@@ -122,6 +131,7 @@ class SaveData:
         """
         获取当日的stock代码合集
         :return:
+         stock_code_df  [ymd	htsc_code	name	exchange]
         """
 
         # dt = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
@@ -139,9 +149,10 @@ class SaveData:
         filehead = 'stocks_codes_all'
         stock_codes_listed_filename = base_utils.save_out_filename(filehead=filehead, file_type='csv')
         stock_codes_listed_dir = os.path.join(self.dir_stock_codes_base, stock_codes_listed_filename)
-        stock_all_df.to_csv(stock_codes_listed_dir, index=False)
+
         #  已上市状态stock_codes
         self.stock_code_df = filtered_df
+        filtered_df.to_csv(stock_codes_listed_dir, index=False)
 
 
     def get_limit_summary(self):
@@ -163,6 +174,9 @@ class SaveData:
                  ups_downs_limit_count_pre_up_limits
                  ups_downs_limit_count_pre_down_limits
                  ups_downs_limit_count_pre_up_limits_average_change_percent
+
+                 [time	name	今日涨停	今日跌停	昨日涨停	昨日跌停	昨日涨停表现]
+
         """
 
         start_date = DateUtility.first_day_of_year()
@@ -190,6 +204,17 @@ class SaveData:
         #  大盘涨跌停数量情况，默认是从年初到今天
         self.limit_summary_df = filter_limit_df
 
+
+    def get_future_index(self):
+        """
+        期货市场数据
+        贵金属,  有色数据
+        国际市场  国内市场
+        Returns:
+
+
+        """
+        pass
 
 
 
@@ -262,9 +287,19 @@ class SaveData:
         print(f"获取筹码数据的get_chouma_datas() 代码执行时间: {elapsed_time} 秒")
 
     def setup(self):
+        #  登陆insight数据源
         self.login()
+
+        #  除去 ST |  退  | B 的股票集合
         self.get_all_stocks()
+
+        #  获取主要股指
+        self.get_index_a_share()
+
+        #  大盘涨跌概览
         self.get_limit_summary()
+
+        #  筹码概览
         # self.get_chouma_datas()
 
 

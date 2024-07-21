@@ -1,15 +1,14 @@
-
-
 from insight_python.com.insight import common
 from insight_python.com.insight.query import *
 from insight_python.com.insight.market_service import market_service
 from datetime import datetime
 import os
 
-
 import CommonProperties.Base_Properties as dataprepare_properties
-import CommonProperties.Base_utils      as dataprepare_utils
+import CommonProperties.Base_utils as dataprepare_utils
+from CommonProperties.DateUtility import DateUtility
 
+#  测试环境文件保存目录
 insight_test_dir = os.path.join(dataprepare_properties.dir_insight_base, 'test')
 
 
@@ -21,13 +20,92 @@ def login():
     common.login(market_service, user, password)
 
 
-def get_kline_demo():
+def get_kline_index_a_share_demo():
     """
-    :param htsc_code: 华泰证券代码，支持多个code查询，列表类型
-    :param time: 时间范围，list类型，开始结束时间为datetime
-    :param frequency: 频率，分钟K（‘1min’，’5min’，’15min’，’60min’），日K（‘daily’），周K（‘weekly’），月K（‘monthly’）
-    :param fq: 复权，默认前复权”pre”，后复权为”post”，不复权“none”
-    :return:pandas.DataFrame
+        000001.SH    上证指数
+        399006.SZ	 创业板指
+        000016.SH    上证50
+        000300.SH    沪深300
+        000849.SH    沪深300非银行金融指数
+        000905.SH	 中证500
+        399852.SZ    中证1000
+        000688.SH    科创50
+    港交所  .HK
+    外汇   .CFE
+
+    """
+
+    time_start_date = DateUtility.first_day_of_month()
+    time_end_date = DateUtility.today()
+
+    time_start_date = datetime.strptime(time_start_date, '%Y%m%d')
+    time_end_date = datetime.strptime(time_end_date, '%Y%m%d')
+
+    index_list = ["000001.SH", "399006.SZ", "000016.SH", "000300.SH", "000849.SH", "000905.SH", "399852.SZ",
+                  "000688.SH", ""]
+    index_df = pd.DataFrame()
+
+    for index in index_list:
+        #  获取数据的关键调用
+        res = get_kline(htsc_code=[index], time=[time_start_date, time_end_date],
+                        frequency="daily", fq="none")
+
+        index_df = pd.concat([index_df, res], ignore_index=True)
+
+    ## 文件输出模块
+    index_filename = dataprepare_utils.save_out_filename(filehead='index_a_share', file_type='csv')
+    index_filedir = os.path.join(insight_test_dir, index_filename)
+    index_df.to_csv(index_filedir)
+    print("------------- get_index_a_share 完成测试文件输出 ---------------------")
+
+
+def get_kline_future_demo():
+    """
+        000001.SH    上证指数
+        399006.SZ	 创业板指
+        000016.SH    上证50
+        000300.SH    沪深300
+        000849.SH    沪深300非银行金融指数
+        000905.SH	 中证500
+        399852.SZ    中证1000
+        000688.SH    科创50
+    港交所  .HK
+    外汇   .CFE
+
+    """
+
+    # time_start_date = DateUtility.first_day_of_month()
+    # time_end_date = DateUtility.today()
+    #
+    # time_start_date = datetime.strptime(time_start_date, '%Y%m%d')
+    # time_end_date = datetime.strptime(time_end_date, '%Y%m%d')
+
+    time_start_date = "2024-05-14 15:10:11"
+    time_end_date = "2024-07-21 11:20:50"
+    time_start_date = datetime.strptime(time_start_date, '%Y-%m-%d %H:%M:%S')
+    time_end_date = datetime.strptime(time_end_date, '%Y-%m-%d %H:%M:%S')
+
+    index_list = ['CF03.ZCE', 'au09.SHF', 'au2409.SHF', 'AU09.SHF', 'AU2409.SHF', "CF2409.ZCE", "c2409.DCE"]
+    index_df = pd.DataFrame()
+
+    for index in index_list:
+        #  获取数据的关键调用
+        res = get_kline(htsc_code=[index], time=[time_start_date, time_end_date],
+                        frequency="daily", fq="pre")
+
+        index_df = pd.concat([index_df, res], ignore_index=True)
+
+    ## 文件输出模块
+    index_filename = dataprepare_utils.save_out_filename(filehead='future', file_type='csv')
+    index_filedir = os.path.join(insight_test_dir, index_filename)
+    index_df.to_csv(index_filedir)
+    print("------------- get_kline_future_demo 完成测试文件输出 ---------------------")
+
+
+def get_foreign_exchange_demo():
+    """
+    本质上这是一个将stock_codes 跟 exchange 随意组合的 get_kline 的demo
+    这里主要用于对外汇中的美元指数进行探索，查找数据源
 
     000001.SH    上证指数
     000016.SH    上证50
@@ -37,106 +115,30 @@ def get_kline_demo():
     000688.SH    科创50
     港交所  .HK
     外汇   .CFE
-
     """
-
-    # time_start_date = "2022-12-31 15:10:11"
-    # time_end_date = "2024-01-02 15:20:50"
-    # time_start_date = datetime.strptime(time_start_date, '%Y-%m-%d %H:%M:%S')
-    # time_end_date = datetime.strptime(time_end_date, '%Y-%m-%d %H:%M:%S')
 
     time_start_date = "2024-01-14"
     time_end_date = "2024-04-03"
     time_start_date = datetime.strptime(time_start_date, '%Y-%m-%d')
     time_end_date = datetime.strptime(time_end_date, '%Y-%m-%d')
 
-    result01 = get_kline(htsc_code=["DX0W.CF"], time=[time_start_date, time_end_date],
-                       frequency="daily", fq="none")
+    stock_code = ['DX0W', 'DX0Y', 'DXY', 'USDIND', 'USD']
+    exchange_code = ['CF', 'CFE', 'CNI', 'CSI', 'HT']
+    res_df = pd.DataFrame()
 
-    result02 = get_kline(htsc_code=["DX0W.CFE"], time=[time_start_date, time_end_date],
-                       frequency="daily", fq="none")
+    for stock in stock_code:
+        for exchange in exchange_code:
+            stock_exchange = stock + '.' + exchange
 
-    result011 = get_kline(htsc_code=["DX0W.CNI"], time=[time_start_date, time_end_date],
-                       frequency="daily", fq="none")
+            #  获取数据的关键调用
+            res = get_kline(htsc_code=[stock_exchange], time=[time_start_date, time_end_date],
+                            frequency="daily", fq="none")
+            res_df = pd.concat([res_df, res], ignore_index=True)
 
-    result022 = get_kline(htsc_code=["DX0W.CSI"], time=[time_start_date, time_end_date],
-                       frequency="daily", fq="none")
-
-    result023 = get_kline(htsc_code=["DX0W.HT"], time=[time_start_date, time_end_date],
-                       frequency="daily", fq="none")
-
-    result03 = get_kline(htsc_code=["DX0Y.CF"], time=[time_start_date, time_end_date],
-                         frequency="daily", fq="none")
-
-    result04 = get_kline(htsc_code=["DX0Y.CFE"], time=[time_start_date, time_end_date],
-                         frequency="daily", fq="none")
-
-
-    result011 = get_kline(htsc_code=["DX0Y.CNI"], time=[time_start_date, time_end_date],
-                       frequency="daily", fq="none")
-
-    result022 = get_kline(htsc_code=["DX0Y.CSI"], time=[time_start_date, time_end_date],
-                       frequency="daily", fq="none")
-
-    result023 = get_kline(htsc_code=["DX0Y.HT"], time=[time_start_date, time_end_date],
-                       frequency="daily", fq="none")
-
-
-
-    result05 = get_kline(htsc_code=["DXY.CF"], time=[time_start_date, time_end_date],
-                         frequency="daily", fq="none")
-
-    result06 = get_kline(htsc_code=["DXY.CFE"], time=[time_start_date, time_end_date],
-                         frequency="daily", fq="none")
-
-    result011 = get_kline(htsc_code=["DXY.CNI"], time=[time_start_date, time_end_date],
-                       frequency="daily", fq="none")
-
-    result022 = get_kline(htsc_code=["DXY.CSI"], time=[time_start_date, time_end_date],
-                       frequency="daily", fq="none")
-
-    result023 = get_kline(htsc_code=["DXY.HT"], time=[time_start_date, time_end_date],
-                       frequency="daily", fq="none")
-
-
-
-    result07 = get_kline(htsc_code=["USDIND.CF"], time=[time_start_date, time_end_date],
-                         frequency="daily", fq="none")
-
-    result08 = get_kline(htsc_code=["USDIND.CFE"], time=[time_start_date, time_end_date],
-                         frequency="daily", fq="none")
-
-
-    result011 = get_kline(htsc_code=["USDIND.CNI"], time=[time_start_date, time_end_date],
-                       frequency="daily", fq="none")
-
-    result022 = get_kline(htsc_code=["USDIND.CSI"], time=[time_start_date, time_end_date],
-                       frequency="daily", fq="none")
-
-    result023 = get_kline(htsc_code=["USDIND.HT"], time=[time_start_date, time_end_date],
-                       frequency="daily", fq="none")
-
-
-    result07 = get_kline(htsc_code=["USD.CF"], time=[time_start_date, time_end_date],
-                         frequency="daily", fq="none")
-
-    result08 = get_kline(htsc_code=["USD.CFE"], time=[time_start_date, time_end_date],
-                         frequency="daily", fq="none")
-
-
-    result011 = get_kline(htsc_code=["USD.CNI"], time=[time_start_date, time_end_date],
-                       frequency="daily", fq="none")
-
-    result022 = get_kline(htsc_code=["USD.CSI"], time=[time_start_date, time_end_date],
-                       frequency="daily", fq="none")
-
-    result023 = get_kline(htsc_code=["USD.HT"], time=[time_start_date, time_end_date],
-                       frequency="daily", fq="none")
-
-
-    print("------------- hello world ---------------------")
-    # result.to_csv('./cfe.txt', sep=',')
-    # print(result)
+    test_summary_filename = dataprepare_utils.save_out_filename(filehead='foreign_exchange', file_type='csv')
+    test_summary_dir = os.path.join(insight_test_dir, test_summary_filename)
+    res_df.to_csv(test_summary_dir)
+    print("------------- get_foreign_exchange_demo() 完成测试文件输出 ---------------------")
 
 
 def insight_billboard(function_type='inc_list', market=['sh_a_share', 'sz_a_share']):
@@ -153,12 +155,13 @@ def insight_billboard(function_type='inc_list', market=['sh_a_share', 'sz_a_shar
             5	gem	创业
             6	sme	中小板
             7	star	科创板
-    Returns: 问题是只返回榜单前十，只有5min涨速有点用
+    Returns: 问题是只返回榜单前十，只有5min涨速有点用     这个基本没用
     """
 
     test_billboard_filename = dataprepare_utils.save_out_filename(filehead='stock_inc_billboard', file_type='csv')
     test_billboard_dir = os.path.join(insight_test_dir, test_billboard_filename)
-    ##  涨幅榜数据
+    #  涨幅榜数据
+    #  获取数据的关键调用
     result = get_billboard(type=function_type, market=market)
     result.to_csv(test_billboard_dir)
 
@@ -189,7 +192,7 @@ def get_change_summary_demo():
     start_date = datetime.strptime(start_date, '%Y-%m-%d')
     end_date = datetime.strptime(end_date, '%Y-%m-%d')
 
-
+    #  获取数据的关键调用
     result_df = get_change_summary(market=["a_share"], trading_day=[start_date, end_date])
 
     filter_limit_df = result_df[['time',
@@ -199,24 +202,15 @@ def get_change_summary_demo():
                                  'ups_downs_limit_count_pre_up_limits',
                                  'ups_downs_limit_count_pre_down_limits',
                                  'ups_downs_limit_count_pre_up_limits_average_change_percent']]
-    filter_limit_df.columns=['time','name','今日涨停','今日跌停','昨日涨停','昨日跌停','昨日涨停表现']
+    filter_limit_df.columns = ['time', 'name', '今日涨停', '今日跌停', '昨日涨停', '昨日跌停', '昨日涨停表现']
 
     test_summary_filename = dataprepare_utils.save_out_filename(filehead='stock_summary', file_type='csv')
     test_summary_dir = os.path.join(insight_test_dir, test_summary_filename)
     filter_limit_df.to_csv(test_summary_dir)
 
 
-
 if __name__ == "__main__":
     login()
-    get_kline_demo()
+    get_kline_future_demo()
     # insight_billboard()
     # get_change_summary_demo()
-
-
-
-
-
-
-
-
