@@ -43,72 +43,106 @@ class DateUtility:
 
 
     @staticmethod
-    def last_day_of_last_week():
+    def last_day_of_week_before_n_weeks(n=0):
+        """
+        n周前的周的最后一天, n=0 就是本周的最后一天; n=1 就是上周的最后一天; n=-1 就是下1周的最后一天
+        """
         today = datetime.today()
         start_of_this_week = today - timedelta(days=today.weekday())
-        end_of_last_week = start_of_this_week - timedelta(days=1)
-        return end_of_last_week.strftime('%Y%m%d')
-
+        end_of_nth_last_week = start_of_this_week - timedelta(days=1 + (n - 1) * 7)
+        return end_of_nth_last_week.strftime('%Y%m%d')
 
     @staticmethod
-    def last_day_of_last_month():
+    def last_day_of_month_before_n_months(n=0):
+        """
+        n月前的月的最后一天, n=0 就是本月的最后一天; n=1 就是上月的最后一天; n=-1 就是下1月的最后一天
+        """
         today = datetime.today()
-        first_day_of_this_month = today.replace(day=1)
-        last_day_of_last_month = first_day_of_this_month - timedelta(days=1)
-        return last_day_of_last_month.strftime('%Y%m%d')
-
+        month = today.month - n
+        year = today.year
+        while month <= 0:
+            month += 12
+            year -= 1
+        last_day = calendar.monthrange(year, month)[1]
+        last_day_of_nth_last_month = datetime(year, month, last_day)
+        return last_day_of_nth_last_month.strftime('%Y%m%d')
 
     @staticmethod
-    def last_day_of_last_quarter():
+    def last_day_of_quarter_before_n_quarters(n=0):
+        """
+        n季前的季的最后一天, n=0 就是本季的最后一天; n=1 就是上季的最后一天; n=-1 就是下1季的最后一天
+        """
         today = datetime.today()
         current_month = today.month
-        first_month_of_current_quarter = current_month - (current_month - 1) % 3
-        first_day_of_current_quarter = today.replace(month=first_month_of_current_quarter, day=1)
-        last_day_of_last_quarter = first_day_of_current_quarter - timedelta(days=1)
-        return last_day_of_last_quarter.strftime('%Y%m%d')
+        current_quarter = (current_month - 1) // 3 + 1
+        last_quarter = current_quarter - n
+        year = today.year
+        while last_quarter <= 0:
+            last_quarter += 4
+            year -= 1
+        quarter_month = (last_quarter - 1) * 3 + 3
+        last_day_of_nth_last_quarter = datetime(year, quarter_month, calendar.monthrange(year, quarter_month)[1])
+        return last_day_of_nth_last_quarter.strftime('%Y%m%d')
+
+    @staticmethod
+    def last_day_of_year_before_n_years(n):
+        """
+        n年前的年的最后一天, n=0 就是本年的最后一天; n=1 就是上年的最后一天; n=-1 就是下1年的最后一天
+        """
+        today = datetime.today()
+        last_day_of_nth_last_year = today.replace(year=today.year - n, month=12, day=31)
+        return last_day_of_nth_last_year.strftime('%Y%m%d')
 
 
     @staticmethod
-    def last_day_of_last_year():
+    def first_day_of_week_after_n_weeks(n):
+        """
+        n周后的周的第一天, n=0 就是本周的第1天; n=1 就是1周后的第1天; n=-1 就是上1周的第1天
+        """
         today = datetime.today()
-        last_day_of_last_year = today.replace(month=1, day=1) - timedelta(days=1)
-        return last_day_of_last_year.strftime('%Y%m%d')
+        start_of_nth_week = today + timedelta(days=(7 - today.weekday()) + (n - 1) * 7)
+        return start_of_nth_week.strftime('%Y%m%d')
 
 
     @staticmethod
-    def first_day_of_next_week():
+    def first_day_of_month_after_n_months(n):
+        """
+        n月后的月的第一天, n=0 就是本月的第1天; n=1 就是1月后的第1天; n=-1 就是上1月的第1天
+        """
         today = datetime.today()
-        start_of_next_week = today + timedelta(days=(7 - today.weekday()))
-        return start_of_next_week.strftime('%Y%m%d')
-
-    @staticmethod
-    def first_day_of_next_month():
-        today = datetime.today()
-        next_month = today.month + 1 if today.month < 12 else 1
-        next_year = today.year if today.month < 12 else today.year + 1
-        first_day = datetime(next_year, next_month, 1)
+        month = today.month - 1 + n
+        year = today.year + month // 12
+        month = month % 12 + 1
+        first_day = datetime(year, month, 1)
         return first_day.strftime('%Y%m%d')
 
 
     @staticmethod
-    def first_day_of_next_quarter():
+    def first_day_of_quarter_after_n_quarters(n):
+        """
+        n季后的季的第一天, n=0 就是本季的第1天; n=1 就是1季后的第1天; n=-1 就是上1季的第1天
+        """
         today = datetime.today()
         current_month = today.month
-        first_month_of_current_quarter = current_month - (current_month - 1) % 3
-        next_quarter_month = first_month_of_current_quarter + 3
-        next_quarter_year = today.year
-        if next_quarter_month > 12:
-            next_quarter_month -= 12
-            next_quarter_year += 1
-        first_day_of_next_quarter = today.replace(year=next_quarter_year, month=next_quarter_month, day=1)
-        return first_day_of_next_quarter.strftime('%Y%m%d')
+        current_quarter = (current_month - 1) // 3 + 1
+        next_quarter = current_quarter + n
+        year = today.year + (next_quarter - 1) // 4
+        quarter_month = ((next_quarter - 1) % 4) * 3 + 1
+        first_day_of_nth_quarter = datetime(year, quarter_month, 1)
+        return first_day_of_nth_quarter.strftime('%Y%m%d')
 
 
     @staticmethod
-    def first_day_of_next_year():
+    def first_day_of_year_after_n_years(n):
+        """
+        n年后的季的第一天, n=0 就是本季的第1天; n=1 就是1季后的第1天; n=-1 就是上1季的第1天
+        """
         today = datetime.today()
-        first_day_of_next_year = today.replace(year=today.year + 1, month=1, day=1)
-        return first_day_of_next_year.strftime('%Y%m%d')
+        first_day_of_nth_year = today.replace(year=today.year + n, month=1, day=1)
+        return first_day_of_nth_year.strftime('%Y%m%d')
+
+
+
 
 
 # 测试

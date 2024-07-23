@@ -61,31 +61,38 @@ def get_kline_index_a_share_demo():
 
 def get_kline_future_demo():
     """
-        000001.SH    上证指数
-        399006.SZ	 创业板指
-        000016.SH    上证50
-        000300.SH    沪深300
-        000849.SH    沪深300非银行金融指数
-        000905.SH	 中证500
-        399852.SZ    中证1000
-        000688.SH    科创50
-    港交所  .HK
-    外汇   .CFE
+        AU9999.SHF    沪金主连
+        AU2409.SHF	  沪金
+        AG9999.SHF    沪银主连
+        AG2409.SHF    沪银
+        CU9999.SHF    沪铜主连
+        CU2409.SHF    沪铜
+
+        EC9999.INE    欧线集运主连
+        EC2410.INE    欧线集运
+        SC9999.INE    原油主连
+        SC2410.INE    原油
+
+        V9999.DCE     PVC主连
+        V2409.DCE     PVC
+        MA9999.ZCE    甲醇主连      (找不到)
+        MA2409.ZCE    甲醇         (找不到)
+
+    目前主连找不到数据，只有月份的，暂时用 t+2 月去代替主连吧
 
     """
+    index_list = ["AU{}.SHF", "AG{}.SHF", "CU{}.SHF", "EC{}.INE", "SC{}.INE", "V{}.DCE"]
 
-    # time_start_date = DateUtility.first_day_of_month()
-    # time_end_date = DateUtility.today()
-    #
-    # time_start_date = datetime.strptime(time_start_date, '%Y%m%d')
-    # time_end_date = datetime.strptime(time_end_date, '%Y%m%d')
+    new_index_list = [index.format(replacement) for index in index_list]
 
-    time_start_date = "2024-05-14 15:10:11"
-    time_end_date = "2024-07-21 11:20:50"
-    time_start_date = datetime.strptime(time_start_date, '%Y-%m-%d %H:%M:%S')
-    time_end_date = datetime.strptime(time_end_date, '%Y-%m-%d %H:%M:%S')
 
-    index_list = ['CF03.ZCE', 'au09.SHF', 'au2409.SHF', 'AU09.SHF', 'AU2409.SHF', "CF2409.ZCE", "c2409.DCE"]
+    time_start_date = DateUtility.first_day_of_year()
+    time_end_date = DateUtility.today()
+
+    time_start_date = datetime.strptime(time_start_date, '%Y%m%d')
+    time_end_date = datetime.strptime(time_end_date, '%Y%m%d')
+
+    index_list = ["EC2410.INE", "SC2410.INE", "CU2409.SHF"]
     index_df = pd.DataFrame()
 
     for index in index_list:

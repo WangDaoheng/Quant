@@ -199,10 +199,10 @@ class SaveData:
 
         test_summary_filename = base_utils.save_out_filename(filehead='stock_limit_summary', file_type='csv')
         test_summary_dir = os.path.join(self.dir_limit_summary_base, test_summary_filename)
-        filter_limit_df.to_csv(test_summary_dir)
 
         #  大盘涨跌停数量情况，默认是从年初到今天
         self.limit_summary_df = filter_limit_df
+        filter_limit_df.to_csv(test_summary_dir)
 
 
     def get_future_index(self):
