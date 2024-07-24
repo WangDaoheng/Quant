@@ -82,20 +82,20 @@ def get_kline_future_demo():
 
     """
     index_list = ["AU{}.SHF", "AG{}.SHF", "CU{}.SHF", "EC{}.INE", "SC{}.INE", "V{}.DCE"]
+    replacement = DateUtility.first_day_of_month_after_n_months(2)[2:6]
 
-    new_index_list = [index.format(replacement) for index in index_list]
+    furture_index_list = [index.format(replacement) for index in index_list]
 
-
-    time_start_date = DateUtility.first_day_of_year()
+    #  查询起始时间写2月前的月初第1天
+    time_start_date = DateUtility.first_day_of_month_after_n_months(-2)
     time_end_date = DateUtility.today()
 
     time_start_date = datetime.strptime(time_start_date, '%Y%m%d')
     time_end_date = datetime.strptime(time_end_date, '%Y%m%d')
 
-    index_list = ["EC2410.INE", "SC2410.INE", "CU2409.SHF"]
     index_df = pd.DataFrame()
 
-    for index in index_list:
+    for index in furture_index_list:
         #  获取数据的关键调用
         res = get_kline(htsc_code=[index], time=[time_start_date, time_end_date],
                         frequency="daily", fq="pre")

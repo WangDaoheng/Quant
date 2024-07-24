@@ -51,6 +51,8 @@ class SaveData:
         #  文件路径_____关键大盘指数
         self.dir_index_a_share_base = os.path.join(self.dir_insight_base, 'index_a_share')
 
+        #  文件路径_____内盘期货
+        self.dir_future_inside_base = os.path.join(self.dir_insight_base, 'future_inside')
 
 
 
@@ -119,10 +121,9 @@ class SaveData:
         index_filename = base_utils.save_out_filename(filehead='index_a_share', file_type='csv')
         index_filedir = os.path.join(self.dir_index_a_share_base, index_filename)
 
-        print("------------- get_index_a_share ---------------------")
-
         index_df.to_csv(index_filedir)
         self.index_a_share = index_df
+        print("------------- get_index_a_share 完成测试文件输出 ---------------------")
 
 
 
@@ -153,6 +154,8 @@ class SaveData:
         #  已上市状态stock_codes
         self.stock_code_df = filtered_df
         filtered_df.to_csv(stock_codes_listed_dir, index=False)
+        print("------------- get_all_stocks 完成测试文件输出 ---------------------")
+
 
 
     def get_limit_summary(self):
@@ -203,18 +206,63 @@ class SaveData:
         #  大盘涨跌停数量情况，默认是从年初到今天
         self.limit_summary_df = filter_limit_df
         filter_limit_df.to_csv(test_summary_dir)
+        print("------------- get_limit_summary 完成测试文件输出 ---------------------")
 
 
-    def get_future_index(self):
+
+    def get_future_inside(self):
         """
         期货市场数据
         贵金属,  有色数据
         国际市场  国内市场
+        AU9999.SHF    沪金主连
+        AU2409.SHF	  沪金
+        AG9999.SHF    沪银主连
+        AG2409.SHF    沪银
+        CU9999.SHF    沪铜主连
+        CU2409.SHF    沪铜
+
+        EC9999.INE    欧线集运主连
+        EC2410.INE    欧线集运
+        SC9999.INE    原油主连
+        SC2410.INE    原油
+
+        V9999.DCE     PVC主连
+        V2409.DCE     PVC
+        MA9999.ZCE    甲醇主连      (找不到)
+        MA2409.ZCE    甲醇         (找不到)
+        目前主连找不到数据，只有月份的，暂时用 t+2 月去代替主连吧
+
         Returns:
-
-
         """
-        pass
+
+        index_list = ["AU{}.SHF", "AG{}.SHF", "CU{}.SHF", "EC{}.INE", "SC{}.INE", "V{}.DCE"]
+        replacement = DateUtility.first_day_of_month_after_n_months(2)[2:6]
+
+        future_index_list = [index.format(replacement) for index in index_list]
+
+        #  查询起始时间写2月前的月初第1天
+        time_start_date = DateUtility.first_day_of_month_after_n_months(-2)
+        time_end_date = DateUtility.today()
+
+        time_start_date = datetime.strptime(time_start_date, '%Y%m%d')
+        time_end_date = datetime.strptime(time_end_date, '%Y%m%d')
+
+        index_df = pd.DataFrame()
+
+        for index in future_index_list:
+            #  获取数据的关键调用
+            res = get_kline(htsc_code=[index], time=[time_start_date, time_end_date],
+                            frequency="daily", fq="pre")
+
+            index_df = pd.concat([index_df, res], ignore_index=True)
+
+        ## 文件输出模块
+        index_filename = base_utils.save_out_filename(filehead='future_inside', file_type='csv')
+        index_filedir = os.path.join(self.dir_future_inside_base, index_filename)
+        index_df.to_csv(index_filedir)
+        print("------------- get_future_inside 完成测试文件输出 ---------------------")
+
 
 
 
@@ -298,6 +346,9 @@ class SaveData:
 
         #  大盘涨跌概览
         self.get_limit_summary()
+
+        #  期货__内盘
+        self.get_future_inside()
 
         #  筹码概览
         # self.get_chouma_datas()
