@@ -338,11 +338,13 @@ class SaveData:
         #  登陆insight数据源
         self.login()
 
+        #  获取主要股指
+        self.get_index_a_share()
+
         #  除去 ST |  退  | B 的股票集合
         self.get_all_stocks()
 
-        #  获取主要股指
-        self.get_index_a_share()
+
 
         #  大盘涨跌概览
         self.get_limit_summary()
