@@ -22,7 +22,7 @@ from CommonProperties.DateUtility import DateUtility
 # ************************************************************************
 
 
-class SaveData:
+class SaveInsightData:
 
     def __init__(self):
 
@@ -357,5 +357,5 @@ class SaveData:
 
 
 if __name__ == '__main__':
-    savedata = SaveData()
-    savedata.setup()
+    save_insight_data = SaveInsightData()
+    save_insight_data.setup()

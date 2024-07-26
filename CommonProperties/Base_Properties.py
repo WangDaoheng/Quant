@@ -12,7 +12,7 @@ password = "F_Y+.3mtc4tU"
 ######################     各类目录信息    #############################
 
 dir_insight_base = r'F:\QDatas\insight_A'
-
+dir_vantage_base = r'F:\QDatas\vantage'
 
 
 

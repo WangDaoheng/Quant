@@ -4,19 +4,19 @@ from insight_python.com.insight.market_service import market_service
 from datetime import datetime
 import os
 
-import CommonProperties.Base_Properties as dataprepare_properties
-import CommonProperties.Base_utils as dataprepare_utils
+import CommonProperties.Base_Properties as base_properties
+import CommonProperties.Base_utils as base_utils
 from CommonProperties.DateUtility import DateUtility
 
-#  测试环境文件保存目录
-insight_test_dir = os.path.join(dataprepare_properties.dir_insight_base, 'test')
+#  insight  测试环境文件保存目录
+insight_test_dir = os.path.join(base_properties.dir_insight_base, 'test')
 
 
 def login():
     # 登陆前 初始化，没有密码可以访问进行自动化注册
     # https://findata-insight.htsc.com:9151/terminalWeb/#/signup
-    user = dataprepare_properties.user
-    password = dataprepare_properties.password
+    user = base_properties.user
+    password = base_properties.password
     common.login(market_service, user, password)
 
 
@@ -53,7 +53,7 @@ def get_kline_index_a_share_demo():
         index_df = pd.concat([index_df, res], ignore_index=True)
 
     ## 文件输出模块
-    index_filename = dataprepare_utils.save_out_filename(filehead='index_a_share', file_type='csv')
+    index_filename = base_utils.save_out_filename(filehead='index_a_share', file_type='csv')
     index_filedir = os.path.join(insight_test_dir, index_filename)
     index_df.to_csv(index_filedir)
     print("------------- get_index_a_share 完成测试文件输出 ---------------------")
@@ -103,7 +103,7 @@ def get_kline_future_demo():
         index_df = pd.concat([index_df, res], ignore_index=True)
 
     ## 文件输出模块
-    index_filename = dataprepare_utils.save_out_filename(filehead='future', file_type='csv')
+    index_filename = base_utils.save_out_filename(filehead='future', file_type='csv')
     index_filedir = os.path.join(insight_test_dir, index_filename)
     index_df.to_csv(index_filedir)
     print("------------- get_kline_future_demo 完成测试文件输出 ---------------------")
@@ -142,7 +142,7 @@ def get_foreign_exchange_demo():
                             frequency="daily", fq="none")
             res_df = pd.concat([res_df, res], ignore_index=True)
 
-    test_summary_filename = dataprepare_utils.save_out_filename(filehead='foreign_exchange', file_type='csv')
+    test_summary_filename = base_utils.save_out_filename(filehead='foreign_exchange', file_type='csv')
     test_summary_dir = os.path.join(insight_test_dir, test_summary_filename)
     res_df.to_csv(test_summary_dir)
     print("------------- get_foreign_exchange_demo() 完成测试文件输出 ---------------------")
@@ -165,7 +165,7 @@ def insight_billboard(function_type='inc_list', market=['sh_a_share', 'sz_a_shar
     Returns: 问题是只返回榜单前十，只有5min涨速有点用     这个基本没用
     """
 
-    test_billboard_filename = dataprepare_utils.save_out_filename(filehead='stock_inc_billboard', file_type='csv')
+    test_billboard_filename = base_utils.save_out_filename(filehead='stock_inc_billboard', file_type='csv')
     test_billboard_dir = os.path.join(insight_test_dir, test_billboard_filename)
     #  涨幅榜数据
     #  获取数据的关键调用
@@ -211,7 +211,7 @@ def get_change_summary_demo():
                                  'ups_downs_limit_count_pre_up_limits_average_change_percent']]
     filter_limit_df.columns = ['time', 'name', '今日涨停', '今日跌停', '昨日涨停', '昨日跌停', '昨日涨停表现']
 
-    test_summary_filename = dataprepare_utils.save_out_filename(filehead='stock_summary', file_type='csv')
+    test_summary_filename = base_utils.save_out_filename(filehead='stock_summary', file_type='csv')
     test_summary_dir = os.path.join(insight_test_dir, test_summary_filename)
     filter_limit_df.to_csv(test_summary_dir)
 
