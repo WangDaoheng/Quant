@@ -41,13 +41,15 @@ class SaveVantageData:
         #  文件路径_____US 的 stock
         self.dir_US_stock_base = os.path.join(self.dir_vantage_base, 'US_stock')
 
+        #  文件路径_____USD 的 汇率
+        self.dir_USD_FX_base = os.path.join(self.dir_vantage_base, 'USD_FX')
+
 
 
     def init_variant(self):
         """
         结果变量初始化
         """
-
         #  关键的stock_code
         self.key_US_stock = ['TSLA', 'AAPL', 'NVDA', 'MSFT', 'META']
 
@@ -57,7 +59,7 @@ class SaveVantageData:
 
     def get_US_stock_from_vantage(self):
         """
-        关键 US
+        关键 US stcok
         Returns:
             [name, timestamp  open  high  low   close   volume]
         """
@@ -91,12 +93,131 @@ class SaveVantageData:
         print("------------- get_US_stock_from_vantage 完成测试文件输出 ---------------------")
 
 
+    def get_USD_FX_core(self, url, flag):
+        """
+        Args:
+            url:
+            flag:
+        Returns:
+        """
+
+        #  存放汇率结果数据
+        res_df = pd.DataFrame()
+
+        # 发送 GET 请求
+        print('--------------------   开始调url   --------------------')
+        response = requests.get(url)
+
+        # 处理响应数据
+        if response.status_code == 200:
+            # 返回csv字符串
+            csv_string = response.text
+            csv_file = StringIO(csv_string)
+            vantage_df = pd.read_csv(csv_file)
+            vantage_df.insert(0, 'name', flag)
+
+            res_df = pd.concat([res_df, vantage_df], ignore_index=True)
+        else:
+            print(f'Error fetching {flag} data: {response.status_code} - {response.text}')
+
+        return res_df
+
+
+
+
+    def get_USD_FX_from_vantage(self):
+        """
+        计算美元指数, 从主流货币去计算美元指数
+        Returns:
+            [name, timestamp  open  high  low   close   volume]
+        """
+        function = 'FX_DAILY'
+        from_symbol_list = ['EUR', '', '' ]
+        to_symbol = 'USD'
+
+        #  存放汇率数据
+        res_df = pd.DataFrame()
+
+        # 定义权重
+        weights = {
+            'eur_usd': -0.576,
+            'usd_jpy': 0.136,
+            'gbp_usd': -0.119,
+            'usd_cad': 0.091,
+            'usd_sek': 0.042,
+            'usd_chf': 0.036
+        }
+
+        # 定义初始常数
+        constant = 50.14348112
+
+
+        #  欧元兑美元
+        url_EUR_USD = f'{base_url}?function={function}&from_symbol=EUR&to_symbol=USD&apikey={api_key}&datatype=csv'
+        df_EUR_USD = self.get_USD_FX_core(url=url_EUR_USD, flag='EUR_USD')
+
+        #  美元兑日元
+        url_USD_JPY = f'{base_url}?function={function}&from_symbol=USD&to_symbol=JPY&apikey={api_key}&datatype=csv'
+        df_USD_JPY = self.get_USD_FX_core(url=url_USD_JPY, flag='USD_JPY')
+
+        #  英镑兑美元
+        url_GBP_USD = f'{base_url}?function={function}&from_symbol=GBP&to_symbol=USD&apikey={api_key}&datatype=csv'
+        df_GBP_USD = self.get_USD_FX_core(url=url_GBP_USD, flag='GBP_USD')
+
+        #  美元兑加拿大元
+        url_USD_CAD = f'{base_url}?function={function}&from_symbol=USD&to_symbol=CAD&apikey={api_key}&datatype=csv'
+        df_USD_CAD = self.get_USD_FX_core(url=url_USD_CAD, flag='USD_CAD')
+
+        #  美元兑瑞典克朗
+        url_USD_SEK = f'{base_url}?function={function}&from_symbol=USD&to_symbol=SEK&apikey={api_key}&datatype=csv'
+        df_USD_SEK = self.get_USD_FX_core(url=url_USD_SEK, flag='USD_SEK')
+
+        #  美元兑瑞士法郎
+        url_USD_CHF = f'{base_url}?function={function}&from_symbol=USD&to_symbol=CHF&apikey={api_key}&datatype=csv'
+        df_USD_CHF = self.get_USD_FX_core(url=url_USD_CHF, flag='USD_CHF')
+
+        #  汇总得到美元指数的主要成分
+        res_df = pd.concat([res_df, df_EUR_USD, df_USD_JPY, df_GBP_USD, df_USD_CAD, df_USD_SEK, df_USD_CHF], ignore_index=True)
+
+        #  --------------------------  开始计算美元指数  ------------------------------
+        # 获取唯一的时间戳
+        timestamps = res_df['timestamp'].unique()
+
+        # 创建一个空列表来存储结果
+        results = []
+
+        for timestamp in timestamps:
+            # 获取当前时间戳的所有汇率数据
+            current_data = res_df[res_df['timestamp'] == timestamp]
+            # 初始化DXY值
+            dxy = constant
+            # 计算DXY
+            for name, weight in weights.items():
+                rate = current_data[current_data['name'] == name]['close'].values[0]
+                dxy *= rate ** weight
+            # 将结果添加到列表中
+            results.append([timestamp, dxy])
+
+        # 将结果转换为DataFrame
+        dxy_df = pd.DataFrame(results, columns=['timestamp', 'DXY'])
+
+        # #  文件输出模块
+        USD_FX_filename = base_utils.save_out_filename(filehead='USD_FX', file_type='csv')
+        USD_FX_filedir = os.path.join(self.dir_US_stock_base, USD_FX_filename)
+        res_df.to_csv(USD_FX_filedir)
+
+        print("------------- get_USD_FX_from_vantage 完成测试文件输出 ---------------------")
+
+
+
+
 
 
     def setup(self):
 
         #  获取 US 主要stock 的全部数据
-        self.get_US_stock_from_vantage()
+        # self.get_US_stock_from_vantage()
+        self.get_USD_FX_from_vantage()
 
 
 
