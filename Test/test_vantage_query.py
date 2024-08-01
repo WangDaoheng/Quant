@@ -59,7 +59,7 @@ def use_vantage_for_US_stock(function='TIME_SERIES_DAILY', symbol_list=key_US_st
     #  文件输出模块
     US_stock_filename = base_utils.save_out_filename(filehead='US_stock', file_type='csv')
     index_filedir = os.path.join(vantage_test_dir, US_stock_filename)
-    res_df.to_csv(index_filedir)
+    res_df.to_csv(index_filedir, index=False)
 
     print("------------- get_kline_future_demo 完成测试文件输出 ---------------------")
 

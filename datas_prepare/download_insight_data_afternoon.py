@@ -121,7 +121,7 @@ class SaveInsightData:
         index_filename = base_utils.save_out_filename(filehead='index_a_share', file_type='csv')
         index_filedir = os.path.join(self.dir_index_a_share_base, index_filename)
 
-        index_df.to_csv(index_filedir)
+        index_df.to_csv(index_filedir, index=False)
         self.index_a_share = index_df
         print("------------- get_index_a_share 完成测试文件输出 ---------------------")
 
@@ -205,7 +205,7 @@ class SaveInsightData:
 
         #  大盘涨跌停数量情况，默认是从年初到今天
         self.limit_summary_df = filter_limit_df
-        filter_limit_df.to_csv(test_summary_dir)
+        filter_limit_df.to_csv(test_summary_dir, index=False)
         print("------------- get_limit_summary 完成测试文件输出 ---------------------")
 
 
@@ -260,7 +260,7 @@ class SaveInsightData:
         ## 文件输出模块
         index_filename = base_utils.save_out_filename(filehead='future_inside', file_type='csv')
         index_filedir = os.path.join(self.dir_future_inside_base, index_filename)
-        index_df.to_csv(index_filedir)
+        index_df.to_csv(index_filedir, index=False)
         print("------------- get_future_inside 完成测试文件输出 ---------------------")
 
 
@@ -334,6 +334,7 @@ class SaveInsightData:
         elapsed_time = end_time - start_time  # 计算时间差
         print(f"获取筹码数据的get_chouma_datas() 代码执行时间: {elapsed_time} 秒")
 
+
     def setup(self):
         #  登陆insight数据源
         self.login()
@@ -343,8 +344,6 @@ class SaveInsightData:
 
         #  除去 ST |  退  | B 的股票集合
         self.get_all_stocks()
-
-
 
         #  大盘涨跌概览
         self.get_limit_summary()

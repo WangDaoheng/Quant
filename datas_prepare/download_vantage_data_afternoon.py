@@ -41,7 +41,10 @@ class SaveVantageData:
         #  文件路径_____US 的 stock
         self.dir_US_stock_base = os.path.join(self.dir_vantage_base, 'US_stock')
 
-        #  文件路径_____USD 的 汇率
+        #  文件路径_____USD 的 汇率明细
+        self.dir_USD_FX_detail_base = os.path.join(self.dir_vantage_base, 'USD_FX_detail')
+
+        #  文件路径_____USD 的 美元指数
         self.dir_USD_FX_base = os.path.join(self.dir_vantage_base, 'USD_FX')
 
 
@@ -88,7 +91,7 @@ class SaveVantageData:
         #  文件输出模块
         US_stock_filename = base_utils.save_out_filename(filehead='US_stock', file_type='csv')
         US_stock_filedir = os.path.join(self.dir_US_stock_base, US_stock_filename)
-        res_df.to_csv(US_stock_filedir)
+        res_df.to_csv(US_stock_filedir, index=False)
 
         print("------------- get_US_stock_from_vantage 完成测试文件输出 ---------------------")
 
@@ -99,13 +102,13 @@ class SaveVantageData:
             url:
             flag:
         Returns:
+            该函数是 get_USD_FX_from_vantage  的核心调用模块
         """
 
         #  存放汇率结果数据
         res_df = pd.DataFrame()
 
         # 发送 GET 请求
-        print('--------------------   开始调url   --------------------')
         response = requests.get(url)
 
         # 处理响应数据
@@ -120,6 +123,8 @@ class SaveVantageData:
         else:
             print(f'Error fetching {flag} data: {response.status_code} - {response.text}')
 
+        print(f"------------- get_USD_FX_core  完成 {flag} 汇率查询 ---------------------")
+
         return res_df
 
 
@@ -132,20 +137,18 @@ class SaveVantageData:
             [name, timestamp  open  high  low   close   volume]
         """
         function = 'FX_DAILY'
-        from_symbol_list = ['EUR', '', '' ]
-        to_symbol = 'USD'
 
         #  存放汇率数据
         res_df = pd.DataFrame()
 
         # 定义权重
         weights = {
-            'eur_usd': -0.576,
-            'usd_jpy': 0.136,
-            'gbp_usd': -0.119,
-            'usd_cad': 0.091,
-            'usd_sek': 0.042,
-            'usd_chf': 0.036
+            'EUR_USD': -0.576,
+            'USD_JPY': 0.136,
+            'GBP_USD': -0.119,
+            'USD_CAD': 0.091,
+            'USD_SEK': 0.042,
+            'USD_CHF': 0.036
         }
 
         # 定义初始常数
@@ -201,10 +204,16 @@ class SaveVantageData:
         # 将结果转换为DataFrame
         dxy_df = pd.DataFrame(results, columns=['timestamp', 'DXY'])
 
-        # #  文件输出模块
+        # #  文件输出模块     输出汇率明细
+        USD_FX_detail_filename = base_utils.save_out_filename(filehead='USD_FX', file_type='csv')
+        USD_FX_detail_filedir = os.path.join(self.dir_USD_FX_detail_base, USD_FX_detail_filename)
+        res_df.to_csv(USD_FX_detail_filedir, index=False)
+
+        # #  文件输出模块     输出美元指数
         USD_FX_filename = base_utils.save_out_filename(filehead='USD_FX', file_type='csv')
-        USD_FX_filedir = os.path.join(self.dir_US_stock_base, USD_FX_filename)
-        res_df.to_csv(USD_FX_filedir)
+        USD_FX_filedir = os.path.join(self.dir_USD_FX_base, USD_FX_filename)
+        dxy_df.to_csv(USD_FX_filedir, index=False)
+
 
         print("------------- get_USD_FX_from_vantage 完成测试文件输出 ---------------------")
 

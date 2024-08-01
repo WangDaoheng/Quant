@@ -55,7 +55,7 @@ def get_kline_index_a_share_demo():
     ## 文件输出模块
     index_filename = base_utils.save_out_filename(filehead='index_a_share', file_type='csv')
     index_filedir = os.path.join(insight_test_dir, index_filename)
-    index_df.to_csv(index_filedir)
+    index_df.to_csv(index_filedir, index=False)
     print("------------- get_index_a_share 完成测试文件输出 ---------------------")
 
 
@@ -105,7 +105,7 @@ def get_kline_future_demo():
     ## 文件输出模块
     index_filename = base_utils.save_out_filename(filehead='future', file_type='csv')
     index_filedir = os.path.join(insight_test_dir, index_filename)
-    index_df.to_csv(index_filedir)
+    index_df.to_csv(index_filedir, index=False)
     print("------------- get_kline_future_demo 完成测试文件输出 ---------------------")
 
 
@@ -144,7 +144,7 @@ def get_foreign_exchange_demo():
 
     test_summary_filename = base_utils.save_out_filename(filehead='foreign_exchange', file_type='csv')
     test_summary_dir = os.path.join(insight_test_dir, test_summary_filename)
-    res_df.to_csv(test_summary_dir)
+    res_df.to_csv(test_summary_dir, index=False)
     print("------------- get_foreign_exchange_demo() 完成测试文件输出 ---------------------")
 
 
@@ -170,7 +170,7 @@ def insight_billboard(function_type='inc_list', market=['sh_a_share', 'sz_a_shar
     #  涨幅榜数据
     #  获取数据的关键调用
     result = get_billboard(type=function_type, market=market)
-    result.to_csv(test_billboard_dir)
+    result.to_csv(test_billboard_dir, index=False)
 
 
 def get_change_summary_demo():
@@ -213,7 +213,7 @@ def get_change_summary_demo():
 
     test_summary_filename = base_utils.save_out_filename(filehead='stock_summary', file_type='csv')
     test_summary_dir = os.path.join(insight_test_dir, test_summary_filename)
-    filter_limit_df.to_csv(test_summary_dir)
+    filter_limit_df.to_csv(test_summary_dir, index=False)
 
 
 if __name__ == "__main__":
