@@ -135,7 +135,7 @@ class DateUtility:
     @staticmethod
     def first_day_of_year_after_n_years(n):
         """
-        n年后的季的第一天, n=0 就是本季的第1天; n=1 就是1季后的第1天; n=-1 就是上1季的第1天
+        n年后的年初的第一天, n=0 就是本年的第1天; n=1 就是1年后的第1天; n=-1 就是上1年的第1天
         """
         today = datetime.today()
         first_day_of_nth_year = today.replace(year=today.year + n, month=1, day=1)

@@ -20,6 +20,49 @@ def login():
     common.login(market_service, user, password)
 
 
+def get_kline_daily_demo():
+    """
+        000001.SH    上证指数
+        399006.SZ	 创业板指
+        000016.SH    上证50
+        000300.SH    沪深300
+        000849.SH    沪深300非银行金融指数
+        000905.SH	 中证500
+        399852.SZ    中证1000
+        000688.SH    科创50
+    港交所  .HK
+    外汇   .CFE
+
+    """
+
+    time_start_date = DateUtility.first_day_of_month()
+    time_end_date = DateUtility.today()
+
+    time_start_date = datetime.strptime(time_start_date, '%Y%m%d')
+    time_end_date = datetime.strptime(time_end_date, '%Y%m%d')
+
+    index_list = ["000001.SH", "399006.SZ", "000016.SH", "000300.SH", "000849.SH", "000905.SH", "399852.SZ",
+                  "000688.SH", ""]
+    index_df = pd.DataFrame()
+
+    # for index in index_list:
+
+    #  获取数据的关键调用
+    res = get_kline(htsc_code=index_list, time=[time_start_date, time_end_date],
+                    frequency="daily", fq="none")
+
+    index_df = pd.concat([index_df, res], ignore_index=True)
+
+
+    ## 文件输出模块
+    index_filename = base_utils.save_out_filename(filehead='index_a_share', file_type='csv')
+    index_filedir = os.path.join(insight_test_dir, index_filename)
+    index_df.to_csv(index_filedir, index=False)
+    print("------------- get_index_a_share 完成测试文件输出 ---------------------")
+
+
+
+
 def get_kline_index_a_share_demo():
     """
         000001.SH    上证指数
@@ -218,6 +261,8 @@ def get_change_summary_demo():
 
 if __name__ == "__main__":
     login()
-    get_kline_future_demo()
+    # get_kline_future_demo()
     # insight_billboard()
     # get_change_summary_demo()
+    get_kline_daily_demo()
+

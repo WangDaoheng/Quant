@@ -31,7 +31,6 @@ class SaveInsightData:
         self.init_variant()
 
 
-
     def init_dirs(self):
         """
         关键路径初始化
@@ -42,29 +41,31 @@ class SaveInsightData:
         #  文件路径_____上市交易股票codes
         self.dir_stock_codes_base = os.path.join(self.dir_insight_base, 'stock_codes')
 
-        #  文件路径_____筹码数据
-        self.dir_chouma_base = os.path.join(self.dir_insight_base, 'chouma')
-
-        #  文件路径_____涨跌停数量
-        self.dir_limit_summary_base = os.path.join(self.dir_insight_base, 'limit_summary')
+        #  文件路径_____上市交易股票的日k线数据
+        self.dir_history_stock_kline_base = os.path.join(self.dir_insight_base, 'stock_kline')
 
         #  文件路径_____关键大盘指数
         self.dir_index_a_share_base = os.path.join(self.dir_insight_base, 'index_a_share')
 
+        #  文件路径_____涨跌停数量
+        self.dir_limit_summary_base = os.path.join(self.dir_insight_base, 'limit_summary')
+
         #  文件路径_____内盘期货
         self.dir_future_inside_base = os.path.join(self.dir_insight_base, 'future_inside')
 
+        #  文件路径_____筹码数据
+        self.dir_chouma_base = os.path.join(self.dir_insight_base, 'chouma')
 
 
     def init_variant(self):
         """
         结果变量初始化
         """
-        #  获得A股市场的股指 [htsc_code 	time	frequency	open	close	high	low	volume	value]
-        self.index_a_share = pd.DataFrame()
-
         #  除去 ST|退|B 的五要素   [ymd	htsc_code	name	exchange]
         self.stock_code_df = pd.DataFrame()
+
+        #  获得A股市场的股指 [htsc_code 	time	frequency	open	close	high	low	volume	value]
+        self.index_a_share = pd.DataFrame()
 
         #  大盘涨跌停数量          [time	name	今日涨停	今日跌停	昨日涨停	昨日跌停	昨日涨停表现]
         self.limit_summary_df = pd.DataFrame()
@@ -76,8 +77,6 @@ class SaveInsightData:
         self.stock_chouma_available = ""
 
 
-
-
     def login(self):
         # 登陆前 初始化，没有密码可以访问进行自动化注册
         # https://findata-insight.htsc.com:9151/terminalWeb/#/signup
@@ -85,6 +84,34 @@ class SaveInsightData:
         password = base_properties.password
         common.login(market_service, user, password)
 
+    def get_stock_codes(self):
+        """
+        获取当日的stock代码合集
+        :return:
+         stock_code_df  [ymd	htsc_code	name	exchange]
+        """
+
+        formatted_date = DateUtility.today()
+
+        ##  获取所有已上市codes
+        stock_all_df = get_all_stocks_info(listing_state="上市交易")
+        stock_all_df = stock_all_df[['htsc_code', 'name', 'exchange']]
+        stock_all_df.insert(0, 'ymd', formatted_date)
+        filtered_df = stock_all_df[~stock_all_df['name'].str.contains('ST|退|B')]
+
+
+        #  导出当日上市交易的股票信息 ymd  htsc_code  name  exchange
+        self.stock_code_df = filtered_df
+
+        filehead = 'stocks_codes_all'
+        stock_codes_listed_filename = base_utils.save_out_filename(filehead=filehead, file_type='csv')
+        stock_codes_listed_dir = os.path.join(self.dir_stock_codes_base, stock_codes_listed_filename)
+        filtered_df.to_csv(stock_codes_listed_dir, index=False)
+        print("------------- get_stock_codes 完成测试文件输出 ---------------------")
+
+
+    def get_stock_kline(self):
+        pass
 
     def get_index_a_share(self):
         """
@@ -101,61 +128,30 @@ class SaveInsightData:
              index_a_share   [htsc_code 	time	frequency	open	close	high	low	volume	value]
         """
 
-        time_start_date = DateUtility.first_day_of_month()
-        time_end_date = DateUtility.today()
+        start_date = DateUtility.first_day_of_month()
+        end_date = DateUtility.today()
 
-        time_start_date = datetime.strptime(time_start_date, '%Y%m%d')
-        time_end_date = datetime.strptime(time_end_date, '%Y%m%d')
+        start_date = datetime.strptime(start_date, '%Y%m%d')
+        end_date = datetime.strptime(end_date, '%Y%m%d')
 
         index_list = ["000001.SH", "399006.SZ", "000016.SH", "000300.SH", "000849.SH", "000905.SH", "399852.SZ",
                       "000688.SH", ""]
         index_df = pd.DataFrame()
 
-        for index in index_list:
-            res = get_kline(htsc_code=[index], time=[time_start_date, time_end_date],
-                            frequency="daily", fq="none")
 
-            index_df = pd.concat([index_df, res], ignore_index=True)
+        res = get_kline(htsc_code=index_list, time=[start_date, end_date],
+                        frequency="daily", fq="none")
+
+        index_df = pd.concat([index_df, res], ignore_index=True)
+
 
         ## 文件输出模块
+        self.index_a_share = index_df
+
         index_filename = base_utils.save_out_filename(filehead='index_a_share', file_type='csv')
         index_filedir = os.path.join(self.dir_index_a_share_base, index_filename)
-
         index_df.to_csv(index_filedir, index=False)
-        self.index_a_share = index_df
         print("------------- get_index_a_share 完成测试文件输出 ---------------------")
-
-
-
-
-    def get_all_stocks(self):
-        """
-        获取当日的stock代码合集
-        :return:
-         stock_code_df  [ymd	htsc_code	name	exchange]
-        """
-
-        # dt = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-        # formatted_date = dt.strftime('%Y%m%d')
-        formatted_date = DateUtility.today()
-
-
-        ##  获取所有已上市codes
-        stock_all_df = get_all_stocks_info(listing_state="上市交易")
-        stock_all_df = stock_all_df[['htsc_code', 'name', 'exchange']]
-        stock_all_df.insert(0, 'ymd', formatted_date)
-        filtered_df = stock_all_df[~stock_all_df['name'].str.contains('ST|退|B')]
-
-        ## 导出当日上市交易的股票信息 ymd  htsc_code  name  exchange
-        filehead = 'stocks_codes_all'
-        stock_codes_listed_filename = base_utils.save_out_filename(filehead=filehead, file_type='csv')
-        stock_codes_listed_dir = os.path.join(self.dir_stock_codes_base, stock_codes_listed_filename)
-
-        #  已上市状态stock_codes
-        self.stock_code_df = filtered_df
-        filtered_df.to_csv(stock_codes_listed_dir, index=False)
-        print("------------- get_all_stocks 完成测试文件输出 ---------------------")
-
 
 
     def get_limit_summary(self):
@@ -182,7 +178,7 @@ class SaveInsightData:
 
         """
 
-        start_date = DateUtility.first_day_of_year()
+        start_date = DateUtility.first_day_of_month()
         end_date = DateUtility.today()
 
         # 转为时间格式  get_change_summary 强制要求的
@@ -200,14 +196,14 @@ class SaveInsightData:
                                      'ups_downs_limit_count_pre_up_limits_average_change_percent']]
         filter_limit_df.columns = ['time', 'name', '今日涨停', '今日跌停', '昨日涨停', '昨日跌停', '昨日涨停表现']
 
-        test_summary_filename = base_utils.save_out_filename(filehead='stock_limit_summary', file_type='csv')
-        test_summary_dir = os.path.join(self.dir_limit_summary_base, test_summary_filename)
 
         #  大盘涨跌停数量情况，默认是从年初到今天
         self.limit_summary_df = filter_limit_df
+
+        test_summary_filename = base_utils.save_out_filename(filehead='stock_limit_summary', file_type='csv')
+        test_summary_dir = os.path.join(self.dir_limit_summary_base, test_summary_filename)
         filter_limit_df.to_csv(test_summary_dir, index=False)
         print("------------- get_limit_summary 完成测试文件输出 ---------------------")
-
 
 
     def get_future_inside(self):
@@ -242,7 +238,7 @@ class SaveInsightData:
         future_index_list = [index.format(replacement) for index in index_list]
 
         #  查询起始时间写2月前的月初第1天
-        time_start_date = DateUtility.first_day_of_month_after_n_months(-2)
+        time_start_date = DateUtility.first_day_of_month()
         time_end_date = DateUtility.today()
 
         time_start_date = datetime.strptime(time_start_date, '%Y%m%d')
@@ -250,24 +246,22 @@ class SaveInsightData:
 
         index_df = pd.DataFrame()
 
-        for index in future_index_list:
-            #  获取数据的关键调用
-            res = get_kline(htsc_code=[index], time=[time_start_date, time_end_date],
-                            frequency="daily", fq="pre")
+        # for index in future_index_list:
 
-            index_df = pd.concat([index_df, res], ignore_index=True)
+        #  获取数据的关键调用
+        res = get_kline(htsc_code=future_index_list, time=[time_start_date, time_end_date],
+                        frequency="daily", fq="pre")
+
+        index_df = pd.concat([index_df, res], ignore_index=True)
+
 
         ## 文件输出模块
+        self.future_index = index_df
+
         index_filename = base_utils.save_out_filename(filehead='future_inside', file_type='csv')
         index_filedir = os.path.join(self.dir_future_inside_base, index_filename)
         index_df.to_csv(index_filedir, index=False)
         print("------------- get_future_inside 完成测试文件输出 ---------------------")
-
-
-
-
-
-
 
 
     def get_chouma_datas(self):
@@ -339,11 +333,11 @@ class SaveInsightData:
         #  登陆insight数据源
         self.login()
 
+        #  除去 ST |  退  | B 的股票集合
+        self.get_stock_codes()
+
         #  获取主要股指
         self.get_index_a_share()
-
-        #  除去 ST |  退  | B 的股票集合
-        self.get_all_stocks()
 
         #  大盘涨跌概览
         self.get_limit_summary()
