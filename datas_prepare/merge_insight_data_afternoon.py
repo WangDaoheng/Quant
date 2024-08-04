@@ -1,8 +1,8 @@
 import os
-from insight_python.com.insight import common
-from insight_python.com.insight.query import *
-from insight_python.com.insight.market_service import market_service
 from datetime import datetime
+
+import pandas as pd
+from sqlalchemy import create_engine
 import time
 
 # import dataprepare_properties
@@ -14,7 +14,7 @@ from CommonProperties.Base_utils import timing_decorator
 
 
 # ************************************************************************
-# 本代码的作用是下午收盘后下载 insight 行情源数据, 本地保存,用于后续分析
+# 本代码的作用是下午收盘后针对 insight 行情源数据的本地保存部分开展merge
 # 需要下载的数据:
 # 1.上市股票代码   get_all_stocks()
 # 2.筹码分布数据   get_chouma_datas()
@@ -35,14 +35,23 @@ class SaveInsightHistoryData:
         """
         关键路径初始化
         """
-        #  文件路径_____insight文件基础路径
+        #  文件路径_____insight文件历史数据基础路径
         self.dir_history_insight_base = base_properties.dir_history_insight_base
 
-        #  文件路径_____上市交易股票codes
-        self.dir_history_stock_codes_base = os.path.join(self.dir_history_insight_base, 'stock_codes')
+        #  文件路径_____insight文件当下数据基础路径
+        self.dir_insight_base = base_properties.dir_insight_base
 
-        #  文件路径_____上市交易股票的日k线数据
+
+        ##  聚合全量的日k 数据
+        #  文件路径_____上市交易股票的当下日k线数据
+        self.dir_stock_kline_base = os.path.join(self.dir_insight_base, 'stock_kline')
+
+        #  文件路径_____上市交易股票的历史日k线数据
         self.dir_history_stock_kline_base = os.path.join(self.dir_history_insight_base, 'stock_kline')
+
+
+
+
 
         #  文件路径_____关键大盘指数
         self.dir_history_index_a_share_base = os.path.join(self.dir_history_insight_base, 'index_a_share')
@@ -80,88 +89,39 @@ class SaveInsightHistoryData:
         self.stock_chouma_available = ""
 
 
-    @timing_decorator
-    def login(self):
-        # 登陆前 初始化，没有密码可以访问进行自动化注册
-        # https://findata-insight.htsc.com:9151/terminalWeb/#/signup
-        user = base_properties.user
-        password = base_properties.password
-        common.login(market_service, user, password)
 
 
     @timing_decorator
-    def get_stock_codes(self):
+    def merge_stock_kline(self):
         """
-        获取当日的stock代码合集   剔除掉ST  退  B
-        :return:
-         stock_code_df  [ymd	htsc_code	name	exchange]
-        """
-
-        # dt = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-        # formatted_date = dt.strftime('%Y%m%d')
-        formatted_date = DateUtility.today()
-
-        ##  获取所有已上市codes
-        stock_all_df = get_all_stocks_info(listing_state="上市交易")
-        stock_all_df = stock_all_df[['htsc_code', 'name', 'exchange']]
-        stock_all_df.insert(0, 'ymd', formatted_date)
-        filtered_df = stock_all_df[~stock_all_df['name'].str.contains('ST|退|B')]
-
-        ## 导出当日上市交易的股票信息 ymd  htsc_code  name  exchange
-        filehead = 'stocks_codes_all'
-        stock_codes_listed_filename = base_utils.save_out_filename(filehead=filehead, file_type='csv')
-        stock_codes_listed_dir = os.path.join(self.dir_history_stock_codes_base, stock_codes_listed_filename)
-        filtered_df.to_csv(stock_codes_listed_dir, index=False)
-
-        #  已上市状态stock_codes
-        self.stock_code_df = filtered_df
-
-
-    @timing_decorator
-    def get_stock_kline(self):
-        """
-        根据当日上市的stock_codes，来获得全部(去除ST|退|B)股票的历史数据
+        将 stock_kline 的历史数据和当月数据做merge
         :return:
          stock_kline_df  [ymd	htsc_code	name	exchange]
         """
 
-        #  历史数据的起止时间
-        time_start_date = DateUtility.first_day_of_year_after_n_years(-3)
-        time_end_date = DateUtility.today()
-
-        time_start_date = datetime.strptime(time_start_date, '%Y%m%d')
-        time_end_date = datetime.strptime(time_end_date, '%Y%m%d')
+        #  读取历史数据和当下数据
+        stock_kline_latest_file = base_utils.get_latest_filename(self.dir_stock_kline_base)
+        stock_kline_history_latest_file = base_utils.get_latest_filename(self.dir_history_stock_kline_base)
 
 
-        #  每个批次取 100 个元素
-        batch_size = 100
+        history_df = pd.read_csv(stock_kline_history_latest_file)
+        now_df = pd.read_csv(stock_kline_latest_file)
 
-        #  这是一个切分批次的内部函数
-        def get_batches(df, batch_size):
-            for start in range(0, len(df), batch_size):
-                yield df[start:start + batch_size]
+        # 设定 'time' 为索引，以便于数据合并
+        history_df.set_index('time', inplace=True)
+        now_df.set_index('time', inplace=True)
 
-        #  计算总批次数
-        total_batches = (len(self.stock_code_df) + batch_size - 1) // batch_size
+        # 合并数据，以 now_df 为准
+        combined_df = now_df.combine_first(history_df).reset_index()
 
-        #  kline的总和dataframe
-        kline_total_df = pd.DataFrame()
-
-
-        for i, batch_df in enumerate(get_batches(self.stock_code_df, batch_size), start=1):
-            print(f'当前执行get_stock_kline的 第{i}个 批次，共{total_batches}个批次')
-
-            index_list = batch_df['htsc_code'].tolist()
-            res = get_kline(htsc_code=index_list, time=[time_start_date, time_end_date], frequency="daily", fq="none")
-            kline_total_df = pd.concat([kline_total_df, res], ignore_index=True)
-
-        #  日期格式转换
-        kline_total_df['time'] = pd.to_datetime(kline_total_df['time']).dt.strftime('%Y%m%d')
+        # MySQL 数据库连接配置
+        db_url = 'mysql+pymysql://username:password@host:port/database'
+        engine = create_engine(db_url)
+        # 将结果写入 MySQL 数据库
+        combined_df.to_sql(name='stock_data', con=engine, if_exists='replace', index=False)
 
         #  文件输出模块
-        self.kline_total_history = kline_total_df
-
-        kline_total_filename = base_utils.save_out_filename(filehead='stock_kline_history', file_type='csv')
+        kline_total_filename = base_utils.save_out_filename(filehead='stock_kline_latest', file_type='csv')
         kline_total_filedir = os.path.join(self.dir_history_stock_kline_base, kline_total_filename)
         kline_total_df.to_csv(kline_total_filedir, index=False)
 
