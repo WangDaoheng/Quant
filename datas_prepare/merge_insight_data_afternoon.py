@@ -35,11 +35,14 @@ class SaveInsightHistoryData:
         """
         关键路径初始化
         """
+        #  文件路径_____insight文件当下数据基础路径
+        self.dir_insight_base = base_properties.dir_insight_base
+
         #  文件路径_____insight文件历史数据基础路径
         self.dir_history_insight_base = base_properties.dir_history_insight_base
 
-        #  文件路径_____insight文件当下数据基础路径
-        self.dir_insight_base = base_properties.dir_insight_base
+        #  文件路径_____insight文件merge数据基础路径
+        self.dir_merge_insight_base = base_properties.dir_merge_insight_base
 
 
         ##  聚合全量的日k 数据
@@ -49,7 +52,8 @@ class SaveInsightHistoryData:
         #  文件路径_____上市交易股票的历史日k线数据
         self.dir_history_stock_kline_base = os.path.join(self.dir_history_insight_base, 'stock_kline')
 
-
+        #  文件路径_____上市交易股票的merge日k线数据
+        self.dir_merge_stock_kline_base = os.path.join(self.dir_merge_insight_base, 'stock_kline')
 
 
 
@@ -122,8 +126,8 @@ class SaveInsightHistoryData:
 
         #  文件输出模块
         kline_total_filename = base_utils.save_out_filename(filehead='stock_kline_latest', file_type='csv')
-        kline_total_filedir = os.path.join(self.dir_history_stock_kline_base, kline_total_filename)
-        kline_total_df.to_csv(kline_total_filedir, index=False)
+        kline_total_filedir = os.path.join(self.dir_merge_stock_kline_base, kline_total_filename)
+        combined_df.to_csv(kline_total_filedir, index=False)
 
 
 
