@@ -253,7 +253,7 @@ class SaveInsightData:
         filter_limit_df.columns = ['time', 'name', '今日涨停', '今日跌停', '昨日涨停', '昨日跌停', '昨日涨停表现']
 
         #  日期格式转换
-        filter_limit_df['time'] = pd.to_datetime(filter_limit_df['time']).dt.strftime('%Y%m%d')
+        filter_limit_df.loc[:, 'time'] = pd.to_datetime(filter_limit_df['time']).dt.strftime('%Y%m%d')
 
         #  大盘涨跌停数量情况，默认是从年初到今天
         self.limit_summary_df = filter_limit_df
@@ -395,6 +395,9 @@ class SaveInsightData:
 
         #  除去 ST |  退  | B 的股票集合
         self.get_stock_codes()
+
+        #  获取上述股票的当月日K
+        self.get_stock_kline()
 
         #  获取主要股指
         self.get_index_a_share()

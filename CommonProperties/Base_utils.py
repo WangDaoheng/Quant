@@ -2,7 +2,13 @@ import os
 from datetime import datetime
 import time
 from functools import wraps
+import shutil
+from sqlalchemy import create_engine
+import pandas as pd
+import logging
 
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
 def save_out_filename(filehead, file_type):
@@ -80,10 +86,89 @@ def timing_decorator(func):
 
 
 
+def copy_and_rename_file(src_file_path, dest_dir, new_name):
+    """
+    将文件复制到另一个目录并重命名
+    :param src_file_path: 源文件路径
+    :param dest_dir: 目标目录
+    :param new_name: 新文件名
+    """
+    # 检查目标目录是否存在，不存在则创建
+    if not os.path.exists(dest_dir):
+        os.makedirs(dest_dir)
+
+    # 目标文件路径
+    dest_file_path = os.path.join(dest_dir, new_name)
+
+    # 复制文件并重命名
+    shutil.copy(src_file_path, dest_file_path)
+    print(f"文件已复制并重命名为: {dest_file_path}")
+
+
+def check_data_written(total_rows, table_name, engine):
+    """
+    用于查询写入数据条数是否完整
+    Args:
+        df:
+        table_name:
+        engine:
+    Returns:
+    """
+
+    try:
+        # 创建数据库连接
+        connection = engine.raw_connection()
+        cursor = connection.cursor()
+
+        # 查询表中写入的数据总数
+        check_query = f"SELECT COUNT(*) FROM {table_name}"
+        cursor.execute(check_query)
+        result = cursor.fetchone()[0]
+
+        # 关闭连接
+        cursor.close()
+        connection.close()
+
+        return result == total_rows
+    except Exception as e:
+        logging.error(f"检查数据写入时发生错误: {e}")
+        return False
 
 
 
 
 
+def data_from_dataframe_to_mysql(df=pd.DataFrame(), table_name='', database='quant'):
+    """
+    把 dataframe 类型数据写入 mysql 表里面
+    Args:
+        df:
+        table_name:
+        database:
+    Returns:
+
+    """
+    # MySQL 数据库连接配置
+    db_url = f'mysql+pymysql://root:123456@localhost:3306/{database}'
+    engine = create_engine(db_url)
+
+    total_rows = df.shape[0]
+
+    # 将结果批量写入 MySQL 数据库
+    chunk_size = 10000  # 根据系统内存情况调整
+
+    for i in range(0, total_rows, chunk_size):
+        chunk = df.iloc[i:i + chunk_size]
+
+        try:
+            chunk.to_sql(name=table_name, con=engine, if_exists='append', index=False)
+        except Exception as e:
+            logging.error(f"写入表：{table_name}的 第 {i // chunk_size + 1} 批次时发生错误: {e}")
+
+    # 所有批次写入完成后检查数据写入完整性
+    if check_data_written(total_rows, table_name, engine):
+        logging.info(f"{table_name} 数据写入成功且无遗漏。")
+    else:
+        logging.warning(f"{table_name} 数据写入可能有问题，记录数不匹配。")
 
 
