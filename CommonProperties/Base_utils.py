@@ -3,7 +3,7 @@ from datetime import datetime
 import time
 from functools import wraps
 import shutil
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 import pandas as pd
 import logging
 
@@ -170,5 +170,41 @@ def data_from_dataframe_to_mysql(df=pd.DataFrame(), table_name='', database='qua
         logging.info(f"{table_name} 数据写入成功且无遗漏。")
     else:
         logging.warning(f"{table_name} 数据写入可能有问题，记录数不匹配。")
+
+
+
+
+def create_partition_if_not_exists(engine, partition_name, year, month):
+    next_month = month + 1
+    next_year = year
+    if next_month > 12:
+        next_month = 1
+        next_year += 1
+
+    partition_value = next_year * 100 + next_month
+
+    with engine.connect() as conn:
+        query = text(f"""
+        ALTER TABLE your_table ADD PARTITION (
+            PARTITION {partition_name} VALUES LESS THAN ({partition_value})
+        );
+        """)
+        conn.execute(query)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
