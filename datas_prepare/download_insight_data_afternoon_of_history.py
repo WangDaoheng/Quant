@@ -249,7 +249,8 @@ class SaveInsightHistoryData:
                                      'ups_downs_limit_count_pre_up_limits',
                                      'ups_downs_limit_count_pre_down_limits',
                                      'ups_downs_limit_count_pre_up_limits_average_change_percent']]
-        filter_limit_df.columns = ['time', 'name', '今日涨停', '今日跌停', '昨日涨停', '昨日跌停', '昨日涨停表现']
+        filter_limit_df.columns = ['time', 'name', 'today_ZT', 'today_DT', 'yesterday_ZT', 'yesterday_DT',
+                                   'yesterday_ZT_rate']
 
         test_summary_filename = base_utils.save_out_filename(filehead='stock_limit_summary', file_type='csv')
         test_summary_dir = os.path.join(self.dir_history_limit_summary_base, test_summary_filename)

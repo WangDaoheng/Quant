@@ -105,7 +105,7 @@ class SaveInsightData:
         stock_all_df = stock_all_df[['htsc_code', 'name', 'exchange']]
         stock_all_df.insert(0, 'ymd', formatted_date)
         filtered_df = stock_all_df[~stock_all_df['name'].str.contains('ST|退|B')]
-
+        filtered_df = filtered_df[['ymd', '']]
 
         #  导出当日上市交易的股票信息 ymd  htsc_code  name  exchange
         self.stock_code_df = filtered_df
@@ -155,6 +155,10 @@ class SaveInsightData:
 
         #  日期格式转换
         kline_total_df['time'] = pd.to_datetime(kline_total_df['time']).dt.strftime('%Y%m%d')
+        kline_total_df.rename(columns={'time': 'ymd'}, inplace=True)
+
+        #  声明所有的列名，去除value列
+        kline_total_df = kline_total_df[['htsc_code', 'ymd', 'open', 'close', 'high', 'low', 'num_trades', 'volume']]
 
         #  文件输出模块
         self.stock_kline_df = kline_total_df
@@ -250,7 +254,8 @@ class SaveInsightData:
                                      'ups_downs_limit_count_pre_up_limits',
                                      'ups_downs_limit_count_pre_down_limits',
                                      'ups_downs_limit_count_pre_up_limits_average_change_percent']]
-        filter_limit_df.columns = ['time', 'name', '今日涨停', '今日跌停', '昨日涨停', '昨日跌停', '昨日涨停表现']
+        filter_limit_df.columns = ['time', 'name', 'today_ZT', 'today_DT', 'yesterday_ZT', 'yesterday_DT',
+                                   'yesterday_ZT_rate']
 
         #  日期格式转换
         filter_limit_df.loc[:, 'time'] = pd.to_datetime(filter_limit_df['time']).dt.strftime('%Y%m%d')
