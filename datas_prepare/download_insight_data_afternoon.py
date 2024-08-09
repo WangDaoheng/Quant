@@ -1,4 +1,5 @@
 import os
+import sys
 from insight_python.com.insight import common
 from insight_python.com.insight.query import *
 from insight_python.com.insight.market_service import market_service
@@ -31,7 +32,6 @@ class SaveInsightData:
 
         self.init_variant()
 
-
     def init_dirs(self):
         """
         关键路径初始化
@@ -56,7 +56,6 @@ class SaveInsightData:
 
         #  文件路径_____筹码数据
         self.dir_chouma_base = os.path.join(self.dir_insight_base, 'chouma')
-
 
     def init_variant(self):
         """
@@ -105,15 +104,19 @@ class SaveInsightData:
         stock_all_df = stock_all_df[['htsc_code', 'name', 'exchange']]
         stock_all_df.insert(0, 'ymd', formatted_date)
         filtered_df = stock_all_df[~stock_all_df['name'].str.contains('ST|退|B')]
-        filtered_df = filtered_df[['ymd', '']]
+        filtered_df = filtered_df[['ymd', 'htsc_code', 'name', 'exchange']]
 
         #  导出当日上市交易的股票信息 ymd  htsc_code  name  exchange
         self.stock_code_df = filtered_df
 
+        #  本地csv文件的落盘保存
         filehead = 'stocks_codes_all'
         stock_codes_listed_filename = base_utils.save_out_filename(filehead=filehead, file_type='csv')
         stock_codes_listed_dir = os.path.join(self.dir_stock_codes_base, stock_codes_listed_filename)
         filtered_df.to_csv(stock_codes_listed_dir, index=False)
+
+        #  结果数据保存到mysql中
+        base_utils.data_from_dataframe_to_mysql(df=filtered_df, table_name="stock_code_daily_insight", database="quant")
 
 
     @timing_decorator
@@ -145,13 +148,17 @@ class SaveInsightData:
         #  kline的总和dataframe
         kline_total_df = pd.DataFrame()
 
-
         for i, batch_df in enumerate(get_batches(self.stock_code_df, batch_size), start=1):
-            print(f'当前执行get_stock_kline的 第{i}个 批次，共{total_batches}个批次')
+            #  一种非常巧妙的循环打印日志的方式
+            sys.stdout.write(f"\r当前执行get_stock_kline的 第 {i} 次循环，总共 {total_batches} 个批次")
+            sys.stdout.flush()
 
             index_list = batch_df['htsc_code'].tolist()
             res = get_kline(htsc_code=index_list, time=[time_start_date, time_end_date], frequency="daily", fq="none")
             kline_total_df = pd.concat([kline_total_df, res], ignore_index=True)
+
+        # 循环结束后打印换行符，以确保后续输出在新行开始
+        sys.stdout.write("\n")
 
         #  日期格式转换
         kline_total_df['time'] = pd.to_datetime(kline_total_df['time']).dt.strftime('%Y%m%d')
@@ -163,15 +170,21 @@ class SaveInsightData:
         #  文件输出模块
         self.stock_kline_df = kline_total_df
 
+        #  本地csv文件的落盘保存
         stock_kline_filename = base_utils.save_out_filename(filehead='stock_kline', file_type='csv')
         stcok_kline_filedir = os.path.join(self.dir_stock_kline_base, stock_kline_filename)
         kline_total_df.to_csv(stcok_kline_filedir, index=False)
+
+        #  结果数据保存到mysql中
+        base_utils.data_from_dataframe_to_mysql(df=kline_total_df, table_name="stock_kline_daily_insight_now", database="quant")
+
 
 
     @timing_decorator
     def get_index_a_share(self):
         """
         000001.SH    上证指数
+        399002.SZ    深成指
         399006.SZ	 创业板指
         000016.SH    上证50
         000300.SH    沪深300
@@ -190,10 +203,18 @@ class SaveInsightData:
         start_date = datetime.strptime(start_date, '%Y%m%d')
         end_date = datetime.strptime(end_date, '%Y%m%d')
 
-        index_list = ["000001.SH", "399006.SZ", "000016.SH", "000300.SH", "000849.SH", "000905.SH", "399852.SZ",
-                      "000688.SH", ""]
-        index_df = pd.DataFrame()
+        index_dict = {"000001.SH": "上证指数"
+            , "399002.SZ": "深成指"
+            , "399006.SZ": "创业板指"
+            , "000016.SH": "上证50"
+            , "000300.SH": "沪深300"
+            , "000849.SH": "300非银"
+            , "000905.SH": "中证500"
+            , "399852.SZ": "中证1000"
+            , "000688.SH": "科创50"}
+        index_list = list(index_dict.keys())
 
+        index_df = pd.DataFrame()
 
         res = get_kline(htsc_code=index_list, time=[start_date, end_date],
                         frequency="daily", fq="none")
@@ -202,14 +223,24 @@ class SaveInsightData:
 
         #  日期格式转换
         index_df['time'] = pd.to_datetime(index_df['time']).dt.strftime('%Y%m%d')
+        index_df.rename(columns={'time': 'ymd'}, inplace=True)
 
+        #  根据映射关系，添加stock_name
+        index_df['name'] = index_df['htsc_code'].map(index_dict)
 
-        ## 文件输出模块
+        #  声明所有的列名，去除value列
+        index_df = index_df[['htsc_code', 'name', 'ymd', 'open', 'close', 'high', 'low', 'volume']]
+
+        ############################   文件输出模块     ############################
         self.index_a_share = index_df
 
+        #  本地csv文件的落盘保存
         index_filename = base_utils.save_out_filename(filehead='index_a_share', file_type='csv')
         index_filedir = os.path.join(self.dir_index_a_share_base, index_filename)
         index_df.to_csv(index_filedir, index=False)
+
+        #  结果数据保存到mysql中
+        base_utils.data_from_dataframe_to_mysql(df=index_df, table_name="index_a_share_insight_now", database="quant")
 
 
 
@@ -254,18 +285,24 @@ class SaveInsightData:
                                      'ups_downs_limit_count_pre_up_limits',
                                      'ups_downs_limit_count_pre_down_limits',
                                      'ups_downs_limit_count_pre_up_limits_average_change_percent']]
-        filter_limit_df.columns = ['time', 'name', 'today_ZT', 'today_DT', 'yesterday_ZT', 'yesterday_DT',
+        filter_limit_df.columns = ['ymd', 'name', 'today_ZT', 'today_DT', 'yesterday_ZT', 'yesterday_DT',
                                    'yesterday_ZT_rate']
 
         #  日期格式转换
-        filter_limit_df.loc[:, 'time'] = pd.to_datetime(filter_limit_df['time']).dt.strftime('%Y%m%d')
+        filter_limit_df['ymd'] = pd.to_datetime(filter_limit_df['ymd'])
+        filter_limit_df['ymd'] = filter_limit_df['ymd'].dt.strftime('%Y%m%d')
 
         #  大盘涨跌停数量情况，默认是从年初到今天
         self.limit_summary_df = filter_limit_df
 
+        #  本地csv文件的落盘保存
         test_summary_filename = base_utils.save_out_filename(filehead='stock_limit_summary', file_type='csv')
         test_summary_dir = os.path.join(self.dir_limit_summary_base, test_summary_filename)
         filter_limit_df.to_csv(test_summary_dir, index=False)
+
+        #  结果数据保存到mysql中
+        base_utils.data_from_dataframe_to_mysql(df=filter_limit_df, table_name="stock_limit_summary_insight_now", database="quant")
+
 
 
     @timing_decorator
@@ -319,13 +356,23 @@ class SaveInsightData:
 
         #  日期格式转换
         future_inside_df['time'] = pd.to_datetime(future_inside_df['time']).dt.strftime('%Y%m%d')
+        future_inside_df.rename(columns={'time': 'ymd'}, inplace=True)
+
+        #  声明所有的列名，去除value列
+        future_inside_df = future_inside_df[
+            ['htsc_code', 'ymd', 'open', 'close', 'high', 'low', 'volume', 'open_interest', 'settle']]
 
         ## 文件输出模块
         self.future_index = future_inside_df
 
+        #  本地csv文件的落盘保存
         future_inside_df_filename = base_utils.save_out_filename(filehead='future_inside', file_type='csv')
         future_inside_df_filedir = os.path.join(self.dir_future_inside_base, future_inside_df_filename)
         future_inside_df.to_csv(future_inside_df_filedir, index=False)
+
+        #  结果数据保存到mysql中
+        base_utils.data_from_dataframe_to_mysql(df=future_inside_df, table_name="future_inside_insight_now", database="quant")
+
 
 
     @timing_decorator

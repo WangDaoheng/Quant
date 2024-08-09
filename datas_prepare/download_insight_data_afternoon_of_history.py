@@ -1,4 +1,5 @@
 import os
+import sys
 from insight_python.com.insight import common
 from insight_python.com.insight.query import *
 from insight_python.com.insight.market_service import market_service
@@ -107,11 +108,6 @@ class SaveInsightHistoryData:
         stock_all_df.insert(0, 'ymd', formatted_date)
         filtered_df = stock_all_df[~stock_all_df['name'].str.contains('ST|退|B')]
 
-        ## 导出当日上市交易的股票信息 ymd  htsc_code  name  exchange
-        filehead = 'stocks_codes_all'
-        stock_codes_listed_filename = base_utils.save_out_filename(filehead=filehead, file_type='csv')
-        stock_codes_listed_dir = os.path.join(self.dir_history_stock_codes_base, stock_codes_listed_filename)
-        filtered_df.to_csv(stock_codes_listed_dir, index=False)
 
         #  已上市状态stock_codes
         self.stock_code_df = filtered_df
@@ -147,23 +143,35 @@ class SaveInsightHistoryData:
         #  kline的总和dataframe
         kline_total_df = pd.DataFrame()
 
-
         for i, batch_df in enumerate(get_batches(self.stock_code_df, batch_size), start=1):
-            print(f'当前执行get_stock_kline的 第{i}个 批次，共{total_batches}个批次')
+            #  一种非常巧妙的循环打印日志的方式
+            sys.stdout.write(f"\r当前执行get_stock_kline的 第 {i} 次循环，总共 {total_batches} 个批次")
+            sys.stdout.flush()
 
             index_list = batch_df['htsc_code'].tolist()
             res = get_kline(htsc_code=index_list, time=[time_start_date, time_end_date], frequency="daily", fq="none")
             kline_total_df = pd.concat([kline_total_df, res], ignore_index=True)
 
+        # 循环结束后打印换行符，以确保后续输出在新行开始
+        sys.stdout.write("\n")
+
         #  日期格式转换
         kline_total_df['time'] = pd.to_datetime(kline_total_df['time']).dt.strftime('%Y%m%d')
+        kline_total_df.rename(columns={'time': 'ymd'}, inplace=True)
+
+        #  声明所有的列名，去除value列
+        kline_total_df = kline_total_df[['htsc_code', 'ymd', 'open', 'close', 'high', 'low', 'num_trades', 'volume']]
 
         #  文件输出模块
         self.kline_total_history = kline_total_df
 
+        #  本地csv文件的落盘保存
         kline_total_filename = base_utils.save_out_filename(filehead='stock_kline_history', file_type='csv')
         kline_total_filedir = os.path.join(self.dir_history_stock_kline_base, kline_total_filename)
         kline_total_df.to_csv(kline_total_filedir, index=False)
+
+        #  结果数据保存到mysql中
+        base_utils.data_from_dataframe_to_mysql(df=kline_total_df, table_name="stock_kline_daily_insight", database="quant")
 
 
 
@@ -189,23 +197,45 @@ class SaveInsightHistoryData:
         time_start_date = datetime.strptime(time_start_date, '%Y%m%d')
         time_end_date = datetime.strptime(time_end_date, '%Y%m%d')
 
-        index_list = ["000001.SH", "399006.SZ", "000016.SH", "000300.SH", "000849.SH", "000905.SH", "399852.SZ",
-                      "000688.SH", ""]
+        index_dict = {"000001.SH": "上证指数"
+            , "399002.SZ": "深成指"
+            , "399006.SZ": "创业板指"
+            , "000016.SH": "上证50"
+            , "000300.SH": "沪深300"
+            , "000849.SH": "300非银"
+            , "000905.SH": "中证500"
+            , "399852.SZ": "中证1000"
+            , "000688.SH": "科创50"}
+        index_list = list(index_dict.keys())
+
         index_df = pd.DataFrame()
 
-        for index in index_list:
-            res = get_kline(htsc_code=[index], time=[time_start_date, time_end_date],
-                            frequency="daily", fq="none")
+        res = get_kline(htsc_code=index_list, time=[time_start_date, time_end_date],
+                        frequency="daily", fq="none")
 
-            index_df = pd.concat([index_df, res], ignore_index=True)
+        index_df = pd.concat([index_df, res], ignore_index=True)
 
-        ## 文件输出模块
-        index_filename = base_utils.save_out_filename(filehead='index_a_share', file_type='csv')
-        index_filedir = os.path.join(self.dir_history_index_a_share_base, index_filename)
+        #  日期格式转换
+        index_df['time'] = pd.to_datetime(index_df['time']).dt.strftime('%Y%m%d')
+        index_df.rename(columns={'time': 'ymd'}, inplace=True)
 
-        index_df.to_csv(index_filedir, index=False)
+        #  根据映射关系，添加stock_name
+        index_df['name'] = index_df['htsc_code'].map(index_dict)
+
+        #  声明所有的列名，去除value列
+        index_df = index_df[['htsc_code', 'name', 'ymd', 'open', 'close', 'high', 'low', 'volume']]
+
+        ############################   文件输出模块     ############################
         self.index_a_share = index_df
-        print("------------- get_index_a_share 完成测试文件输出 ---------------------")
+
+        #  本地csv文件的落盘保存
+        index_filename = base_utils.save_out_filename(filehead='index_a_share_history', file_type='csv')
+        index_filedir = os.path.join(self.dir_history_index_a_share_base, index_filename)
+        index_df.to_csv(index_filedir, index=False)
+
+        #  结果数据保存到mysql中
+        base_utils.data_from_dataframe_to_mysql(df=index_df, table_name="index_a_share_insight", database="quant")
+
 
 
     @timing_decorator
@@ -233,7 +263,7 @@ class SaveInsightHistoryData:
 
         """
 
-        start_date = DateUtility.first_day_of_year()
+        start_date = DateUtility.first_day_of_year_after_n_years(-3)
         end_date = DateUtility.today()
 
         # 转为时间格式  get_change_summary 强制要求的

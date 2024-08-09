@@ -1,14 +1,40 @@
 import os
+import sys
 from datetime import datetime
 import time
+import traceback
 from functools import wraps
 import shutil
 from sqlalchemy import create_engine, text
 import pandas as pd
 import logging
+import colorlog
 
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+from CommonProperties import Base_Properties
+
+
+# 配置日志处理器
+handler = colorlog.StreamHandler()
+
+# 设置彩色日志的格式，包含时间、日志级别和消息内容
+formatter = colorlog.ColoredFormatter(
+    '%(log_color)s%(asctime)s - %(levelname)s - %(message)s',
+    log_colors={
+        'DEBUG': 'cyan',
+        'INFO': 'green',    # 将 INFO 级别设为绿色
+        'WARNING': 'yellow',
+        'ERROR': 'red',
+        'CRITICAL': 'bold_red',
+    }
+)
+
+handler.setFormatter(formatter)
+
+# 获取并配置 logger
+logger = logging.getLogger()
+logger.addHandler(handler)
+logger.setLevel(logging.INFO)
 
 
 def save_out_filename(filehead, file_type):
@@ -71,18 +97,22 @@ def collect_stock_items(input_list):
 
 
 
+
 def timing_decorator(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         start_time = time.time()
-        result = func(*args, **kwargs)
+        try:
+            result = func(*args, **kwargs)
+        except Exception as e:
+            print(f"Error in function {func.__name__}:")
+            traceback.print_exc()  # 打印详细的堆栈追踪信息
+            raise e  # 重新抛出异常，保持原始行为
         end_time = time.time()
         execution_time = end_time - start_time
-        print(f"-------------   {func.__name__} 执行时间: {execution_time:.2f} 秒")
+        logging.info(f"函数: {func.__name__} 执行时间: {execution_time:.2f} 秒")
         return result
     return wrapper
-
-
 
 
 
@@ -107,12 +137,12 @@ def copy_and_rename_file(src_file_path, dest_dir, new_name):
 
 def check_data_written(total_rows, table_name, engine):
     """
-    用于查询写入数据条数是否完整
+    用于查询mysql写入的数据条数是否完整
     Args:
-        df:
-        table_name:
-        engine:
-    Returns:
+        total_rows: 要验证的表的理论上的行数
+        table_name: 要验证的表的名称
+        engine:     查询引擎
+    Returns:  True 条数验证匹配  / False  条数验证不匹配
     """
 
     try:
@@ -140,7 +170,7 @@ def check_data_written(total_rows, table_name, engine):
 
 def data_from_dataframe_to_mysql(df=pd.DataFrame(), table_name='', database='quant'):
     """
-    把 dataframe 类型数据写入 mysql 表里面
+    把 dataframe 类型数据写入 mysql 表里面, 同时调用了
     Args:
         df:
         table_name:
@@ -149,7 +179,9 @@ def data_from_dataframe_to_mysql(df=pd.DataFrame(), table_name='', database='qua
 
     """
     # MySQL 数据库连接配置
-    db_url = f'mysql+pymysql://root:123456@localhost:3306/{database}'
+    password = Base_Properties.mysql_password
+
+    db_url = f'mysql+pymysql://root:{password}@localhost:3306/{database}'
     engine = create_engine(db_url)
 
     total_rows = df.shape[0]
@@ -167,7 +199,7 @@ def data_from_dataframe_to_mysql(df=pd.DataFrame(), table_name='', database='qua
 
     # 所有批次写入完成后检查数据写入完整性
     if check_data_written(total_rows, table_name, engine):
-        logging.info(f"{table_name} 数据写入成功且无遗漏。")
+        logging.info(f"mysql表：{table_name}  数据写入成功且无遗漏。")
     else:
         logging.warning(f"{table_name} 数据写入可能有问题，记录数不匹配。")
 

@@ -27,6 +27,8 @@ dir_merge_vantage_base = r'F:\QDatas\merge\vantage'
 
 
 
+######################  mysql 账号信息  #############################
+mysql_password = "123456"
 
 
 
