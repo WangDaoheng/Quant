@@ -94,13 +94,6 @@ def use_vantage():
 
 
 if __name__ == "__main__":
-    # use_vantage_for_US_stock()
+    use_vantage_for_US_stock()
 
-    import requests
 
-    api_key = 'BI8JFEOOP3C563PO'
-    symbol = 'AAPL'  # 苹果公司的股票代码
-    url = f'https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=TIME_SERIES_DAILY&apikey={api_key}'
-    response = requests.get(url)
-    data = response.json()
-    print(data)

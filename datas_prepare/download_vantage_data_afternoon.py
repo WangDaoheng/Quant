@@ -36,14 +36,12 @@ logger.addHandler(handler)
 logger.setLevel(logging.INFO)
 
 
-
-
 #  vantage  测试环境文件保存目录
 vantage_test_dir = os.path.join(base_properties.dir_vantage_base, 'test')
 
 
-# api_key = 'ICTN 9 P9 ES 00 EADUF'
-api_key = 'BI8JFEOOP3C563PO'
+api_key = 'ICTN 9 P9 ES 00 EADUF'
+# api_key = 'BI8JFEOOP3C563PO'
 key_US_stock = ['TSLA', 'AAPL', 'NVDA', 'MSFT', 'META']
 
 # 构建 API 请求 URL
@@ -156,7 +154,7 @@ class SaveVantageData:
         else:
             logging.error(f'Error fetching {flag} data: {response.status_code} - {response.text}')
 
-        print(f"------------- get_USD_FX_core  完成 {flag} 汇率查询 ---------------------")
+        logging.info(f"get_USD_FX_core  完成 {flag} 汇率查询")
 
         return res_df
 
@@ -215,16 +213,23 @@ class SaveVantageData:
         #  汇总得到美元指数的主要成分
         res_df = pd.concat([res_df, df_EUR_USD, df_USD_JPY, df_GBP_USD, df_USD_CAD, df_USD_SEK, df_USD_CHF], ignore_index=True)
 
+        #  日期格式转换
+        res_df['timestamp'] = pd.to_datetime(res_df['timestamp']).dt.strftime('%Y%m%d')
+        res_df.rename(columns={'timestamp': 'ymd'}, inplace=True)
+
         #  --------------------------  开始计算美元指数  ------------------------------
         # 获取唯一的时间戳
-        timestamps = res_df['timestamp'].unique()
+        timestamps = res_df['ymd'].unique()
 
         # 创建一个空列表来存储结果
         results = []
 
         for timestamp in timestamps:
             # 获取当前时间戳的所有汇率数据
-            current_data = res_df[res_df['timestamp'] == timestamp]
+            current_data = res_df[res_df['ymd'] == timestamp]
+            if current_data.shape[0] != 6:
+                break
+
             # 初始化DXY值
             dxy = constant
             # 计算DXY
@@ -235,18 +240,26 @@ class SaveVantageData:
             results.append([timestamp, dxy])
 
         # 将结果转换为DataFrame
-        dxy_df = pd.DataFrame(results, columns=['timestamp', 'DXY'])
+        dxy_df = pd.DataFrame(results, columns=['ymd', 'DXY'])
+        print(dxy_df)
 
-        # #  文件输出模块     输出汇率明细
-        USD_FX_detail_filename = base_utils.save_out_filename(filehead='USD_FX', file_type='csv')
+        ##  文件输出模块     输出汇率明细
+        USD_FX_detail_filename = base_utils.save_out_filename(filehead='USD_FX_detail', file_type='csv')
         USD_FX_detail_filedir = os.path.join(self.dir_USD_FX_detail_base, USD_FX_detail_filename)
         res_df.to_csv(USD_FX_detail_filedir, index=False)
 
-        # #  文件输出模块     输出美元指数
+        #  将汇率明细写入mysql
+        base_utils.data_from_dataframe_to_mysql(df=res_df, table_name="exchange_rate_vantage_detail", database="quant")
+
+
+
+        ##  文件输出模块     输出美元指数
         USD_FX_filename = base_utils.save_out_filename(filehead='USD_FX', file_type='csv')
         USD_FX_filedir = os.path.join(self.dir_USD_FX_base, USD_FX_filename)
         dxy_df.to_csv(USD_FX_filedir, index=False)
 
+        #  将美元指数写入mysql
+        base_utils.data_from_dataframe_to_mysql(df=res_df, table_name="exchange_DXY_vantage", database="quant")
 
 
 
@@ -257,8 +270,8 @@ class SaveVantageData:
     def setup(self):
 
         #  获取 US 主要stock 的全部数据
-        self.get_US_stock_from_vantage()
-        # self.get_USD_FX_from_vantage()
+        # self.get_US_stock_from_vantage()
+        self.get_USD_FX_from_vantage()
 
 
 

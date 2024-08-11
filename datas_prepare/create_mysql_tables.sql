@@ -181,6 +181,50 @@ CREATE TABLE quant.future_inside_insight (
 
 
 
+------------------  exchange_rate_vantage_detail   汇率&美元指数 日K
+
+CREATE TABLE quant.exchange_rate_vantage_detail (
+    name VARCHAR(50) NOT NULL,
+    ymd DATE NOT NULL,
+    open FLOAT,
+    high FLOAT,
+    low FLOAT,
+    close FLOAT,
+    UNIQUE KEY unique_ymd_stock_code (ymd, name)
+) ;
+
+
+CREATE TABLE quant.exchange_DXY_vantage (
+    ymd DATE NOT NULL,
+    name VARCHAR(50) NOT NULL,
+    UNIQUE KEY unique_ymd_stock_code (ymd, name)
+) ;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
