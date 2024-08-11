@@ -206,6 +206,52 @@ def data_from_dataframe_to_mysql(df=pd.DataFrame(), table_name='', database='qua
 
 
 
+def data_from_mysql_to_dataframe(table_name='', database='quant'):
+    """
+    从 MySQL 表中读取数据到 DataFrame，同时进行最终的数据完整性检查和日志记录
+    Args:
+        table_name: MySQL 表名
+        database: 数据库名称
+
+    Returns:
+        df: 读取到的 DataFrame
+    """
+    # MySQL 数据库连接配置
+    password = Base_Properties.mysql_password  # 从配置文件获取密码
+
+    db_url = f'mysql+pymysql://root:{password}@localhost:3306/{database}'
+    engine = create_engine(db_url)
+
+    # 读取 MySQL 表中的记录总数
+    query_total = f"SELECT COUNT(*) FROM {table_name}"
+    total_rows = pd.read_sql(query_total, engine).iloc[0, 0]
+
+    # 读取数据的批量大小
+    chunk_size = 10000
+    chunks = []
+
+    try:
+        for offset in range(0, total_rows, chunk_size):
+            query = f"SELECT * FROM {table_name} LIMIT {chunk_size} OFFSET {offset}"
+            chunk = pd.read_sql(query, engine)
+            chunks.append(chunk)
+
+        df = pd.concat(chunks, ignore_index=True)
+
+        # 最终的数据完整性检查
+        if df.shape[0] == total_rows:
+            logging.info(f"mysql表：{table_name} 数据读取成功且无遗漏，共 {total_rows} 行。")
+        else:
+            logging.warning(f"{table_name} 数据读取可能有问题，预期记录数为 {total_rows}，实际读取记录数为 {df.shape[0]}。")
+
+    except Exception as e:
+        logging.error(f"从表：{table_name} 读取数据时发生错误: {e}")
+        df = pd.DataFrame()  # 返回一个空的 DataFrame 以防出错时没有返回数据
+
+    return df
+
+
+
 def create_partition_if_not_exists(engine, partition_name, year, month):
     next_month = month + 1
     next_year = year

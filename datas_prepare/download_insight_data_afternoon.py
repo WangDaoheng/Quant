@@ -416,13 +416,16 @@ class SaveInsightData:
             for start in range(0, len(df), batch_size):
                 yield df[start:start + batch_size]
 
+        stock_code_df = base_utils.data_from_mysql_to_dataframe(table_name='stock_code_daily_insight', database='quant')
+        stock_code_df = stock_code_df[stock_code_df['ymd'] == '20240810']
+
         #  计算总批次数
-        total_batches = (len(self.stock_code_df) + batch_size - 1) // batch_size
+        total_batches = (len(stock_code_df) + batch_size - 1) // batch_size
 
         #  chouma 的总和dataframe
         chouma_total_df = pd.DataFrame()
 
-        for i, batch_df in enumerate(get_batches(self.stock_code_df, batch_size), start=1):
+        for i, batch_df in enumerate(get_batches(stock_code_df, batch_size), start=1):
             #  一种非常巧妙的循环打印日志的方式
             sys.stdout.write(f"\r当前执行 get_chouma_datas  第 {i} 次循环，总共 {total_batches} 个批次")
             sys.stdout.flush()
@@ -460,7 +463,7 @@ class SaveInsightData:
         self.login()
 
         #  除去 ST |  退  | B 的股票集合
-        self.get_stock_codes()
+        # self.get_stock_codes()
 
         #  获取上述股票的当月日K
         # self.get_stock_kline()
