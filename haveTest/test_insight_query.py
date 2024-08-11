@@ -61,8 +61,6 @@ def get_kline_daily_demo():
     print("------------- get_index_a_share 完成测试文件输出 ---------------------")
 
 
-
-
 def get_kline_index_a_share_demo():
     """
         000001.SH    上证指数
@@ -259,10 +257,35 @@ def get_change_summary_demo():
     filter_limit_df.to_csv(test_summary_dir, index=False)
 
 
+def get_chouma_demo():
+
+    df = pd.read_csv(r'F:\QDatas\insight_A\stock_codes\stocks_codes_all_2024081019.csv')
+    code_list = df['htsc_code'].to_list()
+
+    #  查询起始时间写2月前的月初第1天
+    time_start_date = DateUtility.first_day_of_month_after_n_months(-2)
+    time_end_date = DateUtility.today()
+
+    time_start_date = datetime.strptime(time_start_date, '%Y%m%d')
+    time_end_date = datetime.strptime(time_end_date, '%Y%m%d')
+
+    temp_list = code_list[0:3]
+
+    chouma_df = get_chip_distribution(htsc_code=temp_list, trading_day=[time_start_date, time_end_date])
+    # print("     =======  拉取第{}条筹码数据：{}返回的结果条数为{}".format(ttflag, enum, chouma_df.shape[0]))
+
+    chouma_df.to_csv(r'F:\QDatas\insight_A\test\chouma.csv')
+
+    print(chouma_df)
+
+
+
+
 if __name__ == "__main__":
     login()
     # get_kline_future_demo()
     # insight_billboard()
     # get_change_summary_demo()
-    get_kline_daily_demo()
+    # get_kline_daily_demo()
+    get_chouma_demo()
 

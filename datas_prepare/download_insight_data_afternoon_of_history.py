@@ -270,25 +270,42 @@ class SaveInsightHistoryData:
         start_date = datetime.strptime(start_date, '%Y%m%d')
         end_date = datetime.strptime(end_date, '%Y%m%d')
 
-        result_df = get_change_summary(market=["a_share"], trading_day=[start_date, end_date])
+        res = get_change_summary(market=["a_share"], trading_day=[start_date, end_date])
 
-        filter_limit_df = result_df[['time',
+        filter_limit_df = pd.DataFrame()
+        filter_limit_df = pd.concat([filter_limit_df, res], ignore_index=True)
+
+
+        filter_limit_df = filter_limit_df[['time',
                                      'name',
                                      'ups_downs_limit_count_up_limits',
                                      'ups_downs_limit_count_down_limits',
                                      'ups_downs_limit_count_pre_up_limits',
                                      'ups_downs_limit_count_pre_down_limits',
                                      'ups_downs_limit_count_pre_up_limits_average_change_percent']]
-        filter_limit_df.columns = ['time', 'name', 'today_ZT', 'today_DT', 'yesterday_ZT', 'yesterday_DT',
+        filter_limit_df.columns = ['ymd', 'name', 'today_ZT', 'today_DT', 'yesterday_ZT', 'yesterday_DT',
                                    'yesterday_ZT_rate']
 
-        test_summary_filename = base_utils.save_out_filename(filehead='stock_limit_summary', file_type='csv')
-        test_summary_dir = os.path.join(self.dir_history_limit_summary_base, test_summary_filename)
+        # 日期格式转换   使用 .loc 保证是在原 DataFrame 上进行操作
+        filter_limit_df['ymd'] = pd.to_datetime(filter_limit_df['ymd']).dt.strftime('%Y%m%d')
 
-        #  大盘涨跌停数量情况，默认是从年初到今天
+        # 删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
+        filter_limit_df = filter_limit_df.drop_duplicates(subset=['ymd', 'name'], keep='first')
+
         self.limit_summary_df = filter_limit_df
-        filter_limit_df.to_csv(test_summary_dir, index=False)
-        print("------------- get_limit_summary 完成测试文件输出 ---------------------")
+
+        ############################   文件输出模块     ############################
+
+        #  本地csv文件的落盘保存
+        #  大盘涨跌停数量情况，默认是从年初到今天
+        summary_filename = base_utils.save_out_filename(filehead='stock_limit_summary', file_type='csv')
+        summary_dir = os.path.join(self.dir_history_limit_summary_base, summary_filename)
+        filter_limit_df.to_csv(summary_dir, index=False)
+
+        #  结果数据保存到mysql中
+        base_utils.data_from_dataframe_to_mysql(df=filter_limit_df, table_name="stock_limit_summary_insight", database="quant")
+
+
 
 
     @timing_decorator
@@ -330,20 +347,37 @@ class SaveInsightHistoryData:
         time_start_date = datetime.strptime(time_start_date, '%Y%m%d')
         time_end_date = datetime.strptime(time_end_date, '%Y%m%d')
 
-        index_df = pd.DataFrame()
+        future_inside_df = pd.DataFrame()
 
-        for index in future_index_list:
-            #  获取数据的关键调用
-            res = get_kline(htsc_code=[index], time=[time_start_date, time_end_date],
-                            frequency="daily", fq="pre")
+        #  获取数据的关键调用
+        res = get_kline(htsc_code=future_index_list, time=[time_start_date, time_end_date],
+                        frequency="daily", fq="pre")
 
-            index_df = pd.concat([index_df, res], ignore_index=True)
+        future_inside_df = pd.concat([future_inside_df, res], ignore_index=True)
+
+        #  日期格式转换
+        future_inside_df['time'] = pd.to_datetime(future_inside_df['time']).dt.strftime('%Y%m%d')
+        future_inside_df.rename(columns={'time': 'ymd'}, inplace=True)
+
+        #  声明所有的列名，去除value列
+        future_inside_df = future_inside_df[
+            ['htsc_code', 'ymd', 'open', 'close', 'high', 'low', 'volume', 'open_interest', 'settle']]
+
+        # 删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
+        future_inside_df = future_inside_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
 
         ## 文件输出模块
-        index_filename = base_utils.save_out_filename(filehead='future_inside', file_type='csv')
-        index_filedir = os.path.join(self.dir_history_future_inside_base, index_filename)
-        index_df.to_csv(index_filedir, index=False)
-        print("------------- get_future_inside 完成测试文件输出 ---------------------")
+        self.future_index = future_inside_df
+
+        ## 文件输出模块
+        future_inside_filename = base_utils.save_out_filename(filehead='future_inside', file_type='csv')
+        future_inside_filedir = os.path.join(self.dir_history_future_inside_base, future_inside_filename)
+        future_inside_df.to_csv(future_inside_filedir, index=False)
+
+        #  结果数据保存到mysql中
+        base_utils.data_from_dataframe_to_mysql(df=future_inside_df, table_name="future_inside_insight", database="quant")
+
+
 
 
     @timing_decorator
@@ -420,17 +454,17 @@ class SaveInsightHistoryData:
         self.get_stock_codes()
 
         #  获取当前已上市股票过去3年到今天的历史kline
-        self.get_stock_kline()
+        # self.get_stock_kline()
 
 
         #  获取主要股指
-        # self.get_index_a_share()
+        self.get_index_a_share()
 
         #  大盘涨跌概览
-        # self.get_limit_summary()
+        self.get_limit_summary()
 
         #  期货__内盘
-        # self.get_future_inside()
+        self.get_future_inside()
 
         #  筹码概览
         # self.get_chouma_datas()

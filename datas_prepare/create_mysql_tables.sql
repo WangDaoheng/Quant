@@ -1,5 +1,5 @@
 
-
+--1.1
 ------------------  stock_code_daily_insight   当日已上市股票码表
 CREATE TABLE quant.stock_code_daily_insight (
     ymd DATE NOT NULL,
@@ -10,7 +10,7 @@ CREATE TABLE quant.stock_code_daily_insight (
 );
 
 
-
+--1.2
 ------------------  stock_kline_daily_insight   当日已上市股票的历史日K
 CREATE TABLE quant.stock_kline_daily_insight_now (
     htsc_code VARCHAR(50) NOT NULL,
@@ -52,7 +52,7 @@ CREATE TABLE quant.stock_kline_daily_insight (
 );
 
 
-
+--1.3
 ------------------  index_a_share_insight   大A的主要指数日K
 CREATE TABLE quant.index_a_share_insight_now (
     htsc_code VARCHAR(50) NOT NULL,
@@ -94,6 +94,7 @@ CREATE TABLE quant.index_a_share_insight (
 );
 
 
+--1.4
 ------------------  stock_limit_summary_insight   当日大A行情温度
 CREATE TABLE quant.stock_limit_summary_insight_now (
     ymd DATE NOT NULL,
@@ -134,7 +135,7 @@ CREATE TABLE quant.stock_limit_summary_insight (
 
 
 
-
+--1.5
 ------------------  future_inside_insight   内盘主要期货数据日K
 
 CREATE TABLE quant.future_inside_insight_now (
@@ -180,7 +181,7 @@ CREATE TABLE quant.future_inside_insight (
 
 
 
-
+--2.1
 ------------------  exchange_rate_vantage_detail   汇率&美元指数 日K
 
 CREATE TABLE quant.exchange_rate_vantage_detail (
@@ -200,6 +201,86 @@ CREATE TABLE quant.exchange_DXY_vantage (
     UNIQUE KEY unique_ymd_stock_code (ymd, name)
 ) ;
 
+
+--1.6
+------------------  future_inside_insight   内盘主要期货数据日K
+
+CREATE TABLE quant.stock_chouma_insight_now (
+    htsc_code                                VARCHAR(50) NOT NULL
+   ,ymd                                      DATE NOT NULL
+   ,exchange                                 VARCHAR(50)
+   ,last                                     FLOAT
+   ,prev_close                               FLOAT
+   ,total_share                              BIGINT
+   ,a_total_share                            BIGINT
+   ,a_listed_share                           BIGINT
+   ,listed_share                             BIGINT
+   ,restricted_share                         BIGINT
+   ,cost_5pct                                FLOAT
+   ,cost_15pct                               FLOAT
+   ,cost_50pct                               FLOAT
+   ,cost_85pct                               FLOAT
+   ,cost_95pct                               FLOAT
+   ,avg_cost                                 FLOAT
+   ,max_cost                                 FLOAT
+   ,min_cost                                 FLOAT
+   ,winner_rate                              FLOAT
+   ,diversity                                FLOAT
+   ,pre_winner_rate                          FLOAT
+   ,restricted_avg_cost                      FLOAT
+   ,restricted_max_cost                      FLOAT
+   ,restricted_min_cost                      FLOAT
+   ,large_shareholders_avg_cost              FLOAT
+   ,large_shareholders_total_share           FLOAT
+   ,large_shareholders_total_share_pct       FLOAT
+   ,UNIQUE KEY unique_ymd_stock_code (ymd, htsc_code)
+ ) ;
+
+
+CREATE TABLE quant.stock_chouma_insight (
+    htsc_code                                VARCHAR(50) NOT NULL
+   ,ymd                                      DATE NOT NULL
+   ,exchange                                 VARCHAR(50)
+   ,last                                     FLOAT
+   ,prev_close                               FLOAT
+   ,total_share                              BIGINT
+   ,a_total_share                            BIGINT
+   ,a_listed_share                           BIGINT
+   ,listed_share                             BIGINT
+   ,restricted_share                         BIGINT
+   ,cost_5pct                                FLOAT
+   ,cost_15pct                               FLOAT
+   ,cost_50pct                               FLOAT
+   ,cost_85pct                               FLOAT
+   ,cost_95pct                               FLOAT
+   ,avg_cost                                 FLOAT
+   ,max_cost                                 FLOAT
+   ,min_cost                                 FLOAT
+   ,winner_rate                              FLOAT
+   ,diversity                                FLOAT
+   ,pre_winner_rate                          FLOAT
+   ,restricted_avg_cost                      FLOAT
+   ,restricted_max_cost                      FLOAT
+   ,restricted_min_cost                      FLOAT
+   ,large_shareholders_avg_cost              FLOAT
+   ,large_shareholders_total_share           FLOAT
+   ,large_shareholders_total_share_pct       FLOAT
+   ,UNIQUE KEY unique_ymd_stock_code (ymd, htsc_code)
+ ) PARTITION BY RANGE (YEAR(ymd) * 100 + MONTH(ymd)) (
+    PARTITION p202112 VALUES LESS THAN (202201),
+    PARTITION p202212 VALUES LESS THAN (202301),
+    PARTITION p202312 VALUES LESS THAN (202401),
+    PARTITION p202401 VALUES LESS THAN (202402),
+    PARTITION p202402 VALUES LESS THAN (202403),
+    PARTITION p202403 VALUES LESS THAN (202404),
+    PARTITION p202404 VALUES LESS THAN (202405),
+    PARTITION p202405 VALUES LESS THAN (202406),
+    PARTITION p202406 VALUES LESS THAN (202407),
+    PARTITION p202407 VALUES LESS THAN (202408),
+    PARTITION p202408 VALUES LESS THAN (202409),
+    -- 添加其他月份的分区
+    PARTITION pmax VALUES LESS THAN MAXVALUE
+);
 
 
 

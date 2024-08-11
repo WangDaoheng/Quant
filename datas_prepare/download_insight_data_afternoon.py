@@ -77,7 +77,7 @@ class SaveInsightData:
         self.future_index = pd.DataFrame()
 
         #  可以获取筹码的股票数据
-        self.stock_chouma_available = ""
+        self.stock_chouma_available = pd.DataFrame()
 
 
     @timing_decorator
@@ -130,7 +130,7 @@ class SaveInsightData:
          stock_kline_df  [ymd	htsc_code	name	exchange]
         """
 
-        #  历史数据的起止时间
+        #  当月数据的起止时间
         time_start_date = DateUtility.first_day_of_month()
         time_end_date = DateUtility.today()
 
@@ -291,8 +291,6 @@ class SaveInsightData:
         limit_summary_df = pd.concat([limit_summary_df, res], ignore_index=True)
 
 
-
-
         limit_summary_df = limit_summary_df[['time',
                                      'name',
                                      'ups_downs_limit_count_up_limits',
@@ -396,70 +394,65 @@ class SaveInsightData:
 
 
 
-    @timing_decorator
+    # @timing_decorator
     def get_chouma_datas(self):
         """
         1.获取每日的筹码分布数据
         2.找到那些当日能够拿到筹码数据的codes
         :return:
         """
-        print("----------------- get_chouma_datas() 开始执行 ------------------")
+        #  当月数据的起止时间
+        time_start_date = DateUtility.first_day_of_month()
+        time_end_date = DateUtility.today()
 
-        start_time = time.time()  # 记录开始时间
+        time_start_date = datetime.strptime(time_start_date, '%Y%m%d')
+        time_end_date = datetime.strptime(time_end_date, '%Y%m%d')
 
-        dt = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-        formatted_date = dt.strftime('%Y%m%d')
+        #  每个批次取 100 个元素
+        batch_size = 100
 
-        ##  所有已上市股票
-        # list_stock = self.stock_all_list
+        #  这是一个切分批次的内部函数
+        def get_batches(df, batch_size):
+            for start in range(0, len(df), batch_size):
+                yield df[start:start + batch_size]
 
-        latest_stock_codes_file = os.path.join(self.dir_stock_codes_base,
-                                               base_utils.get_latest_filename(self.dir_stock_codes_base))
-        with open(latest_stock_codes_file, 'r') as f:
-            content = f.readlines()
-        ##  取出当日 上市交易  的股票代码
-        list_stock = eval(content[0].strip())
-        print(r'   在 {} 日，共有 {} 个已上市stocks'.format(formatted_date, len(list_stock)))
+        #  计算总批次数
+        total_batches = (len(self.stock_code_df) + batch_size - 1) // batch_size
 
-        ############################  准备记录能够查到筹码数据的结果list  ###########################
-        list_suc_res = []  # 用于存放遍历时不发生报错的 enum
-        err_dict = {}  # 用于存放发生报错的 enum 和具体的报错原因
-
-        ## 存放拼接结果
+        #  chouma 的总和dataframe
         chouma_total_df = pd.DataFrame()
 
-        # 获取在指定时间范围的筹码分布数据
-        for enum in list_stock:
+        for i, batch_df in enumerate(get_batches(self.stock_code_df, batch_size), start=1):
+            #  一种非常巧妙的循环打印日志的方式
+            sys.stdout.write(f"\r当前执行 get_chouma_datas  第 {i} 次循环，总共 {total_batches} 个批次")
+            sys.stdout.flush()
+
+            code_list = batch_df['htsc_code'].tolist()
+
             try:
-                chouma_df = get_chip_distribution(htsc_code=enum, trading_day=[dt])
-                # print("     =======  拉取第{}条筹码数据：{}返回的结果条数为{}".format(ttflag, enum, chouma_df.shape[0]))
-                chouma_total_df = pd.concat([chouma_total_df, chouma_df], ignore_index=True)
 
+                res = get_chip_distribution(htsc_code=code_list, trading_day=[time_start_date, time_end_date])
+                chouma_total_df = pd.concat([chouma_total_df, res], ignore_index=True)
             except Exception as e:
-                err_dict[enum] = str(e)
+                continue
 
-            else:
-                ##  成功获取筹码数据的股票代码
-                list_suc_res.append(enum)
+        # 循环结束后打印换行符，以确保后续输出在新行开始
+        sys.stdout.write("\n")
 
-        #################  记录有异常，不能找到筹码数据的codes   ###########################
-        chouma_err_filename = base_utils.save_out_filename(filehead='chouma_err', file_type='txt')
-        chouma_err_file = os.path.join(self.dir_chouma_base, 'err_chouma_codes', chouma_err_filename)
-        with open(chouma_err_file, 'w') as f:
-            f.write(str(err_dict))
-
-        #################  记录无异常，能够找到筹码数据的codes   ###########################
-        chouma_filename = base_utils.save_out_filename(filehead=f"chouma_data", file_type='xlsx')
-        chouma_data_file = os.path.join(self.dir_chouma_base, 'suc_chouma_data', chouma_filename)
-        chouma_total_df.to_excel(chouma_data_file, float_format='%.0f', index=False)
-
-        print("-------------  {} 日股票筹码数据获取完毕，获得{}个股票的筹码数据".format(formatted_date, len(list_suc_res)))
+        #  日期格式转换
+        chouma_total_df['time'] = pd.to_datetime(chouma_total_df['time']).dt.strftime('%Y%m%d')
+        chouma_total_df.rename(columns={'time': 'ymd'}, inplace=True)
 
         self.stock_chouma_available = chouma_total_df
 
-        end_time = time.time()  # 记录结束时间
-        elapsed_time = end_time - start_time  # 计算时间差
-        print(f"获取筹码数据的get_chouma_datas() 代码执行时间: {elapsed_time} 秒")
+        #################  记录无异常，能够找到筹码数据的codes   ###########################
+        chouma_filename = base_utils.save_out_filename(filehead=f"stock_chouma", file_type='csv')
+        chouma_data_file = os.path.join(self.dir_chouma_base, 'chouma_data', chouma_filename)
+        chouma_total_df.to_excel(chouma_data_file, float_format='%.0f', index=False)
+
+        #  结果数据保存到mysql中
+        base_utils.data_from_dataframe_to_mysql(df=chouma_total_df, table_name="stock_chouma_insight_now", database="quant")
+
 
 
     def setup(self):
@@ -467,7 +460,7 @@ class SaveInsightData:
         self.login()
 
         #  除去 ST |  退  | B 的股票集合
-        # self.get_stock_codes()
+        self.get_stock_codes()
 
         #  获取上述股票的当月日K
         # self.get_stock_kline()
@@ -476,13 +469,13 @@ class SaveInsightData:
         # self.get_index_a_share()
 
         #  大盘涨跌概览
-        self.get_limit_summary()
+        # self.get_limit_summary()
 
         #  期货__内盘
         # self.get_future_inside()
 
         #  筹码概览
-        # self.get_chouma_datas()
+        self.get_chouma_datas()
 
 
 if __name__ == '__main__':
