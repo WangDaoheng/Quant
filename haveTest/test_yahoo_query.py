@@ -81,6 +81,11 @@ def get_yahoo():
 
 
 if __name__ == "__main__":
-    get_dollar_index_yahoo()
-    get_yahoo()
+    # get_dollar_index_yahoo()
+    # get_yahoo()
     # get_yahoo_data()
+
+    from yahoo_fin.stock_info import *
+
+    df = get_data("TSLA")
+

@@ -106,6 +106,9 @@ class SaveInsightData:
         filtered_df = stock_all_df[~stock_all_df['name'].str.contains('ST|退|B')]
         filtered_df = filtered_df[['ymd', 'htsc_code', 'name', 'exchange']]
 
+        # 删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
+        filtered_df = filtered_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
+
         #  导出当日上市交易的股票信息 ymd  htsc_code  name  exchange
         self.stock_code_df = filtered_df
 
@@ -166,6 +169,10 @@ class SaveInsightData:
 
         #  声明所有的列名，去除value列
         kline_total_df = kline_total_df[['htsc_code', 'ymd', 'open', 'close', 'high', 'low', 'num_trades', 'volume']]
+
+        # 删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
+        kline_total_df = kline_total_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
+
 
         #  文件输出模块
         self.stock_kline_df = kline_total_df
@@ -231,6 +238,9 @@ class SaveInsightData:
         #  声明所有的列名，去除value列
         index_df = index_df[['htsc_code', 'name', 'ymd', 'open', 'close', 'high', 'low', 'volume']]
 
+        # 删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
+        index_df = index_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
+
         ############################   文件输出模块     ############################
         self.index_a_share = index_df
 
@@ -244,7 +254,7 @@ class SaveInsightData:
 
 
 
-    @timing_decorator
+    # @timing_decorator
     def get_limit_summary(self):
         """
         大盘涨跌停分析数据
@@ -276,32 +286,40 @@ class SaveInsightData:
         start_date = datetime.strptime(start_date, '%Y%m%d')
         end_date = datetime.strptime(end_date, '%Y%m%d')
 
-        result_df = get_change_summary(market=["a_share"], trading_day=[start_date, end_date])
+        res = get_change_summary(market=["a_share"], trading_day=[start_date, end_date])
+        limit_summary_df = pd.DataFrame()
+        limit_summary_df = pd.concat([limit_summary_df, res], ignore_index=True)
 
-        filter_limit_df = result_df[['time',
+
+
+
+        limit_summary_df = limit_summary_df[['time',
                                      'name',
                                      'ups_downs_limit_count_up_limits',
                                      'ups_downs_limit_count_down_limits',
                                      'ups_downs_limit_count_pre_up_limits',
                                      'ups_downs_limit_count_pre_down_limits',
                                      'ups_downs_limit_count_pre_up_limits_average_change_percent']]
-        filter_limit_df.columns = ['ymd', 'name', 'today_ZT', 'today_DT', 'yesterday_ZT', 'yesterday_DT',
+        limit_summary_df.columns = ['ymd', 'name', 'today_ZT', 'today_DT', 'yesterday_ZT', 'yesterday_DT',
                                    'yesterday_ZT_rate']
 
-        #  日期格式转换
-        filter_limit_df['ymd'] = pd.to_datetime(filter_limit_df['ymd'])
-        filter_limit_df['ymd'] = filter_limit_df['ymd'].dt.strftime('%Y%m%d')
+        # 日期格式转换   使用 .loc 保证是在原 DataFrame 上进行操作
+        limit_summary_df['ymd'] = pd.to_datetime(limit_summary_df['ymd']).dt.strftime('%Y%m%d')
+
+        # 删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
+        limit_summary_df = limit_summary_df.drop_duplicates(subset=['ymd', 'name'], keep='first')
+
 
         #  大盘涨跌停数量情况，默认是从年初到今天
-        self.limit_summary_df = filter_limit_df
+        self.limit_summary_df = limit_summary_df
 
         #  本地csv文件的落盘保存
         test_summary_filename = base_utils.save_out_filename(filehead='stock_limit_summary', file_type='csv')
         test_summary_dir = os.path.join(self.dir_limit_summary_base, test_summary_filename)
-        filter_limit_df.to_csv(test_summary_dir, index=False)
+        limit_summary_df.to_csv(test_summary_dir, index=False)
 
         #  结果数据保存到mysql中
-        base_utils.data_from_dataframe_to_mysql(df=filter_limit_df, table_name="stock_limit_summary_insight_now", database="quant")
+        base_utils.data_from_dataframe_to_mysql(df=limit_summary_df, table_name="stock_limit_summary_insight_now", database="quant")
 
 
 
@@ -361,6 +379,9 @@ class SaveInsightData:
         #  声明所有的列名，去除value列
         future_inside_df = future_inside_df[
             ['htsc_code', 'ymd', 'open', 'close', 'high', 'low', 'volume', 'open_interest', 'settle']]
+
+        # 删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
+        future_inside_df = future_inside_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
 
         ## 文件输出模块
         self.future_index = future_inside_df
@@ -446,19 +467,19 @@ class SaveInsightData:
         self.login()
 
         #  除去 ST |  退  | B 的股票集合
-        self.get_stock_codes()
+        # self.get_stock_codes()
 
         #  获取上述股票的当月日K
-        self.get_stock_kline()
+        # self.get_stock_kline()
 
         #  获取主要股指
-        self.get_index_a_share()
+        # self.get_index_a_share()
 
         #  大盘涨跌概览
         self.get_limit_summary()
 
         #  期货__内盘
-        self.get_future_inside()
+        # self.get_future_inside()
 
         #  筹码概览
         # self.get_chouma_datas()

@@ -136,6 +136,7 @@ CREATE TABLE quant.stock_limit_summary_insight (
 
 
 ------------------  future_inside_insight   内盘主要期货数据日K
+
 CREATE TABLE quant.future_inside_insight_now (
     htsc_code VARCHAR(50) NOT NULL,
     ymd DATE NOT NULL,

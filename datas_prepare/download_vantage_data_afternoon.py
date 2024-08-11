@@ -3,10 +3,38 @@ import pandas as pd
 from yahoo_fin.stock_info import *
 from io import StringIO
 import os
+import logging
+import colorlog
+
 
 from CommonProperties.DateUtility import DateUtility
 import CommonProperties.Base_Properties as base_properties
 import CommonProperties.Base_utils as base_utils
+from CommonProperties.Base_utils import timing_decorator
+
+
+# 配置日志处理器
+handler = colorlog.StreamHandler()
+
+# 设置彩色日志的格式，包含时间、日志级别和消息内容
+formatter = colorlog.ColoredFormatter(
+    '%(log_color)s%(asctime)s - %(levelname)s - %(message)s',
+    log_colors={
+        'DEBUG': 'cyan',
+        'INFO': 'green',    # 将 INFO 级别设为绿色
+        'WARNING': 'yellow',
+        'ERROR': 'red',
+        'CRITICAL': 'bold_red',
+    }
+)
+
+handler.setFormatter(formatter)
+
+# 获取并配置 logger
+logger = logging.getLogger()
+logger.addHandler(handler)
+logger.setLevel(logging.INFO)
+
 
 
 
@@ -14,11 +42,16 @@ import CommonProperties.Base_utils as base_utils
 vantage_test_dir = os.path.join(base_properties.dir_vantage_base, 'test')
 
 
-api_key = 'ICTN 9 P9 ES 00 EADUF'
+# api_key = 'ICTN 9 P9 ES 00 EADUF'
+api_key = 'BI8JFEOOP3C563PO'
 key_US_stock = ['TSLA', 'AAPL', 'NVDA', 'MSFT', 'META']
 
 # 构建 API 请求 URL
 base_url = 'https://www.alphavantage.co/query'
+headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
+}
+
 
 
 class SaveVantageData:
@@ -60,6 +93,7 @@ class SaveVantageData:
         self.vantage_US_stock = pd.DataFrame()
 
 
+    # @timing_decorator
     def get_US_stock_from_vantage(self):
         """
         关键 US stcok
@@ -72,9 +106,9 @@ class SaveVantageData:
 
         for symbol in self.key_US_stock:
             url = f'{base_url}?function={function}&symbol={symbol}&apikey={api_key}&outputsize=full&datatype=csv'
-
+            print(url)
             # 发送 GET 请求
-            response = requests.get(url)
+            response = requests.get(url, headers=headers, timeout=10)
 
             # 处理响应数据
             if response.status_code == 200:
@@ -93,7 +127,6 @@ class SaveVantageData:
         US_stock_filedir = os.path.join(self.dir_US_stock_base, US_stock_filename)
         res_df.to_csv(US_stock_filedir, index=False)
 
-        print("------------- get_US_stock_from_vantage 完成测试文件输出 ---------------------")
 
 
     def get_USD_FX_core(self, url, flag):
@@ -109,7 +142,7 @@ class SaveVantageData:
         res_df = pd.DataFrame()
 
         # 发送 GET 请求
-        response = requests.get(url)
+        response = requests.get(url, headers=headers, timeout=10)
 
         # 处理响应数据
         if response.status_code == 200:
@@ -121,7 +154,7 @@ class SaveVantageData:
 
             res_df = pd.concat([res_df, vantage_df], ignore_index=True)
         else:
-            print(f'Error fetching {flag} data: {response.status_code} - {response.text}')
+            logging.error(f'Error fetching {flag} data: {response.status_code} - {response.text}')
 
         print(f"------------- get_USD_FX_core  完成 {flag} 汇率查询 ---------------------")
 
@@ -129,7 +162,7 @@ class SaveVantageData:
 
 
 
-
+    # @timing_decorator
     def get_USD_FX_from_vantage(self):
         """
         计算美元指数, 从主流货币去计算美元指数
@@ -215,18 +248,17 @@ class SaveVantageData:
         dxy_df.to_csv(USD_FX_filedir, index=False)
 
 
-        print("------------- get_USD_FX_from_vantage 完成测试文件输出 ---------------------")
 
 
 
 
 
-
+    # @timing_decorator
     def setup(self):
 
         #  获取 US 主要stock 的全部数据
-        # self.get_US_stock_from_vantage()
-        self.get_USD_FX_from_vantage()
+        self.get_US_stock_from_vantage()
+        # self.get_USD_FX_from_vantage()
 
 
 
