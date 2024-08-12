@@ -5,6 +5,9 @@ from insight_python.com.insight.query import *
 from insight_python.com.insight.market_service import market_service
 from datetime import datetime
 import time
+import logging
+import colorlog
+
 
 # import dataprepare_properties
 # import dataprepare_utils
@@ -20,6 +23,34 @@ from CommonProperties.Base_utils import timing_decorator
 # 1.上市股票代码   get_all_stocks()
 # 2.筹码分布数据   get_chouma_datas()
 
+
+# ************************************************************************
+
+
+# ************************************************************************
+# 日志处理模块
+
+# 配置日志处理器
+handler = colorlog.StreamHandler()
+
+# 设置彩色日志的格式，包含时间、日志级别和消息内容
+formatter = colorlog.ColoredFormatter(
+    '%(log_color)s%(asctime)s - %(levelname)s - %(message)s',
+    log_colors={
+        'DEBUG': 'cyan',
+        'INFO': 'green',    # 将 INFO 级别设为绿色
+        'WARNING': 'yellow',
+        'ERROR': 'red',
+        'CRITICAL': 'bold_red',
+    }
+)
+
+handler.setFormatter(formatter)
+
+# 获取并配置 logger
+logger = logging.getLogger()
+logger.addHandler(handler)
+logger.setLevel(logging.INFO)
 
 # ************************************************************************
 
@@ -416,8 +447,7 @@ class SaveInsightData:
             for start in range(0, len(df), batch_size):
                 yield df[start:start + batch_size]
 
-        stock_code_df = base_utils.data_from_mysql_to_dataframe(table_name='stock_code_daily_insight', database='quant')
-        stock_code_df = stock_code_df[stock_code_df['ymd'] == '20240810']
+        stock_code_df = base_utils.data_from_mysql_to_dataframe_latest(table_name='stock_code_daily_insight', database='quant')
 
         #  计算总批次数
         total_batches = (len(stock_code_df) + batch_size - 1) // batch_size
@@ -432,12 +462,23 @@ class SaveInsightData:
 
             code_list = batch_df['htsc_code'].tolist()
 
-            try:
+            # 添加重试机制的部分
+            max_retries = 3  # 最大重试次数
+            retry_delay = 5  # 每次重试的延迟时间（秒）
 
-                res = get_chip_distribution(htsc_code=code_list, trading_day=[time_start_date, time_end_date])
-                chouma_total_df = pd.concat([chouma_total_df, res], ignore_index=True)
-            except Exception as e:
-                continue
+            for attempt in range(max_retries):
+                try:
+                    res = get_chip_distribution(htsc_code=code_list, trading_day=[time_start_date, time_end_date])
+                    chouma_total_df = pd.concat([chouma_total_df, res], ignore_index=True)
+                    break  # 如果请求成功，则跳出重试循环
+                except Exception as e:
+                    logging.warning(f"尝试 {attempt + 1} 失败: {e}")
+                    if attempt < max_retries - 1:
+                        logging.info(f"等待 {retry_delay} 秒后重试...")
+                        time.sleep(retry_delay)  # 等待一段时间后重试
+                    else:
+                        logging.error(f"多次尝试后仍然失败，跳过当前批次: {e}")
+                        break  # 如果达到最大重试次数，跳过当前批次
 
         # 循环结束后打印换行符，以确保后续输出在新行开始
         sys.stdout.write("\n")
@@ -450,8 +491,8 @@ class SaveInsightData:
 
         #################  记录无异常，能够找到筹码数据的codes   ###########################
         chouma_filename = base_utils.save_out_filename(filehead=f"stock_chouma", file_type='csv')
-        chouma_data_file = os.path.join(self.dir_chouma_base, 'chouma_data', chouma_filename)
-        chouma_total_df.to_excel(chouma_data_file, float_format='%.0f', index=False)
+        chouma_data_filedir = os.path.join(self.dir_chouma_base, 'chouma_data', chouma_filename)
+        chouma_total_df.to_csv(chouma_data_filedir, index=False)
 
         #  结果数据保存到mysql中
         base_utils.data_from_dataframe_to_mysql(df=chouma_total_df, table_name="stock_chouma_insight_now", database="quant")

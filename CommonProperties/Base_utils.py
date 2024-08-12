@@ -251,6 +251,43 @@ def data_from_mysql_to_dataframe(table_name='', database='quant'):
     return df
 
 
+def data_from_mysql_to_dataframe_latest(table_name='', database='quant'):
+    """
+    从 MySQL 表中读取最新一天的数据到 DataFrame，同时进行最终的数据完整性检查和日志记录
+    Args:
+        table_name: MySQL 表名
+        database: 数据库名称
+
+    Returns:
+        df: 读取到的 DataFrame
+    """
+    # MySQL 数据库连接配置
+    password = Base_Properties.mysql_password  # 从配置文件获取密码
+
+    db_url = f'mysql+pymysql://root:{password}@localhost:3306/{database}'
+    engine = create_engine(db_url)
+
+    try:
+        # 获取最新的 ymd 日期
+        query_latest_ymd = f"SELECT MAX(ymd) FROM {table_name}"
+        latest_ymd = pd.read_sql(query_latest_ymd, engine).iloc[0, 0]
+
+        if latest_ymd is not None:
+            # 查询最新一天的全部数据
+            query = f"SELECT * FROM {table_name} WHERE ymd = '{latest_ymd}'"
+            df = pd.read_sql(query, engine)
+
+            logging.info(f"mysql表：{table_name} 最新一天({latest_ymd})的数据读取成功，共 {df.shape[0]} 行。")
+        else:
+            logging.warning(f"{table_name} 表中没有找到有效的 ymd 数据。")
+            df = pd.DataFrame()  # 返回空的 DataFrame
+
+    except Exception as e:
+        logging.error(f"从表：{table_name} 读取数据时发生错误: {e}")
+        df = pd.DataFrame()  # 返回一个空的 DataFrame 以防出错时没有返回数据
+
+    return df
+
 
 def create_partition_if_not_exists(engine, partition_name, year, month):
     next_month = month + 1
