@@ -6,16 +6,14 @@ from insight_python.com.insight.market_service import market_service
 from datetime import datetime
 import time
 import logging
-import colorlog
 
 
-# import dataprepare_properties
-# import dataprepare_utils
 import CommonProperties.Base_Properties as base_properties
 import CommonProperties.Base_utils as base_utils
+import CommonProperties.Mysql_Utils as mysql_utils
 from CommonProperties.DateUtility import DateUtility
 from CommonProperties.Base_utils import timing_decorator
-
+from CommonProperties.logging_config import setup_logging
 
 # ************************************************************************
 # 本代码的作用是下午收盘后下载 insight 行情源数据, 本地保存,用于后续分析
@@ -28,29 +26,8 @@ from CommonProperties.Base_utils import timing_decorator
 
 
 # ************************************************************************
-# 日志处理模块
-
-# 配置日志处理器
-handler = colorlog.StreamHandler()
-
-# 设置彩色日志的格式，包含时间、日志级别和消息内容
-formatter = colorlog.ColoredFormatter(
-    '%(log_color)s%(asctime)s - %(levelname)s - %(message)s',
-    log_colors={
-        'DEBUG': 'cyan',
-        'INFO': 'green',    # 将 INFO 级别设为绿色
-        'WARNING': 'yellow',
-        'ERROR': 'red',
-        'CRITICAL': 'bold_red',
-    }
-)
-
-handler.setFormatter(formatter)
-
-# 获取并配置 logger
-logger = logging.getLogger()
-logger.addHandler(handler)
-logger.setLevel(logging.INFO)
+# 调用日志配置
+setup_logging()
 
 # ************************************************************************
 
@@ -150,7 +127,7 @@ class SaveInsightData:
         filtered_df.to_csv(stock_codes_listed_dir, index=False)
 
         #  结果数据保存到mysql中
-        base_utils.data_from_dataframe_to_mysql(df=filtered_df, table_name="stock_code_daily_insight", database="quant")
+        mysql_utils.data_from_dataframe_to_mysql(df=filtered_df, table_name="stock_code_daily_insight", database="quant")
 
 
     @timing_decorator
@@ -214,7 +191,7 @@ class SaveInsightData:
         kline_total_df.to_csv(stcok_kline_filedir, index=False)
 
         #  结果数据保存到mysql中
-        base_utils.data_from_dataframe_to_mysql(df=kline_total_df, table_name="stock_kline_daily_insight_now", database="quant")
+        mysql_utils.data_from_dataframe_to_mysql(df=kline_total_df, table_name="stock_kline_daily_insight_now", database="quant")
 
 
 
@@ -281,7 +258,7 @@ class SaveInsightData:
         index_df.to_csv(index_filedir, index=False)
 
         #  结果数据保存到mysql中
-        base_utils.data_from_dataframe_to_mysql(df=index_df, table_name="index_a_share_insight_now", database="quant")
+        mysql_utils.data_from_dataframe_to_mysql(df=index_df, table_name="index_a_share_insight_now", database="quant")
 
 
 
@@ -348,7 +325,7 @@ class SaveInsightData:
         limit_summary_df.to_csv(test_summary_dir, index=False)
 
         #  结果数据保存到mysql中
-        base_utils.data_from_dataframe_to_mysql(df=limit_summary_df, table_name="stock_limit_summary_insight_now", database="quant")
+        mysql_utils.data_from_dataframe_to_mysql(df=limit_summary_df, table_name="stock_limit_summary_insight_now", database="quant")
 
 
 
@@ -421,11 +398,11 @@ class SaveInsightData:
         future_inside_df.to_csv(future_inside_df_filedir, index=False)
 
         #  结果数据保存到mysql中
-        base_utils.data_from_dataframe_to_mysql(df=future_inside_df, table_name="future_inside_insight_now", database="quant")
+        mysql_utils.data_from_dataframe_to_mysql(df=future_inside_df, table_name="future_inside_insight_now", database="quant")
 
 
 
-    # @timing_decorator
+    @timing_decorator
     def get_chouma_datas(self):
         """
         1.获取每日的筹码分布数据
@@ -447,7 +424,7 @@ class SaveInsightData:
             for start in range(0, len(df), batch_size):
                 yield df[start:start + batch_size]
 
-        stock_code_df = base_utils.data_from_mysql_to_dataframe_latest(table_name='stock_code_daily_insight', database='quant')
+        stock_code_df = mysql_utils.data_from_mysql_to_dataframe_latest(table_name='stock_code_daily_insight', database='quant')
 
         #  计算总批次数
         total_batches = (len(stock_code_df) + batch_size - 1) // batch_size
@@ -495,7 +472,7 @@ class SaveInsightData:
         chouma_total_df.to_csv(chouma_data_filedir, index=False)
 
         #  结果数据保存到mysql中
-        base_utils.data_from_dataframe_to_mysql(df=chouma_total_df, table_name="stock_chouma_insight_now", database="quant")
+        mysql_utils.data_from_dataframe_to_mysql(df=chouma_total_df, table_name="stock_chouma_insight_now", database="quant")
 
 
 
@@ -504,7 +481,7 @@ class SaveInsightData:
         self.login()
 
         #  除去 ST |  退  | B 的股票集合
-        # self.get_stock_codes()
+        self.get_stock_codes()
 
         #  获取上述股票的当月日K
         # self.get_stock_kline()

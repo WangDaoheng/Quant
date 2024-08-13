@@ -16,8 +16,9 @@ def test_selenium():
     print(driver.page_source)
 
     data = driver.page_source
-    return data
     driver.quit()
+    return data
+
 
 if __name__ == "__main__":
     res = test_selenium()

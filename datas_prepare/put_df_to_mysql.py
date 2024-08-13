@@ -1,15 +1,12 @@
 
 import pandas as pd
 from yahoo_fin.stock_info import *
-from io import StringIO
-import os
-import logging
-import colorlog
+
 
 
 from CommonProperties.DateUtility import DateUtility
 import CommonProperties.Base_Properties as base_properties
-import CommonProperties.Base_utils as base_utils
+import CommonProperties.Mysql_Utils as mysql_utils
 from CommonProperties.Base_utils import timing_decorator
 
 
@@ -30,7 +27,7 @@ def put_csv_to_mysql():
     df = pd.read_csv(file_dir)
     df.columns = ['name', 'ymd', 'open', 'high', 'low', 'close']
 
-    base_utils.data_from_dataframe_to_mysql(df=df, table_name=table_name, database='quant')
+    mysql_utils.data_from_dataframe_to_mysql(df=df, table_name=table_name, database='quant')
 
 
 

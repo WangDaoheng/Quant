@@ -6,13 +6,13 @@ from insight_python.com.insight.market_service import market_service
 from datetime import datetime
 import time
 
-# import dataprepare_properties
-# import dataprepare_utils
+
 import CommonProperties.Base_Properties as base_properties
 import CommonProperties.Base_utils as base_utils
+import CommonProperties.Mysql_Utils as mysql_utils
 from CommonProperties.DateUtility import DateUtility
 from CommonProperties.Base_utils import timing_decorator
-
+from CommonProperties.logging_config import setup_logging
 
 # ************************************************************************
 # 本代码的作用是下午收盘后下载 insight 行情源数据, 本地保存,用于后续分析
@@ -20,6 +20,8 @@ from CommonProperties.Base_utils import timing_decorator
 # 1.上市股票代码   get_all_stocks()
 # 2.筹码分布数据   get_chouma_datas()
 
+# 调用日志配置
+setup_logging()
 
 # ************************************************************************
 
@@ -171,7 +173,7 @@ class SaveInsightHistoryData:
         kline_total_df.to_csv(kline_total_filedir, index=False)
 
         #  结果数据保存到mysql中
-        base_utils.data_from_dataframe_to_mysql(df=kline_total_df, table_name="stock_kline_daily_insight", database="quant")
+        mysql_utils.data_from_dataframe_to_mysql(df=kline_total_df, table_name="stock_kline_daily_insight", database="quant")
 
 
 
@@ -234,7 +236,7 @@ class SaveInsightHistoryData:
         index_df.to_csv(index_filedir, index=False)
 
         #  结果数据保存到mysql中
-        base_utils.data_from_dataframe_to_mysql(df=index_df, table_name="index_a_share_insight", database="quant")
+        mysql_utils.data_from_dataframe_to_mysql(df=index_df, table_name="index_a_share_insight", database="quant")
 
 
 
@@ -303,7 +305,7 @@ class SaveInsightHistoryData:
         filter_limit_df.to_csv(summary_dir, index=False)
 
         #  结果数据保存到mysql中
-        base_utils.data_from_dataframe_to_mysql(df=filter_limit_df, table_name="stock_limit_summary_insight", database="quant")
+        mysql_utils.data_from_dataframe_to_mysql(df=filter_limit_df, table_name="stock_limit_summary_insight", database="quant")
 
 
 
@@ -375,7 +377,7 @@ class SaveInsightHistoryData:
         future_inside_df.to_csv(future_inside_filedir, index=False)
 
         #  结果数据保存到mysql中
-        base_utils.data_from_dataframe_to_mysql(df=future_inside_df, table_name="future_inside_insight", database="quant")
+        mysql_utils.data_from_dataframe_to_mysql(df=future_inside_df, table_name="future_inside_insight", database="quant")
 
 
 

@@ -5,37 +5,15 @@ import time
 import traceback
 from functools import wraps
 import shutil
-from sqlalchemy import create_engine, text
 import pandas as pd
 import logging
-import colorlog
+import requests
 
 
-from CommonProperties import Base_Properties
+from CommonProperties.logging_config import setup_logging
 
-
-# 配置日志处理器
-handler = colorlog.StreamHandler()
-
-# 设置彩色日志的格式，包含时间、日志级别和消息内容
-formatter = colorlog.ColoredFormatter(
-    '%(log_color)s%(asctime)s - %(levelname)s - %(message)s',
-    log_colors={
-        'DEBUG': 'cyan',
-        'INFO': 'green',    # 将 INFO 级别设为绿色
-        'WARNING': 'yellow',
-        'ERROR': 'red',
-        'CRITICAL': 'bold_red',
-    }
-)
-
-handler.setFormatter(formatter)
-
-# 获取并配置 logger
-logger = logging.getLogger()
-logger.addHandler(handler)
-logger.setLevel(logging.INFO)
-
+# 调用日志配置
+setup_logging()
 
 def save_out_filename(filehead, file_type):
     """
@@ -135,186 +113,71 @@ def copy_and_rename_file(src_file_path, dest_dir, new_name):
     print(f"文件已复制并重命名为: {dest_file_path}")
 
 
-def check_data_written(total_rows, table_name, engine):
+
+
+
+def process_in_batches(df, batch_size, processing_function, **kwargs):
     """
-    用于查询mysql写入的数据条数是否完整
+    通用的批次处理函数。
+
     Args:
-        total_rows: 要验证的表的理论上的行数
-        table_name: 要验证的表的名称
-        engine:     查询引擎
-    Returns:  True 条数验证匹配  / False  条数验证不匹配
+        df (pd.DataFrame): 要处理的数据。
+        batch_size (int): 每个批次的大小。
+        processing_function (callable): 处理每个批次的函数。
+        **kwargs: 传递给处理函数的参数。
+
+    Returns:
+        pd.DataFrame: 处理后的总 DataFrame。
     """
+    def get_batches(df, batch_size):
+        for start in range(0, len(df), batch_size):
+            yield df[start:start + batch_size]
 
-    try:
-        # 创建数据库连接
-        connection = engine.raw_connection()
-        cursor = connection.cursor()
+    total_batches = (len(df) + batch_size - 1) // batch_size
+    total_df = pd.DataFrame()
 
-        # 查询表中写入的数据总数
-        check_query = f"SELECT COUNT(*) FROM {table_name}"
-        cursor.execute(check_query)
-        result = cursor.fetchone()[0]
+    for i, batch_df in enumerate(get_batches(df, batch_size), start=1):
+        sys.stdout.write(f"\r当前执行 {processing_function.__name__} 的 第 {i} 次循环，总共 {total_batches} 个批次")
+        sys.stdout.flush()
 
-        # 关闭连接
-        cursor.close()
-        connection.close()
+        # 直接调用处理函数，只传递 **kwargs
+        result = processing_function(**kwargs)
+        total_df = pd.concat([total_df, result], ignore_index=True)
 
-        return result == total_rows
-    except Exception as e:
-        logging.error(f"检查数据写入时发生错误: {e}")
-        return False
+    sys.stdout.write("\n")
+    return total_df
 
 
-
-
-
-def data_from_dataframe_to_mysql(df=pd.DataFrame(), table_name='', database='quant'):
+def get_with_retries(url, headers=None, timeout=10, max_retries=3, backoff_factor=1):
     """
-    把 dataframe 类型数据写入 mysql 表里面, 同时调用了
     Args:
-        df:
-        table_name:
-        database:
+        url:
+        headers:
+        timeout:
+        max_retries:      最大重试次数
+        backoff_factor:
+
     Returns:
 
     """
-    # MySQL 数据库连接配置
-    password = Base_Properties.mysql_password
-
-    db_url = f'mysql+pymysql://root:{password}@localhost:3306/{database}'
-    engine = create_engine(db_url)
-
-    total_rows = df.shape[0]
-
-    # 将结果批量写入 MySQL 数据库
-    chunk_size = 10000  # 根据系统内存情况调整
-
-    for i in range(0, total_rows, chunk_size):
-        chunk = df.iloc[i:i + chunk_size]
-
+    retries = 0
+    while retries < max_retries:
         try:
-            chunk.to_sql(name=table_name, con=engine, if_exists='append', index=False)
-        except Exception as e:
-            logging.error(f"写入表：{table_name}的 第 {i // chunk_size + 1} 批次时发生错误: {e}")
+            response = requests.get(url, headers=headers, timeout=timeout)
+            if response.status_code == 200:
+                return response
+            else:
+                logging.error(f"Error: {response.status_code} - {response.text}")
+        except requests.exceptions.RequestException as e:
+            logging.error(f"请求失败报错: {e}")
 
-    # 所有批次写入完成后检查数据写入完整性
-    if check_data_written(total_rows, table_name, engine):
-        logging.info(f"mysql表：{table_name}  数据写入成功且无遗漏。")
-    else:
-        logging.warning(f"{table_name} 数据写入可能有问题，记录数不匹配。")
+        retries += 1
+        sleep_time = backoff_factor * (2 ** retries)
+        logging.info(f" {sleep_time} 秒后开展重试...")
+        time.sleep(sleep_time)
 
-
-
-
-def data_from_mysql_to_dataframe(table_name='', database='quant'):
-    """
-    从 MySQL 表中读取数据到 DataFrame，同时进行最终的数据完整性检查和日志记录
-    Args:
-        table_name: MySQL 表名
-        database: 数据库名称
-
-    Returns:
-        df: 读取到的 DataFrame
-    """
-    # MySQL 数据库连接配置
-    password = Base_Properties.mysql_password  # 从配置文件获取密码
-
-    db_url = f'mysql+pymysql://root:{password}@localhost:3306/{database}'
-    engine = create_engine(db_url)
-
-    # 读取 MySQL 表中的记录总数
-    query_total = f"SELECT COUNT(*) FROM {table_name}"
-    total_rows = pd.read_sql(query_total, engine).iloc[0, 0]
-
-    # 读取数据的批量大小
-    chunk_size = 10000
-    chunks = []
-
-    try:
-        for offset in range(0, total_rows, chunk_size):
-            query = f"SELECT * FROM {table_name} LIMIT {chunk_size} OFFSET {offset}"
-            chunk = pd.read_sql(query, engine)
-            chunks.append(chunk)
-
-        df = pd.concat(chunks, ignore_index=True)
-
-        # 最终的数据完整性检查
-        if df.shape[0] == total_rows:
-            logging.info(f"mysql表：{table_name} 数据读取成功且无遗漏，共 {total_rows} 行。")
-        else:
-            logging.warning(f"{table_name} 数据读取可能有问题，预期记录数为 {total_rows}，实际读取记录数为 {df.shape[0]}。")
-
-    except Exception as e:
-        logging.error(f"从表：{table_name} 读取数据时发生错误: {e}")
-        df = pd.DataFrame()  # 返回一个空的 DataFrame 以防出错时没有返回数据
-
-    return df
-
-
-def data_from_mysql_to_dataframe_latest(table_name='', database='quant'):
-    """
-    从 MySQL 表中读取最新一天的数据到 DataFrame，同时进行最终的数据完整性检查和日志记录
-    Args:
-        table_name: MySQL 表名
-        database: 数据库名称
-
-    Returns:
-        df: 读取到的 DataFrame
-    """
-    # MySQL 数据库连接配置
-    password = Base_Properties.mysql_password  # 从配置文件获取密码
-
-    db_url = f'mysql+pymysql://root:{password}@localhost:3306/{database}'
-    engine = create_engine(db_url)
-
-    try:
-        # 获取最新的 ymd 日期
-        query_latest_ymd = f"SELECT MAX(ymd) FROM {table_name}"
-        latest_ymd = pd.read_sql(query_latest_ymd, engine).iloc[0, 0]
-
-        if latest_ymd is not None:
-            # 查询最新一天的全部数据
-            query = f"SELECT * FROM {table_name} WHERE ymd = '{latest_ymd}'"
-            df = pd.read_sql(query, engine)
-
-            logging.info(f"mysql表：{table_name} 最新一天({latest_ymd})的数据读取成功，共 {df.shape[0]} 行。")
-        else:
-            logging.warning(f"{table_name} 表中没有找到有效的 ymd 数据。")
-            df = pd.DataFrame()  # 返回空的 DataFrame
-
-    except Exception as e:
-        logging.error(f"从表：{table_name} 读取数据时发生错误: {e}")
-        df = pd.DataFrame()  # 返回一个空的 DataFrame 以防出错时没有返回数据
-
-    return df
-
-
-def create_partition_if_not_exists(engine, partition_name, year, month):
-    next_month = month + 1
-    next_year = year
-    if next_month > 12:
-        next_month = 1
-        next_year += 1
-
-    partition_value = next_year * 100 + next_month
-
-    with engine.connect() as conn:
-        query = text(f"""
-        ALTER TABLE your_table ADD PARTITION (
-            PARTITION {partition_name} VALUES LESS THAN ({partition_value})
-        );
-        """)
-        conn.execute(query)
-
-
-
-
-
-
-
-
-
-
+    logging.error(f"在经历 {max_retries} 次尝试后还是不能捕获数据")
+    return None
 
 
 

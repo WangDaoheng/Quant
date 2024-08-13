@@ -4,37 +4,19 @@ from yahoo_fin.stock_info import *
 from io import StringIO
 import os
 import logging
-import colorlog
 
 
 from CommonProperties.DateUtility import DateUtility
 import CommonProperties.Base_Properties as base_properties
 import CommonProperties.Base_utils as base_utils
+import CommonProperties.Mysql_Utils as mysql_utils
 from CommonProperties.Base_utils import timing_decorator
+from CommonProperties.logging_config import setup_logging
 
 
 # 配置日志处理器
-handler = colorlog.StreamHandler()
-
-# 设置彩色日志的格式，包含时间、日志级别和消息内容
-formatter = colorlog.ColoredFormatter(
-    '%(log_color)s%(asctime)s - %(levelname)s - %(message)s',
-    log_colors={
-        'DEBUG': 'cyan',
-        'INFO': 'green',    # 将 INFO 级别设为绿色
-        'WARNING': 'yellow',
-        'ERROR': 'red',
-        'CRITICAL': 'bold_red',
-    }
-)
-
-handler.setFormatter(formatter)
-
-# 获取并配置 logger
-logger = logging.getLogger()
-logger.addHandler(handler)
-logger.setLevel(logging.INFO)
-
+# 调用日志配置
+setup_logging()
 
 #  vantage  测试环境文件保存目录
 vantage_test_dir = os.path.join(base_properties.dir_vantage_base, 'test')
@@ -91,7 +73,7 @@ class SaveVantageData:
         self.vantage_US_stock = pd.DataFrame()
 
 
-    # @timing_decorator
+    @timing_decorator
     def get_US_stock_from_vantage(self):
         """
         关键 US stcok
@@ -104,7 +86,6 @@ class SaveVantageData:
 
         for symbol in self.key_US_stock:
             url = f'{base_url}?function={function}&symbol={symbol}&apikey={api_key}&outputsize=full&datatype=csv'
-            print(url)
             # 发送 GET 请求
             response = requests.get(url, headers=headers, timeout=10)
 
@@ -125,25 +106,25 @@ class SaveVantageData:
         US_stock_filedir = os.path.join(self.dir_US_stock_base, US_stock_filename)
         res_df.to_csv(US_stock_filedir, index=False)
 
-
+        #  结果数据保存到mysql中
+        mysql_utils.data_from_dataframe_to_mysql(df=res_df, table_name="US_stock_daily_vantage", database="quant")
 
     def get_USD_FX_core(self, url, flag):
         """
         Args:
-            url:
-            flag:
+            url: 请求的URL地址
+            flag: 数据标识符
         Returns:
-            该函数是 get_USD_FX_from_vantage  的核心调用模块
+            返回包含汇率数据的DataFrame
         """
-
-        #  存放汇率结果数据
+        # 存放汇率结果数据
         res_df = pd.DataFrame()
 
-        # 发送 GET 请求
-        response = requests.get(url, headers=headers, timeout=10)
+        # 使用带重试功能的请求
+        response = base_utils.get_with_retries(url, headers=headers, timeout=10)
 
         # 处理响应数据
-        if response.status_code == 200:
+        if response is not None and response.status_code == 200:
             # 返回csv字符串
             csv_string = response.text
             csv_file = StringIO(csv_string)
@@ -152,15 +133,14 @@ class SaveVantageData:
 
             res_df = pd.concat([res_df, vantage_df], ignore_index=True)
         else:
-            logging.error(f'Error fetching {flag} data: {response.status_code} - {response.text}')
+            logging.error(f'Error fetching {flag} data: 请求失败或无效的响应')
 
-        logging.info(f"get_USD_FX_core  完成 {flag} 汇率查询")
+        logging.info(f"get_USD_FX_core 完成 {flag} 汇率查询")
 
         return res_df
 
 
-
-    # @timing_decorator
+    @timing_decorator
     def get_USD_FX_from_vantage(self):
         """
         计算美元指数, 从主流货币去计算美元指数
@@ -185,7 +165,7 @@ class SaveVantageData:
         # 定义初始常数
         constant = 50.14348112
 
-
+        #  --------------------------  开始计算美元指数  ------------------------------
         #  欧元兑美元
         url_EUR_USD = f'{base_url}?function={function}&from_symbol=EUR&to_symbol=USD&apikey={api_key}&datatype=csv'
         df_EUR_USD = self.get_USD_FX_core(url=url_EUR_USD, flag='EUR_USD')
@@ -217,6 +197,14 @@ class SaveVantageData:
         res_df['timestamp'] = pd.to_datetime(res_df['timestamp']).dt.strftime('%Y%m%d')
         res_df.rename(columns={'timestamp': 'ymd'}, inplace=True)
 
+        ##  文件输出模块     输出汇率明细
+        USD_FX_detail_filename = base_utils.save_out_filename(filehead='USD_FX_detail', file_type='csv')
+        USD_FX_detail_filedir = os.path.join(self.dir_USD_FX_detail_base, USD_FX_detail_filename)
+        res_df.to_csv(USD_FX_detail_filedir, index=False)
+
+        #  将汇率明细写入mysql
+        mysql_utils.data_from_dataframe_to_mysql(df=res_df, table_name="exchange_rate_vantage_detail", database="quant")
+
         #  --------------------------  开始计算美元指数  ------------------------------
         # 获取唯一的时间戳
         timestamps = res_df['ymd'].unique()
@@ -243,34 +231,24 @@ class SaveVantageData:
         dxy_df = pd.DataFrame(results, columns=['ymd', 'DXY'])
         print(dxy_df)
 
-        ##  文件输出模块     输出汇率明细
-        USD_FX_detail_filename = base_utils.save_out_filename(filehead='USD_FX_detail', file_type='csv')
-        USD_FX_detail_filedir = os.path.join(self.dir_USD_FX_detail_base, USD_FX_detail_filename)
-        res_df.to_csv(USD_FX_detail_filedir, index=False)
-
-        #  将汇率明细写入mysql
-        base_utils.data_from_dataframe_to_mysql(df=res_df, table_name="exchange_rate_vantage_detail", database="quant")
-
-
-
         ##  文件输出模块     输出美元指数
         USD_FX_filename = base_utils.save_out_filename(filehead='USD_FX', file_type='csv')
         USD_FX_filedir = os.path.join(self.dir_USD_FX_base, USD_FX_filename)
         dxy_df.to_csv(USD_FX_filedir, index=False)
 
         #  将美元指数写入mysql
-        base_utils.data_from_dataframe_to_mysql(df=res_df, table_name="exchange_DXY_vantage", database="quant")
+        mysql_utils.data_from_dataframe_to_mysql(df=res_df, table_name="exchange_DXY_vantage", database="quant")
 
 
 
 
 
 
-    # @timing_decorator
+    @timing_decorator
     def setup(self):
 
         #  获取 US 主要stock 的全部数据
-        # self.get_US_stock_from_vantage()
+        self.get_US_stock_from_vantage()
         self.get_USD_FX_from_vantage()
 
 

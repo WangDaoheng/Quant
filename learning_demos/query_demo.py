@@ -1440,8 +1440,8 @@ def main():
     # get_kline_demo()                          # K线数据
     # get_derived_demo()                        # 行情衍生指标
     # get_trade_distribution_demo()             # 成交分价
-    # get_chip_distribution_demo()              # 筹码分布
-    chouma()
+    get_chip_distribution_demo()              # 筹码分布
+    # chouma()
     # get_money_flow_demo()                     # 资金流向
     # get_change_summary_demo()                 # 涨跌分析
     # get_billboard_demo()                      # 指标排行榜
