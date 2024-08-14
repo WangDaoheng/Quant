@@ -76,7 +76,7 @@ def data_from_dataframe_to_mysql(df=pd.DataFrame(), table_name='', database='qua
 
     # 所有批次写入完成后检查数据写入完整性
     if check_data_written(total_rows, table_name, engine):
-        logging.info(f"mysql表：{table_name}  数据写入成功且无遗漏。")
+        logging.info(f"mysql表：{table_name}  数据写入成功且无遗漏, 共 {total_rows} 行。")
     else:
         logging.warning(f"{table_name} 数据写入可能有问题，记录数不匹配。")
 

@@ -441,8 +441,8 @@ class SaveInsightData:
             code_list = batch_df['htsc_code'].tolist()
 
             # 添加重试机制的部分
-            max_retries = 2  # 最大重试次数
-            retry_delay = 1  # 每次重试的延迟时间（秒）
+            max_retries = 1  # 最大重试次数
+            retry_delay = 0.1  # 每次重试的延迟时间（秒）
 
             for attempt in range(max_retries):
                 try:
