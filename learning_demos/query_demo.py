@@ -93,7 +93,7 @@ def get_chip_distribution_demo():
     print('-------------- 进入get_chip_distribution_demo ---------------------')
     ##  筹码的end_date 只能大于等于当日(自然日)
     start_date = '2024-01-14'
-    end_date = '2024-04-14'
+    end_date = '2024-08-14'
     # 转为时间格式
     start_date = datetime.strptime(start_date, '%Y-%m-%d')
     end_date = datetime.strptime(end_date, '%Y-%m-%d')

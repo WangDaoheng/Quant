@@ -7,6 +7,13 @@ class DateUtility:
     def today():
         return datetime.today().strftime('%Y%m%d')
 
+
+    @staticmethod
+    def next_day(n=0):
+        next_date = datetime.today() + timedelta(days=n)
+        return next_date.strftime('%Y%m%d')
+
+
     @staticmethod
     def is_weekend():
         today = datetime.today()

@@ -411,13 +411,14 @@ class SaveInsightData:
         """
         #  当月数据的起止时间
         time_start_date = DateUtility.first_day_of_month()
-        time_end_date = DateUtility.today()
+        #  结束时间必须大于等于当日，这里取明天的日期
+        time_end_date = DateUtility.next_day(1)
 
         time_start_date = datetime.strptime(time_start_date, '%Y%m%d')
         time_end_date = datetime.strptime(time_end_date, '%Y%m%d')
 
         #  每个批次取 100 个元素
-        batch_size = 100
+        batch_size = 1
 
         #  这是一个切分批次的内部函数
         def get_batches(df, batch_size):
@@ -440,8 +441,8 @@ class SaveInsightData:
             code_list = batch_df['htsc_code'].tolist()
 
             # 添加重试机制的部分
-            max_retries = 3  # 最大重试次数
-            retry_delay = 5  # 每次重试的延迟时间（秒）
+            max_retries = 2  # 最大重试次数
+            retry_delay = 1  # 每次重试的延迟时间（秒）
 
             for attempt in range(max_retries):
                 try:
@@ -456,7 +457,7 @@ class SaveInsightData:
                     else:
                         logging.error(f"多次尝试后仍然失败，跳过当前批次: {e}")
                         break  # 如果达到最大重试次数，跳过当前批次
-
+                time.sleep(0.1)
         # 循环结束后打印换行符，以确保后续输出在新行开始
         sys.stdout.write("\n")
 
@@ -472,7 +473,7 @@ class SaveInsightData:
         chouma_total_df.to_csv(chouma_data_filedir, index=False)
 
         #  结果数据保存到mysql中
-        mysql_utils.data_from_dataframe_to_mysql(df=chouma_total_df, table_name="stock_chouma_insight_now", database="quant")
+        mysql_utils.data_from_dataframe_to_mysql(df=chouma_total_df, table_name="stock_chouma_insight", database="quant")
 
 
 
@@ -481,7 +482,7 @@ class SaveInsightData:
         self.login()
 
         #  除去 ST |  退  | B 的股票集合
-        self.get_stock_codes()
+        # self.get_stock_codes()
 
         #  获取上述股票的当月日K
         # self.get_stock_kline()
