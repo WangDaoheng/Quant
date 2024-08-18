@@ -1,5 +1,6 @@
 
 from sqlalchemy import create_engine, text
+import pymysql
 import pandas as pd
 import logging
 
@@ -45,7 +46,7 @@ def check_data_written(total_rows, table_name, engine):
 
 
 
-def data_from_dataframe_to_mysql(df=pd.DataFrame(), table_name='', database='quant'):
+def data_from_dataframe_to_mysql(df=pd.DataFrame(), table_name='', database='quant', merge_on=[]):
     """
     把 dataframe 类型数据写入 mysql 表里面, 同时调用了
     Args:
@@ -61,24 +62,54 @@ def data_from_dataframe_to_mysql(df=pd.DataFrame(), table_name='', database='qua
     db_url = f'mysql+pymysql://root:{password}@localhost:3306/{database}'
     engine = create_engine(db_url)
 
-    total_rows = df.shape[0]
+    # 将df中的ymd格式转换为DATE类型（如果merge_on包含'ymd'）
+    if 'ymd' in merge_on:
+        df['ymd'] = df['ymd'].apply(lambda x: pd.to_datetime(str(x), format='%Y%m%d').strftime('%Y-%m-%d'))
+        ymd_range = df['ymd'].unique()
+
+
+
+    # 预取数据库中这些日期的数据
+    # 动态构建SELECT语句和WHERE子句
+    select_columns = ", ".join(merge_on)
+    where_condition = f"ymd IN ({','.join(['%s'] * len(ymd_range))})"
+
+    # 构建 SQL 查询
+    existing_query = f"""
+    SELECT {select_columns} FROM {table_name}
+    WHERE {where_condition}
+    """
+
+    existing_data = pd.read_sql(existing_query, engine, params=ymd_range)
+    existing_data['ymd'] = existing_data['ymd'].astype(str)
+
+    # 从df中过滤掉已经存在的数据
+    merged_df = pd.merge(df, existing_data, on=merge_on, how='left', indicator=True)
+    new_data = merged_df[merged_df['_merge'] == 'left_only'].drop(columns=['_merge'])
+
+    total_rows = new_data.shape[0]
+
+    if total_rows == 0:
+        logging.info(f"所有数据已存在，无需插入新的数据到 {table_name} 表中。")
+        return
 
     # 将结果批量写入 MySQL 数据库
     chunk_size = 10000  # 根据系统内存情况调整
 
     for i in range(0, total_rows, chunk_size):
-        chunk = df.iloc[i:i + chunk_size]
+        chunk = new_data.iloc[i:i + chunk_size]
 
         try:
             chunk.to_sql(name=table_name, con=engine, if_exists='append', index=False)
+
         except Exception as e:
             logging.error(f"写入表：{table_name}的 第 {i // chunk_size + 1} 批次时发生错误: {e}")
 
     # 所有批次写入完成后检查数据写入完整性
-    if check_data_written(total_rows, table_name, engine):
-        logging.info(f"mysql表：{table_name}  数据写入成功且无遗漏, 共 {total_rows} 行。")
-    else:
-        logging.warning(f"{table_name} 数据写入可能有问题，记录数不匹配。")
+    # if check_data_written(total_rows, table_name, engine):
+    #     logging.info(f"mysql表：{table_name}  数据写入成功且无遗漏, 共 {total_rows} 行。")
+    # else:
+    #     logging.warning(f"{table_name} 数据写入可能有问题，记录数不匹配。")
 
 
 

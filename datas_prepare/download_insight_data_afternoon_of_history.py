@@ -100,8 +100,6 @@ class SaveInsightHistoryData:
          stock_code_df  [ymd	htsc_code	name	exchange]
         """
 
-        # dt = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-        # formatted_date = dt.strftime('%Y%m%d')
         formatted_date = DateUtility.today()
 
         ##  获取所有已上市codes
@@ -110,6 +108,8 @@ class SaveInsightHistoryData:
         stock_all_df.insert(0, 'ymd', formatted_date)
         filtered_df = stock_all_df[~stock_all_df['name'].str.contains('ST|退|B')]
 
+        # 删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
+        filtered_df = filtered_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
 
         #  已上市状态stock_codes
         self.stock_code_df = filtered_df
@@ -123,28 +123,28 @@ class SaveInsightHistoryData:
          stock_kline_df  [ymd	htsc_code	name	exchange]
         """
 
-        #  历史数据的起止时间
+        #  1.历史数据的起止时间
         time_start_date = DateUtility.first_day_of_year_after_n_years(-3)
         time_end_date = DateUtility.today()
 
         time_start_date = datetime.strptime(time_start_date, '%Y%m%d')
         time_end_date = datetime.strptime(time_end_date, '%Y%m%d')
 
-
-        #  每个批次取 100 个元素
+        #  2.每个批次取 100 个元素
         batch_size = 100
 
-        #  这是一个切分批次的内部函数
+        #  3.这是一个切分批次的内部函数
         def get_batches(df, batch_size):
             for start in range(0, len(df), batch_size):
                 yield df[start:start + batch_size]
 
-        #  计算总批次数
+        #  4.计算总批次数
         total_batches = (len(self.stock_code_df) + batch_size - 1) // batch_size
 
-        #  kline的总和dataframe
+        #  5.kline的总和dataframe
         kline_total_df = pd.DataFrame()
 
+        #  6.请求insight数据
         for i, batch_df in enumerate(get_batches(self.stock_code_df, batch_size), start=1):
             #  一种非常巧妙的循环打印日志的方式
             sys.stdout.write(f"\r当前执行get_stock_kline的 第 {i} 次循环，总共 {total_batches} 个批次")
@@ -154,26 +154,29 @@ class SaveInsightHistoryData:
             res = get_kline(htsc_code=index_list, time=[time_start_date, time_end_date], frequency="daily", fq="none")
             kline_total_df = pd.concat([kline_total_df, res], ignore_index=True)
 
-        # 循环结束后打印换行符，以确保后续输出在新行开始
+        #  7.循环结束后打印换行符，以确保后续输出在新行开始
         sys.stdout.write("\n")
 
-        #  日期格式转换
+        #  8.日期格式转换
         kline_total_df['time'] = pd.to_datetime(kline_total_df['time']).dt.strftime('%Y%m%d')
         kline_total_df.rename(columns={'time': 'ymd'}, inplace=True)
 
-        #  声明所有的列名，去除value列
+        #  9.声明所有的列名，去除value列
         kline_total_df = kline_total_df[['htsc_code', 'ymd', 'open', 'close', 'high', 'low', 'num_trades', 'volume']]
 
-        #  文件输出模块
+        #  10.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
+        # kline_total_df = kline_total_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
+
+        #  11.文件输出模块
         self.kline_total_history = kline_total_df
 
-        #  本地csv文件的落盘保存
+        #  12.本地csv文件的落盘保存
         kline_total_filename = base_utils.save_out_filename(filehead='stock_kline_history', file_type='csv')
         kline_total_filedir = os.path.join(self.dir_history_stock_kline_base, kline_total_filename)
         kline_total_df.to_csv(kline_total_filedir, index=False)
 
-        #  结果数据保存到mysql中
-        mysql_utils.data_from_dataframe_to_mysql(df=kline_total_df, table_name="stock_kline_daily_insight", database="quant")
+        #  13.结果数据保存到mysql中
+        mysql_utils.data_from_dataframe_to_mysql(df=kline_total_df, table_name="stock_kline_daily_insight", database="quant",  merge_on=['ymd', 'htsc_code'])
 
 
 
@@ -227,6 +230,9 @@ class SaveInsightHistoryData:
         #  声明所有的列名，去除value列
         index_df = index_df[['htsc_code', 'name', 'ymd', 'open', 'close', 'high', 'low', 'volume']]
 
+        # 删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
+        index_df = index_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
+
         ############################   文件输出模块     ############################
         self.index_a_share = index_df
 
@@ -236,7 +242,7 @@ class SaveInsightHistoryData:
         index_df.to_csv(index_filedir, index=False)
 
         #  结果数据保存到mysql中
-        mysql_utils.data_from_dataframe_to_mysql(df=index_df, table_name="index_a_share_insight", database="quant")
+        mysql_utils.data_from_dataframe_to_mysql(df=index_df, table_name="index_a_share_insight", database="quant", merge_on=['ymd', 'htsc_code'])
 
 
 
@@ -273,7 +279,6 @@ class SaveInsightHistoryData:
         end_date = datetime.strptime(end_date, '%Y%m%d')
 
         res = get_change_summary(market=["a_share"], trading_day=[start_date, end_date])
-
         filter_limit_df = pd.DataFrame()
         filter_limit_df = pd.concat([filter_limit_df, res], ignore_index=True)
 
@@ -294,10 +299,10 @@ class SaveInsightHistoryData:
         # 删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
         filter_limit_df = filter_limit_df.drop_duplicates(subset=['ymd', 'name'], keep='first')
 
+        #  大盘涨跌停数量情况，默认是从3年前到今天
         self.limit_summary_df = filter_limit_df
 
         ############################   文件输出模块     ############################
-
         #  本地csv文件的落盘保存
         #  大盘涨跌停数量情况，默认是从年初到今天
         summary_filename = base_utils.save_out_filename(filehead='stock_limit_summary', file_type='csv')
@@ -305,8 +310,7 @@ class SaveInsightHistoryData:
         filter_limit_df.to_csv(summary_dir, index=False)
 
         #  结果数据保存到mysql中
-        mysql_utils.data_from_dataframe_to_mysql(df=filter_limit_df, table_name="stock_limit_summary_insight", database="quant")
-
+        mysql_utils.data_from_dataframe_to_mysql(df=filter_limit_df, table_name="stock_limit_summary_insight", database="quant", merge_on=['ymd', 'name'])
 
 
 
@@ -342,8 +346,8 @@ class SaveInsightHistoryData:
 
         future_index_list = [index.format(replacement) for index in index_list]
 
-        #  查询起始时间写2月前的月初第1天
-        time_start_date = DateUtility.first_day_of_month_after_n_months(-2)
+        #  查询起始时间写36月前的月初第1天
+        time_start_date = DateUtility.first_day_of_month_after_n_months(-36)
         time_end_date = DateUtility.today()
 
         time_start_date = datetime.strptime(time_start_date, '%Y%m%d')
@@ -377,75 +381,10 @@ class SaveInsightHistoryData:
         future_inside_df.to_csv(future_inside_filedir, index=False)
 
         #  结果数据保存到mysql中
-        mysql_utils.data_from_dataframe_to_mysql(df=future_inside_df, table_name="future_inside_insight", database="quant")
+        mysql_utils.data_from_dataframe_to_mysql(df=future_inside_df, table_name="future_inside_insight", database="quant", merge_on=['ymd', 'htsc_code'])
 
 
 
-
-    @timing_decorator
-    def get_chouma_datas(self):
-        """
-        1.获取每日的筹码分布数据
-        2.找到那些当日能够拿到筹码数据的codes
-        :return:
-        """
-        print("----------------- get_chouma_datas() 开始执行 ------------------")
-
-        start_time = time.time()  # 记录开始时间
-
-        dt = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-        formatted_date = dt.strftime('%Y%m%d')
-
-        ##  所有已上市股票
-        # list_stock = self.stock_all_list
-
-        latest_stock_codes_file = os.path.join(self.dir_history_stock_codes_base,
-                                               base_utils.get_latest_filename(self.dir_history_stock_codes_base))
-        with open(latest_stock_codes_file, 'r') as f:
-            content = f.readlines()
-        ##  取出当日 上市交易  的股票代码
-        list_stock = eval(content[0].strip())
-        print(r'   在 {} 日，共有 {} 个已上市stocks'.format(formatted_date, len(list_stock)))
-
-        ############################  准备记录能够查到筹码数据的结果list  ###########################
-        list_suc_res = []  # 用于存放遍历时不发生报错的 enum
-        err_dict = {}  # 用于存放发生报错的 enum 和具体的报错原因
-
-        ## 存放拼接结果
-        chouma_total_df = pd.DataFrame()
-
-        # 获取在指定时间范围的筹码分布数据
-        for enum in list_stock:
-            try:
-                chouma_df = get_chip_distribution(htsc_code=enum, trading_day=[dt])
-                # print("     =======  拉取第{}条筹码数据：{}返回的结果条数为{}".format(ttflag, enum, chouma_df.shape[0]))
-                chouma_total_df = pd.concat([chouma_total_df, chouma_df], ignore_index=True)
-
-            except Exception as e:
-                err_dict[enum] = str(e)
-
-            else:
-                ##  成功获取筹码数据的股票代码
-                list_suc_res.append(enum)
-
-        #################  记录有异常，不能找到筹码数据的codes   ###########################
-        chouma_err_filename = base_utils.save_out_filename(filehead='chouma_err', file_type='txt')
-        chouma_err_file = os.path.join(self.dir_history_chouma_base, 'err_chouma_codes', chouma_err_filename)
-        with open(chouma_err_file, 'w') as f:
-            f.write(str(err_dict))
-
-        #################  记录无异常，能够找到筹码数据的codes   ###########################
-        chouma_filename = base_utils.save_out_filename(filehead=f"chouma_data", file_type='xlsx')
-        chouma_data_file = os.path.join(self.dir_history_chouma_base, 'suc_chouma_data', chouma_filename)
-        chouma_total_df.to_excel(chouma_data_file, float_format='%.0f', index=False)
-
-        print("-------------  {} 日股票筹码数据获取完毕，获得{}个股票的筹码数据".format(formatted_date, len(list_suc_res)))
-
-        self.stock_chouma_available = chouma_total_df
-
-        end_time = time.time()  # 记录结束时间
-        elapsed_time = end_time - start_time  # 计算时间差
-        print(f"获取筹码数据的get_chouma_datas() 代码执行时间: {elapsed_time} 秒")
 
 
     def setup(self):
@@ -458,7 +397,6 @@ class SaveInsightHistoryData:
         #  获取当前已上市股票过去3年到今天的历史kline
         # self.get_stock_kline()
 
-
         #  获取主要股指
         self.get_index_a_share()
 
@@ -468,8 +406,6 @@ class SaveInsightHistoryData:
         #  期货__内盘
         self.get_future_inside()
 
-        #  筹码概览
-        # self.get_chouma_datas()
 
 
 if __name__ == '__main__':

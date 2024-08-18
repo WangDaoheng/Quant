@@ -2,7 +2,7 @@ import os
 from datetime import datetime
 
 import pandas as pd
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 import time
 
 # import dataprepare_properties
@@ -11,6 +11,7 @@ import CommonProperties.Base_Properties as base_properties
 import CommonProperties.Base_utils as base_utils
 from CommonProperties.DateUtility import DateUtility
 from CommonProperties.Base_utils import timing_decorator
+import CommonProperties.Mysql_Utils as mysql_utils
 
 
 # ************************************************************************
@@ -103,37 +104,13 @@ class SaveInsightHistoryData:
          stock_kline_df  [ymd	htsc_code	name	exchange]
         """
 
-        #  读取历史数据和当下数据
-        stock_kline_latest_file = base_utils.get_latest_filename(self.dir_stock_kline_base)
-        stock_kline_history_latest_file = base_utils.get_latest_filename(self.dir_history_stock_kline_base)
-
-        now_df = pd.read_csv(os.path.join(self.dir_stock_kline_base, stock_kline_latest_file))
-        history_df = pd.read_csv(os.path.join(self.dir_history_stock_kline_base, stock_kline_history_latest_file))
-
-        # 设定 'time' 为索引，以便于数据合并
-        now_df.set_index('time', inplace=True)
-        history_df.set_index('time', inplace=True)
+        source_table = 'stock_kline_daily_insight_now'
+        target_table = 'stock_kline_daily_insight'
+        columns = []
 
 
-        # 合并数据，以 now_df 为准
-        combined_df = now_df.combine_first(history_df).reset_index()
 
-        # MySQL 数据库连接配置
-        db_url = 'mysql+pymysql://root:123456@localhost:3306/quant'
-        engine = create_engine(db_url)
-
-
-        # 将结果批量写入 MySQL 数据库
-        chunk_size = 10000  # 根据系统内存情况调整
-        for i in range(0, combined_df.shape[0], chunk_size):
-            chunk = combined_df.iloc[i:i + chunk_size]
-            chunk.to_sql(name='stock_kline_daily_insight', con=engine, if_exists='append', index=False)
-
-        #  文件输出模块
-        kline_total_filename = base_utils.save_out_filename(filehead='stock_kline_daily_insight', file_type='csv')
-        kline_total_filedir = os.path.join(self.dir_merge_stock_kline_base, kline_total_filename)
-        combined_df.to_csv(kline_total_filedir, index=False)
-
+        mysql_utils.upsert_table(source_table='', target_table='', columns=[], database='quant')
 
 
     @timing_decorator

@@ -127,7 +127,7 @@ class SaveInsightData:
         filtered_df.to_csv(stock_codes_listed_dir, index=False)
 
         #  结果数据保存到mysql中
-        mysql_utils.data_from_dataframe_to_mysql(df=filtered_df, table_name="stock_code_daily_insight", database="quant")
+        mysql_utils.data_from_dataframe_to_mysql(df=filtered_df, table_name="stock_code_daily_insight", database="quant", merge_on=['ymd', 'htsc_code'])
 
 
     @timing_decorator
@@ -138,27 +138,28 @@ class SaveInsightData:
          stock_kline_df  [ymd	htsc_code	name	exchange]
         """
 
-        #  当月数据的起止时间
+        #  1.当月数据的起止时间
         time_start_date = DateUtility.first_day_of_month()
         time_end_date = DateUtility.today()
 
         time_start_date = datetime.strptime(time_start_date, '%Y%m%d')
         time_end_date = datetime.strptime(time_end_date, '%Y%m%d')
 
-        #  每个批次取 100 个元素
+        #  2.每个批次取 100 个元素
         batch_size = 100
 
-        #  这是一个切分批次的内部函数
+        #  3.这是一个切分批次的内部函数
         def get_batches(df, batch_size):
             for start in range(0, len(df), batch_size):
                 yield df[start:start + batch_size]
 
-        #  计算总批次数
+        #  4.计算总批次数
         total_batches = (len(self.stock_code_df) + batch_size - 1) // batch_size
 
-        #  kline的总和dataframe
+        #  5.kline的总和dataframe
         kline_total_df = pd.DataFrame()
 
+        #  6.请求insight数据
         for i, batch_df in enumerate(get_batches(self.stock_code_df, batch_size), start=1):
             #  一种非常巧妙的循环打印日志的方式
             sys.stdout.write(f"\r当前执行get_stock_kline的 第 {i} 次循环，总共 {total_batches} 个批次")
@@ -168,30 +169,29 @@ class SaveInsightData:
             res = get_kline(htsc_code=index_list, time=[time_start_date, time_end_date], frequency="daily", fq="none")
             kline_total_df = pd.concat([kline_total_df, res], ignore_index=True)
 
-        # 循环结束后打印换行符，以确保后续输出在新行开始
+        #  7.循环结束后打印换行符，以确保后续输出在新行开始
         sys.stdout.write("\n")
 
-        #  日期格式转换
+        #  8.日期格式转换
         kline_total_df['time'] = pd.to_datetime(kline_total_df['time']).dt.strftime('%Y%m%d')
         kline_total_df.rename(columns={'time': 'ymd'}, inplace=True)
 
-        #  声明所有的列名，去除value列
+        #  9.声明所有的列名，去除value列
         kline_total_df = kline_total_df[['htsc_code', 'ymd', 'open', 'close', 'high', 'low', 'num_trades', 'volume']]
 
-        # 删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
+        #  10.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
         kline_total_df = kline_total_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
 
-
-        #  文件输出模块
+        #  11.文件输出模块
         self.stock_kline_df = kline_total_df
 
-        #  本地csv文件的落盘保存
+        #  12.本地csv文件的落盘保存
         stock_kline_filename = base_utils.save_out_filename(filehead='stock_kline', file_type='csv')
         stcok_kline_filedir = os.path.join(self.dir_stock_kline_base, stock_kline_filename)
         kline_total_df.to_csv(stcok_kline_filedir, index=False)
 
-        #  结果数据保存到mysql中
-        mysql_utils.data_from_dataframe_to_mysql(df=kline_total_df, table_name="stock_kline_daily_insight_now", database="quant")
+        #  13.结果数据保存到mysql中
+        mysql_utils.data_from_dataframe_to_mysql(df=kline_total_df, table_name="stock_kline_daily_insight_now", database="quant", merge_on=['ymd', 'htsc_code'])
 
 
 
@@ -258,11 +258,11 @@ class SaveInsightData:
         index_df.to_csv(index_filedir, index=False)
 
         #  结果数据保存到mysql中
-        mysql_utils.data_from_dataframe_to_mysql(df=index_df, table_name="index_a_share_insight_now", database="quant")
+        mysql_utils.data_from_dataframe_to_mysql(df=index_df, table_name="index_a_share_insight_now", database="quant", merge_on=['ymd', 'htsc_code'])
 
 
 
-    # @timing_decorator
+    @timing_decorator
     def get_limit_summary(self):
         """
         大盘涨跌停分析数据
@@ -315,17 +315,17 @@ class SaveInsightData:
         # 删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
         limit_summary_df = limit_summary_df.drop_duplicates(subset=['ymd', 'name'], keep='first')
 
-
-        #  大盘涨跌停数量情况，默认是从年初到今天
+        #  大盘涨跌停数量情况，默认是从月初到今天
         self.limit_summary_df = limit_summary_df
 
+        ############################   文件输出模块     ############################
         #  本地csv文件的落盘保存
         test_summary_filename = base_utils.save_out_filename(filehead='stock_limit_summary', file_type='csv')
         test_summary_dir = os.path.join(self.dir_limit_summary_base, test_summary_filename)
         limit_summary_df.to_csv(test_summary_dir, index=False)
 
         #  结果数据保存到mysql中
-        mysql_utils.data_from_dataframe_to_mysql(df=limit_summary_df, table_name="stock_limit_summary_insight_now", database="quant")
+        mysql_utils.data_from_dataframe_to_mysql(df=limit_summary_df, table_name="stock_limit_summary_insight_now", database="quant", merge_on=['ymd', 'name'])
 
 
 
@@ -370,8 +370,6 @@ class SaveInsightData:
 
         future_inside_df = pd.DataFrame()
 
-        # for index in future_index_list:
-
         #  获取数据的关键调用
         res = get_kline(htsc_code=future_index_list, time=[time_start_date, time_end_date],
                         frequency="daily", fq="pre")
@@ -398,7 +396,7 @@ class SaveInsightData:
         future_inside_df.to_csv(future_inside_df_filedir, index=False)
 
         #  结果数据保存到mysql中
-        mysql_utils.data_from_dataframe_to_mysql(df=future_inside_df, table_name="future_inside_insight_now", database="quant")
+        mysql_utils.data_from_dataframe_to_mysql(df=future_inside_df, table_name="future_inside_insight_now", database="quant", merge_on=['ymd', 'htsc_code'])
 
 
 
@@ -432,32 +430,23 @@ class SaveInsightData:
 
         #  chouma 的总和dataframe
         chouma_total_df = pd.DataFrame()
+        valid_num = 0
 
         for i, batch_df in enumerate(get_batches(stock_code_df, batch_size), start=1):
             #  一种非常巧妙的循环打印日志的方式
-            sys.stdout.write(f"\r当前执行 get_chouma_datas  第 {i} 次循环，总共 {total_batches} 个批次")
+            sys.stdout.write(f"\r当前执行 get_chouma_datas  第 {i} 次循环，总共 {total_batches} 个批次, {valid_num}个有效筹码数据")
             sys.stdout.flush()
 
             code_list = batch_df['htsc_code'].tolist()
 
-            # 添加重试机制的部分
-            max_retries = 1  # 最大重试次数
-            retry_delay = 0.1  # 每次重试的延迟时间（秒）
+            try:
+                res = get_chip_distribution(htsc_code=code_list, trading_day=[time_start_date, time_end_date])
+                chouma_total_df = pd.concat([chouma_total_df, res], ignore_index=True)
+                valid_num += 1
+            except Exception as e:
+                continue
+            time.sleep(0.1)
 
-            for attempt in range(max_retries):
-                try:
-                    res = get_chip_distribution(htsc_code=code_list, trading_day=[time_start_date, time_end_date])
-                    chouma_total_df = pd.concat([chouma_total_df, res], ignore_index=True)
-                    break  # 如果请求成功，则跳出重试循环
-                except Exception as e:
-                    logging.warning(f"尝试 {attempt + 1} 失败: {e}")
-                    if attempt < max_retries - 1:
-                        logging.info(f"等待 {retry_delay} 秒后重试...")
-                        time.sleep(retry_delay)  # 等待一段时间后重试
-                    else:
-                        logging.error(f"多次尝试后仍然失败，跳过当前批次: {e}")
-                        break  # 如果达到最大重试次数，跳过当前批次
-                time.sleep(0.1)
         # 循环结束后打印换行符，以确保后续输出在新行开始
         sys.stdout.write("\n")
 
@@ -473,7 +462,7 @@ class SaveInsightData:
         chouma_total_df.to_csv(chouma_data_filedir, index=False)
 
         #  结果数据保存到mysql中
-        mysql_utils.data_from_dataframe_to_mysql(df=chouma_total_df, table_name="stock_chouma_insight", database="quant")
+        mysql_utils.data_from_dataframe_to_mysql(df=chouma_total_df, table_name="stock_chouma_insight", database="quant", merge_on=['ymd', 'htsc_code'])
 
 
 
@@ -482,7 +471,7 @@ class SaveInsightData:
         self.login()
 
         #  除去 ST |  退  | B 的股票集合
-        # self.get_stock_codes()
+        self.get_stock_codes()
 
         #  获取上述股票的当月日K
         # self.get_stock_kline()
