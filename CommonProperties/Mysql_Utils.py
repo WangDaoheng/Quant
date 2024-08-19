@@ -215,8 +215,42 @@ def create_partition_if_not_exists(engine, partition_name, year, month):
         conn.execute(query)
 
 
+def upsert_table(database, source_table, target_table, columns):
+    """
+    使用 source_table 中的数据来更新或插入到 target_table 中。
 
+    :param database:     默认为 quant
+    :param source_table: 源表名称（字符串）
+    :param target_table: 目标表名称（字符串）
+    :param columns: 需要更新或插入的列名列表（列表）
+    """
+    # MySQL 数据库连接配置
+    password = Base_Properties.mysql_password  # 从配置文件获取密码
 
+    db_url = f'mysql+pymysql://root:{password}@localhost:3306/{database}'
+    engine = create_engine(db_url)
+
+    # 构建列名部分
+    columns_str = ", ".join(columns)
+
+    # 构建 ON DUPLICATE KEY UPDATE 部分
+    update_str = ", ".join([f"{col} = VALUES({col})" for col in columns])
+
+    # 构建 SELECT 部分
+    select_str = ", ".join(columns)
+
+    # 构建完整的 SQL 语句
+    sql = f"""
+    INSERT INTO {target_table} ({columns_str})
+    SELECT {select_str}
+    FROM {source_table}
+    ON DUPLICATE KEY UPDATE 
+    {update_str};
+    """
+
+    # 执行 SQL 语句
+    with engine.connect() as connection:
+        connection.execute(text(sql))
 
 
 

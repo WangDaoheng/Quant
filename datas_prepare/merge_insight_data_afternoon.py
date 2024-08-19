@@ -27,73 +27,7 @@ import CommonProperties.Mysql_Utils as mysql_utils
 class SaveInsightHistoryData:
 
     def __init__(self):
-
-        self.init_dirs()
-
-        self.init_variant()
-
-    def init_dirs(self):
-        """
-        关键路径初始化
-        """
-        #  文件路径_____insight文件当下数据基础路径
-        self.dir_insight_base = base_properties.dir_insight_base
-
-        #  文件路径_____insight文件历史数据基础路径
-        self.dir_history_insight_base = base_properties.dir_history_insight_base
-
-        #  文件路径_____insight文件merge数据基础路径
-        self.dir_merge_insight_base = base_properties.dir_merge_insight_base
-
-
-        ##  聚合全量的日k 数据
-        #  文件路径_____上市交易股票的当下日k线数据
-        self.dir_stock_kline_base = os.path.join(self.dir_insight_base, 'stock_kline')
-
-        #  文件路径_____上市交易股票的历史日k线数据
-        self.dir_history_stock_kline_base = os.path.join(self.dir_history_insight_base, 'stock_kline')
-
-        #  文件路径_____上市交易股票的merge日k线数据
-        self.dir_merge_stock_kline_base = os.path.join(self.dir_merge_insight_base, 'stock_kline')
-
-
-
-        #  文件路径_____关键大盘指数
-        self.dir_history_index_a_share_base = os.path.join(self.dir_history_insight_base, 'index_a_share')
-
-        #  文件路径_____涨跌停数量
-        self.dir_history_limit_summary_base = os.path.join(self.dir_history_insight_base, 'limit_summary')
-
-        #  文件路径_____内盘期货
-        self.dir_history_future_inside_base = os.path.join(self.dir_history_insight_base, 'future_inside')
-
-        #  文件路径_____筹码数据
-        self.dir_history_chouma_base = os.path.join(self.dir_history_insight_base, 'chouma')
-
-
-    def init_variant(self):
-        """
-        结果变量初始化
-        """
-        #  除去 ST|退|B 的五要素   [ymd	htsc_code	name	exchange]
-        self.stock_code_df = pd.DataFrame()
-
-        #  获取上述股票的历史数据   日K级别
-        self.kline_total_history = pd.DataFrame()
-
-        #  获得A股市场的股指 [htsc_code 	time	frequency	open	close	high	low	volume	value]
-        self.index_a_share = pd.DataFrame()
-
-        #  大盘涨跌停数量          [time	name	今日涨停	今日跌停	昨日涨停	昨日跌停	昨日涨停表现]
-        self.limit_summary_df = pd.DataFrame()
-
-        #  期货市场数据    原油  贵金属  有色
-        self.future_index = pd.DataFrame()
-
-        #  可以获取筹码的股票数据
-        self.stock_chouma_available = ""
-
-
+        pass
 
 
     @timing_decorator
@@ -106,11 +40,9 @@ class SaveInsightHistoryData:
 
         source_table = 'stock_kline_daily_insight_now'
         target_table = 'stock_kline_daily_insight'
-        columns = []
+        columns = ['htsc_code', 'ymd', 'open', 'close', 'high', 'low', 'num_trades', 'volume']
 
-
-
-        mysql_utils.upsert_table(source_table='', target_table='', columns=[], database='quant')
+        mysql_utils.upsert_table(source_table=source_table, target_table=target_table, columns=columns, database='quant')
 
 
     @timing_decorator
@@ -128,7 +60,11 @@ class SaveInsightHistoryData:
         Returns:
              index_a_share   [htsc_code 	time	frequency	open	close	high	low	volume	value]
         """
+        source_table = 'index_a_share_insight_now'
+        target_table = 'index_a_share_insight'
+        columns = ['htsc_code', 'name', 'ymd', 'open', 'close', 'high', 'low', 'volume']
 
+        mysql_utils.upsert_table(source_table=source_table, target_table=target_table, columns=columns, database='quant')
 
 
     @timing_decorator
@@ -153,10 +89,12 @@ class SaveInsightHistoryData:
                  ups_downs_limit_count_pre_up_limits_average_change_percent
 
                  [time	name	今日涨停	今日跌停	昨日涨停	昨日跌停	昨日涨停表现]
-
         """
+        source_table = 'stock_limit_summary_insight_now'
+        target_table = 'stock_limit_summary_insight'
+        columns = ['ymd', 'name', 'today_ZT', 'today_DT', 'yesterday_ZT', 'yesterday_DT', 'yesterday_ZT_rate']
 
-
+        mysql_utils.upsert_table(source_table=source_table, target_table=target_table, columns=columns, database='quant')
 
 
     @timing_decorator
@@ -185,36 +123,29 @@ class SaveInsightHistoryData:
 
         Returns:
         """
+        source_table = 'future_inside_insight_now'
+        target_table = 'future_inside_insight'
+        columns = ['htsc_code', 'ymd', 'open', 'close', 'high', 'low', 'volume', 'open_interest', 'settle']
 
+        mysql_utils.upsert_table(source_table=source_table, target_table=target_table, columns=columns, database='quant')
 
-
-    @timing_decorator
-    def get_chouma_datas(self):
-        """
-        1.获取每日的筹码分布数据
-        2.找到那些当日能够拿到筹码数据的codes
-        :return:
-        """
 
 
 
     def setup(self):
 
         #  获取当前已上市股票过去3年到今天的历史kline
-        self.merge_stock_kline()
-
+        # self.merge_stock_kline()
 
         #  获取主要股指
-        # self.get_index_a_share()
+        self.get_index_a_share()
 
         #  大盘涨跌概览
-        # self.get_limit_summary()
+        self.get_limit_summary()
 
         #  期货__内盘
-        # self.get_future_inside()
+        self.get_future_inside()
 
-        #  筹码概览
-        # self.get_chouma_datas()
 
 
 if __name__ == '__main__':
