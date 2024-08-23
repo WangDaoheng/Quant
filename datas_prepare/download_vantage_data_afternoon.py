@@ -14,6 +14,7 @@ from CommonProperties.Base_utils import timing_decorator
 from CommonProperties.logging_config import setup_logging
 
 
+
 # 配置日志处理器
 # 调用日志配置
 setup_logging()
@@ -31,6 +32,19 @@ base_url = 'https://www.alphavantage.co/query'
 headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
 }
+
+
+
+######################  mysql 配置信息  本地和远端服务器  ####################
+local_user = base_properties.local_mysql_user
+local_password = base_properties.local_mysql_password
+local_database = base_properties.local_mysql_database
+local_host = base_properties.local_mysql_host
+
+origin_user = base_properties.origin_mysql_user
+origin_password = base_properties.origin_mysql_password
+origin_database = base_properties.origin_mysql_database
+origin_host = base_properties.origin_mysql_host
 
 
 

@@ -27,12 +27,17 @@ dir_merge_vantage_base = r'F:\QDatas\merge\vantage'
 
 
 
-######################  mysql 账号信息  #############################
-mysql_password = "123456"
+######################  本地 mysql 账号信息  #############################
+local_mysql_user = 'root'
+local_mysql_password = "123456"
+local_mysql_database = 'quant'
+local_mysql_host = 'localhost'
 
-
-
-
+######################  远程 mysql 账号信息  #############################
+origin_mysql_user = "root"
+origin_mysql_password = "000000"
+origin_mysql_host = "49.4.94.223"
+origin_mysql_database = "quant"
 
 
 

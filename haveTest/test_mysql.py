@@ -4,7 +4,8 @@ from sqlalchemy import create_engine
 import time
 import pymysql
 
-
+import mysql.connector
+from mysql.connector import Error
 
 def merge_stock_kline():
     """
@@ -36,10 +37,54 @@ def merge_stock_kline():
     # combined_df.to_csv(kline_total_filedir, index=False)
 
 
+def test_Origin_Mysql():
+    host = "49.4.94.223"
+    user = "root"
+    password = "000000"
+    database = "quant"
+
+    try:
+        # 连接到MySQL服务器
+        connection = mysql.connector.connect(
+            host=host,
+            user=user,
+            password=password,
+            database=database
+        )
+
+        if connection.is_connected():
+            print("成功连接到MySQL服务器")
+
+            # 创建一个游标对象
+            cursor = connection.cursor()
+
+            # 执行 SQL 语句
+            cursor.execute("SHOW DATABASES")
+
+            # 获取结果
+            databases = cursor.fetchall()
+            print("可用的数据库:")
+            for db in databases:
+                print(db[0])
+
+    except Error as e:
+        print(f"连接错误: {e}")
+
+    finally:
+        if (connection.is_connected()):
+            cursor.close()
+            connection.close()
+            print("MySQL连接已关闭")
+
+
+
+
+
+
 
 
 if __name__ == '__main__':
-    merge_stock_kline()
+    test_Origin_Mysql()
 
 
 

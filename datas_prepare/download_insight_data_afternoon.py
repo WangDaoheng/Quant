@@ -28,7 +28,16 @@ from CommonProperties.logging_config import setup_logging
 # ************************************************************************
 # 调用日志配置
 setup_logging()
+######################  mysql 配置信息  本地和远端服务器  ####################
+local_user = base_properties.local_mysql_user
+local_password = base_properties.local_mysql_password
+local_database = base_properties.local_mysql_database
+local_host = base_properties.local_mysql_host
 
+origin_user = base_properties.origin_mysql_user
+origin_password = base_properties.origin_mysql_password
+origin_database = base_properties.origin_mysql_database
+origin_host = base_properties.origin_mysql_host
 # ************************************************************************
 
 
@@ -126,8 +135,24 @@ class SaveInsightData:
         stock_codes_listed_dir = os.path.join(self.dir_stock_codes_base, stock_codes_listed_filename)
         filtered_df.to_csv(stock_codes_listed_dir, index=False)
 
-        #  结果数据保存到mysql中
-        mysql_utils.data_from_dataframe_to_mysql(df=filtered_df, table_name="stock_code_daily_insight", database="quant", merge_on=['ymd', 'htsc_code'])
+        #  结果数据保存到 本地 mysql中
+        mysql_utils.data_from_dataframe_to_mysql(user=local_user,
+                                                 password=local_password,
+                                                 host=local_host,
+                                                 database=local_database,
+                                                 df=filtered_df,
+                                                 table_name="stock_code_daily_insight",
+                                                 merge_on=['ymd', 'htsc_code'])
+
+        #  结果数据保存到 远端 mysql中
+        mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
+                                                 password=origin_password,
+                                                 host=origin_host,
+                                                 database=origin_database,
+                                                 df=filtered_df,
+                                                 table_name="stock_code_daily_insight",
+                                                 merge_on=['ymd', 'htsc_code'])
+
 
 
     @timing_decorator
@@ -190,9 +215,23 @@ class SaveInsightData:
         stcok_kline_filedir = os.path.join(self.dir_stock_kline_base, stock_kline_filename)
         kline_total_df.to_csv(stcok_kline_filedir, index=False)
 
-        #  13.结果数据保存到mysql中
-        mysql_utils.data_from_dataframe_to_mysql(df=kline_total_df, table_name="stock_kline_daily_insight_now", database="quant", merge_on=['ymd', 'htsc_code'])
+        #  13.结果数据保存到 本地 mysql中
+        mysql_utils.data_from_dataframe_to_mysql(user=local_user,
+                                                 password=local_password,
+                                                 host=local_host,
+                                                 database=local_database,
+                                                 df=kline_total_df,
+                                                 table_name="stock_kline_daily_insight_now",
+                                                 merge_on=['ymd', 'htsc_code'])
 
+        #  14.结果数据保存到 远端 mysql中
+        mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
+                                                 password=origin_password,
+                                                 host=origin_host,
+                                                 database=origin_database,
+                                                 df=kline_total_df,
+                                                 table_name="stock_kline_daily_insight_now",
+                                                 merge_on=['ymd', 'htsc_code'])
 
 
     @timing_decorator
@@ -257,8 +296,23 @@ class SaveInsightData:
         index_filedir = os.path.join(self.dir_index_a_share_base, index_filename)
         index_df.to_csv(index_filedir, index=False)
 
-        #  结果数据保存到mysql中
-        mysql_utils.data_from_dataframe_to_mysql(df=index_df, table_name="index_a_share_insight_now", database="quant", merge_on=['ymd', 'htsc_code'])
+        #  结果数据保存到 本地 mysql中
+        mysql_utils.data_from_dataframe_to_mysql(user=local_user,
+                                                 password=local_password,
+                                                 host=local_host,
+                                                 database=local_database,
+                                                 df=index_df,
+                                                 table_name="index_a_share_insight_now",
+                                                 merge_on=['ymd', 'htsc_code'])
+
+        #  结果数据保存到 远端 mysql中
+        mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
+                                                 password=origin_password,
+                                                 host=origin_host,
+                                                 database=origin_database,
+                                                 df=index_df,
+                                                 table_name="index_a_share_insight_now",
+                                                 merge_on=['ymd', 'htsc_code'])
 
 
 
@@ -324,8 +378,23 @@ class SaveInsightData:
         test_summary_dir = os.path.join(self.dir_limit_summary_base, test_summary_filename)
         limit_summary_df.to_csv(test_summary_dir, index=False)
 
-        #  结果数据保存到mysql中
-        mysql_utils.data_from_dataframe_to_mysql(df=limit_summary_df, table_name="stock_limit_summary_insight_now", database="quant", merge_on=['ymd', 'name'])
+        #  结果数据保存到 本地 mysql中
+        mysql_utils.data_from_dataframe_to_mysql(user=local_user,
+                                                 password=local_password,
+                                                 host=local_host,
+                                                 database=local_database,
+                                                 df=limit_summary_df,
+                                                 table_name="stock_limit_summary_insight_now",
+                                                 merge_on=['ymd', 'name'])
+
+        #  结果数据保存到 远端 mysql中
+        mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
+                                                 password=origin_password,
+                                                 host=origin_host,
+                                                 database=origin_database,
+                                                 df=limit_summary_df,
+                                                 table_name="stock_limit_summary_insight_now",
+                                                 merge_on=['ymd', 'name'])
 
 
 
@@ -395,8 +464,23 @@ class SaveInsightData:
         future_inside_df_filedir = os.path.join(self.dir_future_inside_base, future_inside_df_filename)
         future_inside_df.to_csv(future_inside_df_filedir, index=False)
 
-        #  结果数据保存到mysql中
-        mysql_utils.data_from_dataframe_to_mysql(df=future_inside_df, table_name="future_inside_insight_now", database="quant", merge_on=['ymd', 'htsc_code'])
+        #  结果数据保存到 本地 mysql中
+        mysql_utils.data_from_dataframe_to_mysql(user=local_user,
+                                                 password=local_password,
+                                                 host=local_host,
+                                                 database=local_database,
+                                                 df=future_inside_df,
+                                                 table_name="future_inside_insight_now",
+                                                 merge_on=['ymd', 'htsc_code'])
+
+        #  结果数据保存到 远端 mysql中
+        mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
+                                                 password=origin_password,
+                                                 host=origin_host,
+                                                 database=origin_database,
+                                                 df=future_inside_df,
+                                                 table_name="future_inside_insight_now",
+                                                 merge_on=['ymd', 'htsc_code'])
 
 
 
@@ -461,10 +545,23 @@ class SaveInsightData:
         chouma_data_filedir = os.path.join(self.dir_chouma_base, 'chouma_data', chouma_filename)
         chouma_total_df.to_csv(chouma_data_filedir, index=False)
 
-        #  结果数据保存到mysql中
-        mysql_utils.data_from_dataframe_to_mysql(df=chouma_total_df, table_name="stock_chouma_insight", database="quant", merge_on=['ymd', 'htsc_code'])
+        #  结果数据保存到 本地 mysql中
+        mysql_utils.data_from_dataframe_to_mysql(user=local_user,
+                                                 password=local_password,
+                                                 host=local_host,
+                                                 database=local_database,
+                                                 df=chouma_total_df,
+                                                 table_name="stock_chouma_insight",
+                                                 merge_on=['ymd', 'htsc_code'])
 
-
+        #  结果数据保存到 远端 mysql中
+        mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
+                                                 password=origin_password,
+                                                 host=origin_host,
+                                                 database=origin_database,
+                                                 df=chouma_total_df,
+                                                 table_name="stock_chouma_insight",
+                                                 merge_on=['ymd', 'htsc_code'])
 
     def setup(self):
         #  登陆insight数据源
@@ -474,19 +571,19 @@ class SaveInsightData:
         self.get_stock_codes()
 
         #  获取上述股票的当月日K
-        # self.get_stock_kline()
+        self.get_stock_kline()
 
         #  获取主要股指
-        # self.get_index_a_share()
+        self.get_index_a_share()
 
         #  大盘涨跌概览
-        # self.get_limit_summary()
+        self.get_limit_summary()
 
         #  期货__内盘
-        # self.get_future_inside()
+        self.get_future_inside()
 
         #  筹码概览
-        self.get_chouma_datas()
+        # self.get_chouma_datas()
 
 
 if __name__ == '__main__':

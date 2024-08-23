@@ -25,6 +25,18 @@ setup_logging()
 
 # ************************************************************************
 
+######################  mysql 配置信息  本地和远端服务器  ####################
+local_user = base_properties.local_mysql_user
+local_password = base_properties.local_mysql_password
+local_database = base_properties.local_mysql_database
+local_host = base_properties.local_mysql_host
+
+origin_user = base_properties.origin_mysql_user
+origin_password = base_properties.origin_mysql_password
+origin_database = base_properties.origin_mysql_database
+origin_host = base_properties.origin_mysql_host
+
+
 
 class SaveInsightHistoryData:
 
@@ -175,8 +187,23 @@ class SaveInsightHistoryData:
         kline_total_filedir = os.path.join(self.dir_history_stock_kline_base, kline_total_filename)
         kline_total_df.to_csv(kline_total_filedir, index=False)
 
-        #  13.结果数据保存到mysql中
-        mysql_utils.data_from_dataframe_to_mysql(df=kline_total_df, table_name="stock_kline_daily_insight", database="quant",  merge_on=['ymd', 'htsc_code'])
+        #  13.结果数据保存到 本地 mysql中
+        mysql_utils.data_from_dataframe_to_mysql(user=local_user,
+                                                 password=local_password,
+                                                 host=local_host,
+                                                 database=local_database,
+                                                 df=kline_total_df,
+                                                 table_name="stock_kline_daily_insight",
+                                                 merge_on=['ymd', 'htsc_code'])
+
+        #  14.结果数据保存到 远端 mysql中
+        mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
+                                                 password=origin_password,
+                                                 host=origin_host,
+                                                 database=origin_database,
+                                                 df=kline_total_df,
+                                                 table_name="stock_kline_daily_insight",
+                                                 merge_on=['ymd', 'htsc_code'])
 
 
 
@@ -241,8 +268,23 @@ class SaveInsightHistoryData:
         index_filedir = os.path.join(self.dir_history_index_a_share_base, index_filename)
         index_df.to_csv(index_filedir, index=False)
 
-        #  结果数据保存到mysql中
-        mysql_utils.data_from_dataframe_to_mysql(df=index_df, table_name="index_a_share_insight", database="quant", merge_on=['ymd', 'htsc_code'])
+        #  结果数据保存到 本地 mysql中
+        mysql_utils.data_from_dataframe_to_mysql(user=local_user,
+                                                 password=local_password,
+                                                 host=local_host,
+                                                 database=local_database,
+                                                 df=index_df,
+                                                 table_name="index_a_share_insight",
+                                                 merge_on=['ymd', 'htsc_code'])
+
+        #  结果数据保存到 远端 mysql中
+        mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
+                                                 password=origin_password,
+                                                 host=origin_host,
+                                                 database=origin_database,
+                                                 df=index_df,
+                                                 table_name="index_a_share_insight",
+                                                 merge_on=['ymd', 'htsc_code'])
 
 
 
@@ -309,8 +351,23 @@ class SaveInsightHistoryData:
         summary_dir = os.path.join(self.dir_history_limit_summary_base, summary_filename)
         filter_limit_df.to_csv(summary_dir, index=False)
 
-        #  结果数据保存到mysql中
-        mysql_utils.data_from_dataframe_to_mysql(df=filter_limit_df, table_name="stock_limit_summary_insight", database="quant", merge_on=['ymd', 'name'])
+        #  结果数据保存到 本地 mysql中
+        mysql_utils.data_from_dataframe_to_mysql(user=local_user,
+                                                 password=local_password,
+                                                 host=local_host,
+                                                 database=local_database,
+                                                 df=filter_limit_df,
+                                                 table_name="stock_limit_summary_insight",
+                                                 merge_on=['ymd', 'name'])
+
+        #  结果数据保存到 远端 mysql中
+        mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
+                                                 password=origin_password,
+                                                 host=origin_host,
+                                                 database=origin_database,
+                                                 df=filter_limit_df,
+                                                 table_name="stock_limit_summary_insight",
+                                                 merge_on=['ymd', 'name'])
 
 
 
@@ -380,10 +437,23 @@ class SaveInsightHistoryData:
         future_inside_filedir = os.path.join(self.dir_history_future_inside_base, future_inside_filename)
         future_inside_df.to_csv(future_inside_filedir, index=False)
 
-        #  结果数据保存到mysql中
-        mysql_utils.data_from_dataframe_to_mysql(df=future_inside_df, table_name="future_inside_insight", database="quant", merge_on=['ymd', 'htsc_code'])
+        #  结果数据保存到 本地 mysql中
+        mysql_utils.data_from_dataframe_to_mysql(user=local_user,
+                                                 password=local_password,
+                                                 host=local_host,
+                                                 database=local_database,
+                                                 df=future_inside_df,
+                                                 table_name="future_inside_insight",
+                                                 merge_on=['ymd', 'htsc_code'])
 
-
+        #  结果数据保存到 远端 mysql中
+        mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
+                                                 password=origin_password,
+                                                 host=origin_host,
+                                                 database=origin_database,
+                                                 df=future_inside_df,
+                                                 table_name="future_inside_insight",
+                                                 merge_on=['ymd', 'htsc_code'])
 
 
 

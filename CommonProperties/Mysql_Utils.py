@@ -43,10 +43,7 @@ def check_data_written(total_rows, table_name, engine):
 
 
 
-
-
-
-def data_from_dataframe_to_mysql(df=pd.DataFrame(), table_name='', database='quant', merge_on=[]):
+def data_from_dataframe_to_mysql(user, password, host, database='quant', df=pd.DataFrame(), table_name='', merge_on=[]):
     """
     把 dataframe 类型数据写入 mysql 表里面, 同时调用了
     Args:
@@ -54,20 +51,15 @@ def data_from_dataframe_to_mysql(df=pd.DataFrame(), table_name='', database='qua
         table_name:
         database:
     Returns:
-
     """
-    # MySQL 数据库连接配置
-    password = Base_Properties.mysql_password
 
-    db_url = f'mysql+pymysql://root:{password}@localhost:3306/{database}'
+    db_url = f'mysql+pymysql://{user}:{password}@{host}:3306/{database}'
     engine = create_engine(db_url)
 
     # 将df中的ymd格式转换为DATE类型（如果merge_on包含'ymd'）
     if 'ymd' in merge_on:
         df['ymd'] = df['ymd'].apply(lambda x: pd.to_datetime(str(x), format='%Y%m%d').strftime('%Y-%m-%d'))
         ymd_range = df['ymd'].unique()
-
-
 
     # 预取数据库中这些日期的数据
     # 动态构建SELECT语句和WHERE子句
@@ -105,13 +97,6 @@ def data_from_dataframe_to_mysql(df=pd.DataFrame(), table_name='', database='qua
         except Exception as e:
             logging.error(f"写入表：{table_name}的 第 {i // chunk_size + 1} 批次时发生错误: {e}")
 
-    # 所有批次写入完成后检查数据写入完整性
-    # if check_data_written(total_rows, table_name, engine):
-    #     logging.info(f"mysql表：{table_name}  数据写入成功且无遗漏, 共 {total_rows} 行。")
-    # else:
-    #     logging.warning(f"{table_name} 数据写入可能有问题，记录数不匹配。")
-
-
 
 
 def data_from_mysql_to_dataframe(table_name='', database='quant'):
@@ -125,7 +110,7 @@ def data_from_mysql_to_dataframe(table_name='', database='quant'):
         df: 读取到的 DataFrame
     """
     # MySQL 数据库连接配置
-    password = Base_Properties.mysql_password  # 从配置文件获取密码
+    password = Base_Properties.local_mysql_password  # 从配置文件获取密码
 
     db_url = f'mysql+pymysql://root:{password}@localhost:3306/{database}'
     engine = create_engine(db_url)
@@ -170,7 +155,7 @@ def data_from_mysql_to_dataframe_latest(table_name='', database='quant'):
         df: 读取到的 DataFrame
     """
     # MySQL 数据库连接配置
-    password = Base_Properties.mysql_password  # 从配置文件获取密码
+    password = Base_Properties.local_mysql_password  # 从配置文件获取密码
 
     db_url = f'mysql+pymysql://root:{password}@localhost:3306/{database}'
     engine = create_engine(db_url)
@@ -215,7 +200,7 @@ def create_partition_if_not_exists(engine, partition_name, year, month):
         conn.execute(query)
 
 
-def upsert_table(database, source_table, target_table, columns):
+def upsert_table(user, password, host, database, source_table, target_table, columns):
     """
     使用 source_table 中的数据来更新或插入到 target_table 中。
 
@@ -224,10 +209,8 @@ def upsert_table(database, source_table, target_table, columns):
     :param target_table: 目标表名称（字符串）
     :param columns: 需要更新或插入的列名列表（列表）
     """
-    # MySQL 数据库连接配置
-    password = Base_Properties.mysql_password  # 从配置文件获取密码
 
-    db_url = f'mysql+pymysql://root:{password}@localhost:3306/{database}'
+    db_url = f'mysql+pymysql://{user}:{password}@{host}:3306/{database}'
     engine = create_engine(db_url)
 
     # 构建列名部分

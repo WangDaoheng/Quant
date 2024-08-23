@@ -7,7 +7,7 @@ import time
 
 # import dataprepare_properties
 # import dataprepare_utils
-import CommonProperties.Base_Properties as base_properties
+from CommonProperties import Base_Properties
 import CommonProperties.Base_utils as base_utils
 from CommonProperties.DateUtility import DateUtility
 from CommonProperties.Base_utils import timing_decorator
@@ -23,6 +23,20 @@ import CommonProperties.Mysql_Utils as mysql_utils
 
 # ************************************************************************
 
+######################  mysql 配置信息  本地和远端服务器  ####################
+local_user = Base_Properties.local_mysql_user
+local_password = Base_Properties.local_mysql_password
+local_database = Base_Properties.local_mysql_database
+local_host = Base_Properties.local_mysql_host
+
+origin_user = Base_Properties.origin_mysql_user
+origin_password = Base_Properties.origin_mysql_password
+origin_database = Base_Properties.origin_mysql_database
+origin_host = Base_Properties.origin_mysql_host
+
+
+
+
 
 class SaveInsightHistoryData:
 
@@ -37,12 +51,27 @@ class SaveInsightHistoryData:
         :return:
          stock_kline_df  [ymd	htsc_code	name	exchange]
         """
-
         source_table = 'stock_kline_daily_insight_now'
         target_table = 'stock_kline_daily_insight'
         columns = ['htsc_code', 'ymd', 'open', 'close', 'high', 'low', 'num_trades', 'volume']
 
-        mysql_utils.upsert_table(source_table=source_table, target_table=target_table, columns=columns, database='quant')
+        # 对本地 Mysql 做数据聚合
+        mysql_utils.upsert_table(user=local_user,
+                                 password=local_password,
+                                 host=local_host,
+                                 database=local_database,
+                                 source_table=source_table,
+                                 target_table=target_table,
+                                 columns=columns)
+
+        # 对远端 Mysql 做数据聚合
+        mysql_utils.upsert_table(user=origin_user,
+                                 password=origin_password,
+                                 host=origin_host,
+                                 database=origin_database,
+                                 source_table=source_table,
+                                 target_table=target_table,
+                                 columns=columns)
 
 
     @timing_decorator
@@ -64,8 +93,23 @@ class SaveInsightHistoryData:
         target_table = 'index_a_share_insight'
         columns = ['htsc_code', 'name', 'ymd', 'open', 'close', 'high', 'low', 'volume']
 
-        mysql_utils.upsert_table(source_table=source_table, target_table=target_table, columns=columns, database='quant')
+        # 对本地 Mysql 做数据聚合
+        mysql_utils.upsert_table(user=local_user,
+                                 password=local_password,
+                                 host=local_host,
+                                 database=local_database,
+                                 source_table=source_table,
+                                 target_table=target_table,
+                                 columns=columns)
 
+        # 对远端 Mysql 做数据聚合
+        mysql_utils.upsert_table(user=origin_user,
+                                 password=origin_password,
+                                 host=origin_host,
+                                 database=origin_database,
+                                 source_table=source_table,
+                                 target_table=target_table,
+                                 columns=columns)
 
     @timing_decorator
     def get_limit_summary(self):
@@ -94,8 +138,23 @@ class SaveInsightHistoryData:
         target_table = 'stock_limit_summary_insight'
         columns = ['ymd', 'name', 'today_ZT', 'today_DT', 'yesterday_ZT', 'yesterday_DT', 'yesterday_ZT_rate']
 
-        mysql_utils.upsert_table(source_table=source_table, target_table=target_table, columns=columns, database='quant')
+        # 对本地 Mysql 做数据聚合
+        mysql_utils.upsert_table(user=local_user,
+                                 password=local_password,
+                                 host=local_host,
+                                 database=local_database,
+                                 source_table=source_table,
+                                 target_table=target_table,
+                                 columns=columns)
 
+        # 对远端 Mysql 做数据聚合
+        mysql_utils.upsert_table(user=origin_user,
+                                 password=origin_password,
+                                 host=origin_host,
+                                 database=origin_database,
+                                 source_table=source_table,
+                                 target_table=target_table,
+                                 columns=columns)
 
     @timing_decorator
     def get_future_inside(self):
@@ -127,8 +186,23 @@ class SaveInsightHistoryData:
         target_table = 'future_inside_insight'
         columns = ['htsc_code', 'ymd', 'open', 'close', 'high', 'low', 'volume', 'open_interest', 'settle']
 
-        mysql_utils.upsert_table(source_table=source_table, target_table=target_table, columns=columns, database='quant')
+        # 对本地 Mysql 做数据聚合
+        mysql_utils.upsert_table(user=local_user,
+                                 password=local_password,
+                                 host=local_host,
+                                 database=local_database,
+                                 source_table=source_table,
+                                 target_table=target_table,
+                                 columns=columns)
 
+        # 对远端 Mysql 做数据聚合
+        mysql_utils.upsert_table(user=origin_user,
+                                 password=origin_password,
+                                 host=origin_host,
+                                 database=origin_database,
+                                 source_table=source_table,
+                                 target_table=target_table,
+                                 columns=columns)
 
 
 
