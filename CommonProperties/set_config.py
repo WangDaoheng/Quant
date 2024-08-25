@@ -1,9 +1,14 @@
 
-# logging_config.py
+# set_config.py
 import logging
 import colorlog
 
-def setup_logging():
+
+import CommonProperties.Base_Properties as base_properties
+
+
+
+def setup_logging_config():
     # 获取并配置 root logger
     logger = logging.getLogger()
 
@@ -27,7 +32,6 @@ def setup_logging():
         logger.addHandler(handler)
 
     logger.setLevel(logging.INFO)
-
 
 
 

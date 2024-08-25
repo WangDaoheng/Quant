@@ -3,6 +3,7 @@ import sys
 from datetime import datetime
 import time
 import traceback
+import inspect
 from functools import wraps
 import shutil
 import pandas as pd
@@ -10,10 +11,10 @@ import logging
 import requests
 
 
-from CommonProperties.logging_config import setup_logging
+from CommonProperties.set_config import setup_logging_config
 
 # 调用日志配置
-setup_logging()
+setup_logging_config()
 
 def save_out_filename(filehead, file_type):
     """
@@ -79,6 +80,14 @@ def collect_stock_items(input_list):
 def timing_decorator(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
+        # 获取当前函数所在的文件名和函数名
+        current_frame = inspect.currentframe()
+        caller_frame = inspect.getouterframes(current_frame, 2)
+        file_name = os.path.basename(caller_frame[1].filename)
+
+        # 在函数执行前打印开始日志
+        logging.info(f"文件: {file_name} 函数: {func.__name__} 开始执行...")
+
         start_time = time.time()
         try:
             result = func(*args, **kwargs)
@@ -88,10 +97,11 @@ def timing_decorator(func):
             raise e  # 重新抛出异常，保持原始行为
         end_time = time.time()
         execution_time = end_time - start_time
-        logging.info(f"函数: {func.__name__} 执行时间: {execution_time:.2f} 秒")
+
+        # 在函数执行后打印执行时间日志
+        logging.info(f"文件: {file_name} 函数: {func.__name__} 执行时间: {execution_time:.2f} 秒")
         return result
     return wrapper
-
 
 
 def copy_and_rename_file(src_file_path, dest_dir, new_name):
@@ -139,6 +149,7 @@ def process_in_batches(df, batch_size, processing_function, **kwargs):
     for i, batch_df in enumerate(get_batches(df, batch_size), start=1):
         sys.stdout.write(f"\r当前执行 {processing_function.__name__} 的 第 {i} 次循环，总共 {total_batches} 个批次")
         sys.stdout.flush()
+        time.sleep(0.01)
 
         # 直接调用处理函数，只传递 **kwargs
         result = processing_function(**kwargs)

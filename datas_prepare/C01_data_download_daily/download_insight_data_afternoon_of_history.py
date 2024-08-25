@@ -12,7 +12,7 @@ import CommonProperties.Base_utils as base_utils
 import CommonProperties.Mysql_Utils as mysql_utils
 from CommonProperties.DateUtility import DateUtility
 from CommonProperties.Base_utils import timing_decorator
-from CommonProperties.logging_config import setup_logging
+from CommonProperties.set_config import setup_logging_config
 
 # ************************************************************************
 # 本代码的作用是下午收盘后下载 insight 行情源数据, 本地保存,用于后续分析
@@ -21,7 +21,7 @@ from CommonProperties.logging_config import setup_logging
 # 2.筹码分布数据   get_chouma_datas()
 
 # 调用日志配置
-setup_logging()
+setup_logging_config()
 
 # ************************************************************************
 
@@ -142,8 +142,8 @@ class SaveInsightHistoryData:
         time_start_date = datetime.strptime(time_start_date, '%Y%m%d')
         time_end_date = datetime.strptime(time_end_date, '%Y%m%d')
 
-        #  2.每个批次取 100 个元素
-        batch_size = 100
+        #  2.每个批次取 40 个元素
+        batch_size = 40
 
         #  3.这是一个切分批次的内部函数
         def get_batches(df, batch_size):
@@ -161,6 +161,7 @@ class SaveInsightHistoryData:
             #  一种非常巧妙的循环打印日志的方式
             sys.stdout.write(f"\r当前执行get_stock_kline的 第 {i} 次循环，总共 {total_batches} 个批次")
             sys.stdout.flush()
+            time.sleep(0.01)
 
             index_list = batch_df['htsc_code'].tolist()
             res = get_kline(htsc_code=index_list, time=[time_start_date, time_end_date], frequency="daily", fq="none")
@@ -465,7 +466,7 @@ class SaveInsightHistoryData:
         self.get_stock_codes()
 
         #  获取当前已上市股票过去3年到今天的历史kline
-        # self.get_stock_kline()
+        self.get_stock_kline()
 
         #  获取主要股指
         self.get_index_a_share()

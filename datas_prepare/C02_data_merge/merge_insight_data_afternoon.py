@@ -38,7 +38,7 @@ origin_host = Base_Properties.origin_mysql_host
 
 
 
-class SaveInsightHistoryData:
+class MergeInsightData:
 
     def __init__(self):
         pass
@@ -111,8 +111,9 @@ class SaveInsightHistoryData:
                                  target_table=target_table,
                                  columns=columns)
 
+
     @timing_decorator
-    def get_limit_summary(self):
+    def merge_limit_summary(self):
         """
         大盘涨跌停分析数据
         Args:
@@ -156,8 +157,9 @@ class SaveInsightHistoryData:
                                  target_table=target_table,
                                  columns=columns)
 
+
     @timing_decorator
-    def get_future_inside(self):
+    def merge_future_inside(self):
         """
         期货市场数据
         贵金属,  有色数据
@@ -205,23 +207,22 @@ class SaveInsightHistoryData:
                                  columns=columns)
 
 
-
     def setup(self):
 
         #  获取当前已上市股票过去3年到今天的历史kline
-        # self.merge_stock_kline()
+        self.merge_stock_kline()
 
         #  获取主要股指
-        self.get_index_a_share()
+        self.merge_index_a_share()
 
         #  大盘涨跌概览
-        self.get_limit_summary()
+        self.merge_limit_summary()
 
         #  期货__内盘
-        self.get_future_inside()
+        self.merge_future_inside()
 
 
 
 if __name__ == '__main__':
-    save_insight_data = SaveInsightHistoryData()
+    save_insight_data = MergeInsightData()
     save_insight_data.setup()

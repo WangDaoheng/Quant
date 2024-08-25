@@ -6,10 +6,10 @@ import logging
 
 
 from CommonProperties import Base_Properties
-from CommonProperties.logging_config import setup_logging
+from CommonProperties.set_config import setup_logging_config
 
-# 调用日志配置
-setup_logging()
+# 调用日志配置   这里要注释掉，不然日志重复打印
+# setup_logging()
 
 
 def check_data_written(total_rows, table_name, engine):
@@ -61,6 +61,7 @@ def data_from_dataframe_to_mysql(user, password, host, database='quant', df=pd.D
         df['ymd'] = df['ymd'].apply(lambda x: pd.to_datetime(str(x), format='%Y%m%d').strftime('%Y-%m-%d'))
         ymd_range = df['ymd'].unique()
 
+
     # 预取数据库中这些日期的数据
     # 动态构建SELECT语句和WHERE子句
     select_columns = ", ".join(merge_on)
@@ -81,8 +82,11 @@ def data_from_dataframe_to_mysql(user, password, host, database='quant', df=pd.D
 
     total_rows = new_data.shape[0]
 
+    # 把 df 中的ymd列还原回去
+    df['ymd'] = df['ymd'].apply(lambda x: pd.to_datetime(x).strftime('%Y%m%d'))
+
     if total_rows == 0:
-        logging.info(f"所有数据已存在，无需插入新的数据到 {table_name} 表中。")
+        logging.info(f"所有数据已存在，无需插入新的数据到 {host} 的 {table_name} 表中。")
         return
 
     # 将结果批量写入 MySQL 数据库
@@ -95,11 +99,11 @@ def data_from_dataframe_to_mysql(user, password, host, database='quant', df=pd.D
             chunk.to_sql(name=table_name, con=engine, if_exists='append', index=False)
 
         except Exception as e:
-            logging.error(f"写入表：{table_name}的 第 {i // chunk_size + 1} 批次时发生错误: {e}")
+            logging.error(f"写入{host} 的表：{table_name}的 第 {i // chunk_size + 1} 批次时发生错误: {e}")
 
 
 
-def data_from_mysql_to_dataframe(table_name='', database='quant'):
+def data_from_mysql_to_dataframe(user, password, host, database='quant', table_name=''):
     """
     从 MySQL 表中读取数据到 DataFrame，同时进行最终的数据完整性检查和日志记录
     Args:
@@ -109,10 +113,8 @@ def data_from_mysql_to_dataframe(table_name='', database='quant'):
     Returns:
         df: 读取到的 DataFrame
     """
-    # MySQL 数据库连接配置
-    password = Base_Properties.local_mysql_password  # 从配置文件获取密码
 
-    db_url = f'mysql+pymysql://root:{password}@localhost:3306/{database}'
+    db_url = f'mysql+pymysql://{user}:{password}@{host}:3306/{database}'
     engine = create_engine(db_url)
 
     # 读取 MySQL 表中的记录总数
@@ -133,7 +135,7 @@ def data_from_mysql_to_dataframe(table_name='', database='quant'):
 
         # 最终的数据完整性检查
         if df.shape[0] == total_rows:
-            logging.info(f"mysql表：{table_name} 数据读取成功且无遗漏，共 {total_rows} 行。")
+            logging.info(f"{host} 的 mysql表：{table_name} 数据读取成功且无遗漏，共 {total_rows} 行。")
         else:
             logging.warning(f"{table_name} 数据读取可能有问题，预期记录数为 {total_rows}，实际读取记录数为 {df.shape[0]}。")
 
@@ -144,7 +146,7 @@ def data_from_mysql_to_dataframe(table_name='', database='quant'):
     return df
 
 
-def data_from_mysql_to_dataframe_latest(table_name='', database='quant'):
+def data_from_mysql_to_dataframe_latest(user, password, host, database='quant', table_name=''):
     """
     从 MySQL 表中读取最新一天的数据到 DataFrame，同时进行最终的数据完整性检查和日志记录
     Args:
@@ -154,10 +156,8 @@ def data_from_mysql_to_dataframe_latest(table_name='', database='quant'):
     Returns:
         df: 读取到的 DataFrame
     """
-    # MySQL 数据库连接配置
-    password = Base_Properties.local_mysql_password  # 从配置文件获取密码
 
-    db_url = f'mysql+pymysql://root:{password}@localhost:3306/{database}'
+    db_url = f'mysql+pymysql://{user}:{password}@{host}:3306/{database}'
     engine = create_engine(db_url)
 
     try:
@@ -203,6 +203,7 @@ def create_partition_if_not_exists(engine, partition_name, year, month):
 def upsert_table(user, password, host, database, source_table, target_table, columns):
     """
     使用 source_table 中的数据来更新或插入到 target_table 中。
+    这是一种追加取并集的方式
 
     :param database:     默认为 quant
     :param source_table: 源表名称（字符串）
@@ -234,6 +235,110 @@ def upsert_table(user, password, host, database, source_table, target_table, col
     # 执行 SQL 语句
     with engine.connect() as connection:
         connection.execute(text(sql))
+
+
+def cross_server_upsert(source_user, source_password, source_host, source_database,
+                        target_user, target_password, target_host, target_database,
+                        source_table, target_table, columns):
+    """
+    跨服务器迁移数据，并在目标服务器上实现数据的并集。
+    这是一种追加取并集的方式
+
+    :param source_user:      源服务器的数据库用户名
+    :param source_password:  源服务器的数据库密码
+    :param source_host:      源服务器的主机地址
+    :param source_database:  源服务器的数据库名称
+    :param target_user:      目标服务器的数据库用户名
+    :param target_password:  目标服务器的数据库密码
+    :param target_host:      目标服务器的主机地址
+    :param target_database:  目标服务器的数据库名称
+    :param source_table:     源表名称（字符串）
+    :param target_table:     目标表名称（字符串）
+    :param columns:          需要更新或插入的列名列表（列表）
+    """
+
+    # 源服务器连接
+    source_db_url = f'mysql+pymysql://{source_user}:{source_password}@{source_host}:3306/{source_database}'
+    source_engine = create_engine(source_db_url)
+
+    # 目标服务器连接
+    target_db_url = f'mysql+pymysql://{target_user}:{target_password}@{target_host}:3306/{target_database}'
+    target_engine = create_engine(target_db_url)
+
+    # 从源服务器读取数据
+    df = pd.read_sql_table(source_table, source_engine)
+
+    # 在目标服务器创建临时表并插入数据
+    temp_table_name = 'temp_source_data'
+    df.to_sql(name=temp_table_name, con=target_engine, if_exists='replace', index=False)
+
+    # 构建列名部分
+    columns_str = ", ".join(columns)
+
+    # 构建 ON DUPLICATE KEY UPDATE 部分
+    update_str = ", ".join([f"{col} = VALUES({col})" for col in columns])
+
+    # 构建 SELECT 部分
+    select_str = ", ".join(columns)
+
+    # 构建完整的 SQL 语句
+    sql = f"""
+    INSERT INTO {target_table} ({columns_str})
+    SELECT {select_str}
+    FROM {temp_table_name}
+    ON DUPLICATE KEY UPDATE 
+    {update_str};
+    """
+
+    # 在目标服务器上执行合并操作
+    with target_engine.connect() as connection:
+        connection.execute(text(sql))
+        connection.execute(f"DROP TABLE {temp_table_name};")
+
+    print(f"数据已从 {source_table} 迁移并合并到 {target_table}。")
+
+
+
+def full_replace_migrate(source_host, source_db_url, target_host, target_db_url, table_name):
+    """
+    将本地 MySQL 数据库中的表数据导入到远程 MySQL 数据库中。
+    整体暴力迁移，全删全插
+
+    Args:
+        source_host   (str): 源端 主机
+        source_db_url (str): 源端 MySQL 数据库的连接 URL
+        target_host   (str): 目标 主机
+        target_db_url (str): 目标 MySQL 数据库的连接 URL
+        table_name    (str): 要迁移的表名
+    """
+    # 创建 源端 数据库的 SQLAlchemy 引擎
+    source_engine = create_engine(source_db_url)
+
+    # 创建 目标 数据库的 SQLAlchemy 引擎
+    target_engine = create_engine(target_db_url)
+
+    try:
+        # 从本地 MySQL 数据库读取数据
+        df = pd.read_sql_table(table_name, source_engine)
+        print(f"成功从{source_host} mysql库读取表 {table_name} 数据。")
+
+        # 将数据写入远程 MySQL 数据库
+        df.to_sql(name=table_name, con=target_engine, if_exists='replace', index=False)
+        print(f"成功将表 {table_name} 数据写入{target_host} mysql库。")
+
+    except Exception as e:
+        print(f"数据迁移过程中发生错误: {e}")
+
+
+
+
+
+
+
+
+
+
+
 
 
 

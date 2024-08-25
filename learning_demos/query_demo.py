@@ -194,18 +194,19 @@ def get_industries_demo():
     """
 
     result = get_industries(classified='zjh_l2')
+    result.to_csv(r'G:\quant_test\zjh_l2.csv', index=False)
     print(result)
 
 
 # 行业分类-按标的查询
 def get_industry_demo():
     """
-    :param htsc_code: 华泰证券代码
+    :param htsc_code: 华泰证券代码, 貌似只能以 str 形式逐一查询股票的行业代码
     :param classified: 行业分类 申万行业划分“sw”，证监会行业划分“zjh”，默认为申万行业划分
     :return: pandas.DataFrame
     """
-
     result = get_industry(htsc_code='601688.SH', classified='sw')
+    result.to_csv(r'G:\quant_test\one_stock.csv', index=False)
     print(result)
 
 
@@ -216,8 +217,7 @@ def get_industry_stocks_demo():
     :param classified: 行业分类 申万行业划分“sw”，证监会行业划分“zjh”，默认为申万行业划分
     :return: pandas.DataFrame
     """
-
-    result = get_industry_stocks(industry_code='C26', classified='zjh')
+    result = get_industry_stocks(industry_code='240601', classified='sw')
     print(result)
 
 
@@ -1440,13 +1440,13 @@ def main():
     # get_kline_demo()                          # K线数据
     # get_derived_demo()                        # 行情衍生指标
     # get_trade_distribution_demo()             # 成交分价
-    get_chip_distribution_demo()              # 筹码分布
+    # get_chip_distribution_demo()              # 筹码分布
     # chouma()
     # get_money_flow_demo()                     # 资金流向
     # get_change_summary_demo()                 # 涨跌分析
     # get_billboard_demo()                      # 指标排行榜
     # get_industries_demo()                     # 行业分类-按行业查询
-    # get_industry_demo()                       # 行业分类-按标的查询
+    get_industry_demo()                       # 行业分类-按标的查询
     # get_industry_stocks_demo()                # 行业分类-按行业代码查询
     # get_stock_info_demo()                     # 股票基础信息-按证券ID查询
     # get_all_stocks_info_demo()                # 股票基础信息-按市场查询
@@ -1507,3 +1507,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+

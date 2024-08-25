@@ -11,13 +11,13 @@ import CommonProperties.Base_Properties as base_properties
 import CommonProperties.Base_utils as base_utils
 import CommonProperties.Mysql_Utils as mysql_utils
 from CommonProperties.Base_utils import timing_decorator
-from CommonProperties.logging_config import setup_logging
+from CommonProperties.set_config import setup_logging_config
 
 
 
 # 配置日志处理器
 # 调用日志配置
-setup_logging()
+setup_logging_config()
 
 #  vantage  测试环境文件保存目录
 vantage_test_dir = os.path.join(base_properties.dir_vantage_base, 'test')
@@ -120,8 +120,24 @@ class SaveVantageData:
         US_stock_filedir = os.path.join(self.dir_US_stock_base, US_stock_filename)
         res_df.to_csv(US_stock_filedir, index=False)
 
-        #  结果数据保存到mysql中
-        mysql_utils.data_from_dataframe_to_mysql(df=res_df, table_name="US_stock_daily_vantage", database="quant")
+        #  结果数据保存到 本地 mysql中
+        mysql_utils.data_from_dataframe_to_mysql(user=local_user,
+                                                 password=local_password,
+                                                 host=local_host,
+                                                 database=local_database,
+                                                 df=res_df,
+                                                 table_name="US_stock_daily_vantage",
+                                                 merge_on=['ymd', 'name'])
+
+        #  结果数据保存到 远端 mysql中
+        mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
+                                                 password=origin_password,
+                                                 host=origin_host,
+                                                 database=origin_database,
+                                                 df=res_df,
+                                                 table_name="US_stock_daily_vantage",
+                                                 merge_on=['ymd', 'name'])
+
 
     def get_USD_FX_core(self, url, flag):
         """
@@ -216,8 +232,24 @@ class SaveVantageData:
         USD_FX_detail_filedir = os.path.join(self.dir_USD_FX_detail_base, USD_FX_detail_filename)
         res_df.to_csv(USD_FX_detail_filedir, index=False)
 
-        #  将汇率明细写入mysql
-        mysql_utils.data_from_dataframe_to_mysql(df=res_df, table_name="exchange_rate_vantage_detail", database="quant")
+        #  将汇率明细写入 本地 mysql
+        mysql_utils.data_from_dataframe_to_mysql(user=local_user,
+                                                 password=local_password,
+                                                 host=local_host,
+                                                 database=local_database,
+                                                 df=res_df,
+                                                 table_name="exchange_rate_vantage_detail",
+                                                 merge_on=["ymd", "name"])
+
+        #  将汇率明细写入 远端 mysql
+        mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
+                                                 password=origin_password,
+                                                 host=origin_host,
+                                                 database=origin_database,
+                                                 df=res_df,
+                                                 table_name="exchange_rate_vantage_detail",
+                                                 merge_on=["ymd", "name"])
+
 
         #  --------------------------  开始计算美元指数  ------------------------------
         # 获取唯一的时间戳
@@ -250,12 +282,23 @@ class SaveVantageData:
         USD_FX_filedir = os.path.join(self.dir_USD_FX_base, USD_FX_filename)
         dxy_df.to_csv(USD_FX_filedir, index=False)
 
-        #  将美元指数写入mysql
-        mysql_utils.data_from_dataframe_to_mysql(df=res_df, table_name="exchange_DXY_vantage", database="quant")
+        #  将汇率明细写入 本地 mysql
+        mysql_utils.data_from_dataframe_to_mysql(user=local_user,
+                                                 password=local_password,
+                                                 host=local_host,
+                                                 database=local_database,
+                                                 df=res_df,
+                                                 table_name="exchange_DXY_vantage",
+                                                 merge_on=["ymd", "name"])
 
-
-
-
+        #  将汇率明细写入 远端 mysql
+        mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
+                                                 password=origin_password,
+                                                 host=origin_host,
+                                                 database=origin_database,
+                                                 df=res_df,
+                                                 table_name="exchange_DXY_vantage",
+                                                 merge_on=["ymd", "name"])
 
 
     @timing_decorator
