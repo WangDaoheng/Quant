@@ -208,7 +208,7 @@ class SaveInsightData:
             time.sleep(0.01)
 
             index_list = batch_df['htsc_code'].tolist()
-            res = get_kline(htsc_code=index_list, time=[time_start_date, time_end_date], frequency="daily", fq="none")
+            res = get_kline(htsc_code=index_list, time=[time_start_date, time_end_date], frequency="daily", fq="pre")
             kline_total_df = pd.concat([kline_total_df, res], ignore_index=True)
 
         #  7.循环结束后打印换行符，以确保后续输出在新行开始
@@ -288,7 +288,7 @@ class SaveInsightData:
         index_df = pd.DataFrame()
 
         res = get_kline(htsc_code=index_list, time=[start_date, end_date],
-                        frequency="daily", fq="none")
+                        frequency="daily", fq="pre")
 
         index_df = pd.concat([index_df, res], ignore_index=True)
 
@@ -665,6 +665,7 @@ class SaveInsightData:
         for stock_code in index_list:
             res = get_industry(htsc_code=stock_code, classified='sw')
             stock_in_industry_df = pd.concat([stock_in_industry_df, res], ignore_index=True)
+            time.sleep(0.01)
 
         #  4.插入ymd
         stock_in_industry_df.insert(0, 'ymd', time_today)
@@ -716,19 +717,19 @@ class SaveInsightData:
         self.get_stock_codes()
 
         #  获取上述股票的当月日K
-        # self.get_stock_kline()
+        self.get_stock_kline()
 
         #  获取主要股指
-        # self.get_index_a_share()
+        self.get_index_a_share()
 
         #  大盘涨跌概览
-        # self.get_limit_summary()
+        self.get_limit_summary()
 
         #  期货__内盘
-        # self.get_future_inside()
+        self.get_future_inside()
 
         #  筹码概览
-        # self.get_chouma_datas()
+        self.get_chouma_datas()
 
         #  获取A股的行业分类数据, 是行业数据
         self.get_Ashare_industry_overview()

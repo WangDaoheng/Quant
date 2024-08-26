@@ -743,12 +743,13 @@ def get_shareholder_num_demo():
 
     htsc_code = '601688.SH'
     name = '华泰证券'
-    end_date_start_date = "2012-01-14"
-    end_date_end_date = "2022-10-27"
+    end_date_start_date = "2020-01-01"
+    end_date_end_date = "2024-08-27"
     end_date_start_date = datetime.strptime(end_date_start_date, '%Y-%m-%d')
     end_date_end_date = datetime.strptime(end_date_end_date, '%Y-%m-%d')
 
     result = get_shareholder_num(htsc_code=htsc_code, name=name, end_date=[end_date_start_date, end_date_end_date])
+    result.to_csv(r'G:\quant_test\shareholders.csv')
     print(result)
 
 
@@ -1446,7 +1447,7 @@ def main():
     # get_change_summary_demo()                 # 涨跌分析
     # get_billboard_demo()                      # 指标排行榜
     # get_industries_demo()                     # 行业分类-按行业查询
-    get_industry_demo()                       # 行业分类-按标的查询
+    # get_industry_demo()                       # 行业分类-按标的查询
     # get_industry_stocks_demo()                # 行业分类-按行业代码查询
     # get_stock_info_demo()                     # 股票基础信息-按证券ID查询
     # get_all_stocks_info_demo()                # 股票基础信息-按市场查询
@@ -1469,7 +1470,7 @@ def main():
     # get_company_info_demo()                   # 公司概况
     # get_allotment_share_demo()                # 股票配售
     # get_capital_structure_demo()              # 股本结构
-    # get_shareholder_num_demo()                # 股东人数
+    get_shareholder_num_demo()                # 股东人数
     # get_additional_share_demo()               # 股票增发
     # get_dividend_demo()                       # 股票分红
     # get_shareholders_top10_demo()             # 十大股东

@@ -164,7 +164,7 @@ class SaveInsightHistoryData:
             time.sleep(0.01)
 
             index_list = batch_df['htsc_code'].tolist()
-            res = get_kline(htsc_code=index_list, time=[time_start_date, time_end_date], frequency="daily", fq="none")
+            res = get_kline(htsc_code=index_list, time=[time_start_date, time_end_date], frequency="daily", fq="pre")
             kline_total_df = pd.concat([kline_total_df, res], ignore_index=True)
 
         #  7.循环结束后打印换行符，以确保后续输出在新行开始
@@ -244,7 +244,7 @@ class SaveInsightHistoryData:
         index_df = pd.DataFrame()
 
         res = get_kline(htsc_code=index_list, time=[time_start_date, time_end_date],
-                        frequency="daily", fq="none")
+                        frequency="daily", fq="pre")
 
         index_df = pd.concat([index_df, res], ignore_index=True)
 

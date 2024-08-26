@@ -121,29 +121,29 @@ def append_local_to_origin_mysql():
 
     columns = ['htsc_code','ymd','exchange','last','prev_close','total_share','a_total_share','a_listed_share','listed_share','restricted_share','cost_5pct','cost_15pct','cost_50pct','cost_85pct','cost_95pct','avg_cost','max_cost','min_cost','winner_rate','diversity','pre_winner_rate','restricted_avg_cost','restricted_max_cost','restricted_min_cost','large_shareholders_avg_cost','large_shareholders_total_share','large_shareholders_total_share_pct']
 
-    mysql_utils.cross_server_upsert(source_user=origin_user,
-                                    source_password=origin_password,
-                                    source_host=origin_host,
-                                    source_database=origin_database,
-                                    target_user=local_user,
-                                    target_password=local_password,
-                                    target_host=local_host,
-                                    target_database=local_database,
-                                    source_table=sourceTable,
-                                    target_table=targetTable,
-                                    columns=columns)
-
-    # mysql_utils.cross_server_upsert(source_user=local_user,
-    #                                 source_password=local_password,
-    #                                 source_host=local_host,
-    #                                 source_database=local_database,
-    #                                 target_user=origin_user,
-    #                                 target_password=origin_password,
-    #                                 target_host=origin_host,
-    #                                 target_database=origin_database,
+    # mysql_utils.cross_server_upsert(source_user=origin_user,
+    #                                 source_password=origin_password,
+    #                                 source_host=origin_host,
+    #                                 source_database=origin_database,
+    #                                 target_user=local_user,
+    #                                 target_password=local_password,
+    #                                 target_host=local_host,
+    #                                 target_database=local_database,
     #                                 source_table=sourceTable,
     #                                 target_table=targetTable,
     #                                 columns=columns)
+
+    mysql_utils.cross_server_upsert(source_user=local_user,
+                                    source_password=local_password,
+                                    source_host=local_host,
+                                    source_database=local_database,
+                                    target_user=origin_user,
+                                    target_password=origin_password,
+                                    target_host=origin_host,
+                                    target_database=origin_database,
+                                    source_table=sourceTable,
+                                    target_table=targetTable,
+                                    columns=columns)
 
 
 
