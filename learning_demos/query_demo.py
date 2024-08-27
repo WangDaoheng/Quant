@@ -741,15 +741,17 @@ def get_shareholder_num_demo():
     return: pandas.DataFrame
     """
 
-    htsc_code = '601688.SH'
+    htsc_code = ['000001.SZ', '601318.SH']
+    # htsc_code = '000001.SZ'
+
     name = '华泰证券'
-    end_date_start_date = "2020-01-01"
-    end_date_end_date = "2024-08-27"
+    end_date_start_date = "2021-01-01"
+    end_date_end_date = "2024-08-28"
     end_date_start_date = datetime.strptime(end_date_start_date, '%Y-%m-%d')
     end_date_end_date = datetime.strptime(end_date_end_date, '%Y-%m-%d')
 
-    result = get_shareholder_num(htsc_code=htsc_code, name=name, end_date=[end_date_start_date, end_date_end_date])
-    result.to_csv(r'G:\quant_test\shareholders.csv')
+    result = get_shareholder_num(htsc_code=htsc_code, end_date=[end_date_start_date, end_date_end_date])
+    result.to_csv(r'G:\quant_test\shareholder-06.csv')
     print(result)
 
 
