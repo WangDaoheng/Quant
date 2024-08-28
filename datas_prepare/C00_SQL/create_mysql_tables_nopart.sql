@@ -193,6 +193,31 @@ CREATE TABLE quant.astock_industry_detail (
    ,UNIQUE KEY unique_industry_code (ymd, htsc_code)
 );
 
+--1.9
+------------------  shareholder_num   个股的股东数
+CREATE TABLE quant.shareholder_num_now (
+      htsc_code              varchar(100)
+     ,name                   varchar(100)
+     ,ymd                    DATE
+     ,total_sh               DOUBLE
+     ,avg_share              DOUBLE
+     ,pct_of_total_sh        DOUBLE
+     ,pct_of_avg_sh          DOUBLE
+   ,UNIQUE KEY unique_industry_code (ymd, htsc_code)
+ );
+
+
+CREATE TABLE quant.shareholder_num (
+      htsc_code              varchar(100)
+     ,name                   varchar(100)
+     ,ymd                    DATE
+     ,total_sh               DOUBLE
+     ,avg_share              DOUBLE
+     ,pct_of_total_sh        DOUBLE
+     ,pct_of_avg_sh          DOUBLE
+   ,UNIQUE KEY unique_industry_code (ymd, htsc_code)
+ );
+
 
 
 --2.1

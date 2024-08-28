@@ -1,9 +1,12 @@
 import os
 import sys
+import io
 from insight_python.com.insight import common
 from insight_python.com.insight.query import *
 from insight_python.com.insight.market_service import market_service
 from datetime import datetime
+import contextlib
+
 import time
 import logging
 
@@ -723,7 +726,7 @@ class SaveInsightData:
                                                  table_name="astock_industry_detail",
                                                  merge_on=['ymd', 'htsc_code'])
 
-
+    @timing_decorator
     def get_shareholder_num(self):
         """
         获取 股东数
@@ -743,17 +746,31 @@ class SaveInsightData:
 
         #  3.请求insight  个股股东数   数据
         code_list = self.stock_code_df['htsc_code'].tolist()
+        total_xunhuan = len(code_list)
+        i = 1
+        valid_i = 1
         for stock_code in code_list:
+            # 屏蔽 stdout 和 stderr
+            with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+                res = get_shareholder_num(htsc_code=stock_code, end_date=[time_start_date, time_end_date])
 
-            res = get_shareholder_num(htsc_code=stock_code, end_date=[time_start_date, time_end_date])
-            shareholder_num_df = pd.concat([shareholder_num_df, res], ignore_index=True)
+            if res is not None:
+                shareholder_num_df = pd.concat([shareholder_num_df, res], ignore_index=True)
+                sys.stdout.write(f"\r当前执行 get_shareholder_num  第 {i} 次循环，总共 {total_xunhuan} 个批次, {valid_i}个有效股东数据")
+                sys.stdout.flush()
+                valid_i += 1
+
+            i += 1
+
+        sys.stdout.write("\n")
+
 
         #  4.日期格式转换
         shareholder_num_df.rename(columns={'end_date': 'ymd'}, inplace=True)
         shareholder_num_df['ymd'] = pd.to_datetime(shareholder_num_df['ymd']).dt.strftime('%Y%m%d')
 
         #  5.声明所有的列名，去除多余列
-        shareholder_num_df = shareholder_num_df[['htsc_code', 'name', 'end_date', 'total_sh', 'avg_share', 'pct_of_total_sh', 'pct_of_avg_sh']]
+        shareholder_num_df = shareholder_num_df[['htsc_code', 'name', 'ymd', 'total_sh', 'avg_share', 'pct_of_total_sh', 'pct_of_avg_sh']]
 
         #  6.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
         shareholder_num_df = shareholder_num_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
@@ -764,7 +781,7 @@ class SaveInsightData:
 
         #  8.本地csv文件的落盘保存
         shareholder_num_filename = base_utils.save_out_filename(filehead='shareholder_num', file_type='csv')
-        shareholder_num_filedir = os.path.join(self.dir_industry_overview_base, shareholder_num_filename)
+        shareholder_num_filedir = os.path.join(self.dir_shareholder_num_base, shareholder_num_filename)
         shareholder_num_df.to_csv(shareholder_num_filedir, index=False)
 
         #  9.结果数据保存到 本地 mysql中
@@ -773,7 +790,7 @@ class SaveInsightData:
                                                  host=local_host,
                                                  database=local_database,
                                                  df=shareholder_num_df,
-                                                 table_name="astock_industry_overview",
+                                                 table_name="shareholder_num_now",
                                                  merge_on=['ymd', 'htsc_code'])
 
         #  10.结果数据保存到 远端 mysql中
@@ -782,10 +799,8 @@ class SaveInsightData:
                                                  host=origin_host,
                                                  database=origin_database,
                                                  df=shareholder_num_df,
-                                                 table_name="astock_industry_overview",
+                                                 table_name="shareholder_num_now",
                                                  merge_on=['ymd', 'htsc_code'])
-
-
 
 
     @timing_decorator
@@ -797,25 +812,28 @@ class SaveInsightData:
         self.get_stock_codes()
 
         #  获取上述股票的当月日K
-        self.get_stock_kline()
+        # self.get_stock_kline()
 
         #  获取主要股指
-        self.get_index_a_share()
+        # self.get_index_a_share()
 
         #  大盘涨跌概览
-        self.get_limit_summary()
+        # self.get_limit_summary()
 
         #  期货__内盘
-        self.get_future_inside()
+        # self.get_future_inside()
 
         #  筹码概览
-        self.get_chouma_datas()
+        # self.get_chouma_datas()
 
         #  获取A股的行业分类数据, 是行业数据
-        self.get_Ashare_industry_overview()
+        # self.get_Ashare_industry_overview()
 
         #  获取A股的行业分类数据, 是stock_code & industry 关联后的大表数据
-        self.get_Ashare_industry_detail()
+        # self.get_Ashare_industry_detail()
+
+        #  个股股东数
+        self.get_shareholder_num()
 
 
 

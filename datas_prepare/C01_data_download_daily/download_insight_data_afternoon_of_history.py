@@ -1,5 +1,7 @@
 import os
 import sys
+import contextlib
+import io
 from insight_python.com.insight import common
 from insight_python.com.insight.query import *
 from insight_python.com.insight.market_service import market_service
@@ -70,6 +72,10 @@ class SaveInsightHistoryData:
 
         #  文件路径_____筹码数据
         self.dir_history_chouma_base = os.path.join(self.dir_history_insight_base, 'chouma')
+
+        #  文件路径_____个股的股东数_明细
+        self.dir_history_shareholder_num_base = os.path.join(self.dir_history_insight_base, 'shareholder_num')
+
 
 
     def init_variant(self):
@@ -371,7 +377,6 @@ class SaveInsightHistoryData:
                                                  merge_on=['ymd', 'name'])
 
 
-
     @timing_decorator
     def get_future_inside(self):
         """
@@ -457,7 +462,86 @@ class SaveInsightHistoryData:
                                                  merge_on=['ymd', 'htsc_code'])
 
 
+    @timing_decorator
+    def get_shareholder_num(self):
+        """
+        获取 股东数
+        Returns:  stock_kline_df  [ymd	htsc_code	name	exchange]
+        """
 
+        #  1.起止时间 查询起始时间写 36月前的月初
+        time_start_date = DateUtility.first_day_of_month_after_n_months(-36)
+        #  结束时间必须大于等于当日，这里取明天的日期
+        time_end_date = DateUtility.next_day(1)
+
+        time_start_date = datetime.strptime(time_start_date, '%Y%m%d')
+        time_end_date = datetime.strptime(time_end_date, '%Y%m%d')
+
+        #  2.行业信息的总和dataframe
+        shareholder_num_df = pd.DataFrame()
+
+        #  3.请求insight  个股股东数   数据
+        code_list = self.stock_code_df['htsc_code'].tolist()
+        total_xunhuan = len(code_list)
+        i = 1
+        valid_i = 1
+        for stock_code in code_list:
+            # 屏蔽 stdout 和 stderr
+            with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+                res = get_shareholder_num(htsc_code=stock_code, end_date=[time_start_date, time_end_date])
+
+            if res is not None:
+                shareholder_num_df = pd.concat([shareholder_num_df, res], ignore_index=True)
+                sys.stdout.write(f"\r当前执行 get_shareholder_num  第 {i} 次循环，总共 {total_xunhuan} 个批次, {valid_i}个有效股东数据")
+                sys.stdout.flush()
+                valid_i += 1
+
+            i += 1
+
+        sys.stdout.write("\n")
+
+
+        #  4.日期格式转换
+        shareholder_num_df.rename(columns={'end_date': 'ymd'}, inplace=True)
+        shareholder_num_df['ymd'] = pd.to_datetime(shareholder_num_df['ymd']).dt.strftime('%Y%m%d')
+
+        #  5.声明所有的列名，去除多余列
+        shareholder_num_df = shareholder_num_df[['htsc_code', 'name', 'ymd', 'total_sh', 'avg_share', 'pct_of_total_sh', 'pct_of_avg_sh']]
+
+        #  6.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
+        shareholder_num_df = shareholder_num_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
+
+        ############################   文件输出模块     ############################
+        #  7.更新dataframe
+        self.shareholder_num_df = shareholder_num_df
+
+        #  8.本地csv文件的落盘保存
+        shareholder_num_filename = base_utils.save_out_filename(filehead='shareholder_num', file_type='csv')
+        shareholder_num_filedir = os.path.join(self.dir_history_shareholder_num_base, shareholder_num_filename)
+        shareholder_num_df.to_csv(shareholder_num_filedir, index=False)
+
+        #  9.结果数据保存到 本地 mysql中
+        mysql_utils.data_from_dataframe_to_mysql(user=local_user,
+                                                 password=local_password,
+                                                 host=local_host,
+                                                 database=local_database,
+                                                 df=shareholder_num_df,
+                                                 table_name="shareholder_num",
+                                                 merge_on=['ymd', 'htsc_code'])
+
+        #  10.结果数据保存到 远端 mysql中
+        mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
+                                                 password=origin_password,
+                                                 host=origin_host,
+                                                 database=origin_database,
+                                                 df=shareholder_num_df,
+                                                 table_name="shareholder_num",
+                                                 merge_on=['ymd', 'htsc_code'])
+
+
+
+
+    @timing_decorator
     def setup(self):
         #  登陆insight数据源
         self.login()
@@ -466,16 +550,19 @@ class SaveInsightHistoryData:
         self.get_stock_codes()
 
         #  获取当前已上市股票过去3年到今天的历史kline
-        self.get_stock_kline()
+        # self.get_stock_kline()
 
         #  获取主要股指
-        self.get_index_a_share()
+        # self.get_index_a_share()
 
         #  大盘涨跌概览
-        self.get_limit_summary()
+        # self.get_limit_summary()
 
         #  期货__内盘
-        self.get_future_inside()
+        # self.get_future_inside()
+
+        #  个股股东数
+        self.get_shareholder_num()
 
 
 
