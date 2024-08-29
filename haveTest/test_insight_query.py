@@ -296,7 +296,8 @@ if __name__ == "__main__":
     # get_kline_daily_demo()
     # get_foreign_exchange_demo()
     # insight_billboard()
-    get_shareholder_num_demo()
+    # get_shareholder_num_demo()
+    get_north_bound_demo()
 
 
 

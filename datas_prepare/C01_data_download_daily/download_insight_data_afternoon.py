@@ -16,7 +16,7 @@ import CommonProperties.Base_utils as base_utils
 import CommonProperties.Mysql_Utils as mysql_utils
 from CommonProperties.DateUtility import DateUtility
 from CommonProperties.Base_utils import timing_decorator
-from CommonProperties.set_config import setup_logging_config
+from CommonProperties import set_config
 
 # ************************************************************************
 # 本代码的作用是下午收盘后下载 insight 行情源数据, 本地保存,用于后续分析
@@ -29,9 +29,9 @@ from CommonProperties.set_config import setup_logging_config
 
 
 # ************************************************************************
-# 调用日志配置
-setup_logging_config()
-######################  mysql 配置信息  本地和远端服务器  ####################
+#  调用日志配置
+set_config.setup_logging_config()
+#  调用mysql日志配置
 local_user = base_properties.local_mysql_user
 local_password = base_properties.local_mysql_password
 local_database = base_properties.local_mysql_database
@@ -41,8 +41,6 @@ origin_user = base_properties.origin_mysql_user
 origin_password = base_properties.origin_mysql_password
 origin_database = base_properties.origin_mysql_database
 origin_host = base_properties.origin_mysql_host
-
-
 # ************************************************************************
 
 
@@ -801,6 +799,12 @@ class SaveInsightData:
                                                  df=shareholder_num_df,
                                                  table_name="shareholder_num_now",
                                                  merge_on=['ymd', 'htsc_code'])
+
+
+
+
+
+
 
 
     @timing_decorator

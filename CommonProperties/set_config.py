@@ -1,11 +1,8 @@
-
 # set_config.py
 import logging
 import colorlog
 
-
 import CommonProperties.Base_Properties as base_properties
-
 
 
 def setup_logging_config():
@@ -21,7 +18,7 @@ def setup_logging_config():
             '%(log_color)s%(asctime)s - %(levelname)s - %(message)s',
             log_colors={
                 'DEBUG': 'cyan',
-                'INFO': 'green',    # 将 INFO 级别设为绿色
+                'INFO': 'green',  # 将 INFO 级别设为绿色
                 'WARNING': 'yellow',
                 'ERROR': 'red',
                 'CRITICAL': 'bold_red',
@@ -32,14 +29,6 @@ def setup_logging_config():
         logger.addHandler(handler)
 
     logger.setLevel(logging.INFO)
-
-
-
-
-
-
-
-
 
 
 

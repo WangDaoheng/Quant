@@ -848,12 +848,13 @@ def get_north_bound_demo():
     :return: pandas.DataFrame
     """
 
-    start_date = "2021-01-14"
-    end_date = "2022-10-20"
+    start_date = "2024-01-01"
+    end_date = "2024-10-20"
     start_date = datetime.strptime(start_date, '%Y-%m-%d')
     end_date = datetime.strptime(end_date, '%Y-%m-%d')
 
     result = get_north_bound(htsc_code='601688.SH', trading_day=[start_date, end_date])
+    result.to_csv(r'F:\quant_test\north_bound_01.csv', index=False)
     print(result)
 
 
@@ -1472,12 +1473,12 @@ def main():
     # get_company_info_demo()                   # 公司概况
     # get_allotment_share_demo()                # 股票配售
     # get_capital_structure_demo()              # 股本结构
-    get_shareholder_num_demo()                # 股东人数
+    # get_shareholder_num_demo()                # 股东人数
     # get_additional_share_demo()               # 股票增发
     # get_dividend_demo()                       # 股票分红
     # get_shareholders_top10_demo()             # 十大股东
     # get_shareholders_floating_top10_demo()    # 十大流通股东
-    # get_north_bound_demo()                    # 沪深港通持股记录
+    get_north_bound_demo()                    # 沪深港通持股记录
     # get_margin_target_demo()                  # 融资融券列表
     # get_margin_detail_demo()                  # 融资融券交易明细
     # get_margin_summary_demo()                 # 融资融券交易汇总

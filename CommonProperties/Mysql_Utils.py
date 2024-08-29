@@ -5,11 +5,23 @@ import pandas as pd
 import logging
 
 
-from CommonProperties import Base_Properties
+import CommonProperties.Base_Properties as base_properties
 from CommonProperties.set_config import setup_logging_config
 
 # 调用日志配置   这里要注释掉，不然日志重复打印
 # setup_logging()
+
+###################  mysql 配置   ######################
+local_user = base_properties.local_mysql_user
+local_password = base_properties.local_mysql_password
+local_database = base_properties.local_mysql_database
+local_host = base_properties.local_mysql_host
+
+origin_user = base_properties.origin_mysql_user
+origin_password = base_properties.origin_mysql_password
+origin_database = base_properties.origin_mysql_database
+origin_host = base_properties.origin_mysql_host
+
 
 
 def check_data_written(total_rows, table_name, engine):
@@ -330,6 +342,12 @@ def full_replace_migrate(source_host, source_db_url, target_host, target_db_url,
         print(f"数据迁移过程中发生错误: {e}")
 
 
+def get_stock_codes_latest(df):
+    stock_code_df = data_from_mysql_to_dataframe_latest(user=local_user,
+                                                                    password=local_password,
+                                                                    host=local_host,
+                                                                    database=local_database,
+                                                                    table_name='stock_code_daily_insight')
 
 
 
