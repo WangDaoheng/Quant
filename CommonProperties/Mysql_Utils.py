@@ -54,7 +54,6 @@ def check_data_written(total_rows, table_name, engine):
         return False
 
 
-
 def data_from_dataframe_to_mysql(user, password, host, database='quant', df=pd.DataFrame(), table_name='', merge_on=[]):
     """
     把 dataframe 类型数据写入 mysql 表里面, 同时调用了
@@ -112,7 +111,6 @@ def data_from_dataframe_to_mysql(user, password, host, database='quant', df=pd.D
 
         except Exception as e:
             logging.error(f"写入{host} 的表：{table_name}的 第 {i // chunk_size + 1} 批次时发生错误: {e}")
-
 
 
 def data_from_mysql_to_dataframe(user, password, host, database='quant', table_name=''):
@@ -343,11 +341,36 @@ def full_replace_migrate(source_host, source_db_url, target_host, target_db_url,
 
 
 def get_stock_codes_latest(df):
-    stock_code_df = data_from_mysql_to_dataframe_latest(user=local_user,
-                                                                    password=local_password,
-                                                                    host=local_host,
-                                                                    database=local_database,
-                                                                    table_name='stock_code_daily_insight')
+    """
+    这是为了取最新的 stock_code, 首先默认从类变量里面获取 stock_code(df), 如果df为空，就从mysql里面去取最新的
+    Args:
+        df:
+    Returns:
+    """
+
+    if df is not None:
+        stock_code_df = data_from_mysql_to_dataframe_latest(user=local_user,
+                                                            password=local_password,
+                                                            host=local_host,
+                                                            database=local_database,
+                                                            table_name='stock_code_daily_insight')
+
+        mysql_stock_code_list = stock_code_df['htsc_code'].tolist()
+    else:
+        mysql_stock_code_list = df['htsc_code'].tolist()
+
+    return mysql_stock_code_list
+
+
+
+
+
+
+
+
+
+
+
 
 
 

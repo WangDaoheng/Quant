@@ -118,18 +118,23 @@ class SaveInsightHistoryData:
          stock_code_df  [ymd	htsc_code	name	exchange]
         """
 
+        #  1.获取日期
         formatted_date = DateUtility.today()
 
-        ##  获取所有已上市codes
+        #  2.请求insight数据   get_all_stocks_info
         stock_all_df = get_all_stocks_info(listing_state="上市交易")
-        stock_all_df = stock_all_df[['htsc_code', 'name', 'exchange']]
+
+        #  3.日期格式转换
         stock_all_df.insert(0, 'ymd', formatted_date)
+
+        #  4.声明所有的列名，去除多余列
+        stock_all_df = stock_all_df[['ymd', 'htsc_code', 'name', 'exchange']]
         filtered_df = stock_all_df[~stock_all_df['name'].str.contains('ST|退|B')]
 
-        # 删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
+        #  5.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
         filtered_df = filtered_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
 
-        #  已上市状态stock_codes
+        #  6.已上市状态stock_codes
         self.stock_code_df = filtered_df
 
 
@@ -152,49 +157,51 @@ class SaveInsightHistoryData:
         batch_size = 40
 
         #  3.这是一个切分批次的内部函数
-        def get_batches(df, batch_size):
-            for start in range(0, len(df), batch_size):
-                yield df[start:start + batch_size]
+        def get_batches(lst, batch_size):
+            for start in range(0, len(lst), batch_size):
+                yield lst[start:start + batch_size]
 
-        #  4.计算总批次数
-        total_batches = (len(self.stock_code_df) + batch_size - 1) // batch_size
+        #  4.获取最新 stock_code 的list
+        stock_code_list = mysql_utils.get_stock_codes_latest(self.stock_code_df)
 
-        #  5.kline的总和dataframe
+        #  5.计算总批次数
+        total_batches = (len(stock_code_list) + batch_size - 1) // batch_size
+
+        #  6.kline的总和dataframe
         kline_total_df = pd.DataFrame()
 
-        #  6.请求insight数据
-        for i, batch_df in enumerate(get_batches(self.stock_code_df, batch_size), start=1):
+        #  7.请求insight数据
+        for i, batch_list in enumerate(get_batches(stock_code_list, batch_size), start=1):
             #  一种非常巧妙的循环打印日志的方式
             sys.stdout.write(f"\r当前执行get_stock_kline的 第 {i} 次循环，总共 {total_batches} 个批次")
             sys.stdout.flush()
             time.sleep(0.01)
 
-            index_list = batch_df['htsc_code'].tolist()
-            res = get_kline(htsc_code=index_list, time=[time_start_date, time_end_date], frequency="daily", fq="pre")
+            res = get_kline(htsc_code=batch_list, time=[time_start_date, time_end_date], frequency="daily", fq="pre")
             kline_total_df = pd.concat([kline_total_df, res], ignore_index=True)
 
-        #  7.循环结束后打印换行符，以确保后续输出在新行开始
+        #  8.循环结束后打印换行符，以确保后续输出在新行开始
         sys.stdout.write("\n")
 
-        #  8.日期格式转换
+        #  9.日期格式转换
         kline_total_df['time'] = pd.to_datetime(kline_total_df['time']).dt.strftime('%Y%m%d')
         kline_total_df.rename(columns={'time': 'ymd'}, inplace=True)
 
-        #  9.声明所有的列名，去除value列
+        #  10.声明所有的列名，去除value列
         kline_total_df = kline_total_df[['htsc_code', 'ymd', 'open', 'close', 'high', 'low', 'num_trades', 'volume']]
 
-        #  10.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
+        #  11.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
         # kline_total_df = kline_total_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
 
-        #  11.文件输出模块
+        #  12.文件输出模块
         self.kline_total_history = kline_total_df
 
-        #  12.本地csv文件的落盘保存
+        #  13.本地csv文件的落盘保存
         kline_total_filename = base_utils.save_out_filename(filehead='stock_kline_history', file_type='csv')
         kline_total_filedir = os.path.join(self.dir_history_stock_kline_base, kline_total_filename)
         kline_total_df.to_csv(kline_total_filedir, index=False)
 
-        #  13.结果数据保存到 本地 mysql中
+        #  14.结果数据保存到 本地 mysql中
         mysql_utils.data_from_dataframe_to_mysql(user=local_user,
                                                  password=local_password,
                                                  host=local_host,
@@ -203,7 +210,7 @@ class SaveInsightHistoryData:
                                                  table_name="stock_kline_daily_insight",
                                                  merge_on=['ymd', 'htsc_code'])
 
-        #  14.结果数据保存到 远端 mysql中
+        #  15.结果数据保存到 远端 mysql中
         mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
                                                  password=origin_password,
                                                  host=origin_host,
@@ -230,12 +237,14 @@ class SaveInsightHistoryData:
              index_a_share   [htsc_code 	time	frequency	open	close	high	low	volume	value]
         """
 
+        #  1.当月数据的起止时间
         time_start_date = DateUtility.first_day_of_year_after_n_years(-3)
         time_end_date = DateUtility.today()
 
         time_start_date = datetime.strptime(time_start_date, '%Y%m%d')
         time_end_date = datetime.strptime(time_end_date, '%Y%m%d')
 
+        #  2.查询标的
         index_dict = {"000001.SH": "上证指数"
             , "399002.SZ": "深成指"
             , "399006.SZ": "创业板指"
@@ -247,35 +256,37 @@ class SaveInsightHistoryData:
             , "000688.SH": "科创50"}
         index_list = list(index_dict.keys())
 
+        #  3.index_a_share 的总和dataframe
         index_df = pd.DataFrame()
 
+        #  4.请求insight数据   get_kline
         res = get_kline(htsc_code=index_list, time=[time_start_date, time_end_date],
                         frequency="daily", fq="pre")
-
         index_df = pd.concat([index_df, res], ignore_index=True)
 
-        #  日期格式转换
+        #  5.日期格式转换
         index_df['time'] = pd.to_datetime(index_df['time']).dt.strftime('%Y%m%d')
         index_df.rename(columns={'time': 'ymd'}, inplace=True)
 
-        #  根据映射关系，添加stock_name
+        #  6.根据映射关系，添加stock_name
         index_df['name'] = index_df['htsc_code'].map(index_dict)
 
-        #  声明所有的列名，去除value列
+        #  7.声明所有的列名，去除多余列
         index_df = index_df[['htsc_code', 'name', 'ymd', 'open', 'close', 'high', 'low', 'volume']]
 
-        # 删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
+        #  8.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
         index_df = index_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
 
         ############################   文件输出模块     ############################
+        #  9.更新dataframe
         self.index_a_share = index_df
 
-        #  本地csv文件的落盘保存
+        #  10.本地csv文件的落盘保存
         index_filename = base_utils.save_out_filename(filehead='index_a_share_history', file_type='csv')
         index_filedir = os.path.join(self.dir_history_index_a_share_base, index_filename)
         index_df.to_csv(index_filedir, index=False)
 
-        #  结果数据保存到 本地 mysql中
+        #  11.结果数据保存到 本地 mysql中
         mysql_utils.data_from_dataframe_to_mysql(user=local_user,
                                                  password=local_password,
                                                  host=local_host,
@@ -284,7 +295,7 @@ class SaveInsightHistoryData:
                                                  table_name="index_a_share_insight",
                                                  merge_on=['ymd', 'htsc_code'])
 
-        #  结果数据保存到 远端 mysql中
+        #  12.结果数据保存到 远端 mysql中
         mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
                                                  password=origin_password,
                                                  host=origin_host,
@@ -320,18 +331,21 @@ class SaveInsightHistoryData:
 
         """
 
+        #  1.当月数据的起止时间
         start_date = DateUtility.first_day_of_year_after_n_years(-3)
         end_date = DateUtility.today()
 
-        # 转为时间格式  get_change_summary 强制要求的
         start_date = datetime.strptime(start_date, '%Y%m%d')
         end_date = datetime.strptime(end_date, '%Y%m%d')
 
+        #  2.请求insight数据   get_kline
         res = get_change_summary(market=["a_share"], trading_day=[start_date, end_date])
+
+        #  3.limit_summary 的总和dataframe
         filter_limit_df = pd.DataFrame()
         filter_limit_df = pd.concat([filter_limit_df, res], ignore_index=True)
 
-
+        #  4.声明所有的列名，去除多余列
         filter_limit_df = filter_limit_df[['time',
                                      'name',
                                      'ups_downs_limit_count_up_limits',
@@ -342,23 +356,22 @@ class SaveInsightHistoryData:
         filter_limit_df.columns = ['ymd', 'name', 'today_ZT', 'today_DT', 'yesterday_ZT', 'yesterday_DT',
                                    'yesterday_ZT_rate']
 
-        # 日期格式转换   使用 .loc 保证是在原 DataFrame 上进行操作
+        #  5.日期格式转换
         filter_limit_df['ymd'] = pd.to_datetime(filter_limit_df['ymd']).dt.strftime('%Y%m%d')
 
-        # 删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
+        #  6.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
         filter_limit_df = filter_limit_df.drop_duplicates(subset=['ymd', 'name'], keep='first')
 
-        #  大盘涨跌停数量情况，默认是从3年前到今天
+        ############################   文件输出模块     ############################
+        #  7.更新dataframe
         self.limit_summary_df = filter_limit_df
 
-        ############################   文件输出模块     ############################
-        #  本地csv文件的落盘保存
-        #  大盘涨跌停数量情况，默认是从年初到今天
+        #  8.本地csv文件的落盘保存
         summary_filename = base_utils.save_out_filename(filehead='stock_limit_summary', file_type='csv')
         summary_dir = os.path.join(self.dir_history_limit_summary_base, summary_filename)
         filter_limit_df.to_csv(summary_dir, index=False)
 
-        #  结果数据保存到 本地 mysql中
+        #  9.结果数据保存到 本地 mysql中
         mysql_utils.data_from_dataframe_to_mysql(user=local_user,
                                                  password=local_password,
                                                  host=local_host,
@@ -367,7 +380,7 @@ class SaveInsightHistoryData:
                                                  table_name="stock_limit_summary_insight",
                                                  merge_on=['ymd', 'name'])
 
-        #  结果数据保存到 远端 mysql中
+        #  10.结果数据保存到 远端 mysql中
         mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
                                                  password=origin_password,
                                                  host=origin_host,
@@ -404,11 +417,7 @@ class SaveInsightHistoryData:
         Returns:
         """
 
-        index_list = ["AU{}.SHF", "AG{}.SHF", "CU{}.SHF", "EC{}.INE", "SC{}.INE", "V{}.DCE"]
-        replacement = DateUtility.first_day_of_month_after_n_months(2)[2:6]
-
-        future_index_list = [index.format(replacement) for index in index_list]
-
+        #  1.起止时间 查询起始时间写2月前的月初第1天
         #  查询起始时间写36月前的月初第1天
         time_start_date = DateUtility.first_day_of_month_after_n_months(-36)
         time_end_date = DateUtility.today()
@@ -416,34 +425,41 @@ class SaveInsightHistoryData:
         time_start_date = datetime.strptime(time_start_date, '%Y%m%d')
         time_end_date = datetime.strptime(time_end_date, '%Y%m%d')
 
+        #  2.查询标的
+        index_list = ["AU{}.SHF", "AG{}.SHF", "CU{}.SHF", "EC{}.INE", "SC{}.INE", "V{}.DCE"]
+        replacement = DateUtility.first_day_of_month_after_n_months(2)[2:6]
+
+        future_index_list = [index.format(replacement) for index in index_list]
+
+        #  3.future_inside 的总和dataframe
         future_inside_df = pd.DataFrame()
 
-        #  获取数据的关键调用
+        #  4.请求insight数据   get_kline
         res = get_kline(htsc_code=future_index_list, time=[time_start_date, time_end_date],
                         frequency="daily", fq="pre")
-
         future_inside_df = pd.concat([future_inside_df, res], ignore_index=True)
 
-        #  日期格式转换
+        #  5.日期格式转换
         future_inside_df['time'] = pd.to_datetime(future_inside_df['time']).dt.strftime('%Y%m%d')
         future_inside_df.rename(columns={'time': 'ymd'}, inplace=True)
 
-        #  声明所有的列名，去除value列
+        #  6.声明所有的列名，去除多余列
         future_inside_df = future_inside_df[
             ['htsc_code', 'ymd', 'open', 'close', 'high', 'low', 'volume', 'open_interest', 'settle']]
 
-        # 删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
+        #  7.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
         future_inside_df = future_inside_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
 
-        ## 文件输出模块
+        ############################   文件输出模块     ############################
+        #  8.更新dataframe
         self.future_index = future_inside_df
 
-        ## 文件输出模块
+        #  9.本地csv文件的落盘保存
         future_inside_filename = base_utils.save_out_filename(filehead='future_inside', file_type='csv')
         future_inside_filedir = os.path.join(self.dir_history_future_inside_base, future_inside_filename)
         future_inside_df.to_csv(future_inside_filedir, index=False)
 
-        #  结果数据保存到 本地 mysql中
+        #  10.结果数据保存到 本地 mysql中
         mysql_utils.data_from_dataframe_to_mysql(user=local_user,
                                                  password=local_password,
                                                  host=local_host,
@@ -452,7 +468,7 @@ class SaveInsightHistoryData:
                                                  table_name="future_inside_insight",
                                                  merge_on=['ymd', 'htsc_code'])
 
-        #  结果数据保存到 远端 mysql中
+        #  11.结果数据保存到 远端 mysql中
         mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
                                                  password=origin_password,
                                                  host=origin_host,
@@ -463,10 +479,10 @@ class SaveInsightHistoryData:
 
 
     @timing_decorator
-    def get_shareholder_num(self):
+    def get_shareholder_north_bound_num(self):
         """
-        获取 股东数
-        Returns:  stock_kline_df  [ymd	htsc_code	name	exchange]
+        获取 股东数 & 北向资金情况
+        Returns:
         """
 
         #  1.起止时间 查询起始时间写 36月前的月初
@@ -479,48 +495,71 @@ class SaveInsightHistoryData:
 
         #  2.行业信息的总和dataframe
         shareholder_num_df = pd.DataFrame()
+        #  北向资金的总和dataframe
+        north_bound_df = pd.DataFrame()
 
-        #  3.请求insight  个股股东数   数据
-        code_list = self.stock_code_df['htsc_code'].tolist()
+        #  3.获取最新的stock_codes 数据
+        code_list = mysql_utils.get_stock_codes_latest(self.stock_code_df)
+
+        #  4.请求insight  个股股东数   数据
+        #    请求insight  北向资金持仓  数据
         total_xunhuan = len(code_list)
-        i = 1
-        valid_i = 1
+        i = 1                       # 总循环标记
+        valid_shareholder = 1       # 个股股东数有效标记
+        valid_north_bound = 1       # 北向资金持仓有效标记
+
         for stock_code in code_list:
             # 屏蔽 stdout 和 stderr
             with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
-                res = get_shareholder_num(htsc_code=stock_code, end_date=[time_start_date, time_end_date])
+                res_shareholder = get_shareholder_num(htsc_code=stock_code, end_date=[time_start_date, time_end_date])
+                res_north_bound =get_north_bound(htsc_code=stock_code, trading_day=[time_start_date, time_end_date])
 
-            if res is not None:
-                shareholder_num_df = pd.concat([shareholder_num_df, res], ignore_index=True)
-                sys.stdout.write(f"\r当前执行 get_shareholder_num  第 {i} 次循环，总共 {total_xunhuan} 个批次, {valid_i}个有效股东数据")
+            if res_shareholder is not None:
+                shareholder_num_df = pd.concat([shareholder_num_df, res_shareholder], ignore_index=True)
+                sys.stdout.write(f"\r当前执行 get_shareholder_num  第 {i} 次循环，总共 {total_xunhuan} 个批次, {valid_shareholder}个有效股东数据")
                 sys.stdout.flush()
-                valid_i += 1
+                valid_shareholder += 1
+
+            if res_north_bound is not None:
+                north_bound_df = pd.concat([north_bound_df, res_north_bound], ignore_index=True)
+                sys.stdout.write(f"\r当前执行 get_north_bound  第 {i} 次循环，总共 {total_xunhuan} 个批次, {valid_north_bound}个有效北向持仓数据")
+                sys.stdout.flush()
+                valid_north_bound += 1
 
             i += 1
 
         sys.stdout.write("\n")
 
-
-        #  4.日期格式转换
+        #  5.日期格式转换
         shareholder_num_df.rename(columns={'end_date': 'ymd'}, inplace=True)
         shareholder_num_df['ymd'] = pd.to_datetime(shareholder_num_df['ymd']).dt.strftime('%Y%m%d')
 
-        #  5.声明所有的列名，去除多余列
-        shareholder_num_df = shareholder_num_df[['htsc_code', 'name', 'ymd', 'total_sh', 'avg_share', 'pct_of_total_sh', 'pct_of_avg_sh']]
+        north_bound_df.rename(columns={'trading_day': 'ymd'}, inplace=True)
+        north_bound_df['ymd'] = pd.to_datetime(shareholder_num_df['ymd']).dt.strftime('%Y%m%d')
 
-        #  6.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
+        #  6.声明所有的列名，去除多余列
+        shareholder_num_df = shareholder_num_df[['htsc_code', 'name', 'ymd', 'total_sh', 'avg_share', 'pct_of_total_sh', 'pct_of_avg_sh']]
+        north_bound_df = north_bound_df[['htsc_code', 'ymd', 'sh_hkshare_hold', 'pct_total_share']]
+
+        #  7.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
         shareholder_num_df = shareholder_num_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
+        north_bound_df = north_bound_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
 
         ############################   文件输出模块     ############################
-        #  7.更新dataframe
+        #  8.更新dataframe
         self.shareholder_num_df = shareholder_num_df
+        self.north_bound_df = north_bound_df
 
-        #  8.本地csv文件的落盘保存
+        #  9.本地csv文件的落盘保存
         shareholder_num_filename = base_utils.save_out_filename(filehead='shareholder_num', file_type='csv')
-        shareholder_num_filedir = os.path.join(self.dir_history_shareholder_num_base, shareholder_num_filename)
+        shareholder_num_filedir = os.path.join(self.dir_shareholder_num_base, shareholder_num_filename)
         shareholder_num_df.to_csv(shareholder_num_filedir, index=False)
 
-        #  9.结果数据保存到 本地 mysql中
+        north_bound_filename = base_utils.save_out_filename(filehead='north_bound', file_type='csv')
+        north_bound_filedir = os.path.join(self.dir_north_bound_base, north_bound_filename)
+        north_bound_df.to_csv(north_bound_filedir, index=False)
+
+        #  10.结果数据保存到 本地 mysql中
         mysql_utils.data_from_dataframe_to_mysql(user=local_user,
                                                  password=local_password,
                                                  host=local_host,
@@ -529,7 +568,15 @@ class SaveInsightHistoryData:
                                                  table_name="shareholder_num",
                                                  merge_on=['ymd', 'htsc_code'])
 
-        #  10.结果数据保存到 远端 mysql中
+        mysql_utils.data_from_dataframe_to_mysql(user=local_user,
+                                                 password=local_password,
+                                                 host=local_host,
+                                                 database=local_database,
+                                                 df=north_bound_df,
+                                                 table_name="north_bound_daily",
+                                                 merge_on=['ymd', 'htsc_code'])
+
+        #  11.结果数据保存到 远端 mysql中
         mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
                                                  password=origin_password,
                                                  host=origin_host,
@@ -538,6 +585,13 @@ class SaveInsightHistoryData:
                                                  table_name="shareholder_num",
                                                  merge_on=['ymd', 'htsc_code'])
 
+        mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
+                                                 password=origin_password,
+                                                 host=origin_host,
+                                                 database=origin_database,
+                                                 df=north_bound_df,
+                                                 table_name="north_bound_daily",
+                                                 merge_on=['ymd', 'htsc_code'])
 
 
 
@@ -550,19 +604,21 @@ class SaveInsightHistoryData:
         self.get_stock_codes()
 
         #  获取当前已上市股票过去3年到今天的历史kline
-        # self.get_stock_kline()
+        self.get_stock_kline()
 
         #  获取主要股指
-        # self.get_index_a_share()
+        self.get_index_a_share()
 
         #  大盘涨跌概览
-        # self.get_limit_summary()
+        self.get_limit_summary()
 
         #  期货__内盘
-        # self.get_future_inside()
+        self.get_future_inside()
 
         #  个股股东数
         self.get_shareholder_num()
+
+
 
 
 

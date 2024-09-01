@@ -41,24 +41,36 @@ def get_kline_daily_demo():
     time_start_date = datetime.strptime(time_start_date, '%Y%m%d')
     time_end_date = datetime.strptime(time_end_date, '%Y%m%d')
 
-    index_list = ["000001.SH", "399006.SZ", "000016.SH", "000300.SH", "000849.SH", "000905.SH", "399852.SZ",
-                  "000688.SH", ""]
+    # index_list = ["000001.SH", "399006.SZ", "000016.SH", "000300.SH", "000849.SH", "000905.SH", "399852.SZ",
+    #               "000688.SH"]
+
+
+    index_list = ["240202.SH", "240202.SZ", "240202", "240202.sw", "240202.SW", "240202.HTSC", "240202.HT", ""
+                  "240202.sw_l3", "240202.SW_L3"]
+
+    # 定义要替换的部分和新值
+    old_value = "240202"
+    new_value = "270000"
+
+    # 使用列表推导式来进行替换
+    new_index_list = [item.replace(old_value, new_value) for item in index_list]
+
     index_df = pd.DataFrame()
 
-    # for index in index_list:
-
     #  获取数据的关键调用
-    res = get_kline(htsc_code=index_list, time=[time_start_date, time_end_date],
-                    frequency="daily", fq="none")
-
-    index_df = pd.concat([index_df, res], ignore_index=True)
-
+    for code in new_index_list:
+        print(f'------------------- 执行 {code} 的查询 ---------------------')
+        res = get_kline(htsc_code=code, time=[time_start_date, time_end_date],
+                        frequency="daily", fq="none")
+        index_df = pd.concat([index_df, res], ignore_index=True)
 
     ## 文件输出模块
+    print(index_df)
+
     index_filename = base_utils.save_out_filename(filehead='index_a_share', file_type='csv')
     index_filedir = os.path.join(insight_test_dir, index_filename)
     index_df.to_csv(index_filedir, index=False)
-    print("------------- get_index_a_share 完成测试文件输出 ---------------------")
+    print("------------- get_kline_daily_demo  完成测试文件输出 ---------------------")
 
 
 def get_foreign_exchange_demo():
@@ -293,11 +305,11 @@ def get_hk_stock_basic_info_demo():
 
 if __name__ == "__main__":
     login()
-    # get_kline_daily_demo()
+    get_kline_daily_demo()
     # get_foreign_exchange_demo()
     # insight_billboard()
     # get_shareholder_num_demo()
-    get_north_bound_demo()
+    # get_north_bound_demo()
 
 
 

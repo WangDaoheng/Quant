@@ -86,6 +86,8 @@ class SaveInsightData:
         #  文件路径_____个股的股东数_明细
         self.dir_shareholder_num_base = os.path.join(self.dir_insight_base, 'shareholder_num')
 
+        #  文件路径_____北向持仓数据_明细
+        self.dir_north_bound_base = os.path.join(self.dir_insight_base, 'north_bound')
 
 
     def init_variant(self):
@@ -119,6 +121,9 @@ class SaveInsightData:
         #  获取insight 中个股的 股东数
         self.shareholder_num_df = pd.DataFrame()
 
+        #  获取insight 中北向的 持仓数据
+        self.north_bound_df = pd.DataFrame()
+
 
     @timing_decorator
     def login(self):
@@ -147,8 +152,8 @@ class SaveInsightData:
         stock_all_df.insert(0, 'ymd', formatted_date)
 
         #  4.声明所有的列名，去除多余列
+        stock_all_df = stock_all_df[['ymd', 'htsc_code', 'name', 'exchange']]
         filtered_df = stock_all_df[~stock_all_df['name'].str.contains('ST|退|B')]
-        filtered_df = filtered_df[['ymd', 'htsc_code', 'name', 'exchange']]
 
         #  5.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
         filtered_df = filtered_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
@@ -201,48 +206,50 @@ class SaveInsightData:
         batch_size = 100
 
         #  3.这是一个切分批次的内部函数
-        def get_batches(df, batch_size):
-            for start in range(0, len(df), batch_size):
-                yield df[start:start + batch_size]
+        def get_batches(lst, batch_size):
+            for start in range(0, len(lst), batch_size):
+                yield lst[start:start + batch_size]
 
-        #  4.计算总批次数
-        total_batches = (len(self.stock_code_df) + batch_size - 1) // batch_size
+        #  4.获取最新的stock_code 的list
+        stock_code_list = mysql_utils.get_stock_codes_latest(self.stock_code_df)
 
-        #  5.kline的总和dataframe
+        #  5.计算总批次数
+        total_batches = (len(stock_code_list) + batch_size - 1) // batch_size
+
+        #  6.kline的总和dataframe
         kline_total_df = pd.DataFrame()
 
-        #  6.请求insight数据  get_kline
-        for i, batch_df in enumerate(get_batches(self.stock_code_df, batch_size), start=1):
+        #  7.请求insight数据  get_kline
+        for i, batch_list in enumerate(get_batches(stock_code_list, batch_size), start=1):
             #  一种非常巧妙的循环打印日志的方式
             sys.stdout.write(f"\r当前执行get_stock_kline的 第 {i} 次循环，总共 {total_batches} 个批次")
             sys.stdout.flush()
             time.sleep(0.01)
 
-            index_list = batch_df['htsc_code'].tolist()
-            res = get_kline(htsc_code=index_list, time=[time_start_date, time_end_date], frequency="daily", fq="pre")
+            res = get_kline(htsc_code=batch_list, time=[time_start_date, time_end_date], frequency="daily", fq="pre")
             kline_total_df = pd.concat([kline_total_df, res], ignore_index=True)
 
         sys.stdout.write("\n")
 
-        #  7.日期格式转换
+        #  8.日期格式转换
         kline_total_df['time'] = pd.to_datetime(kline_total_df['time']).dt.strftime('%Y%m%d')
         kline_total_df.rename(columns={'time': 'ymd'}, inplace=True)
 
-        #  8.声明所有的列名，去除多余列
+        #  9.声明所有的列名，去除多余列
         kline_total_df = kline_total_df[['htsc_code', 'ymd', 'open', 'close', 'high', 'low', 'num_trades', 'volume']]
 
-        #  9.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
+        #  10.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
         kline_total_df = kline_total_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
 
-        #  10.更新dataframe
+        #  11.更新dataframe
         self.stock_kline_df = kline_total_df
 
-        #  11.本地csv文件的落盘保存
+        #  12.本地csv文件的落盘保存
         stock_kline_filename = base_utils.save_out_filename(filehead='stock_kline', file_type='csv')
         stcok_kline_filedir = os.path.join(self.dir_stock_kline_base, stock_kline_filename)
         kline_total_df.to_csv(stcok_kline_filedir, index=False)
 
-        #  12.结果数据保存到 本地 mysql中
+        #  13.结果数据保存到 本地 mysql中
         mysql_utils.data_from_dataframe_to_mysql(user=local_user,
                                                  password=local_password,
                                                  host=local_host,
@@ -251,7 +258,7 @@ class SaveInsightData:
                                                  table_name="stock_kline_daily_insight_now",
                                                  merge_on=['ymd', 'htsc_code'])
 
-        #  13.结果数据保存到 远端 mysql中
+        #  14.结果数据保存到 远端 mysql中
         mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
                                                  password=origin_password,
                                                  host=origin_host,
@@ -536,19 +543,15 @@ class SaveInsightData:
         batch_size = 1
 
         #  3.这是一个切分批次的内部函数
-        def get_batches(df, batch_size):
-            for start in range(0, len(df), batch_size):
-                yield df[start:start + batch_size]
+        def get_batches(lst, batch_size):
+            for start in range(0, len(lst), batch_size):
+                yield lst[start:start + batch_size]
 
-        #  4.从本地数据库读取最新日期的stock_code, 其实没必要, 考虑到stock_code 变化不大, 从本地读取也没事
-        stock_code_df = mysql_utils.data_from_mysql_to_dataframe_latest(user=local_user,
-                                                                        password=local_password,
-                                                                        host=local_host,
-                                                                        database=local_database,
-                                                                        table_name='stock_code_daily_insight')
+        #  4.获取最新的stock_code_list
+        stock_code_list = mysql_utils.get_stock_codes_latest(self.stock_code_df)
 
         #  5.计算总批次数
-        total_batches = (len(stock_code_df) + batch_size - 1) // batch_size
+        total_batches = (len(stock_code_list) + batch_size - 1) // batch_size
 
         #  6.chouma 的总和dataframe
         chouma_total_df = pd.DataFrame()
@@ -556,13 +559,11 @@ class SaveInsightData:
         #  7.调用insight数据  get_chip_distribution
         valid_num = 0
 
-        for i, batch_df in enumerate(get_batches(stock_code_df, batch_size), start=1):
+        for i, code_list in enumerate(get_batches(stock_code_list, batch_size), start=1):
             #  一种非常巧妙的循环打印日志的方式
             sys.stdout.write(f"\r当前执行 get_chouma_datas  第 {i} 次循环，总共 {total_batches} 个批次, {valid_num}个有效筹码数据")
             sys.stdout.flush()
             time.sleep(0.01)
-
-            code_list = batch_df['htsc_code'].tolist()
 
             try:
                 res = get_chip_distribution(htsc_code=code_list, trading_day=[time_start_date, time_end_date])
@@ -678,8 +679,8 @@ class SaveInsightData:
         #  2.行业信息的总和dataframe
         stock_in_industry_df = pd.DataFrame()
 
-        #  3.获取 stock_code 数据
-        index_list = self.stock_code_df['htsc_code'].tolist()
+        #  3.获取最新的 stock_code 数据
+        index_list = mysql_utils.get_stock_codes_latest(self.stock_code_df)
 
         #  4.请求insight 上的申万三级行业 数据
         for stock_code in index_list:
@@ -725,10 +726,10 @@ class SaveInsightData:
                                                  merge_on=['ymd', 'htsc_code'])
 
     @timing_decorator
-    def get_shareholder_num(self):
+    def get_shareholder_north_bound_num(self):
         """
-        获取 股东数
-        Returns:  stock_kline_df  [ymd	htsc_code	name	exchange]
+        获取 股东数 & 北向资金情况
+        Returns:
         """
 
         #  1.起止时间 查询起始时间写 2月前的月初
@@ -741,48 +742,71 @@ class SaveInsightData:
 
         #  2.行业信息的总和dataframe
         shareholder_num_df = pd.DataFrame()
+        #  北向资金的总和dataframe
+        north_bound_df = pd.DataFrame()
 
-        #  3.请求insight  个股股东数   数据
-        code_list = self.stock_code_df['htsc_code'].tolist()
+        #  3.获取最新的stock_codes 数据
+        code_list = mysql_utils.get_stock_codes_latest(self.stock_code_df)
+
+        #  4.请求insight  个股股东数   数据
+        #    请求insight  北向资金持仓  数据
         total_xunhuan = len(code_list)
-        i = 1
-        valid_i = 1
+        i = 1                       # 总循环标记
+        valid_shareholder = 1       # 个股股东数有效标记
+        valid_north_bound = 1       # 北向资金持仓有效标记
+
         for stock_code in code_list:
             # 屏蔽 stdout 和 stderr
             with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
-                res = get_shareholder_num(htsc_code=stock_code, end_date=[time_start_date, time_end_date])
+                res_shareholder = get_shareholder_num(htsc_code=stock_code, end_date=[time_start_date, time_end_date])
+                res_north_bound =get_north_bound(htsc_code=stock_code, trading_day=[time_start_date, time_end_date])
 
-            if res is not None:
-                shareholder_num_df = pd.concat([shareholder_num_df, res], ignore_index=True)
-                sys.stdout.write(f"\r当前执行 get_shareholder_num  第 {i} 次循环，总共 {total_xunhuan} 个批次, {valid_i}个有效股东数据")
+            if res_shareholder is not None:
+                shareholder_num_df = pd.concat([shareholder_num_df, res_shareholder], ignore_index=True)
+                sys.stdout.write(f"\r当前执行 get_shareholder_num  第 {i} 次循环，总共 {total_xunhuan} 个批次, {valid_shareholder}个有效股东数据")
                 sys.stdout.flush()
-                valid_i += 1
+                valid_shareholder += 1
+
+            if res_north_bound is not None:
+                north_bound_df = pd.concat([north_bound_df, res_north_bound], ignore_index=True)
+                sys.stdout.write(f"\r当前执行 get_north_bound  第 {i} 次循环，总共 {total_xunhuan} 个批次, {valid_north_bound}个有效北向持仓数据")
+                sys.stdout.flush()
+                valid_north_bound += 1
 
             i += 1
 
         sys.stdout.write("\n")
 
-
-        #  4.日期格式转换
+        #  5.日期格式转换
         shareholder_num_df.rename(columns={'end_date': 'ymd'}, inplace=True)
         shareholder_num_df['ymd'] = pd.to_datetime(shareholder_num_df['ymd']).dt.strftime('%Y%m%d')
 
-        #  5.声明所有的列名，去除多余列
-        shareholder_num_df = shareholder_num_df[['htsc_code', 'name', 'ymd', 'total_sh', 'avg_share', 'pct_of_total_sh', 'pct_of_avg_sh']]
+        north_bound_df.rename(columns={'trading_day': 'ymd'}, inplace=True)
+        north_bound_df['ymd'] = pd.to_datetime(shareholder_num_df['ymd']).dt.strftime('%Y%m%d')
 
-        #  6.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
+        #  6.声明所有的列名，去除多余列
+        shareholder_num_df = shareholder_num_df[['htsc_code', 'name', 'ymd', 'total_sh', 'avg_share', 'pct_of_total_sh', 'pct_of_avg_sh']]
+        north_bound_df = north_bound_df[['htsc_code', 'ymd', 'sh_hkshare_hold', 'pct_total_share']]
+
+        #  7.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
         shareholder_num_df = shareholder_num_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
+        north_bound_df = north_bound_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
 
         ############################   文件输出模块     ############################
-        #  7.更新dataframe
+        #  8.更新dataframe
         self.shareholder_num_df = shareholder_num_df
+        self.north_bound_df = north_bound_df
 
-        #  8.本地csv文件的落盘保存
+        #  9.本地csv文件的落盘保存
         shareholder_num_filename = base_utils.save_out_filename(filehead='shareholder_num', file_type='csv')
         shareholder_num_filedir = os.path.join(self.dir_shareholder_num_base, shareholder_num_filename)
         shareholder_num_df.to_csv(shareholder_num_filedir, index=False)
 
-        #  9.结果数据保存到 本地 mysql中
+        north_bound_filename = base_utils.save_out_filename(filehead='north_bound', file_type='csv')
+        north_bound_filedir = os.path.join(self.dir_north_bound_base, north_bound_filename)
+        north_bound_df.to_csv(north_bound_filedir, index=False)
+
+        #  10.结果数据保存到 本地 mysql中
         mysql_utils.data_from_dataframe_to_mysql(user=local_user,
                                                  password=local_password,
                                                  host=local_host,
@@ -791,7 +815,15 @@ class SaveInsightData:
                                                  table_name="shareholder_num_now",
                                                  merge_on=['ymd', 'htsc_code'])
 
-        #  10.结果数据保存到 远端 mysql中
+        mysql_utils.data_from_dataframe_to_mysql(user=local_user,
+                                                 password=local_password,
+                                                 host=local_host,
+                                                 database=local_database,
+                                                 df=north_bound_df,
+                                                 table_name="north_bound_daily_now",
+                                                 merge_on=['ymd', 'htsc_code'])
+
+        #  11.结果数据保存到 远端 mysql中
         mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
                                                  password=origin_password,
                                                  host=origin_host,
@@ -800,9 +832,13 @@ class SaveInsightData:
                                                  table_name="shareholder_num_now",
                                                  merge_on=['ymd', 'htsc_code'])
 
-
-
-
+        mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
+                                                 password=origin_password,
+                                                 host=origin_host,
+                                                 database=origin_database,
+                                                 df=north_bound_df,
+                                                 table_name="north_bound_daily_now",
+                                                 merge_on=['ymd', 'htsc_code'])
 
 
 
@@ -816,28 +852,28 @@ class SaveInsightData:
         self.get_stock_codes()
 
         #  获取上述股票的当月日K
-        # self.get_stock_kline()
+        self.get_stock_kline()
 
         #  获取主要股指
-        # self.get_index_a_share()
+        self.get_index_a_share()
 
         #  大盘涨跌概览
-        # self.get_limit_summary()
+        self.get_limit_summary()
 
         #  期货__内盘
-        # self.get_future_inside()
+        self.get_future_inside()
 
         #  筹码概览
-        # self.get_chouma_datas()
+        self.get_chouma_datas()
 
         #  获取A股的行业分类数据, 是行业数据
-        # self.get_Ashare_industry_overview()
+        self.get_Ashare_industry_overview()
 
         #  获取A股的行业分类数据, 是stock_code & industry 关联后的大表数据
-        # self.get_Ashare_industry_detail()
+        self.get_Ashare_industry_detail()
 
         #  个股股东数
-        self.get_shareholder_num()
+        self.get_shareholder_north_bound_num()
 
 
 

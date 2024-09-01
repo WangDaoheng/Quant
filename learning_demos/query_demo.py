@@ -853,8 +853,8 @@ def get_north_bound_demo():
     start_date = datetime.strptime(start_date, '%Y-%m-%d')
     end_date = datetime.strptime(end_date, '%Y-%m-%d')
 
-    result = get_north_bound(htsc_code='601688.SH', trading_day=[start_date, end_date])
-    result.to_csv(r'F:\quant_test\north_bound_01.csv', index=False)
+    result = get_north_bound(htsc_code=['601688.SH', '000001.SZ'], trading_day=[start_date, end_date])
+    result.to_csv(r'F:\quant_test\north_bound_02.csv', index=False)
     print(result)
 
 

@@ -291,6 +291,25 @@ CREATE TABLE quant.shareholder_num (
  );
 
 
+--1.10
+------------------  north_bound   北向持仓数据
+CREATE TABLE quant.north_bound_daily_now (
+      htsc_code            varchar(100)
+     ,ymd                  DATE
+     ,sh_hkshare_hold      BIGINT
+     ,pct_total_share      FLOAT
+   ,UNIQUE KEY unique_industry_code (ymd, htsc_code)
+ );
+
+
+CREATE TABLE quant.north_bound_daily (
+      htsc_code            varchar(100)
+     ,ymd                  DATE
+     ,sh_hkshare_hold      BIGINT
+     ,pct_total_share      FLOAT
+   ,UNIQUE KEY unique_industry_code (ymd, htsc_code)
+ );
+
 
 --2.1
 ------------------  US_stock_daily_vantage   美股 日K
