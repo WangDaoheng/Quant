@@ -180,13 +180,13 @@ def data_from_mysql_to_dataframe_latest(user, password, host, database='quant', 
             query = f"SELECT * FROM {table_name} WHERE ymd = '{latest_ymd}'"
             df = pd.read_sql(query, engine)
 
-            logging.info(f"mysql表：{table_name} 最新一天({latest_ymd})的数据读取成功，共 {df.shape[0]} 行。")
+            logging.info(f"    mysql表：{table_name} 最新一天({latest_ymd})的数据读取成功，共 {df.shape[0]} 行。")
         else:
-            logging.warning(f"{table_name} 表中没有找到有效的 ymd 数据。")
+            logging.warning(f"    {table_name} 表中没有找到有效的 ymd 数据。")
             df = pd.DataFrame()  # 返回空的 DataFrame
 
     except Exception as e:
-        logging.error(f"从表：{table_name} 读取数据时发生错误: {e}")
+        logging.error(f"    从表：{table_name} 读取数据时发生错误: {e}")
         df = pd.DataFrame()  # 返回一个空的 DataFrame 以防出错时没有返回数据
 
     return df
@@ -348,7 +348,7 @@ def get_stock_codes_latest(df):
     Returns:
     """
 
-    if df is not None:
+    if df is None:
         stock_code_df = data_from_mysql_to_dataframe_latest(user=local_user,
                                                             password=local_password,
                                                             host=local_host,
@@ -356,8 +356,11 @@ def get_stock_codes_latest(df):
                                                             table_name='stock_code_daily_insight')
 
         mysql_stock_code_list = stock_code_df['htsc_code'].tolist()
+        logging.info("    从 本地Mysql库 里读取最新的股票代码")
     else:
         mysql_stock_code_list = df['htsc_code'].tolist()
+        logging.info("    从 self.stock_code 里读取最新的股票代码")
+
 
     return mysql_stock_code_list
 

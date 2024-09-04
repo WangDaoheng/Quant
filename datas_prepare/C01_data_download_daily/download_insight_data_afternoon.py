@@ -557,10 +557,11 @@ class SaveInsightData:
         chouma_total_df = pd.DataFrame()
 
         #  7.调用insight数据  get_chip_distribution
-        valid_num = 0
+        # valid_num = 0
 
         for i, code_list in enumerate(get_batches(stock_code_list, batch_size), start=1):
             #  一种非常巧妙的循环打印日志的方式
+            valid_num = chouma_total_df.shape[0]
             sys.stdout.write(f"\r当前执行 get_chouma_datas  第 {i} 次循环，总共 {total_batches} 个批次, {valid_num}个有效筹码数据")
             sys.stdout.flush()
             time.sleep(0.01)
@@ -568,7 +569,7 @@ class SaveInsightData:
             try:
                 res = get_chip_distribution(htsc_code=code_list, trading_day=[time_start_date, time_end_date])
                 chouma_total_df = pd.concat([chouma_total_df, res], ignore_index=True)
-                valid_num += 1
+                # valid_num += 1
             except Exception as e:
                 continue
             time.sleep(0.1)
@@ -683,10 +684,23 @@ class SaveInsightData:
         index_list = mysql_utils.get_stock_codes_latest(self.stock_code_df)
 
         #  4.请求insight 上的申万三级行业 数据
+        i = 1                                     # 总第 i个 循环标记
+        total_batches = len(index_list)           # 总批次数量
+
         for stock_code in index_list:
+
+            valid_num = stock_in_industry_df.shape[0]
+            sys.stdout.write(f"\r当前执行 get_Ashare_industry_detail  第 {i} 次循环，总共 {total_batches} 个批次, {valid_num}个有效筹码数据")
+            sys.stdout.flush()
+            time.sleep(0.03)
+
             res = get_industry(htsc_code=stock_code, classified='sw')
             stock_in_industry_df = pd.concat([stock_in_industry_df, res], ignore_index=True)
-            time.sleep(0.01)
+
+            i += 1
+
+        sys.stdout.write("\n")
+
 
         #  5.日期格式转换
         stock_in_industry_df.insert(0, 'ymd', time_today)
@@ -752,8 +766,6 @@ class SaveInsightData:
         #    请求insight  北向资金持仓  数据
         total_xunhuan = len(code_list)
         i = 1                       # 总循环标记
-        valid_shareholder = 1       # 个股股东数有效标记
-        valid_north_bound = 1       # 北向资金持仓有效标记
 
         for stock_code in code_list:
             # 屏蔽 stdout 和 stderr
@@ -761,17 +773,20 @@ class SaveInsightData:
                 res_shareholder = get_shareholder_num(htsc_code=stock_code, end_date=[time_start_date, time_end_date])
                 res_north_bound =get_north_bound(htsc_code=stock_code, trading_day=[time_start_date, time_end_date])
 
+                valid_shareholder = shareholder_num_df.shape[0]
+                valid_north_bound = north_bound_df.shape[0]
+
             if res_shareholder is not None:
                 shareholder_num_df = pd.concat([shareholder_num_df, res_shareholder], ignore_index=True)
                 sys.stdout.write(f"\r当前执行 get_shareholder_num  第 {i} 次循环，总共 {total_xunhuan} 个批次, {valid_shareholder}个有效股东数据")
                 sys.stdout.flush()
-                valid_shareholder += 1
 
             if res_north_bound is not None:
                 north_bound_df = pd.concat([north_bound_df, res_north_bound], ignore_index=True)
                 sys.stdout.write(f"\r当前执行 get_north_bound  第 {i} 次循环，总共 {total_xunhuan} 个批次, {valid_north_bound}个有效北向持仓数据")
                 sys.stdout.flush()
-                valid_north_bound += 1
+
+            time.sleep(0.03)
 
             i += 1
 
@@ -852,28 +867,28 @@ class SaveInsightData:
         self.get_stock_codes()
 
         #  获取上述股票的当月日K
-        self.get_stock_kline()
+        # self.get_stock_kline()
 
         #  获取主要股指
-        self.get_index_a_share()
+        # self.get_index_a_share()
 
         #  大盘涨跌概览
-        self.get_limit_summary()
+        # self.get_limit_summary()
 
         #  期货__内盘
-        self.get_future_inside()
+        # self.get_future_inside()
 
         #  筹码概览
         self.get_chouma_datas()
 
         #  获取A股的行业分类数据, 是行业数据
-        self.get_Ashare_industry_overview()
+        # self.get_Ashare_industry_overview()
 
         #  获取A股的行业分类数据, 是stock_code & industry 关联后的大表数据
-        self.get_Ashare_industry_detail()
+        # self.get_Ashare_industry_detail()
 
         #  个股股东数
-        self.get_shareholder_north_bound_num()
+        # self.get_shareholder_north_bound_num()
 
 
 
