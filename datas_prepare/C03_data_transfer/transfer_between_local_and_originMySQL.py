@@ -32,9 +32,9 @@ def transfer_local_to_origin_mysql():
                       'stock_limit_summary_insight_now',
                       'future_inside_insight_now',
                       'stock_chouma_insight_now',
-                      'US_stock_daily_vantage',
+                      'us_stock_daily_vantage',
                       'exchange_rate_vantage_detail',
-                      'exchange_DXY_vantage']
+                      'exchange_dxy_vantage']
 
     table_all_list = ['stock_kline_daily_insight',
                       'index_a_share_insight',
@@ -69,9 +69,9 @@ def transfer_origin_to_local_mysql():
                       'stock_limit_summary_insight_now',
                       'future_inside_insight_now',
                       'stock_chouma_insight_now',
-                      'US_stock_daily_vantage',
+                      'us_stock_daily_vantage',
                       'exchange_rate_vantage_detail',
-                      'exchange_DXY_vantage']
+                      'exchange_dxy_vantage']
 
     table_all_list = ['stock_kline_daily_insight',
                       'index_a_share_insight',
@@ -106,9 +106,9 @@ def append_local_to_origin_mysql():
                       'stock_limit_summary_insight_now',
                       'future_inside_insight_now',
                       'stock_chouma_insight_now',
-                      'US_stock_daily_vantage',
+                      'us_stock_daily_vantage',
                       'exchange_rate_vantage_detail',
-                      'exchange_DXY_vantage']
+                      'exchange_dxy_vantage']
 
     table_all_list = ['stock_kline_daily_insight',
                       'index_a_share_insight',

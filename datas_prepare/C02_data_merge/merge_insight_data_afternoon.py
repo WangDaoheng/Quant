@@ -206,6 +206,62 @@ class MergeInsightData:
                                  target_table=target_table,
                                  columns=columns)
 
+    @timing_decorator
+    def merge_shareholder_num(self):
+        """
+        A股市场的股东数
+        Returns:
+        """
+        source_table = 'shareholder_num_now'
+        target_table = 'shareholder_num'
+        columns = ['htsc_code', 'name', 'ymd', 'total_sh', 'avg_share', 'pct_of_total_sh', 'pct_of_avg_sh']
+
+        # 对本地 Mysql 做数据聚合
+        mysql_utils.upsert_table(user=local_user,
+                                 password=local_password,
+                                 host=local_host,
+                                 database=local_database,
+                                 source_table=source_table,
+                                 target_table=target_table,
+                                 columns=columns)
+
+        # 对远端 Mysql 做数据聚合
+        mysql_utils.upsert_table(user=origin_user,
+                                 password=origin_password,
+                                 host=origin_host,
+                                 database=origin_database,
+                                 source_table=source_table,
+                                 target_table=target_table,
+                                 columns=columns)
+
+
+    @timing_decorator
+    def merge_north_bound(self):
+        """
+        A股市场的股东数
+        Returns:
+        """
+        source_table = 'north_bound_daily_now'
+        target_table = 'north_bound_daily'
+        columns = ['htsc_code', 'ymd', 'sh_hkshare_hold', 'pct_total_share']
+
+        # 对本地 Mysql 做数据聚合
+        mysql_utils.upsert_table(user=local_user,
+                                 password=local_password,
+                                 host=local_host,
+                                 database=local_database,
+                                 source_table=source_table,
+                                 target_table=target_table,
+                                 columns=columns)
+
+        # 对远端 Mysql 做数据聚合
+        mysql_utils.upsert_table(user=origin_user,
+                                 password=origin_password,
+                                 host=origin_host,
+                                 database=origin_database,
+                                 source_table=source_table,
+                                 target_table=target_table,
+                                 columns=columns)
 
     def setup(self):
 
@@ -220,6 +276,10 @@ class MergeInsightData:
 
         #  期货__内盘
         self.merge_future_inside()
+
+        #  股东数
+        self.merge_shareholder_num()
+
 
 
 

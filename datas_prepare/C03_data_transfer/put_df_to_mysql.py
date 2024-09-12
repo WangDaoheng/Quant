@@ -18,7 +18,7 @@ def put_csv_to_mysql():
 
     #  读取csv
     # file_dir = r'F:\QDatas\vantage\USD_FX\USD_FX_2024081114.csv'
-    # table_name = r'exchange_DXY_vantage'
+    # table_name = r'exchange_dxy_vantage'
 
     file_dir = r'F:\QDatas\vantage\USD_FX_detail\USD_FX_detail_2024081114.csv'
     table_name = r'exchange_rate_vantage_detail'

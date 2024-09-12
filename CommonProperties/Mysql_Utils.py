@@ -69,7 +69,11 @@ def data_from_dataframe_to_mysql(user, password, host, database='quant', df=pd.D
 
     # 将df中的ymd格式转换为DATE类型（如果merge_on包含'ymd'）
     if 'ymd' in merge_on:
-        df['ymd'] = df['ymd'].apply(lambda x: pd.to_datetime(str(x), format='%Y%m%d').strftime('%Y-%m-%d'))
+
+        # df['ymd'] = df['ymd'].apply(lambda x: pd.to_datetime(str(x), format='%Y%m%d').strftime('%Y-%m-%d'))
+        df['ymd'] = df['ymd'].apply(lambda x: pd.to_datetime(str(x), format='%Y%m%d') if pd.notnull(x) else pd.NaT)
+        df['ymd'] = df['ymd'].apply(lambda x: x.strftime('%Y-%m-%d') if pd.notnull(x) else None)
+
         ymd_range = df['ymd'].unique()
 
 
@@ -348,7 +352,7 @@ def get_stock_codes_latest(df):
     Returns:
     """
 
-    if df is None:
+    if df is None or df.empty:
         stock_code_df = data_from_mysql_to_dataframe_latest(user=local_user,
                                                             password=local_password,
                                                             host=local_host,

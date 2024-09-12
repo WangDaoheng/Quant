@@ -87,7 +87,7 @@ class SaveVantageData:
         self.vantage_US_stock = pd.DataFrame()
 
 
-    @timing_decorator
+    # @timing_decorator
     def get_US_stock_from_vantage(self):
         """
         关键 US stcok
@@ -115,7 +115,12 @@ class SaveVantageData:
             else:
                 print(f'Error fetching {symbol} data: {response.status_code} - {response.text}')
 
-        #  文件输出模块
+        #  8.日期格式转换
+        res_df['timestamp'] = pd.to_datetime(res_df['timestamp']).dt.strftime('%Y%m%d')
+        res_df.rename(columns={'timestamp': 'ymd'}, inplace=True)
+
+
+        ############################   文件输出模块     ############################
         US_stock_filename = base_utils.save_out_filename(filehead='US_stock', file_type='csv')
         US_stock_filedir = os.path.join(self.dir_US_stock_base, US_stock_filename)
         res_df.to_csv(US_stock_filedir, index=False)
@@ -126,7 +131,7 @@ class SaveVantageData:
                                                  host=local_host,
                                                  database=local_database,
                                                  df=res_df,
-                                                 table_name="US_stock_daily_vantage",
+                                                 table_name="us_stock_daily_vantage",
                                                  merge_on=['ymd', 'name'])
 
         #  结果数据保存到 远端 mysql中
@@ -135,7 +140,7 @@ class SaveVantageData:
                                                  host=origin_host,
                                                  database=origin_database,
                                                  df=res_df,
-                                                 table_name="US_stock_daily_vantage",
+                                                 table_name="us_stock_daily_vantage",
                                                  merge_on=['ymd', 'name'])
 
 
@@ -170,7 +175,7 @@ class SaveVantageData:
         return res_df
 
 
-    @timing_decorator
+    # @timing_decorator
     def get_USD_FX_from_vantage(self):
         """
         计算美元指数, 从主流货币去计算美元指数
@@ -288,7 +293,7 @@ class SaveVantageData:
                                                  host=local_host,
                                                  database=local_database,
                                                  df=res_df,
-                                                 table_name="exchange_DXY_vantage",
+                                                 table_name="exchange_dxy_vantage",
                                                  merge_on=["ymd", "name"])
 
         #  将汇率明细写入 远端 mysql
@@ -297,11 +302,11 @@ class SaveVantageData:
                                                  host=origin_host,
                                                  database=origin_database,
                                                  df=res_df,
-                                                 table_name="exchange_DXY_vantage",
+                                                 table_name="exchange_dxy_vantage",
                                                  merge_on=["ymd", "name"])
 
 
-    @timing_decorator
+    # @timing_decorator
     def setup(self):
 
         #  获取 US 主要stock 的全部数据

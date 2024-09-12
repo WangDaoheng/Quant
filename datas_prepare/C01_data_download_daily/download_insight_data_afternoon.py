@@ -690,7 +690,7 @@ class SaveInsightData:
         for stock_code in index_list:
 
             valid_num = stock_in_industry_df.shape[0]
-            sys.stdout.write(f"\r当前执行 get_Ashare_industry_detail  第 {i} 次循环，总共 {total_batches} 个批次, {valid_num}个有效筹码数据")
+            sys.stdout.write(f"\r当前执行 get_Ashare_industry_detail  第 {i} 次循环，总共 {total_batches} 个批次, {valid_num}个有效股票行业数据")
             sys.stdout.flush()
             time.sleep(0.03)
 
@@ -757,7 +757,7 @@ class SaveInsightData:
         #  2.行业信息的总和dataframe
         shareholder_num_df = pd.DataFrame()
         #  北向资金的总和dataframe
-        north_bound_df = pd.DataFrame()
+        # north_bound_df = pd.DataFrame()
 
         #  3.获取最新的stock_codes 数据
         code_list = mysql_utils.get_stock_codes_latest(self.stock_code_df)
@@ -771,20 +771,20 @@ class SaveInsightData:
             # 屏蔽 stdout 和 stderr
             with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
                 res_shareholder = get_shareholder_num(htsc_code=stock_code, end_date=[time_start_date, time_end_date])
-                res_north_bound =get_north_bound(htsc_code=stock_code, trading_day=[time_start_date, time_end_date])
+                # res_north_bound =get_north_bound(htsc_code=stock_code, trading_day=[time_start_date, time_end_date])
 
                 valid_shareholder = shareholder_num_df.shape[0]
-                valid_north_bound = north_bound_df.shape[0]
+                # valid_north_bound = north_bound_df.shape[0]
 
             if res_shareholder is not None:
                 shareholder_num_df = pd.concat([shareholder_num_df, res_shareholder], ignore_index=True)
                 sys.stdout.write(f"\r当前执行 get_shareholder_num  第 {i} 次循环，总共 {total_xunhuan} 个批次, {valid_shareholder}个有效股东数据")
                 sys.stdout.flush()
 
-            if res_north_bound is not None:
-                north_bound_df = pd.concat([north_bound_df, res_north_bound], ignore_index=True)
-                sys.stdout.write(f"\r当前执行 get_north_bound  第 {i} 次循环，总共 {total_xunhuan} 个批次, {valid_north_bound}个有效北向持仓数据")
-                sys.stdout.flush()
+            # if res_north_bound is not None:
+            #     north_bound_df = pd.concat([north_bound_df, res_north_bound], ignore_index=True)
+            #     sys.stdout.write(f"\r当前执行 get_north_bound  第 {i} 次循环，总共 {total_xunhuan} 个批次, {valid_north_bound}个有效北向持仓数据")
+            #     sys.stdout.flush()
 
             time.sleep(0.03)
 
@@ -796,30 +796,30 @@ class SaveInsightData:
         shareholder_num_df.rename(columns={'end_date': 'ymd'}, inplace=True)
         shareholder_num_df['ymd'] = pd.to_datetime(shareholder_num_df['ymd']).dt.strftime('%Y%m%d')
 
-        north_bound_df.rename(columns={'trading_day': 'ymd'}, inplace=True)
-        north_bound_df['ymd'] = pd.to_datetime(shareholder_num_df['ymd']).dt.strftime('%Y%m%d')
+        # north_bound_df.rename(columns={'trading_day': 'ymd'}, inplace=True)
+        # north_bound_df['ymd'] = pd.to_datetime(shareholder_num_df['ymd']).dt.strftime('%Y%m%d')
 
         #  6.声明所有的列名，去除多余列
         shareholder_num_df = shareholder_num_df[['htsc_code', 'name', 'ymd', 'total_sh', 'avg_share', 'pct_of_total_sh', 'pct_of_avg_sh']]
-        north_bound_df = north_bound_df[['htsc_code', 'ymd', 'sh_hkshare_hold', 'pct_total_share']]
+        # north_bound_df = north_bound_df[['htsc_code', 'ymd', 'sh_hkshare_hold', 'pct_total_share']]
 
         #  7.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
         shareholder_num_df = shareholder_num_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
-        north_bound_df = north_bound_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
+        # north_bound_df = north_bound_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
 
         ############################   文件输出模块     ############################
         #  8.更新dataframe
         self.shareholder_num_df = shareholder_num_df
-        self.north_bound_df = north_bound_df
+        # self.north_bound_df = north_bound_df
 
         #  9.本地csv文件的落盘保存
         shareholder_num_filename = base_utils.save_out_filename(filehead='shareholder_num', file_type='csv')
         shareholder_num_filedir = os.path.join(self.dir_shareholder_num_base, shareholder_num_filename)
         shareholder_num_df.to_csv(shareholder_num_filedir, index=False)
 
-        north_bound_filename = base_utils.save_out_filename(filehead='north_bound', file_type='csv')
-        north_bound_filedir = os.path.join(self.dir_north_bound_base, north_bound_filename)
-        north_bound_df.to_csv(north_bound_filedir, index=False)
+        # north_bound_filename = base_utils.save_out_filename(filehead='north_bound', file_type='csv')
+        # north_bound_filedir = os.path.join(self.dir_north_bound_base, north_bound_filename)
+        # north_bound_df.to_csv(north_bound_filedir, index=False)
 
         #  10.结果数据保存到 本地 mysql中
         mysql_utils.data_from_dataframe_to_mysql(user=local_user,
@@ -830,13 +830,13 @@ class SaveInsightData:
                                                  table_name="shareholder_num_now",
                                                  merge_on=['ymd', 'htsc_code'])
 
-        mysql_utils.data_from_dataframe_to_mysql(user=local_user,
-                                                 password=local_password,
-                                                 host=local_host,
-                                                 database=local_database,
-                                                 df=north_bound_df,
-                                                 table_name="north_bound_daily_now",
-                                                 merge_on=['ymd', 'htsc_code'])
+        # mysql_utils.data_from_dataframe_to_mysql(user=local_user,
+        #                                          password=local_password,
+        #                                          host=local_host,
+        #                                          database=local_database,
+        #                                          df=north_bound_df,
+        #                                          table_name="north_bound_daily_now",
+        #                                          merge_on=['ymd', 'htsc_code'])
 
         #  11.结果数据保存到 远端 mysql中
         mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
@@ -847,18 +847,18 @@ class SaveInsightData:
                                                  table_name="shareholder_num_now",
                                                  merge_on=['ymd', 'htsc_code'])
 
-        mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
-                                                 password=origin_password,
-                                                 host=origin_host,
-                                                 database=origin_database,
-                                                 df=north_bound_df,
-                                                 table_name="north_bound_daily_now",
-                                                 merge_on=['ymd', 'htsc_code'])
+        # mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
+        #                                          password=origin_password,
+        #                                          host=origin_host,
+        #                                          database=origin_database,
+        #                                          df=north_bound_df,
+        #                                          table_name="north_bound_daily_now",
+        #                                          merge_on=['ymd', 'htsc_code'])
 
 
 
 
-    @timing_decorator
+    # @timing_decorator
     def setup(self):
         #  登陆insight数据源
         self.login()
@@ -867,28 +867,28 @@ class SaveInsightData:
         self.get_stock_codes()
 
         #  获取上述股票的当月日K
-        # self.get_stock_kline()
+        self.get_stock_kline()
 
         #  获取主要股指
-        # self.get_index_a_share()
+        self.get_index_a_share()
 
         #  大盘涨跌概览
-        # self.get_limit_summary()
+        self.get_limit_summary()
 
         #  期货__内盘
-        # self.get_future_inside()
+        self.get_future_inside()
 
-        #  筹码概览
+        # 筹码概览
         self.get_chouma_datas()
 
-        #  获取A股的行业分类数据, 是行业数据
-        # self.get_Ashare_industry_overview()
+        # 获取A股的行业分类数据, 是行业数据
+        self.get_Ashare_industry_overview()
 
-        #  获取A股的行业分类数据, 是stock_code & industry 关联后的大表数据
-        # self.get_Ashare_industry_detail()
+        # 获取A股的行业分类数据, 是stock_code & industry 关联后的大表数据
+        self.get_Ashare_industry_detail()
 
         #  个股股东数
-        # self.get_shareholder_north_bound_num()
+        self.get_shareholder_north_bound_num()
 
 
 

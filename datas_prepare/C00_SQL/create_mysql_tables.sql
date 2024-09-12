@@ -312,8 +312,8 @@ CREATE TABLE quant.north_bound_daily (
 
 
 --2.1
-------------------  US_stock_daily_vantage   美股 日K
-CREATE TABLE quant.US_stock_daily_vantage (
+------------------  us_stock_daily_vantage   美股 日K
+CREATE TABLE quant.us_stock_daily_vantage (
     name VARCHAR(50) NOT NULL,
     ymd DATE NOT NULL,
     open FLOAT,
@@ -339,7 +339,7 @@ CREATE TABLE quant.exchange_rate_vantage_detail (
 ) ;
 
 
-CREATE TABLE quant.exchange_DXY_vantage (
+CREATE TABLE quant.exchange_dxy_vantage (
     ymd DATE NOT NULL,
     name VARCHAR(50) NOT NULL,
     UNIQUE KEY unique_ymd_stock_code (ymd, name)
