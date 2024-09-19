@@ -40,5 +40,13 @@ origin_mysql_host = "49.4.94.223"
 origin_mysql_database = "quant"
 
 
+######################  华为云 日志文件 留存地址  #############################
+
+log_file_linux_path = r"/path/to/your/logfile.log"
+log_file_window_path = r"F:\QDatas\logs"
+
+
+
+
 
 

@@ -9,6 +9,7 @@ import contextlib
 
 import time
 import logging
+import platform
 
 
 import CommonProperties.Base_Properties as base_properties
@@ -161,29 +162,42 @@ class SaveInsightData:
         #  6.更新dataframe ymd  htsc_code  name  exchange
         self.stock_code_df = filtered_df
 
-        #  7.本地csv文件的落盘保存
-        filehead = 'stocks_codes_all'
-        stock_codes_listed_filename = base_utils.save_out_filename(filehead=filehead, file_type='csv')
-        stock_codes_listed_dir = os.path.join(self.dir_stock_codes_base, stock_codes_listed_filename)
-        filtered_df.to_csv(stock_codes_listed_dir, index=False)
+        ############################   文件输出模块     ############################
+        if platform.system() == "Windows":
+            #  7.本地csv文件的落盘保存
+            filehead = 'stocks_codes_all'
+            stock_codes_listed_filename = base_utils.save_out_filename(filehead=filehead, file_type='csv')
+            stock_codes_listed_dir = os.path.join(self.dir_stock_codes_base, stock_codes_listed_filename)
+            filtered_df.to_csv(stock_codes_listed_dir, index=False)
 
-        #  8.结果数据保存到 本地 mysql中
-        mysql_utils.data_from_dataframe_to_mysql(user=local_user,
-                                                 password=local_password,
-                                                 host=local_host,
-                                                 database=local_database,
-                                                 df=filtered_df,
-                                                 table_name="stock_code_daily_insight",
-                                                 merge_on=['ymd', 'htsc_code'])
+            #  8.结果数据保存到 本地 mysql中
+            mysql_utils.data_from_dataframe_to_mysql(user=local_user,
+                                                     password=local_password,
+                                                     host=local_host,
+                                                     database=local_database,
+                                                     df=filtered_df,
+                                                     table_name="stock_code_daily_insight",
+                                                     merge_on=['ymd', 'htsc_code'])
 
-        #  9.结果数据保存到 远端 mysql中
-        mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
-                                                 password=origin_password,
-                                                 host=origin_host,
-                                                 database=origin_database,
-                                                 df=filtered_df,
-                                                 table_name="stock_code_daily_insight",
-                                                 merge_on=['ymd', 'htsc_code'])
+            #  9.结果数据保存到 远端 mysql中
+            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
+                                                     password=origin_password,
+                                                     host=origin_host,
+                                                     database=origin_database,
+                                                     df=filtered_df,
+                                                     table_name="stock_code_daily_insight",
+                                                     merge_on=['ymd', 'htsc_code'])
+        else:
+            #  9.结果数据保存到 远端 mysql中
+            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
+                                                     password=origin_password,
+                                                     host=origin_host,
+                                                     database=origin_database,
+                                                     df=filtered_df,
+                                                     table_name="stock_code_daily_insight",
+                                                     merge_on=['ymd', 'htsc_code'])
+
+
 
 
 

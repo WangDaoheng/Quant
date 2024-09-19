@@ -13,8 +13,7 @@ import requests
 
 from CommonProperties.set_config import setup_logging_config
 
-# 调用日志配置
-setup_logging_config()
+
 
 def save_out_filename(filehead, file_type):
     """
@@ -192,7 +191,8 @@ def get_with_retries(url, headers=None, timeout=10, max_retries=3, backoff_facto
 
 
 
-
+# 调用日志配置
+setup_logging_config()
 
 
 
