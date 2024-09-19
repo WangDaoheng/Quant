@@ -7,6 +7,7 @@ from insight_python.com.insight.query import *
 from insight_python.com.insight.market_service import market_service
 from datetime import datetime
 import time
+import platform
 
 
 import CommonProperties.Base_Properties as base_properties
@@ -195,6 +196,10 @@ class SaveInsightHistoryData:
 
         #  12.文件输出模块
         self.kline_total_history = kline_total_df
+
+        ############################   文件输出模块     ############################
+
+
 
         #  13.本地csv文件的落盘保存
         kline_total_filename = base_utils.save_out_filename(filehead='stock_kline_history', file_type='csv')
