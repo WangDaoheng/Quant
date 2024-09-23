@@ -42,11 +42,16 @@ origin_mysql_database = "quant"
 
 ######################  华为云 日志文件 留存地址  #############################
 
-log_file_linux_path = r"/path/to/your/logfile.log"
+log_file_linux_path = r"/root/Quant/Logs"
 log_file_window_path = r"F:\QDatas\logs"
 
 
 
+######################  个人 配置 留存地址  #############################
+
+personal_linux_path = r"/root/Quant/ss_property"
+personal_window_path = r"F:\QDatas\ss_property"
+personal_property_file = r"personal_property.txt"
 
 
 
