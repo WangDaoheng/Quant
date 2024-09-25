@@ -87,7 +87,7 @@ class SaveVantageData:
         self.vantage_US_stock = pd.DataFrame()
 
 
-    # @timing_decorator
+    @timing_decorator
     def get_US_stock_from_vantage(self):
         """
         关键 US stcok
@@ -118,7 +118,6 @@ class SaveVantageData:
         #  8.日期格式转换
         res_df['timestamp'] = pd.to_datetime(res_df['timestamp']).dt.strftime('%Y%m%d')
         res_df.rename(columns={'timestamp': 'ymd'}, inplace=True)
-
 
         ############################   文件输出模块     ############################
         US_stock_filename = base_utils.save_out_filename(filehead='US_stock', file_type='csv')
@@ -175,7 +174,7 @@ class SaveVantageData:
         return res_df
 
 
-    # @timing_decorator
+    @timing_decorator
     def get_USD_FX_from_vantage(self):
         """
         计算美元指数, 从主流货币去计算美元指数
@@ -306,7 +305,7 @@ class SaveVantageData:
                                                  merge_on=["ymd", "name"])
 
 
-    # @timing_decorator
+    @timing_decorator
     def setup(self):
 
         #  获取 US 主要stock 的全部数据

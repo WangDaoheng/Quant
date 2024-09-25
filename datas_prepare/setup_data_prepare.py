@@ -33,6 +33,14 @@ class RunDataPrepare:
         self.save_vantage_now = SaveVantageData()
         self.merge_insight = MergeInsightData()
 
+    def send_logfile_email(self):
+        """
+        聚合后发送邮件的服务
+        Returns:
+
+        """
+        pass
+
     def setup(self):
 
         #  下载 insight 当日数据
