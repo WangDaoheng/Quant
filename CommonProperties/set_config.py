@@ -153,7 +153,7 @@ def send_log_via_email():
     # 关闭连接
     server.quit()
 
-    print("邮件发送成功！")
+    logging.info("邮件发送成功！")
 
 
 

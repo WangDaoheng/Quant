@@ -6,7 +6,7 @@ from datas_prepare.C01_data_download_daily.download_vantage_data_afternoon impor
 
 from datas_prepare.C02_data_merge.merge_insight_data_afternoon import MergeInsightData
 
-
+import CommonProperties.set_config as set_config
 
 # ************************************************************************
 # 本代码的作用是   运行整个 DataPrepare 工作
@@ -33,13 +33,15 @@ class RunDataPrepare:
         self.save_vantage_now = SaveVantageData()
         self.merge_insight = MergeInsightData()
 
+
     def send_logfile_email(self):
         """
         聚合后发送邮件的服务
         Returns:
 
         """
-        pass
+        set_config.send_log_via_email()
+
 
     def setup(self):
 
@@ -51,6 +53,9 @@ class RunDataPrepare:
 
         #  下载 vantage 当日数据
         self.save_vantage_now.setup()
+
+        #  发送邮件
+        self.send_logfile_email()
 
 
 

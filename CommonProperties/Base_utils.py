@@ -49,7 +49,7 @@ def get_latest_filename(filename_dir):
                 latest_date = timestamp
                 latest_file_name = file_name
         except Exception as e:
-            print(r"   在处理文件 {} 时遇到问题:{}".format(file_name, e))
+            logging.error(r"   在处理文件 {} 时遇到问题:{}".format(file_name, e))
 
     return latest_file_name
 
@@ -91,7 +91,7 @@ def timing_decorator(func):
         try:
             result = func(*args, **kwargs)
         except Exception as e:
-            print(f"Error in function {func.__name__}:")
+            logging.error(f"Error in function {func.__name__}:")
             traceback.print_exc()  # 打印详细的堆栈追踪信息
             raise e  # 重新抛出异常，保持原始行为
         end_time = time.time()
@@ -119,10 +119,7 @@ def copy_and_rename_file(src_file_path, dest_dir, new_name):
 
     # 复制文件并重命名
     shutil.copy(src_file_path, dest_file_path)
-    print(f"文件已复制并重命名为: {dest_file_path}")
-
-
-
+    logging.info(f"文件已复制并重命名为: {dest_file_path}")
 
 
 def process_in_batches(df, batch_size, processing_function, **kwargs):
