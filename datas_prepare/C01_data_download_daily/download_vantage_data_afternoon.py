@@ -1,6 +1,6 @@
 
 import pandas as pd
-from yahoo_fin.stock_info import *
+# from yahoo_fin.stock_info import *
 from io import StringIO
 import os
 import logging

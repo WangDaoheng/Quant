@@ -6,16 +6,45 @@ import os
 import platform
 from datetime import datetime
 
+import json
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
 
-
-import CommonProperties.Base_utils as base_utils
 import CommonProperties.Base_Properties as base_properties
 from CommonProperties.Base_Properties import log_file_linux_path, log_file_window_path, personal_linux_path, personal_window_path, personal_property_file
+
+
+def get_platform_is_window():
+    """
+    判断当前操作系统是window 还是 其他
+    Returns: True  是window平台
+             Flase 是其他平台
+    """
+    if platform.system() == "Windows":
+        return True
+    else:
+        return False
+
+
+def read_json_file(filepath):
+    """
+    对 json 文件的处理, 返回一个dict
+    Args:
+        filepath:  文件路径
+    Returns:
+    """
+    # 读取文件
+    with open(filepath, 'r', encoding='utf-8') as file:
+        data = file.read()
+
+    # 解析 JSON 数据
+    json_data = json.loads(data)
+
+    # 输出解析结果
+    return json_data
 
 
 def read_personal_property():
@@ -23,13 +52,13 @@ def read_personal_property():
     读取私人配置文件
     Returns:
     """
-    if base_utils.get_platform_is_window():
+    if  get_platform_is_window():
         personal_window_file = os.path.join(personal_window_path, personal_property_file)
-        personal_property_dict = base_utils.read_json_file(personal_window_file)
+        personal_property_dict = read_json_file(personal_window_file)
 
     else:
         personal_linux_file = os.path.join(personal_linux_path, personal_property_file)
-        personal_property_dict = base_utils.read_json_file(personal_linux_file)
+        personal_property_dict = read_json_file(personal_linux_file)
 
     return personal_property_dict
 
@@ -42,7 +71,7 @@ def read_logfile():
     # 获取当前日期并生成日志文件名
     current_date = datetime.now().strftime('%Y-%m-%d')
 
-    if base_utils.get_platform_is_window():
+    if get_platform_is_window():
         log_file = f"log_windows_{current_date}.txt"
         log_filedir = os.path.join(log_file_window_path, log_file)
 
@@ -106,7 +135,6 @@ def setup_logging_config():
 
     # 设置日志级别
     logger.setLevel(logging.INFO)
-
 
 
 def send_log_via_email():

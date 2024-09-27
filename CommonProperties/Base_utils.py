@@ -187,35 +187,6 @@ def get_with_retries(url, headers=None, timeout=10, max_retries=3, backoff_facto
     return None
 
 
-def get_platform_is_window():
-    """
-    判断当前操作系统是window 还是 其他
-    Returns: True  是window平台
-             Flase 是其他平台
-    """
-    if platform.system() == "Windows":
-        return True
-    else:
-        return False
-
-
-def read_json_file(filepath):
-    """
-    对 json 文件的处理, 返回一个dict
-    Args:
-        filepath:  文件路径
-    Returns:
-    """
-    # 读取文件
-    with open(filepath, 'r', encoding='utf-8') as file:
-        data = file.read()
-
-    # 解析 JSON 数据
-    json_data = json.loads(data)
-
-    # 输出解析结果
-    return json_data
-
 
 
 # 调用日志配置
