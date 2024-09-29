@@ -103,7 +103,7 @@ def setup_logging_config():
             log_file_window = os.path.join(log_file_window_path, log_file_window_filename)
             log_file_path = log_file_window  # Windows 下的路径
         else:
-            log_file_linux_filename = f'log_linux_{current_date}.log'
+            log_file_linux_filename = f'log_linux_{current_date}.txt'
             log_file_linux = os.path.join(log_file_linux_path, log_file_linux_filename)
             log_file_path = log_file_linux    # Linux 下的路径
 

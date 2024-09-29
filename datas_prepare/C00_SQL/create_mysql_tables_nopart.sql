@@ -2,111 +2,109 @@
 --1.1
 ------------------  stock_code_daily_insight   当日已上市股票码表
 CREATE TABLE quant.stock_code_daily_insight (
-    ymd DATE NOT NULL,
-    htsc_code VARCHAR(50) NOT NULL,
-    name VARCHAR(50),
-    exchange VARCHAR(50),
-    UNIQUE KEY unique_ymd_stock_code (ymd, htsc_code)
+     ymd          DATE NOT NULL            --交易日期
+    ,htsc_code    VARCHAR(50) NOT NULL     --股票代码
+    ,name         VARCHAR(50)              --股票名
+    ,exchange     VARCHAR(50)              --交易所名称
+    ,UNIQUE KEY unique_ymd_stock_code (ymd, htsc_code)
 );
 
 
 --1.2
 ------------------  stock_kline_daily_insight   当日已上市股票的历史日K
 CREATE TABLE quant.stock_kline_daily_insight_now (
-    htsc_code VARCHAR(50) NOT NULL,
-    ymd DATE NOT NULL,
-    open FLOAT,
-    close FLOAT,
-    high FLOAT,
-    low FLOAT,
-    num_trades BIGINT,
-    volume BIGINT,
-    UNIQUE KEY unique_ymd_stock_code (ymd, htsc_code)
+     htsc_code    VARCHAR(50) NOT NULL    --股票代码
+    ,ymd          DATE NOT NULL           --交易日期
+    ,open         FLOAT                   --开盘价
+    ,close        FLOAT                   --收盘价
+    ,high         FLOAT                   --最高价
+    ,low          FLOAT                   --最低价
+    ,num_trades   BIGINT                  --交易笔数
+    ,volume       BIGINT                  --成交量
+    ,UNIQUE KEY unique_ymd_stock_code (ymd, htsc_code)
 ) ;
 
 
 CREATE TABLE quant.stock_kline_daily_insight (
-    htsc_code VARCHAR(50) NOT NULL,
-    ymd DATE NOT NULL,
-    open FLOAT,
-    close FLOAT,
-    high FLOAT,
-    low FLOAT,
-    num_trades BIGINT,
-    volume BIGINT,
-    UNIQUE KEY unique_ymd_stock_code (ymd, htsc_code)
+     htsc_code    VARCHAR(50) NOT NULL    --股票代码
+    ,ymd          DATE NOT NULL           --交易日期
+    ,open         FLOAT                   --开盘价
+    ,close        FLOAT                   --收盘价
+    ,high         FLOAT                   --最高价
+    ,low          FLOAT                   --最低价
+    ,num_trades   BIGINT                  --交易笔数
+    ,volume       BIGINT                  --成交量
+    ,UNIQUE KEY unique_ymd_stock_code (ymd, htsc_code)
 );
 
 
 --1.3
 ------------------  index_a_share_insight   大A的主要指数日K
 CREATE TABLE quant.index_a_share_insight_now (
-    htsc_code VARCHAR(50) NOT NULL,
-    name VARCHAR(50) NOT NULL,
-    ymd DATE NOT NULL,
-    open FLOAT,
-    close FLOAT,
-    high FLOAT,
-    low FLOAT,
-    volume BIGINT,
-    UNIQUE KEY unique_ymd_stock_code (ymd, htsc_code)
+     htsc_code    VARCHAR(50) NOT NULL    --指数代码
+    ,name         VARCHAR(50) NOT NULL    --指数名称
+    ,ymd          DATE NOT NULL           --交易日期
+    ,open         FLOAT                   --开盘价
+    ,close        FLOAT                   --收盘价
+    ,high         FLOAT                   --最高价
+    ,low          FLOAT                   --最低价
+    ,volume       BIGINT                  --成交量
+    ,UNIQUE KEY unique_ymd_stock_code (ymd, htsc_code)
 ) ;
 
 
 CREATE TABLE quant.index_a_share_insight (
-    htsc_code VARCHAR(50) NOT NULL,
-    name VARCHAR(50) NOT NULL,
-    ymd DATE NOT NULL,
-    open FLOAT,
-    close FLOAT,
-    high FLOAT,
-    low FLOAT,
-    volume BIGINT,
-    UNIQUE KEY unique_ymd_stock_code (ymd, htsc_code)
+     htsc_code    VARCHAR(50) NOT NULL    --指数代码
+    ,name         VARCHAR(50) NOT NULL    --指数名称
+    ,ymd          DATE NOT NULL           --交易日期
+    ,open         FLOAT                   --开盘价
+    ,close        FLOAT                   --收盘价
+    ,high         FLOAT                   --最高价
+    ,low          FLOAT                   --最低价
+    ,volume       BIGINT                  --成交量
+    ,UNIQUE KEY unique_ymd_stock_code (ymd, htsc_code)
 );
 
 
 --1.4
 ------------------  stock_limit_summary_insight   当日大A行情温度
 CREATE TABLE quant.stock_limit_summary_insight_now (
-    ymd DATE NOT NULL,
-    name VARCHAR(50) NOT NULL,
-    today_ZT INT,
-    today_DT INT,
-    yesterday_ZT INT,
-    yesterday_DT INT,
-    yesterday_ZT_rate FLOAT,
-    UNIQUE KEY unique_ymd_name (ymd, name)
+     ymd          DATE NOT NULL           --日期
+    ,name         VARCHAR(50) NOT NULL    --市场名称
+    ,today_ZT     INT                     --今日涨停股票数
+    ,today_DT     INT                     --今日跌停股票数
+    ,yesterday_ZT INT                     --昨日涨停股票数
+    ,yesterday_DT INT                     --昨日跌停股票数
+    ,yesterday_ZT_rate FLOAT              --昨日涨停股票的今日平均涨幅
+    ,UNIQUE KEY unique_ymd_name (ymd, name)
 ) ;
 
 
 CREATE TABLE quant.stock_limit_summary_insight (
-    ymd DATE NOT NULL,
-    name VARCHAR(50) NOT NULL,
-    today_ZT INT,
-    today_DT INT,
-    yesterday_ZT INT,
-    yesterday_DT INT,
-    yesterday_ZT_rate FLOAT,
-    UNIQUE KEY unique_ymd_name (ymd, name)
-);
-
+     ymd          DATE NOT NULL           --日期
+    ,name         VARCHAR(50) NOT NULL    --市场名称
+    ,today_ZT     INT                     --今日涨停股票数
+    ,today_DT     INT                     --今日跌停股票数
+    ,yesterday_ZT INT                     --昨日涨停股票数
+    ,yesterday_DT INT                     --昨日跌停股票数
+    ,yesterday_ZT_rate FLOAT              --昨日涨停股票的今日平均涨幅
+    ,UNIQUE KEY unique_ymd_name (ymd, name)
+) ;
 
 
 --1.5
 ------------------  future_inside_insight   内盘主要期货数据日K
-
 CREATE TABLE quant.future_inside_insight_now (
-    htsc_code VARCHAR(50) NOT NULL,
-    ymd DATE NOT NULL,
-    open FLOAT,
-    close FLOAT,
-    high FLOAT,
-    low FLOAT,
-    volume BIGINT,
-    open_interest BIGINT,
-    settle BIGINT,
-    UNIQUE KEY unique_ymd_stock_code (ymd, htsc_code)
+     htsc_code      VARCHAR(50) NOT NULL  --期货标的代码
+    ,ymd            DATE NOT NULL         --交易日期
+    ,open           FLOAT                 --开盘价
+    ,close          FLOAT                 --收盘价
+    ,high           FLOAT                 --最高价
+    ,low            FLOAT                 --最低价
+    ,volume         BIGINT                --成交量
+    ,open_interest  BIGINT
+    ,settle         BIGINT
+    ,UNIQUE KEY unique_ymd_stock_code (ymd, htsc_code)
 ) ;
 
 

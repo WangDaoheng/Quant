@@ -29,7 +29,7 @@ class RunDataPrepare:
 
     def __init__(self):
         self.save_insight_now = SaveInsightData()
-        # self.save_insight_history = SaveInsightHistoryData()
+        self.save_insight_history = SaveInsightHistoryData()
         self.save_vantage_now = SaveVantageData()
         self.merge_insight = MergeInsightData()
 
@@ -53,6 +53,9 @@ class RunDataPrepare:
 
         #  下载 vantage 当日数据
         self.save_vantage_now.setup()
+
+        #  下载历史数据
+        self.save_insight_history.setup()
 
         #  发送邮件
         self.send_logfile_email()
