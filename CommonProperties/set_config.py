@@ -99,7 +99,7 @@ def setup_logging_config():
 
         # 根据操作系统类型设置日志文件路径
         if platform.system() == "Windows":
-            log_file_window_filename = f'log_windows_{current_date}.log'
+            log_file_window_filename = f'log_windows_{current_date}.txt'
             log_file_window = os.path.join(log_file_window_path, log_file_window_filename)
             log_file_path = log_file_window  # Windows 下的路径
         else:

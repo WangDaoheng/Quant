@@ -315,7 +315,7 @@ class SaveVantageData:
                                                      password=local_password,
                                                      host=local_host,
                                                      database=local_database,
-                                                     df=res_df,
+                                                     df=dxy_df,
                                                      table_name="exchange_dxy_vantage",
                                                      merge_on=["ymd", "name"])
 
@@ -324,7 +324,7 @@ class SaveVantageData:
                                                      password=origin_password,
                                                      host=origin_host,
                                                      database=origin_database,
-                                                     df=res_df,
+                                                     df=dxy_df,
                                                      table_name="exchange_dxy_vantage",
                                                      merge_on=["ymd", "name"])
         else:
@@ -333,7 +333,7 @@ class SaveVantageData:
                                                      password=origin_password,
                                                      host=origin_host,
                                                      database=origin_database,
-                                                     df=res_df,
+                                                     df=dxy_df,
                                                      table_name="exchange_dxy_vantage",
                                                      merge_on=["ymd", "name"])
 
