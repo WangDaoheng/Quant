@@ -11,7 +11,7 @@ CREATE TABLE quant.ods_stock_code_daily_insight (
 
 
 --1.2
-------------------  stock_kline_daily_insight   当日已上市股票的历史日K
+------------------  ods_stock_kline_daily_insight   当日已上市股票的历史日K
 CREATE TABLE quant.ods_stock_kline_daily_insight_now (
      htsc_code    VARCHAR(50) NOT NULL    --股票代码
     ,ymd          DATE NOT NULL           --交易日期
@@ -39,7 +39,7 @@ CREATE TABLE quant.ods_stock_kline_daily_insight (
 
 
 --1.3
-------------------  index_a_share_insight   大A的主要指数日K
+------------------  ods_index_a_share_insight   大A的主要指数日K
 CREATE TABLE quant.ods_index_a_share_insight_now (
      htsc_code    VARCHAR(50) NOT NULL    --指数代码
     ,name         VARCHAR(50) NOT NULL    --指数名称
@@ -67,7 +67,7 @@ CREATE TABLE quant.ods_index_a_share_insight (
 
 
 --1.4
-------------------  stock_limit_summary_insight   当日大A行情温度
+------------------  ods_stock_limit_summary_insight   当日大A行情温度
 CREATE TABLE quant.ods_stock_limit_summary_insight_now (
      ymd          DATE NOT NULL           --日期
     ,name         VARCHAR(50) NOT NULL    --市场名称
@@ -93,7 +93,7 @@ CREATE TABLE quant.ods_stock_limit_summary_insight (
 
 
 --1.5
-------------------  future_inside_insight   内盘主要期货数据日K
+------------------  ods_future_inside_insight   内盘主要期货数据日K
 CREATE TABLE quant.ods_future_inside_insight_now (
      htsc_code      VARCHAR(50) NOT NULL  --期货标的代码
     ,ymd            DATE NOT NULL         --交易日期
@@ -124,7 +124,7 @@ CREATE TABLE quant.ods_future_inside_insight (
 
 
 --1.6
-------------------  stock_chouma_insight   A股的筹码分布数据
+------------------  ods_stock_chouma_insight   A股的筹码分布数据
 
 CREATE TABLE quant.ods_stock_chouma_insight (
     htsc_code                                VARCHAR(50) NOT NULL     --证券代码
@@ -162,7 +162,7 @@ CREATE TABLE quant.ods_stock_chouma_insight (
 
 
 --1.7
-------------------  astock_industry_overview   行业分类，申万三级分类
+------------------  ods_astock_industry_overview   行业分类，申万三级分类
 CREATE TABLE quant.ods_astock_industry_overview (
     ymd                  DATE                  --交易日期
    ,classified           varchar(100)          --行业分类
@@ -179,7 +179,7 @@ CREATE TABLE quant.ods_astock_industry_overview (
 
 
 --1.8
-------------------  astock_industry_detail   股票&行业的关联
+------------------  ods_astock_industry_detail   股票&行业的关联
 CREATE TABLE quant.ods_astock_industry_detail (
     ymd              DATE                      --交易日期
    ,htsc_code        varchar(100)              --股票代码
@@ -197,7 +197,7 @@ CREATE TABLE quant.ods_astock_industry_detail (
 
 
 --1.9
-------------------  shareholder_num   个股的股东数
+------------------  ods_shareholder_num   个股的股东数
 
 CREATE TABLE quant.ods_shareholder_num_now (
        htsc_code              varchar(100)            --股票代码
