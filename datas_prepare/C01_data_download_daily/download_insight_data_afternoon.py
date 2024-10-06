@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import os
 import sys
 import io
@@ -177,7 +179,7 @@ class SaveInsightData:
                                                      host=local_host,
                                                      database=local_database,
                                                      df=filtered_df,
-                                                     table_name="stock_code_daily_insight",
+                                                     table_name="ods_stock_code_daily_insight",
                                                      merge_on=['ymd', 'htsc_code'])
 
             #  9.结果数据保存到 远端 mysql中
@@ -186,7 +188,7 @@ class SaveInsightData:
                                                      host=origin_host,
                                                      database=origin_database,
                                                      df=filtered_df,
-                                                     table_name="stock_code_daily_insight",
+                                                     table_name="ods_stock_code_daily_insight",
                                                      merge_on=['ymd', 'htsc_code'])
         else:
             #  9.结果数据保存到 远端 mysql中
@@ -195,7 +197,7 @@ class SaveInsightData:
                                                      host=origin_host,
                                                      database=origin_database,
                                                      df=filtered_df,
-                                                     table_name="stock_code_daily_insight",
+                                                     table_name="ods_stock_code_daily_insight",
                                                      merge_on=['ymd', 'htsc_code'])
 
 
@@ -276,7 +278,7 @@ class SaveInsightData:
                                                          host=local_host,
                                                          database=local_database,
                                                          df=kline_total_df,
-                                                         table_name="stock_kline_daily_insight_now",
+                                                         table_name="ods_stock_kline_daily_insight_now",
                                                          merge_on=['ymd', 'htsc_code'])
 
                 #  14.结果数据保存到 远端 mysql中
@@ -285,7 +287,7 @@ class SaveInsightData:
                                                          host=origin_host,
                                                          database=origin_database,
                                                          df=kline_total_df,
-                                                         table_name="stock_kline_daily_insight_now",
+                                                         table_name="ods_stock_kline_daily_insight_now",
                                                          merge_on=['ymd', 'htsc_code'])
             else:
                 #  14.结果数据保存到 远端 mysql中
@@ -294,7 +296,7 @@ class SaveInsightData:
                                                          host=origin_host,
                                                          database=origin_database,
                                                          df=kline_total_df,
-                                                         table_name="stock_kline_daily_insight_now",
+                                                         table_name="ods_stock_kline_daily_insight_now",
                                                          merge_on=['ymd', 'htsc_code'])
         else:
             ## insight 返回为空值
@@ -380,7 +382,7 @@ class SaveInsightData:
                                                          host=local_host,
                                                          database=local_database,
                                                          df=index_df,
-                                                         table_name="index_a_share_insight_now",
+                                                         table_name="ods_index_a_share_insight_now",
                                                          merge_on=['ymd', 'htsc_code'])
 
                 #  12.结果数据保存到 远端 mysql中
@@ -389,7 +391,7 @@ class SaveInsightData:
                                                          host=origin_host,
                                                          database=origin_database,
                                                          df=index_df,
-                                                         table_name="index_a_share_insight_now",
+                                                         table_name="ods_index_a_share_insight_now",
                                                          merge_on=['ymd', 'htsc_code'])
             else:
                 #  12.结果数据保存到 远端 mysql中
@@ -398,7 +400,7 @@ class SaveInsightData:
                                                          host=origin_host,
                                                          database=origin_database,
                                                          df=index_df,
-                                                         table_name="index_a_share_insight_now",
+                                                         table_name="ods_index_a_share_insight_now",
                                                          merge_on=['ymd', 'htsc_code'])
         else:
             ## insight 返回为空值
@@ -482,7 +484,7 @@ class SaveInsightData:
                                                          host=local_host,
                                                          database=local_database,
                                                          df=limit_summary_df,
-                                                         table_name="stock_limit_summary_insight_now",
+                                                         table_name="ods_stock_limit_summary_insight_now",
                                                          merge_on=['ymd', 'name'])
 
                 #  10.结果数据保存到 远端 mysql中
@@ -491,7 +493,7 @@ class SaveInsightData:
                                                          host=origin_host,
                                                          database=origin_database,
                                                          df=limit_summary_df,
-                                                         table_name="stock_limit_summary_insight_now",
+                                                         table_name="ods_stock_limit_summary_insight_now",
                                                          merge_on=['ymd', 'name'])
             else:
                 #  10.结果数据保存到 远端 mysql中
@@ -500,7 +502,7 @@ class SaveInsightData:
                                                          host=origin_host,
                                                          database=origin_database,
                                                          df=limit_summary_df,
-                                                         table_name="stock_limit_summary_insight_now",
+                                                         table_name="ods_stock_limit_summary_insight_now",
                                                          merge_on=['ymd', 'name'])
         else:
             ## insight 返回为空值
@@ -585,7 +587,7 @@ class SaveInsightData:
                                                          host=local_host,
                                                          database=local_database,
                                                          df=future_inside_df,
-                                                         table_name="future_inside_insight_now",
+                                                         table_name="ods_future_inside_insight_now",
                                                          merge_on=['ymd', 'htsc_code'])
 
                 #  11.结果数据保存到 远端 mysql中
@@ -594,7 +596,7 @@ class SaveInsightData:
                                                          host=origin_host,
                                                          database=origin_database,
                                                          df=future_inside_df,
-                                                         table_name="future_inside_insight_now",
+                                                         table_name="ods_future_inside_insight_now",
                                                          merge_on=['ymd', 'htsc_code'])
             else:
                 #  11.结果数据保存到 远端 mysql中
@@ -603,7 +605,7 @@ class SaveInsightData:
                                                          host=origin_host,
                                                          database=origin_database,
                                                          df=future_inside_df,
-                                                         table_name="future_inside_insight_now",
+                                                         table_name="ods_future_inside_insight_now",
                                                          merge_on=['ymd', 'htsc_code'])
 
         else:
@@ -686,7 +688,7 @@ class SaveInsightData:
                                                          host=local_host,
                                                          database=local_database,
                                                          df=chouma_total_df,
-                                                         table_name="stock_chouma_insight",
+                                                         table_name="ods_stock_chouma_insight",
                                                          merge_on=['ymd', 'htsc_code'])
 
                 #  12.结果数据保存到 远端 mysql中
@@ -695,7 +697,7 @@ class SaveInsightData:
                                                          host=origin_host,
                                                          database=origin_database,
                                                          df=chouma_total_df,
-                                                         table_name="stock_chouma_insight",
+                                                         table_name="ods_stock_chouma_insight",
                                                          merge_on=['ymd', 'htsc_code'])
             else:
                 #  12.结果数据保存到 远端 mysql中
@@ -704,7 +706,7 @@ class SaveInsightData:
                                                          host=origin_host,
                                                          database=origin_database,
                                                          df=chouma_total_df,
-                                                         table_name="stock_chouma_insight",
+                                                         table_name="ods_stock_chouma_insight",
                                                          merge_on=['ymd', 'htsc_code'])
         else:
             ## insight 返回为空值
@@ -764,7 +766,7 @@ class SaveInsightData:
                                                          host=local_host,
                                                          database=local_database,
                                                          df=industry_df,
-                                                         table_name="astock_industry_overview",
+                                                         table_name="ods_astock_industry_overview",
                                                          merge_on=['ymd', 'industry_code'])
 
                 #  10.结果数据保存到 远端 mysql中
@@ -773,7 +775,7 @@ class SaveInsightData:
                                                          host=origin_host,
                                                          database=origin_database,
                                                          df=industry_df,
-                                                         table_name="astock_industry_overview",
+                                                         table_name="ods_astock_industry_overview",
                                                          merge_on=['ymd', 'industry_code'])
             else:
                 #  10.结果数据保存到 远端 mysql中
@@ -782,7 +784,7 @@ class SaveInsightData:
                                                          host=origin_host,
                                                          database=origin_database,
                                                          df=industry_df,
-                                                         table_name="astock_industry_overview",
+                                                         table_name="ods_astock_industry_overview",
                                                          merge_on=['ymd', 'industry_code'])
         else:
             ## insight 返回为空值
@@ -858,7 +860,7 @@ class SaveInsightData:
                                                          host=local_host,
                                                          database=local_database,
                                                          df=stock_in_industry_df,
-                                                         table_name="astock_industry_detail",
+                                                         table_name="ods_astock_industry_detail",
                                                          merge_on=['ymd', 'htsc_code'])
 
                 #  11.结果数据保存到 远端 mysql中
@@ -867,7 +869,7 @@ class SaveInsightData:
                                                          host=origin_host,
                                                          database=origin_database,
                                                          df=stock_in_industry_df,
-                                                         table_name="astock_industry_detail",
+                                                         table_name="ods_astock_industry_detail",
                                                          merge_on=['ymd', 'htsc_code'])
             else:
                 #  11.结果数据保存到 远端 mysql中
@@ -876,7 +878,7 @@ class SaveInsightData:
                                                          host=origin_host,
                                                          database=origin_database,
                                                          df=stock_in_industry_df,
-                                                         table_name="astock_industry_detail",
+                                                         table_name="ods_astock_industry_detail",
                                                          merge_on=['ymd', 'htsc_code'])
         else:
             ## insight 返回为空值
@@ -978,7 +980,7 @@ class SaveInsightData:
                                                          host=local_host,
                                                          database=local_database,
                                                          df=shareholder_num_df,
-                                                         table_name="shareholder_num_now",
+                                                         table_name="ods_shareholder_num_now",
                                                          merge_on=['ymd', 'htsc_code'])
 
                 # mysql_utils.data_from_dataframe_to_mysql(user=local_user,
@@ -995,7 +997,7 @@ class SaveInsightData:
                                                          host=origin_host,
                                                          database=origin_database,
                                                          df=shareholder_num_df,
-                                                         table_name="shareholder_num_now",
+                                                         table_name="ods_shareholder_num_now",
                                                          merge_on=['ymd', 'htsc_code'])
 
                 # mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
@@ -1012,7 +1014,7 @@ class SaveInsightData:
                                                          host=origin_host,
                                                          database=origin_database,
                                                          df=shareholder_num_df,
-                                                         table_name="shareholder_num_now",
+                                                         table_name="ods_shareholder_num_now",
                                                          merge_on=['ymd', 'htsc_code'])
         else:
             ## insight 返回为空值

@@ -1,7 +1,7 @@
 
 --1.1
-------------------  stock_code_daily_insight   当日已上市股票码表
-CREATE TABLE quant.stock_code_daily_insight (
+------------------  ods_stock_code_daily_insight   当日已上市股票码表
+CREATE TABLE quant.ods_stock_code_daily_insight (
     ymd DATE NOT NULL,
     htsc_code VARCHAR(50) NOT NULL,
     name VARCHAR(50),
@@ -12,7 +12,7 @@ CREATE TABLE quant.stock_code_daily_insight (
 
 --1.2
 ------------------  stock_kline_daily_insight   当日已上市股票的历史日K
-CREATE TABLE quant.stock_kline_daily_insight_now (
+CREATE TABLE quant.ods_stock_kline_daily_insight_now (
     htsc_code VARCHAR(50) NOT NULL,
     ymd DATE NOT NULL,
     open FLOAT,
@@ -25,7 +25,7 @@ CREATE TABLE quant.stock_kline_daily_insight_now (
 ) ;
 
 
-CREATE TABLE quant.stock_kline_daily_insight (
+CREATE TABLE quant.ods_stock_kline_daily_insight (
     htsc_code VARCHAR(50) NOT NULL,
     ymd DATE NOT NULL,
     open FLOAT,
@@ -54,7 +54,7 @@ CREATE TABLE quant.stock_kline_daily_insight (
 
 --1.3
 ------------------  index_a_share_insight   大A的主要指数日K
-CREATE TABLE quant.index_a_share_insight_now (
+CREATE TABLE quant.ods_index_a_share_insight_now (
     htsc_code VARCHAR(50) NOT NULL,
     name VARCHAR(50) NOT NULL,
     ymd DATE NOT NULL,
@@ -67,7 +67,7 @@ CREATE TABLE quant.index_a_share_insight_now (
 ) ;
 
 
-CREATE TABLE quant.index_a_share_insight (
+CREATE TABLE quant.ods_index_a_share_insight (
     htsc_code VARCHAR(50) NOT NULL,
     name VARCHAR(50) NOT NULL,
     ymd DATE NOT NULL,
@@ -96,7 +96,7 @@ CREATE TABLE quant.index_a_share_insight (
 
 --1.4
 ------------------  stock_limit_summary_insight   当日大A行情温度
-CREATE TABLE quant.stock_limit_summary_insight_now (
+CREATE TABLE quant.ods_stock_limit_summary_insight_now (
     ymd DATE NOT NULL,
     name VARCHAR(50) NOT NULL,
     today_ZT INT,
@@ -108,7 +108,7 @@ CREATE TABLE quant.stock_limit_summary_insight_now (
 ) ;
 
 
-CREATE TABLE quant.stock_limit_summary_insight (
+CREATE TABLE quant.ods_stock_limit_summary_insight (
     ymd DATE NOT NULL,
     name VARCHAR(50) NOT NULL,
     today_ZT INT,
@@ -137,7 +137,7 @@ CREATE TABLE quant.stock_limit_summary_insight (
 
 --1.5
 ------------------  future_inside_insight   内盘主要期货数据日K
-CREATE TABLE quant.future_inside_insight_now (
+CREATE TABLE quant.ods_future_inside_insight_now (
     htsc_code VARCHAR(50) NOT NULL,
     ymd DATE NOT NULL,
     open FLOAT,
@@ -151,7 +151,7 @@ CREATE TABLE quant.future_inside_insight_now (
 ) ;
 
 
-CREATE TABLE quant.future_inside_insight (
+CREATE TABLE quant.ods_future_inside_insight (
     htsc_code VARCHAR(50) NOT NULL,
     ymd DATE NOT NULL,
     open FLOAT,
@@ -183,7 +183,7 @@ CREATE TABLE quant.future_inside_insight (
 --1.6
 ------------------  stock_chouma_insight   A股的筹码分布数据
 
-CREATE TABLE quant.stock_chouma_insight (
+CREATE TABLE quant.ods_stock_chouma_insight (
     htsc_code                                VARCHAR(50) NOT NULL
    ,ymd                                      DATE NOT NULL
    ,exchange                                 VARCHAR(50)
@@ -232,7 +232,7 @@ CREATE TABLE quant.stock_chouma_insight (
 
 --1.7
 ------------------  astock_industry_overview   行业分类，申万三级分类
-CREATE TABLE quant.astock_industry_overview (
+CREATE TABLE quant.ods_astock_industry_overview (
     ymd                  DATE
    ,classified           varchar(100)
    ,industry_name        varchar(100)
@@ -249,7 +249,7 @@ CREATE TABLE quant.astock_industry_overview (
 
 --1.8
 ------------------  astock_industry_detail   股票&行业的关联
-CREATE TABLE quant.astock_industry_detail (
+CREATE TABLE quant.ods_astock_industry_detail (
     ymd              DATE
    ,htsc_code        varchar(100)
    ,name             varchar(100)
@@ -267,7 +267,7 @@ CREATE TABLE quant.astock_industry_detail (
 
 --1.9
 ------------------  shareholder_num   个股的股东数
-CREATE TABLE quant.shareholder_num_now (
+CREATE TABLE quant.ods_shareholder_num_now (
       htsc_code              varchar(100)
      ,name                   varchar(100)
      ,ymd                    DATE
@@ -279,7 +279,7 @@ CREATE TABLE quant.shareholder_num_now (
  );
 
 
-CREATE TABLE quant.shareholder_num (
+CREATE TABLE quant.ods_shareholder_num (
       htsc_code              varchar(100)
      ,name                   varchar(100)
      ,ymd                    DATE
@@ -293,7 +293,7 @@ CREATE TABLE quant.shareholder_num (
 
 --1.10
 ------------------  north_bound   北向持仓数据
-CREATE TABLE quant.north_bound_daily_now (
+CREATE TABLE quant.ods_north_bound_daily_now (
       htsc_code            varchar(100)
      ,ymd                  DATE
      ,sh_hkshare_hold      BIGINT
@@ -302,7 +302,7 @@ CREATE TABLE quant.north_bound_daily_now (
  );
 
 
-CREATE TABLE quant.north_bound_daily (
+CREATE TABLE quant.ods_north_bound_daily (
       htsc_code            varchar(100)
      ,ymd                  DATE
      ,sh_hkshare_hold      BIGINT
@@ -313,7 +313,7 @@ CREATE TABLE quant.north_bound_daily (
 
 --2.1
 ------------------  us_stock_daily_vantage   美股 日K
-CREATE TABLE quant.us_stock_daily_vantage (
+CREATE TABLE quant.ods_us_stock_daily_vantage (
     name VARCHAR(50) NOT NULL,
     ymd DATE NOT NULL,
     open FLOAT,
@@ -328,7 +328,7 @@ CREATE TABLE quant.us_stock_daily_vantage (
 
 --2.2
 ------------------  exchange_rate_vantage_detail   汇率&美元指数 日K
-CREATE TABLE quant.exchange_rate_vantage_detail (
+CREATE TABLE quant.ods_exchange_rate_vantage_detail (
     name VARCHAR(50) NOT NULL,
     ymd DATE NOT NULL,
     open FLOAT,
@@ -339,7 +339,7 @@ CREATE TABLE quant.exchange_rate_vantage_detail (
 ) ;
 
 
-CREATE TABLE quant.exchange_dxy_vantage (
+CREATE TABLE quant.ods_exchange_dxy_vantage (
     ymd DATE NOT NULL,
     name VARCHAR(50) NOT NULL,
     UNIQUE KEY unique_ymd_stock_code (ymd, name)

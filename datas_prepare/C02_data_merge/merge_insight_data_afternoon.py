@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import os
 from datetime import datetime
 
@@ -52,8 +54,8 @@ class MergeInsightData:
         :return:
          stock_kline_df  [ymd	htsc_code	name	exchange]
         """
-        source_table = 'stock_kline_daily_insight_now'
-        target_table = 'stock_kline_daily_insight'
+        source_table = 'ods_stock_kline_daily_insight_now'
+        target_table = 'ods_stock_kline_daily_insight'
         columns = ['htsc_code', 'ymd', 'open', 'close', 'high', 'low', 'num_trades', 'volume']
 
         ############################   文件输出模块     ############################
@@ -101,8 +103,8 @@ class MergeInsightData:
         Returns:
              index_a_share   [htsc_code 	time	frequency	open	close	high	low	volume	value]
         """
-        source_table = 'index_a_share_insight_now'
-        target_table = 'index_a_share_insight'
+        source_table = 'ods_index_a_share_insight_now'
+        target_table = 'ods_index_a_share_insight'
         columns = ['htsc_code', 'name', 'ymd', 'open', 'close', 'high', 'low', 'volume']
 
         ############################   文件输出模块     ############################
@@ -159,8 +161,8 @@ class MergeInsightData:
 
                  [time	name	今日涨停	今日跌停	昨日涨停	昨日跌停	昨日涨停表现]
         """
-        source_table = 'stock_limit_summary_insight_now'
-        target_table = 'stock_limit_summary_insight'
+        source_table = 'ods_stock_limit_summary_insight_now'
+        target_table = 'ods_stock_limit_summary_insight'
         columns = ['ymd', 'name', 'today_ZT', 'today_DT', 'yesterday_ZT', 'yesterday_DT', 'yesterday_ZT_rate']
 
         ############################   文件输出模块     ############################
@@ -219,8 +221,8 @@ class MergeInsightData:
 
         Returns:
         """
-        source_table = 'future_inside_insight_now'
-        target_table = 'future_inside_insight'
+        source_table = 'ods_future_inside_insight_now'
+        target_table = 'ods_future_inside_insight'
         columns = ['htsc_code', 'ymd', 'open', 'close', 'high', 'low', 'volume', 'open_interest', 'settle']
 
         ############################   文件输出模块     ############################
@@ -259,8 +261,8 @@ class MergeInsightData:
         A股市场的股东数
         Returns:
         """
-        source_table = 'shareholder_num_now'
-        target_table = 'shareholder_num'
+        source_table = 'ods_shareholder_num_now'
+        target_table = 'ods_shareholder_num'
         columns = ['htsc_code', 'name', 'ymd', 'total_sh', 'avg_share', 'pct_of_total_sh', 'pct_of_avg_sh']
 
         ############################   文件输出模块     ############################
@@ -299,8 +301,8 @@ class MergeInsightData:
         A股市场的股东数
         Returns:
         """
-        source_table = 'north_bound_daily_now'
-        target_table = 'north_bound_daily'
+        source_table = 'ods_north_bound_daily_now'
+        target_table = 'ods_north_bound_daily'
         columns = ['htsc_code', 'ymd', 'sh_hkshare_hold', 'pct_total_share']
 
         ############################   文件输出模块     ############################

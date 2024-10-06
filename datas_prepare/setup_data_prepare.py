@@ -1,4 +1,4 @@
-
+# -*- coding: utf-8 -*-
 
 from datas_prepare.C01_data_download_daily.download_insight_data_afternoon import SaveInsightData
 from datas_prepare.C01_data_download_daily.download_insight_data_afternoon_of_history import SaveInsightHistoryData
@@ -52,7 +52,7 @@ class RunDataPrepare:
         self.merge_insight.setup()
 
         #  下载 vantage 当日数据
-        self.save_vantage_now.setup()
+        # self.save_vantage_now.setup()
 
         #  下载历史数据
         # self.save_insight_history.setup()

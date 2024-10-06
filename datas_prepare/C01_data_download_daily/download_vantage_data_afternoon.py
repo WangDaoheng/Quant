@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 
 import pandas as pd
 import requests
@@ -133,7 +134,7 @@ class SaveVantageData:
                                                      host=local_host,
                                                      database=local_database,
                                                      df=res_df,
-                                                     table_name="us_stock_daily_vantage",
+                                                     table_name="ods_us_stock_daily_vantage",
                                                      merge_on=['ymd', 'name'])
 
             #  结果数据保存到 远端 mysql中
@@ -142,7 +143,7 @@ class SaveVantageData:
                                                      host=origin_host,
                                                      database=origin_database,
                                                      df=res_df,
-                                                     table_name="us_stock_daily_vantage",
+                                                     table_name="ods_us_stock_daily_vantage",
                                                      merge_on=['ymd', 'name'])
         else:
             #  结果数据保存到 远端 mysql中
@@ -151,7 +152,7 @@ class SaveVantageData:
                                                      host=origin_host,
                                                      database=origin_database,
                                                      df=res_df,
-                                                     table_name="us_stock_daily_vantage",
+                                                     table_name="ods_us_stock_daily_vantage",
                                                      merge_on=['ymd', 'name'])
 
 
@@ -257,7 +258,7 @@ class SaveVantageData:
                                                      host=local_host,
                                                      database=local_database,
                                                      df=res_df,
-                                                     table_name="exchange_rate_vantage_detail",
+                                                     table_name="ods_exchange_rate_vantage_detail",
                                                      merge_on=["ymd", "name"])
 
             #  将汇率明细写入 远端 mysql
@@ -266,7 +267,7 @@ class SaveVantageData:
                                                      host=origin_host,
                                                      database=origin_database,
                                                      df=res_df,
-                                                     table_name="exchange_rate_vantage_detail",
+                                                     table_name="ods_exchange_rate_vantage_detail",
                                                      merge_on=["ymd", "name"])
         else:
             #  将汇率明细写入 远端 mysql
@@ -275,7 +276,7 @@ class SaveVantageData:
                                                      host=origin_host,
                                                      database=origin_database,
                                                      df=res_df,
-                                                     table_name="exchange_rate_vantage_detail",
+                                                     table_name="ods_exchange_rate_vantage_detail",
                                                      merge_on=["ymd", "name"])
 
 
@@ -316,7 +317,7 @@ class SaveVantageData:
                                                      host=local_host,
                                                      database=local_database,
                                                      df=dxy_df,
-                                                     table_name="exchange_dxy_vantage",
+                                                     table_name="ods_exchange_dxy_vantage",
                                                      merge_on=["ymd", "name"])
 
             #  将汇率明细写入 远端 mysql
@@ -325,7 +326,7 @@ class SaveVantageData:
                                                      host=origin_host,
                                                      database=origin_database,
                                                      df=dxy_df,
-                                                     table_name="exchange_dxy_vantage",
+                                                     table_name="ods_exchange_dxy_vantage",
                                                      merge_on=["ymd", "name"])
         else:
             #  将汇率明细写入 远端 mysql
@@ -334,7 +335,7 @@ class SaveVantageData:
                                                      host=origin_host,
                                                      database=origin_database,
                                                      df=dxy_df,
-                                                     table_name="exchange_dxy_vantage",
+                                                     table_name="ods_exchange_dxy_vantage",
                                                      merge_on=["ymd", "name"])
 
 
@@ -342,7 +343,7 @@ class SaveVantageData:
     def setup(self):
 
         #  获取 US 主要stock 的全部数据
-        self.get_US_stock_from_vantage()
+        # self.get_US_stock_from_vantage()
         self.get_USD_FX_from_vantage()
 
 

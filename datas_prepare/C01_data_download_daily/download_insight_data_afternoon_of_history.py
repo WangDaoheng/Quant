@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import os
 import sys
 import contextlib
@@ -77,6 +79,8 @@ class SaveInsightHistoryData:
         #  文件路径_____个股的股东数_明细
         self.dir_history_shareholder_num_base = os.path.join(self.dir_history_insight_base, 'shareholder_num')
 
+        #  文件路径_____北向持仓数据_明细
+        self.dir_history_north_bound_base = os.path.join(self.dir_history_insight_base, 'north_bound')
 
 
     def init_variant(self):
@@ -211,7 +215,7 @@ class SaveInsightHistoryData:
                                                      host=local_host,
                                                      database=local_database,
                                                      df=kline_total_df,
-                                                     table_name="stock_kline_daily_insight",
+                                                     table_name="ods_stock_kline_daily_insight",
                                                      merge_on=['ymd', 'htsc_code'])
 
             #  15.结果数据保存到 远端 mysql中
@@ -220,7 +224,7 @@ class SaveInsightHistoryData:
                                                      host=origin_host,
                                                      database=origin_database,
                                                      df=kline_total_df,
-                                                     table_name="stock_kline_daily_insight",
+                                                     table_name="ods_stock_kline_daily_insight",
                                                      merge_on=['ymd', 'htsc_code'])
         else:
             #  15.结果数据保存到 远端 mysql中
@@ -229,7 +233,7 @@ class SaveInsightHistoryData:
                                                      host=origin_host,
                                                      database=origin_database,
                                                      df=kline_total_df,
-                                                     table_name="stock_kline_daily_insight",
+                                                     table_name="ods_stock_kline_daily_insight",
                                                      merge_on=['ymd', 'htsc_code'])
 
 
@@ -306,7 +310,7 @@ class SaveInsightHistoryData:
                                                      host=local_host,
                                                      database=local_database,
                                                      df=index_df,
-                                                     table_name="index_a_share_insight",
+                                                     table_name="ods_index_a_share_insight",
                                                      merge_on=['ymd', 'htsc_code'])
 
             #  12.结果数据保存到 远端 mysql中
@@ -315,7 +319,7 @@ class SaveInsightHistoryData:
                                                      host=origin_host,
                                                      database=origin_database,
                                                      df=index_df,
-                                                     table_name="index_a_share_insight",
+                                                     table_name="ods_index_a_share_insight",
                                                      merge_on=['ymd', 'htsc_code'])
         else:
             #  12.结果数据保存到 远端 mysql中
@@ -324,7 +328,7 @@ class SaveInsightHistoryData:
                                                      host=origin_host,
                                                      database=origin_database,
                                                      df=index_df,
-                                                     table_name="index_a_share_insight",
+                                                     table_name="ods_index_a_share_insight",
                                                      merge_on=['ymd', 'htsc_code'])
 
 
@@ -400,7 +404,7 @@ class SaveInsightHistoryData:
                                                      host=local_host,
                                                      database=local_database,
                                                      df=filter_limit_df,
-                                                     table_name="stock_limit_summary_insight",
+                                                     table_name="ods_stock_limit_summary_insight",
                                                      merge_on=['ymd', 'name'])
 
             #  10.结果数据保存到 远端 mysql中
@@ -409,7 +413,7 @@ class SaveInsightHistoryData:
                                                      host=origin_host,
                                                      database=origin_database,
                                                      df=filter_limit_df,
-                                                     table_name="stock_limit_summary_insight",
+                                                     table_name="ods_stock_limit_summary_insight",
                                                      merge_on=['ymd', 'name'])
         else:
             #  10.结果数据保存到 远端 mysql中
@@ -418,7 +422,7 @@ class SaveInsightHistoryData:
                                                      host=origin_host,
                                                      database=origin_database,
                                                      df=filter_limit_df,
-                                                     table_name="stock_limit_summary_insight",
+                                                     table_name="ods_stock_limit_summary_insight",
                                                      merge_on=['ymd', 'name'])
 
 
@@ -498,7 +502,7 @@ class SaveInsightHistoryData:
                                                      host=local_host,
                                                      database=local_database,
                                                      df=future_inside_df,
-                                                     table_name="future_inside_insight",
+                                                     table_name="ods_future_inside_insight",
                                                      merge_on=['ymd', 'htsc_code'])
 
             #  11.结果数据保存到 远端 mysql中
@@ -507,7 +511,7 @@ class SaveInsightHistoryData:
                                                      host=origin_host,
                                                      database=origin_database,
                                                      df=future_inside_df,
-                                                     table_name="future_inside_insight",
+                                                     table_name="ods_future_inside_insight",
                                                      merge_on=['ymd', 'htsc_code'])
         else:
             #  11.结果数据保存到 远端 mysql中
@@ -516,7 +520,7 @@ class SaveInsightHistoryData:
                                                      host=origin_host,
                                                      database=origin_database,
                                                      df=future_inside_df,
-                                                     table_name="future_inside_insight",
+                                                     table_name="ods_future_inside_insight",
                                                      merge_on=['ymd', 'htsc_code'])
 
 
@@ -595,11 +599,11 @@ class SaveInsightHistoryData:
         if platform.system() == "Windows":
             #  9.本地csv文件的落盘保存
             shareholder_num_filename = base_utils.save_out_filename(filehead='shareholder_num', file_type='csv')
-            shareholder_num_filedir = os.path.join(self.dir_shareholder_num_base, shareholder_num_filename)
+            shareholder_num_filedir = os.path.join(self.dir_history_north_bound_base, shareholder_num_filename)
             shareholder_num_df.to_csv(shareholder_num_filedir, index=False)
 
             north_bound_filename = base_utils.save_out_filename(filehead='north_bound', file_type='csv')
-            north_bound_filedir = os.path.join(self.dir_north_bound_base, north_bound_filename)
+            north_bound_filedir = os.path.join(self.dir_history_north_bound_base, north_bound_filename)
             north_bound_df.to_csv(north_bound_filedir, index=False)
 
             #  10.结果数据保存到 本地 mysql中
@@ -608,7 +612,7 @@ class SaveInsightHistoryData:
                                                      host=local_host,
                                                      database=local_database,
                                                      df=shareholder_num_df,
-                                                     table_name="shareholder_num",
+                                                     table_name="ods_shareholder_num",
                                                      merge_on=['ymd', 'htsc_code'])
 
             mysql_utils.data_from_dataframe_to_mysql(user=local_user,
@@ -616,7 +620,7 @@ class SaveInsightHistoryData:
                                                      host=local_host,
                                                      database=local_database,
                                                      df=north_bound_df,
-                                                     table_name="north_bound_daily",
+                                                     table_name="ods_north_bound_daily",
                                                      merge_on=['ymd', 'htsc_code'])
 
             #  11.结果数据保存到 远端 mysql中
@@ -625,7 +629,7 @@ class SaveInsightHistoryData:
                                                      host=origin_host,
                                                      database=origin_database,
                                                      df=shareholder_num_df,
-                                                     table_name="shareholder_num",
+                                                     table_name="ods_shareholder_num",
                                                      merge_on=['ymd', 'htsc_code'])
 
             mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
@@ -633,7 +637,7 @@ class SaveInsightHistoryData:
                                                      host=origin_host,
                                                      database=origin_database,
                                                      df=north_bound_df,
-                                                     table_name="north_bound_daily",
+                                                     table_name="ods_north_bound_daily",
                                                      merge_on=['ymd', 'htsc_code'])
         else:
             #  11.结果数据保存到 远端 mysql中
@@ -642,7 +646,7 @@ class SaveInsightHistoryData:
                                                      host=origin_host,
                                                      database=origin_database,
                                                      df=shareholder_num_df,
-                                                     table_name="shareholder_num",
+                                                     table_name="ods_shareholder_num",
                                                      merge_on=['ymd', 'htsc_code'])
 
             mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
@@ -650,7 +654,7 @@ class SaveInsightHistoryData:
                                                      host=origin_host,
                                                      database=origin_database,
                                                      df=north_bound_df,
-                                                     table_name="north_bound_daily",
+                                                     table_name="ods_north_bound_daily",
                                                      merge_on=['ymd', 'htsc_code'])
 
 

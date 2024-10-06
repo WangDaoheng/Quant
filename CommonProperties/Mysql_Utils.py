@@ -357,7 +357,7 @@ def get_stock_codes_latest(df):
                                                             password=local_password,
                                                             host=local_host,
                                                             database=local_database,
-                                                            table_name='stock_code_daily_insight')
+                                                            table_name='ods_stock_code_daily_insight')
 
         mysql_stock_code_list = stock_code_df['htsc_code'].tolist()
         logging.info("    从 本地Mysql库 里读取最新的股票代码")
