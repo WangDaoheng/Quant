@@ -672,6 +672,10 @@ class SaveInsightData:
             chouma_total_df['time'] = pd.to_datetime(chouma_total_df['time']).dt.strftime('%Y%m%d')
             chouma_total_df.rename(columns={'time': 'ymd'}, inplace=True)
 
+            #  9.数据格式调整
+            cols_to_process = ['A', 'B', 'C', 'D']
+
+
             ############################   文件输出模块     ############################
             #  9.更新dataframe
             self.stock_chouma_available = chouma_total_df
