@@ -365,7 +365,6 @@ def get_stock_codes_latest(df):
         mysql_stock_code_list = df['htsc_code'].tolist()
         logging.info("    从 self.stock_code 里读取最新的股票代码")
 
-
     return mysql_stock_code_list
 
 

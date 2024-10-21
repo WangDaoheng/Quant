@@ -673,8 +673,14 @@ class SaveInsightData:
             chouma_total_df.rename(columns={'time': 'ymd'}, inplace=True)
 
             #  9.数据格式调整
-            cols_to_process = ['A', 'B', 'C', 'D']
+            cols_to_clean = ['last', 'pre_close', 'avg_cost', 'max_cost', 'min_cost', 'winner_rate', 'diversity',
+                               'pre_winner_rate', 'restricted_avg_cost', 'restricted_max_cost', 'restricted_min_cost',
+                               'large_shareholders_avg_cost', 'large_shareholders_total_share_pct']
 
+            for col in cols_to_clean:
+                chouma_total_df[col] = chouma_total_df[col].apply(lambda x: round(x * 10000, 2) if x < 1 else x)
+
+            chouma_total_df[cols_to_clean] = chouma_total_df[cols_to_clean].applymap(lambda x: f"{x:.2f}")
 
             ############################   文件输出模块     ############################
             #  9.更新dataframe
