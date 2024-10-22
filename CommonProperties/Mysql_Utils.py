@@ -117,12 +117,58 @@ def data_from_dataframe_to_mysql(user, password, host, database='quant', df=pd.D
             logging.error(f"写入{host} 的表：{table_name}的 第 {i // chunk_size + 1} 批次时发生错误: {e}")
 
 
-def data_from_mysql_to_dataframe(user, password, host, database='quant', table_name=''):
+# def data_from_mysql_to_dataframe(user, password, host, database='quant', table_name=''):
+#     """
+#     从 MySQL 表中读取数据到 DataFrame，同时进行最终的数据完整性检查和日志记录
+#     Args:
+#         table_name: MySQL 表名
+#         database: 数据库名称
+#
+#     Returns:
+#         df: 读取到的 DataFrame
+#     """
+#
+#     db_url = f'mysql+pymysql://{user}:{password}@{host}:3306/{database}'
+#     engine = create_engine(db_url)
+#
+#     # 读取 MySQL 表中的记录总数
+#     query_total = f"SELECT COUNT(*) FROM {table_name}"
+#     total_rows = pd.read_sql(query_total, engine).iloc[0, 0]
+#
+#     # 读取数据的批量大小
+#     chunk_size = 10000
+#     chunks = []
+#
+#     try:
+#         for offset in range(0, total_rows, chunk_size):
+#             query = f"SELECT * FROM {table_name} LIMIT {chunk_size} OFFSET {offset}"
+#             chunk = pd.read_sql(query, engine)
+#             chunks.append(chunk)
+#
+#         df = pd.concat(chunks, ignore_index=True)
+#
+#         # 最终的数据完整性检查
+#         if df.shape[0] == total_rows:
+#             logging.info(f"{host} 的 mysql表：{table_name} 数据读取成功且无遗漏，共 {total_rows} 行。")
+#         else:
+#             logging.warning(f"{table_name} 数据读取可能有问题，预期记录数为 {total_rows}，实际读取记录数为 {df.shape[0]}。")
+#
+#     except Exception as e:
+#         logging.error(f"从表：{table_name} 读取数据时发生错误: {e}")
+#         df = pd.DataFrame()  # 返回一个空的 DataFrame 以防出错时没有返回数据
+#
+#     return df
+
+
+def data_from_mysql_to_dataframe(user, password, host, database='quant', table_name='', start_date=None, end_date=None, cols=None):
     """
     从 MySQL 表中读取数据到 DataFrame，同时进行最终的数据完整性检查和日志记录
     Args:
         table_name: MySQL 表名
         database: 数据库名称
+        start_date: 起始日期
+        end_date: 结束日期
+        cols: 要选择的字段列表
 
     Returns:
         df: 读取到的 DataFrame
@@ -131,8 +177,25 @@ def data_from_mysql_to_dataframe(user, password, host, database='quant', table_n
     db_url = f'mysql+pymysql://{user}:{password}@{host}:3306/{database}'
     engine = create_engine(db_url)
 
+    # 构建 SELECT 语句
+    if cols:
+        selected_cols = ', '.join(cols)
+    else:
+        selected_cols = '*'
+
+    # 构建 WHERE 条件
+    where_conditions = []
+    if start_date:
+        where_conditions.append(f"ymd >= '{start_date}'")
+    if end_date:
+        where_conditions.append(f"ymd <= '{end_date}'")
+
+    where_clause = " AND ".join(where_conditions)
+
     # 读取 MySQL 表中的记录总数
     query_total = f"SELECT COUNT(*) FROM {table_name}"
+    if where_clause:
+        query_total += f" WHERE {where_clause}"
     total_rows = pd.read_sql(query_total, engine).iloc[0, 0]
 
     # 读取数据的批量大小
@@ -141,7 +204,10 @@ def data_from_mysql_to_dataframe(user, password, host, database='quant', table_n
 
     try:
         for offset in range(0, total_rows, chunk_size):
-            query = f"SELECT * FROM {table_name} LIMIT {chunk_size} OFFSET {offset}"
+            query = f"SELECT {selected_cols} FROM {table_name}"
+            if where_clause:
+                query += f" WHERE {where_clause}"
+            query += f" LIMIT {chunk_size} OFFSET {offset}"
             chunk = pd.read_sql(query, engine)
             chunks.append(chunk)
 
@@ -160,12 +226,48 @@ def data_from_mysql_to_dataframe(user, password, host, database='quant', table_n
     return df
 
 
-def data_from_mysql_to_dataframe_latest(user, password, host, database='quant', table_name=''):
+# def data_from_mysql_to_dataframe_latest(user, password, host, database='quant', table_name=''):
+#     """
+#     从 MySQL 表中读取最新一天的数据到 DataFrame，同时进行最终的数据完整性检查和日志记录
+#     Args:
+#         table_name: MySQL 表名
+#         database: 数据库名称
+#
+#     Returns:
+#         df: 读取到的 DataFrame
+#     """
+#
+#     db_url = f'mysql+pymysql://{user}:{password}@{host}:3306/{database}'
+#     engine = create_engine(db_url)
+#
+#     try:
+#         # 获取最新的 ymd 日期
+#         query_latest_ymd = f"SELECT MAX(ymd) FROM {table_name}"
+#         latest_ymd = pd.read_sql(query_latest_ymd, engine).iloc[0, 0]
+#
+#         if latest_ymd is not None:
+#             # 查询最新一天的全部数据
+#             query = f"SELECT * FROM {table_name} WHERE ymd = '{latest_ymd}'"
+#             df = pd.read_sql(query, engine)
+#
+#             logging.info(f"    mysql表：{table_name} 最新一天({latest_ymd})的数据读取成功，共 {df.shape[0]} 行。")
+#         else:
+#             logging.warning(f"    {table_name} 表中没有找到有效的 ymd 数据。")
+#             df = pd.DataFrame()  # 返回空的 DataFrame
+#
+#     except Exception as e:
+#         logging.error(f"    从表：{table_name} 读取数据时发生错误: {e}")
+#         df = pd.DataFrame()  # 返回一个空的 DataFrame 以防出错时没有返回数据
+#
+#     return df
+
+def data_from_mysql_to_dataframe_latest(user, password, host, database='quant', table_name='', cols=None):
     """
     从 MySQL 表中读取最新一天的数据到 DataFrame，同时进行最终的数据完整性检查和日志记录
     Args:
         table_name: MySQL 表名
         database: 数据库名称
+        cols: 要选择的字段列表
 
     Returns:
         df: 读取到的 DataFrame
@@ -180,8 +282,14 @@ def data_from_mysql_to_dataframe_latest(user, password, host, database='quant', 
         latest_ymd = pd.read_sql(query_latest_ymd, engine).iloc[0, 0]
 
         if latest_ymd is not None:
-            # 查询最新一天的全部数据
-            query = f"SELECT * FROM {table_name} WHERE ymd = '{latest_ymd}'"
+            # 构建 SELECT 语句
+            if cols:
+                selected_cols = ', '.join(cols)
+            else:
+                selected_cols = '*'
+
+            # 查询最新一天的数据
+            query = f"SELECT {selected_cols} FROM {table_name} WHERE ymd = '{latest_ymd}'"
             df = pd.read_sql(query, engine)
 
             logging.info(f"    mysql表：{table_name} 最新一天({latest_ymd})的数据读取成功，共 {df.shape[0]} 行。")
@@ -194,6 +302,7 @@ def data_from_mysql_to_dataframe_latest(user, password, host, database='quant', 
         df = pd.DataFrame()  # 返回一个空的 DataFrame 以防出错时没有返回数据
 
     return df
+
 
 
 def create_partition_if_not_exists(engine, partition_name, year, month):
