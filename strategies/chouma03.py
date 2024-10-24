@@ -15,9 +15,12 @@ port = '3306'
 
 # 连接到 MySQL 数据库
 
-# 从数据库中读取数据
+# 从数据库中读取筹码数据，取最新日期的
 chouma_df = data_from_mysql_to_dataframe_latest(user=user, password=password, host=host, database=database,
                                                 table_name='ods_stock_chouma_insight', cols=['htsc_code','ymd','winner_rate','diversity'])
+
+
+# 抽取概念板块数据
 
 
 
