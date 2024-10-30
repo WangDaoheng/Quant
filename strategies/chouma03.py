@@ -14,17 +14,13 @@ host = base_properties.origin_mysql_host
 port = '3306'
 
 # 连接到 MySQL 数据库
-
 # 从数据库中读取筹码数据，取最新日期的
 chouma_df = data_from_mysql_to_dataframe_latest(user=user, password=password, host=host, database=database,
-                                                table_name='ods_stock_chouma_insight', cols=['htsc_code','ymd','winner_rate','diversity'])
-
+                                                table_name='ods_stock_chouma_insight', cols=['htsc_code', 'ymd', 'winner_rate', 'diversity'])
 
 # 抽取概念板块数据
-
-
-
-industry_df = pd.read_sql('SELECT * FROM quant.ods_astock_industry_detail', engine)
+stock_concept_df = data_from_mysql_to_dataframe_latest(user=user, password=password, host=host, database=database,
+                                                table_name='ods_tdx_stock_concept_plate', cols=['ymd', 'concept_name', 'stock_code', 'stock_name'])
 
 # 筛选条件
 filtered_stocks = chouma_df[
@@ -34,11 +30,15 @@ filtered_stocks = chouma_df[
 # 获取股票代码和名称
 filtered_stock_codes = filtered_stocks[['htsc_code', 'name']]
 
+# 去掉 htsc_code 中的 ".SH"
+filtered_stock_codes['htsc_code'] = filtered_stock_codes['htsc_code'].str.replace('.SH', '', regex=False)
+
 # 合并行业信息
-result = pd.merge(filtered_stock_codes, industry_df, on='htsc_code', how='left')
+result = pd.merge(filtered_stock_codes, stock_concept_df, left_on='htsc_code', right_on='stock_code', how='left')
 
 # 输出结果
 result_list = result[['htsc_code', 'name', 'industry_name']].values.tolist()
+
 print("筛选结果:")
 for item in result_list:
     print(item)
@@ -48,6 +48,20 @@ for item in result_list:
 def get_data(htsc_code):
     query = f'SELECT ymd, open, close, high, low, volume FROM quant.ods_stock_kline_daily_insight WHERE htsc_code = "{htsc_code}" ORDER BY ymd'
     df = pd.read_sql(query, engine)
+    ##  获取指定
+    res = data_from_mysql_to_dataframe(user=user, password=password, host=host, database=database,
+                                 table_name='ods_stock_kline_daily_insight',
+                                 start_date='2024-01-01', end_date='2024-10-28')
+
+
+
+
+
+
+    data_from_mysql_to_dataframe()
+
+
+
     df['ymd'] = pd.to_datetime(df['ymd'])
     df.set_index('ymd', inplace=True)
     return df
@@ -70,6 +84,8 @@ if __name__ == '__main__':
     cerebro = bt.Cerebro()
 
     # 使用筛选出的股票进行回测
+
+
     for stock in result['htsc_code']:
         data = get_data(stock)
         data_feed = bt.feeds.PandasData(dataname=data)
