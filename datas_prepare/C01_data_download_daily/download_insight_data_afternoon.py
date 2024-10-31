@@ -681,8 +681,7 @@ class SaveInsightData:
             for col in cols_to_clean:
                 chouma_total_df[col] = chouma_total_df[col].apply(lambda x: round(x * 10000, 2) if x < 1 else x)
                 # 替换 'nan' 和 np.nan 为 None
-                chouma_total_df[col] = chouma_total_df[col].replace(['nan', np.nan], [None, None])
-
+                chouma_total_df[col] = chouma_total_df[col].apply(lambda x: None if (x == 'nan' or pd.isna(x)) else x)
 
             chouma_total_df[cols_to_clean] = chouma_total_df[cols_to_clean].applymap(lambda x: f"{x:.2f}")
 
