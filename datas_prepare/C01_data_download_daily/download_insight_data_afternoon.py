@@ -678,10 +678,20 @@ class SaveInsightData:
                                'pre_winner_rate', 'restricted_avg_cost', 'restricted_max_cost', 'restricted_min_cost',
                                'large_shareholders_avg_cost', 'large_shareholders_total_share_pct']
 
+            chouma_total_df.to_csv(r'F:\03.Quant\tt.csv')
+
             for col in cols_to_clean:
+                # 将字符串转换为 float，遇到错误时返回 NaN
+                chouma_total_df[col] = pd.to_numeric(chouma_total_df[col].replace({'': np.nan, 'nan': np.nan}), errors='coerce')
+
+                # 将 NaN 填充为 0
+                chouma_total_df[col] = chouma_total_df[col].fillna(0)
+
+                # 对价格进行转换
                 chouma_total_df[col] = chouma_total_df[col].apply(lambda x: round(x * 10000, 2) if x < 1 else x)
-                # 替换 'nan' 和 np.nan 为 None
-                chouma_total_df[col] = chouma_total_df[col].apply(lambda x: None if (x == 'nan' or pd.isna(x)) else x)
+
+
+
 
             chouma_total_df[cols_to_clean] = chouma_total_df[cols_to_clean].applymap(lambda x: f"{x:.2f}")
 
@@ -1041,31 +1051,31 @@ class SaveInsightData:
         self.login()
 
         #  除去 ST |  退  | B 的股票集合
-        self.get_stock_codes()
+        # self.get_stock_codes()
 
         #  获取上述股票的当月日K
-        self.get_stock_kline()
+        # self.get_stock_kline()
 
         #  获取主要股指
-        self.get_index_a_share()
+        # self.get_index_a_share()
 
         #  大盘涨跌概览
-        self.get_limit_summary()
+        # self.get_limit_summary()
 
         #  期货__内盘
-        self.get_future_inside()
+        # self.get_future_inside()
 
         # 筹码概览
         self.get_chouma_datas()
 
         # 获取A股的行业分类数据, 是行业数据
-        self.get_Ashare_industry_overview()
+        # self.get_Ashare_industry_overview()
 
         # 获取A股的行业分类数据, 是stock_code & industry 关联后的大表数据
-        self.get_Ashare_industry_detail()
+        # self.get_Ashare_industry_detail()
 
         #  个股股东数
-        self.get_shareholder_north_bound_num()
+        # self.get_shareholder_north_bound_num()
 
 
 
