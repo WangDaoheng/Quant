@@ -678,19 +678,30 @@ class SaveInsightData:
                                'pre_winner_rate', 'restricted_avg_cost', 'restricted_max_cost', 'restricted_min_cost',
                                'large_shareholders_avg_cost', 'large_shareholders_total_share_pct']
 
-            chouma_total_df.to_csv(r'F:\03.Quant\tt.csv')
-
             for col in cols_to_clean:
+                # # 将字符串转换为 float，遇到错误时返回 NaN
+                # chouma_total_df[col] = pd.to_numeric(chouma_total_df[col].replace({'': np.nan, 'nan': np.nan}), errors='coerce')
+                #
+                # # 将 NaN 填充为 0
+                # chouma_total_df[col] = chouma_total_df[col].fillna(0)
+                #
+                # # 对价格进行转换
+                # chouma_total_df[col] = chouma_total_df[col].apply(lambda x: round(x * 10000, 2) if x < 1 else x)
+
+                # 确保列的数据是字符串类型
+                chouma_total_df[col] = chouma_total_df[col].astype(str)
+
+                # 将空字符串和 'nan' 替换为 NaN
+                chouma_total_df[col].replace({'': np.nan, 'nan': np.nan}, inplace=True)
+
                 # 将字符串转换为 float，遇到错误时返回 NaN
-                chouma_total_df[col] = pd.to_numeric(chouma_total_df[col].replace({'': np.nan, 'nan': np.nan}), errors='coerce')
+                chouma_total_df[col] = pd.to_numeric(chouma_total_df[col], errors='coerce')
 
                 # 将 NaN 填充为 0
-                chouma_total_df[col] = chouma_total_df[col].fillna(0)
+                chouma_total_df[col].fillna(0, inplace=True)
 
                 # 对价格进行转换
                 chouma_total_df[col] = chouma_total_df[col].apply(lambda x: round(x * 10000, 2) if x < 1 else x)
-
-
 
 
             chouma_total_df[cols_to_clean] = chouma_total_df[cols_to_clean].applymap(lambda x: f"{x:.2f}")

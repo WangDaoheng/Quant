@@ -3,7 +3,7 @@ from sqlalchemy import create_engine, text
 import pymysql
 import pandas as pd
 import logging
-
+import platform
 
 import CommonProperties.Base_Properties as base_properties
 from CommonProperties.set_config import setup_logging_config
@@ -462,10 +462,22 @@ def get_stock_codes_latest(df):
     """
 
     if df is None or df.empty:
-        stock_code_df = data_from_mysql_to_dataframe_latest(user=local_user,
-                                                            password=local_password,
-                                                            host=local_host,
-                                                            database=local_database,
+
+        if platform.system() == "Windows":
+            user = local_user
+            password = local_password
+            host = local_host
+            database = local_database
+        else:
+            user = origin_user
+            password = origin_password
+            host = origin_host
+            database = origin_database
+
+        stock_code_df = data_from_mysql_to_dataframe_latest(user=user,
+                                                            password=password,
+                                                            host=host,
+                                                            database=database,
                                                             table_name='ods_stock_code_daily_insight')
 
         mysql_stock_code_list = stock_code_df['htsc_code'].tolist()

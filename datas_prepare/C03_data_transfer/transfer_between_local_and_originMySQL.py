@@ -170,10 +170,10 @@ if __name__ == "__main__":
     #  从 本地 往 远端     msyql迁移数据
     # transfer_local_to_origin_mysql()
 
-    # transfer_origin_to_local_mysql()
+    transfer_origin_to_local_mysql()
 
     #  跨服务器的数据append
-    append_local_to_origin_mysql()
+    # append_local_to_origin_mysql()
 
 
 
