@@ -7,10 +7,10 @@ from CommonProperties.Mysql_Utils import data_from_mysql_to_dataframe_latest, da
 
 
 # 连接到 MySQL 数据库
-user = base_properties.origin_mysql_user
-password = base_properties.origin_mysql_password
-database = base_properties.origin_mysql_database
-host = base_properties.origin_mysql_host
+user = base_properties.local_mysql_user
+password = base_properties.local_mysql_password
+database = base_properties.local_mysql_database
+host = base_properties.local_mysql_host
 port = '3306'
 
 # 连接到 MySQL 数据库
@@ -45,22 +45,11 @@ for item in result_list:
 
 
 # 定义获取数据的函数
-def get_data(htsc_code):
-    query = f'SELECT ymd, open, close, high, low, volume FROM quant.ods_stock_kline_daily_insight WHERE htsc_code = "{htsc_code}" ORDER BY ymd'
-    df = pd.read_sql(query, engine)
-    ##  获取指定
-    res = data_from_mysql_to_dataframe(user=user, password=password, host=host, database=database,
+def get_data():
+
+    df = data_from_mysql_to_dataframe(user=user, password=password, host=host, database=database,
                                  table_name='ods_stock_kline_daily_insight',
-                                 start_date='2024-01-01', end_date='2024-10-28')
-
-
-
-
-
-
-    data_from_mysql_to_dataframe()
-
-
+                                 start_date='2024-01-01', end_date='2024-11-04')
 
     df['ymd'] = pd.to_datetime(df['ymd'])
     df.set_index('ymd', inplace=True)
@@ -84,6 +73,8 @@ if __name__ == '__main__':
     cerebro = bt.Cerebro()
 
     # 使用筛选出的股票进行回测
+    res = get_data()
+
 
 
     for stock in result['htsc_code']:

@@ -360,9 +360,9 @@ def upsert_table(user, password, host, database, source_table, target_table, col
         connection.execute(text(sql))
 
 
-def cross_server_upsert(source_user, source_password, source_host, source_database,
-                        target_user, target_password, target_host, target_database,
-                        source_table, target_table, columns):
+def cross_server_upsert_all(source_user, source_password, source_host, source_database,
+                            target_user, target_password, target_host, target_database,
+                            source_table, target_table):
     """
     跨服务器迁移数据，并在目标服务器上实现数据的并集。
     这是一种追加取并集的方式
@@ -390,6 +390,9 @@ def cross_server_upsert(source_user, source_password, source_host, source_databa
 
     # 从源服务器读取数据
     df = pd.read_sql_table(source_table, source_engine)
+
+    # 动态获取列名
+    columns = df.columns.tolist()
 
     # 在目标服务器创建临时表并插入数据
     temp_table_name = 'temp_source_data'
@@ -419,6 +422,77 @@ def cross_server_upsert(source_user, source_password, source_host, source_databa
         connection.execute(f"DROP TABLE {temp_table_name};")
 
     print(f"数据已从 {source_table} 迁移并合并到 {target_table}。")
+
+
+
+def cross_server_upsert_ymd(source_user, source_password, source_host, source_database,
+                            target_user, target_password, target_host, target_database,
+                            source_table, target_table, start_date, end_date):
+    """
+    跨服务器迁移数据，并在目标服务器上实现数据的并集。
+    这是一种追加取并集的方式
+
+    :param source_user:      源服务器的数据库用户名
+    :param source_password:  源服务器的数据库密码
+    :param source_host:      源服务器的主机地址
+    :param source_database:  源服务器的数据库名称
+    :param target_user:      目标服务器的数据库用户名
+    :param target_password:  目标服务器的数据库密码
+    :param target_host:      目标服务器的主机地址
+    :param target_database:  目标服务器的数据库名称
+    :param source_table:     源表名称（字符串）
+    :param target_table:     目标表名称（字符串）
+    :param columns:          需要更新或插入的列名列表（列表）
+    """
+
+    # 源服务器连接
+    source_db_url = f'mysql+pymysql://{source_user}:{source_password}@{source_host}:3306/{source_database}'
+    source_engine = create_engine(source_db_url)
+
+    # 目标服务器连接
+    target_db_url = f'mysql+pymysql://{target_user}:{target_password}@{target_host}:3306/{target_database}'
+    target_engine = create_engine(target_db_url)
+
+    # # 从源服务器读取数据
+    # df = pd.read_sql_table(source_table, source_engine)
+
+    # 从源服务器读取数据，限制 ymd 在 [start_date, end_date] 内
+    query = f"""
+    SELECT * FROM {source_table}
+    WHERE ymd BETWEEN '{start_date}' AND '{end_date}'
+    """
+    df = pd.read_sql_query(query, source_engine)
+
+    # 动态获取列名
+    columns = df.columns.tolist()
+
+    # 在目标服务器创建临时表并插入数据
+    temp_table_name = 'temp_source_data'
+    df.to_sql(name=temp_table_name, con=target_engine, if_exists='replace', index=False)
+
+    # 构建列名部分
+    columns_str = ", ".join(columns)
+    # 构建 ON DUPLICATE KEY UPDATE 部分
+    update_str = ", ".join([f"{col} = VALUES({col})" for col in columns])
+    # 构建 SELECT 部分
+    select_str = ", ".join(columns)
+
+    # 构建完整的 SQL 语句
+    sql = f"""
+    INSERT INTO {target_table} ({columns_str})
+    SELECT {select_str}
+    FROM {temp_table_name}
+    ON DUPLICATE KEY UPDATE 
+    {update_str};
+    """
+
+    # 在目标服务器上执行合并操作
+    with target_engine.connect() as connection:
+        connection.execute(text(sql))
+        connection.execute(f"DROP TABLE {temp_table_name};")
+
+    print(f"数据已从 {source_table} 迁移并合并到 {target_table}。")
+
 
 
 
