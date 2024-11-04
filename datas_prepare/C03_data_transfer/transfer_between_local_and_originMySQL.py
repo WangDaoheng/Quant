@@ -80,7 +80,7 @@ def transfer_origin_to_local_mysql():
                       'ods_stock_chouma_insight',
                       'ods_us_stock_daily_vantage',
                       'ods_exchange_rate_vantage_detail',
-                      'ods_exchange_dxy_vantage'
+                      'ods_exchange_dxy_vantage',
                       'ods_tdx_stock_concept_plate',
                       'ods_tdx_stock_index_plate',
                       'ods_tdx_stock_industry_plate',
