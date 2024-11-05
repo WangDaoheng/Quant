@@ -24,8 +24,7 @@ stock_concept_df = data_from_mysql_to_dataframe_latest(user=user, password=passw
 
 # 筛选条件
 filtered_stocks = chouma_df[
-    (chouma_df['winner_rate'] > 60) & (chouma_df['diversity'] > 60)
-    ]
+    (chouma_df['winner_rate'] > 60) & (chouma_df['diversity'] > 60)]
 
 # 获取股票代码和名称
 filtered_stock_codes = filtered_stocks[['htsc_code', 'name']]
