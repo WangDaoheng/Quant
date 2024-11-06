@@ -26,21 +26,19 @@ stock_concept_df = data_from_mysql_to_dataframe_latest(user=user, password=passw
 filtered_stocks = chouma_df[
     (chouma_df['winner_rate'] > 60) & (chouma_df['diversity'] > 60)]
 
-# 获取股票代码和名称
-filtered_stock_codes = filtered_stocks[['htsc_code', 'name']]
+# 获取stock代码和名称
+filtered_stock_codes = filtered_stocks[['htsc_code', 'winner_rate', 'diversity']]
 
 # 去掉 htsc_code 中的 ".SH"
-filtered_stock_codes['htsc_code'] = filtered_stock_codes['htsc_code'].str.replace('.SH', '', regex=False)
+# filtered_stock_codes['htsc_code'] = filtered_stock_codes['htsc_code'].str.replace('.SH', '', regex=False)
+filtered_stock_codes['htsc_code'] = filtered_stock_codes['htsc_code'].str.replace(r'\.\w{2}$', '', regex=True)
 
 # 合并行业信息
 result = pd.merge(filtered_stock_codes, stock_concept_df, left_on='htsc_code', right_on='stock_code', how='left')
 
 # 输出结果
-result_list = result[['htsc_code', 'name', 'industry_name']].values.tolist()
-
-print("筛选结果:")
-for item in result_list:
-    print(item)
+result_list = result[['htsc_code', 'stock_name', 'concept_name', 'winner_rate', 'diversity']].values.tolist()
+result.to_csv(r'F:\QDatas\stock_res.csv')
 
 
 # 定义获取数据的函数
