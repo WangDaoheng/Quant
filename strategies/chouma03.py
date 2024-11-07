@@ -56,7 +56,7 @@ def get_data():
 # 定义策略类
 class MyStrategy(bt.Strategy):
     def __init__(self):
-        self.sma = bt.indicators.SimpleMovingAverage(self.data.close, period=15)
+        self.sma = bt.indicators.MovingAverageSimple(self.data.close, period=15)
 
     def next(self):
         if self.data.close[0] > self.sma[0]:

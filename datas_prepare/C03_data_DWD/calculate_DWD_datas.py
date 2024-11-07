@@ -48,7 +48,7 @@ class CalDWD:
 
         #  1.获取日期
         # ymd = DateUtility.today()
-        ymd = "20241001"
+        ymd = "20241004"
 
         # 2.定义 SQL 模板
         sql_statements_template = [
@@ -146,6 +146,22 @@ class CalDWD:
                 database=origin_database,
                 sql_statements=sql_statements)
 
+
+    @timing_decorator
+    def cal_ZT_DT(self):
+
+        # 1.确定起止日期
+        time_start_date = DateUtility.next_day(-15)
+        time_end_date = DateUtility.next_day(0)
+
+        # 2.获取起止日期范围内的日K线数据
+        mysql_utils.data_from_mysql_to_dataframe(user=local_user, password=local_password, host=local_host,
+                                                 database=local_database)
+
+
+
+
+        pass
 
 
 
