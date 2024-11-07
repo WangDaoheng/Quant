@@ -224,7 +224,7 @@ CREATE TABLE quant.ods_shareholder_num (
 
 
 --1.10
-------------------  north_bound   北向持仓数据
+------------------  ods_north_bound_daily   北向持仓数据
 CREATE TABLE quant.ods_north_bound_daily_now (
       htsc_code            varchar(100)
      ,ymd                  DATE
@@ -245,7 +245,7 @@ CREATE TABLE quant.ods_north_bound_daily (
 
 
 --2.1
-------------------  us_stock_daily_vantage   美股 日K
+------------------  ods_us_stock_daily_vantage   美股 日K
 CREATE TABLE quant.ods_us_stock_daily_vantage (
      name     VARCHAR(50) NOT NULL          --股票名称
     ,ymd      DATE        NOT NULL          --交易日期
@@ -260,7 +260,7 @@ CREATE TABLE quant.ods_us_stock_daily_vantage (
 
 
 --2.2
-------------------  exchange_rate_vantage_detail   汇率&美元指数 日K
+------------------  ods_exchange_rate_vantage_detail   汇率&美元指数 日K
 CREATE TABLE quant.ods_exchange_rate_vantage_detail (
      name      VARCHAR(50) NOT NULL         --货币对
     ,ymd       DATE        NOT NULL         --交易日期
@@ -283,7 +283,7 @@ CREATE TABLE quant.ods_exchange_dxy_vantage (
 
 
 --3.1        通达信数据
-------------------  tdx_stock_concept_plate   通达信概念板块数据
+------------------  ods_tdx_stock_concept_plate   通达信概念板块数据
 CREATE TABLE quant.ods_tdx_stock_concept_plate (
      ymd DATE NOT NULL                    --日期
     ,concept_code VARCHAR(50) NOT NULL    --概念板块代码
@@ -294,7 +294,7 @@ CREATE TABLE quant.ods_tdx_stock_concept_plate (
 
 
 --3.2        通达信数据
-------------------  tdx_stock_style_plate   通达信风格板块数据
+------------------  ods_tdx_stock_style_plate   通达信风格板块数据
 CREATE TABLE quant.ods_tdx_stock_style_plate (
      ymd DATE NOT NULL                    --日期
     ,style_code VARCHAR(50) NOT NULL    --概念板块代码
@@ -305,7 +305,7 @@ CREATE TABLE quant.ods_tdx_stock_style_plate (
 
 
 --3.3        通达信数据
-------------------  tdx_stock_industry_plate   通达信行业板块数据
+------------------  ods_tdx_stock_industry_plate   通达信行业板块数据
 CREATE TABLE quant.ods_tdx_stock_industry_plate (
      ymd DATE NOT NULL                    --日期
     ,industry_code VARCHAR(50) NOT NULL   --行业板块代码
@@ -316,7 +316,7 @@ CREATE TABLE quant.ods_tdx_stock_industry_plate (
 
 
 --3.4        通达信数据
-------------------  tdx_stock_region_plate   通达信地区板块数据
+------------------  ods_tdx_stock_region_plate   通达信地区板块数据
 CREATE TABLE quant.ods_tdx_stock_region_plate (
      ymd         DATE NOT NULL            --日期
     ,region_code VARCHAR(50) NOT NULL     --地区板块代码
@@ -327,7 +327,7 @@ CREATE TABLE quant.ods_tdx_stock_region_plate (
 
 
 --3.5        通达信数据
-------------------  tdx_stock_index_plate   通达信指数板块数据
+------------------  ods_tdx_stock_index_plate   通达信指数板块数据
 CREATE TABLE quant.ods_tdx_stock_index_plate (
      ymd         DATE NOT NULL            --日期
     ,index_code  VARCHAR(50) NOT NULL     --指数板块代码
@@ -335,6 +335,35 @@ CREATE TABLE quant.ods_tdx_stock_index_plate (
     ,stock_code  VARCHAR(50)              --股票代码
     ,stock_name  VARCHAR(50)              --股票名称
 ) ;
+
+
+--4.1        多渠道板块数据 -- 小红书
+------------------  ods_stock_plate_redbook
+CREATE TABLE quant.ods_stock_plate_redbook (
+     ymd          DATE        NOT NULL      --日期
+    ,plate_name   VARCHAR(50) NOT NULL      --板块名称
+    ,stock_code   VARCHAR(50)               --标的代码
+    ,stock_name   VARCHAR(50)               --标的名称
+    ,remark       VARCHAR(50)               --备注
+) ;
+
+
+--4.2        多渠道板块数据 -- 多渠道汇总
+------------------  ods_stock_a_total_plate
+CREATE TABLE quant.ods_stock_a_total_plate (
+     ymd          DATE        NOT NULL      --日期
+    ,plate_name   VARCHAR(50) NOT NULL      --板块名称
+    ,stock_code   VARCHAR(50)               --标的代码
+    ,stock_name   VARCHAR(50)               --标的名称
+    ,source_table VARCHAR(50)               --来源表
+    ,remark       VARCHAR(50)               --备注
+) ;
+
+
+
+
+
+
 
 
 
