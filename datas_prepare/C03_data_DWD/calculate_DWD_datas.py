@@ -16,7 +16,6 @@ from CommonProperties.DateUtility import DateUtility
 from CommonProperties.Base_utils import timing_decorator
 import CommonProperties.Mysql_Utils as mysql_utils
 
-
 # ************************************************************************
 # 本代码的作用是下午收盘后针对 insight 行情源数据的本地保存部分开展merge
 # 需要下载的数据:
@@ -146,8 +145,7 @@ class CalDWD:
                 database=origin_database,
                 sql_statements=sql_statements)
 
-
-    @timing_decorator
+    # @timing_decorator
     def cal_ZT_DT(self):
 
         # 1.确定起止日期
@@ -155,38 +153,62 @@ class CalDWD:
         time_end_date = DateUtility.next_day(0)
 
         # 2.获取起止日期范围内的日K线数据
-        mysql_utils.data_from_mysql_to_dataframe(user=local_user, password=local_password, host=local_host,
-                                                 database=local_database)
+        df = mysql_utils.data_from_mysql_to_dataframe(user=local_user, password=local_password, host=local_host,
+                                                      database=local_database,
+                                                      table_name='ods_stock_kline_daily_insight',
+                                                      start_date=time_start_date, end_date=time_end_date)
+        df['ymd'] = pd.to_datetime(df['ymd'], format='%Y%m%d')
+        # 按照 ymd 排序，确保数据是按日期排列的
+        latest_15_days = df.sort_values(by='ymd')
+        # 获取前一个交易日的 close 价
+        latest_15_days['昨日close'] = latest_15_days['close'].shift(1)
 
+        # 计算昨日的涨停价和跌停价
+        latest_15_days['昨日ZT价'] = (latest_15_days['昨日close'] * 1.10).round(2)
+        latest_15_days['昨日DT价'] = (latest_15_days['昨日close'] * 0.90).round(2)
 
+        def ZT_DT_orz(price, target_price):
+            # 如果 price 和 target_price 之间的差距小于等于0.01，才进一步计算
+            if abs(target_price - price) <= 0.01:
+                # 计算 price 周围 0.01 范围内的最接近的2个价格
+                left_price = price - 0.01
+                right_price = price + 0.01
 
+                # 算价差
+                left_delta = abs(left_price - target_price)
+                mid_delta = abs(price - target_price)
+                right_delta = abs(right_price - target_price)
+                min_delta = min(left_delta, mid_delta, right_delta)
 
-        pass
+                # 判断为ZT or DT
+                if mid_delta == min_delta:
+                    return True
 
+            # 不可能 ZT or DT
+            return False
+
+        # 3. 判断每日的涨停或跌停
+        latest_15_days['是否涨停'] = latest_15_days.apply(
+            lambda row: ZT_DT_orz(row['close'], row['昨日ZT价']), axis=1)
+        latest_15_days['是否跌停'] = latest_15_days.apply(
+            lambda row: ZT_DT_orz(row['close'], row['昨日DT价']), axis=1)
+
+        # 4. 筛选出涨停或跌停的记录
+        zt_dt_records = latest_15_days[(latest_15_days['是否涨停'] == True) | (latest_15_days['是否跌停'] == True)]
+
+        # 5. 打印或返回结果
+        print(f"在 {time_start_date} 至 {time_end_date} 期间，以下股票发生了涨停或跌停：")
+        print(zt_dt_records[['ymd', 'stock_code', 'close', '昨日ZT价', '昨日DT价', '是否涨停', '是否跌停']])
 
 
 
     def setup(self):
         #
-        self.cal_ashare_plate()
+        # self.cal_ashare_plate()
 
+        self.cal_ZT_DT()
 
 
 if __name__ == '__main__':
     save_insight_data = CalDWD()
     save_insight_data.setup()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
