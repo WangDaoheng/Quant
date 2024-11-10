@@ -69,13 +69,17 @@ def data_from_dataframe_to_mysql(user, password, host, database='quant', df=pd.D
 
     # 将df中的ymd格式转换为DATE类型（如果merge_on包含'ymd'）
     if 'ymd' in merge_on:
+        sample_value = df['ymd'].dropna().iloc[0] if not df['ymd'].dropna().empty else None
+        sample_str = sample_value.strftime('%Y-%m-%d') if isinstance(sample_value, pd.Timestamp) else str(sample_value)
 
-        # df['ymd'] = df['ymd'].apply(lambda x: pd.to_datetime(str(x), format='%Y%m%d').strftime('%Y-%m-%d'))
-        df['ymd'] = df['ymd'].apply(lambda x: pd.to_datetime(str(x), format='%Y%m%d') if pd.notnull(x) else pd.NaT)
-        df['ymd'] = df['ymd'].apply(lambda x: x.strftime('%Y-%m-%d') if pd.notnull(x) else None)
+        if isinstance(sample_str, str) and sample_str[4] == '-' and sample_str[7] == '-':
+            pass
+        else:
+            # df['ymd'] = df['ymd'].apply(lambda x: pd.to_datetime(str(x), format='%Y%m%d').strftime('%Y-%m-%d'))
+            df.loc[:, 'ymd'] = df['ymd'].apply(lambda x: pd.to_datetime(str(x), format='%Y%m%d') if pd.notnull(x) else pd.NaT)
+            df.loc[:, 'ymd'] = df['ymd'].apply(lambda x: x.strftime('%Y-%m-%d') if pd.notnull(x) else None)
 
         ymd_range = df['ymd'].unique()
-
 
     # 预取数据库中这些日期的数据
     # 动态构建SELECT语句和WHERE子句
@@ -98,7 +102,7 @@ def data_from_dataframe_to_mysql(user, password, host, database='quant', df=pd.D
     total_rows = new_data.shape[0]
 
     # 把 df 中的ymd列还原回去
-    df['ymd'] = df['ymd'].apply(lambda x: pd.to_datetime(x).strftime('%Y%m%d'))
+    df.loc[:, 'ymd'] = df['ymd'].apply(lambda x: pd.to_datetime(x).strftime('%Y%m%d'))
 
     if total_rows == 0:
         logging.info(f"所有数据已存在，无需插入新的数据到 {host} 的 {table_name} 表中。")

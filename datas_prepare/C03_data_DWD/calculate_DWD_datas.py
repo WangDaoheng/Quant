@@ -153,19 +153,24 @@ class CalDWD:
         time_end_date = DateUtility.next_day(0)
 
         # 2.获取起止日期范围内的日K线数据
-        df = mysql_utils.data_from_mysql_to_dataframe(user=local_user, password=local_password, host=local_host,
-                                                      database=local_database,
+        df = mysql_utils.data_from_mysql_to_dataframe(user=origin_user, password=origin_password, host=origin_host,
+                                                      database=origin_database,
                                                       table_name='ods_stock_kline_daily_insight',
                                                       start_date=time_start_date, end_date=time_end_date)
-        df['ymd'] = pd.to_datetime(df['ymd'], format='%Y%m%d')
+        df['ymd'] = pd.to_datetime(df['ymd'], format='%Y-%m-%d')
+
         # 按照 ymd 排序，确保数据是按日期排列的
-        latest_15_days = df.sort_values(by='ymd')
-        # 获取前一个交易日的 close 价
-        latest_15_days['昨日close'] = latest_15_days['close'].shift(1)
+        latest_15_days = df.sort_values(by=['htsc_code', 'ymd'])
+
+        # 按股票代码分组，然后对每个分组进行 shift(1) 操作, 计算昨日close
+        latest_15_days['last_close'] = latest_15_days.groupby('htsc_code')['close'].shift(1)
+
+        # 过滤掉没有昨日数据的行
+        latest_15_days = latest_15_days.dropna(subset=['last_close'])
 
         # 计算昨日的涨停价和跌停价
-        latest_15_days['昨日ZT价'] = (latest_15_days['昨日close'] * 1.10).round(2)
-        latest_15_days['昨日DT价'] = (latest_15_days['昨日close'] * 0.90).round(2)
+        latest_15_days['昨日ZT价'] = (latest_15_days['last_close'] * 1.10).round(4)
+        latest_15_days['昨日DT价'] = (latest_15_days['last_close'] * 0.90).round(4)
 
         def ZT_DT_orz(price, target_price):
             # 如果 price 和 target_price 之间的差距小于等于0.01，才进一步计算
@@ -193,12 +198,71 @@ class CalDWD:
         latest_15_days['是否跌停'] = latest_15_days.apply(
             lambda row: ZT_DT_orz(row['close'], row['昨日DT价']), axis=1)
 
-        # 4. 筛选出涨停或跌停的记录
-        zt_dt_records = latest_15_days[(latest_15_days['是否涨停'] == True) | (latest_15_days['是否跌停'] == True)]
+        # 4. 筛选出涨停和跌停的记录，分别存入两个 DataFrame
+        zt_records = latest_15_days[latest_15_days['是否涨停'] == True].copy()
+        zt_records['rate'] = ((zt_records['close'] - zt_records['last_close']) / zt_records['last_close'] * 100).round(2)
+        zt_df = zt_records[['ymd', 'htsc_code', 'last_close', 'open', 'high', 'low', 'close', 'rate']]
 
-        # 5. 打印或返回结果
-        print(f"在 {time_start_date} 至 {time_end_date} 期间，以下股票发生了涨停或跌停：")
-        print(zt_dt_records[['ymd', 'stock_code', 'close', '昨日ZT价', '昨日DT价', '是否涨停', '是否跌停']])
+        dt_records = latest_15_days[latest_15_days['是否跌停'] == True].copy()
+        dt_records['rate'] = ((dt_records['close'] - dt_records['last_close']) / dt_records['last_close'] * 100).round(2)
+        dt_df = dt_records[['ymd', 'htsc_code', 'last_close', 'open', 'high', 'low', 'close', 'rate']]
+
+        ############################   文件输出模块     ############################
+        if platform.system() == "Windows":
+            #  涨停数据保存到 本地 mysql中
+            mysql_utils.data_from_dataframe_to_mysql(user=local_user,
+                                                     password=local_password,
+                                                     host=local_host,
+                                                     database=local_database,
+                                                     df=zt_df,
+                                                     table_name="dwd_stock_ZT_list",
+                                                     merge_on=['ymd', 'htsc_code'])
+
+            #  涨停数据保存到 远端 mysql中
+            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
+                                                     password=origin_password,
+                                                     host=origin_host,
+                                                     database=origin_database,
+                                                     df=zt_df,
+                                                     table_name="dwd_stock_ZT_list",
+                                                     merge_on=['ymd', 'htsc_code'])
+
+            #  跌停数据保存到 本地 mysql中
+            mysql_utils.data_from_dataframe_to_mysql(user=local_user,
+                                                     password=local_password,
+                                                     host=local_host,
+                                                     database=local_database,
+                                                     df=dt_df,
+                                                     table_name="dwd_stock_DT_list",
+                                                     merge_on=['ymd', 'htsc_code'])
+
+            #  跌停数据保存到 远端 mysql中
+            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
+                                                     password=origin_password,
+                                                     host=origin_host,
+                                                     database=origin_database,
+                                                     df=dt_df,
+                                                     table_name="dwd_stock_DT_list",
+                                                     merge_on=['ymd', 'htsc_code'])
+        else:
+            #  涨停数据保存到 远端 mysql中
+            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
+                                                     password=origin_password,
+                                                     host=origin_host,
+                                                     database=origin_database,
+                                                     df=zt_df,
+                                                     table_name="dwd_stock_ZT_list",
+                                                     merge_on=['ymd', 'htsc_code'])
+
+            #  跌停数据保存到 远端 mysql中
+            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
+                                                     password=origin_password,
+                                                     host=origin_host,
+                                                     database=origin_database,
+                                                     df=dt_df,
+                                                     table_name="dwd_stock_DT_list",
+                                                     merge_on=['ymd', 'htsc_code'])
+
 
 
 

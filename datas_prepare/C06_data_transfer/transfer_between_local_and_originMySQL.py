@@ -121,11 +121,13 @@ def append_origin_to_local_mysql():
                       'ods_tdx_stock_industry_plate',
                       'ods_tdx_stock_region_plate',
                       'ods_tdx_stock_style_plate',
-                      'stock_kline_daily_insight']
+                      'ods_stock_kline_daily_insight']
+
+    table_all_list = ['ods_stock_kline_daily_insight']
 
     #  设置起止时间，从source_table 中拉取数据
     start_date = '2024-10-01'
-    end_date = '2024-11-04'
+    end_date = '2024-11-10'
 
     for tableName in table_all_list:
         sourceTable = tableName
