@@ -14,8 +14,8 @@ CREATE TABLE quant.ods_stock_plate_redbook (
 
 
 
-------------------  ods_stock_a_total_plate   
-CREATE TABLE quant.ods_stock_a_total_plate (
+------------------  dwd_stock_a_total_plate
+CREATE TABLE quant.dwd_stock_a_total_plate (
      ymd          DATE        NOT NULL      --日期
     ,plate_name   VARCHAR(50) NOT NULL      --板块名称
     ,stock_code   VARCHAR(50)               --标的代码
@@ -29,9 +29,9 @@ CREATE TABLE quant.ods_stock_a_total_plate (
 
 
 
-delete from quant.ods_stock_a_total_plate  where ymd='20241001' ;
+delete from quant.dwd_stock_a_total_plate  where ymd='20241001' ;
 
-insert into  table quant.ods_stock_a_total_plate 
+insert into  table quant.dwd_stock_a_total_plate
   select 
        ymd                                 
       ,concept_name                    as plate_name

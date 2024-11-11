@@ -52,10 +52,10 @@ class CalDWD:
         # 2.定义 SQL 模板
         sql_statements_template = [
             """
-            DELETE FROM quant.ods_stock_a_total_plate WHERE ymd='{ymd}';
+            DELETE FROM quant.dwd_stock_a_total_plate WHERE ymd='{ymd}';
             """,
             """
-            INSERT INTO quant.ods_stock_a_total_plate
+            INSERT INTO quant.dwd_stock_a_total_plate
             SELECT 
                 ymd, 
                 concept_name AS plate_name,

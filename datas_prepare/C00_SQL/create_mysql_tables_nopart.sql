@@ -349,8 +349,8 @@ CREATE TABLE quant.ods_stock_plate_redbook (
 
 
 --4.2        多渠道板块数据 -- 多渠道汇总
-------------------  ods_stock_a_total_plate
-CREATE TABLE quant.ods_stock_a_total_plate (
+------------------  dwd_stock_a_total_plate
+CREATE TABLE quant.dwd_stock_a_total_plate (
      ymd          DATE        NOT NULL      --日期
     ,plate_name   VARCHAR(50) NOT NULL      --板块名称
     ,stock_code   VARCHAR(50)               --标的代码

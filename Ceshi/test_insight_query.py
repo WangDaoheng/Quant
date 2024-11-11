@@ -20,6 +20,39 @@ def login():
     common.login(market_service, user, password)
 
 
+def get_stock_code_demo():
+    #  1.获取日期
+    formatted_date = DateUtility.today()
+    # formatted_date = '20240930'
+
+    #  2.请求insight数据   get_all_stocks_info
+    get_stock_info(htsc_code='835368.BZ')
+
+
+    stock_all_df = get_all_stocks_info(exchange='XSHG', listing_state="上市交易")
+    stock_all_df.to_csv(r'F:\QDatas\tttt.csv')
+
+    df01 = get_all_stocks_info(exchange='XBJE')
+    df01.to_csv(r'F:\QDatas\df01.csv')
+
+    df02 = get_all_stocks_info(exchange=['XSHG', 'XSHE', 'XBSE'])
+    df02.to_csv(r'F:\QDatas\df02.csv')
+
+
+    #  3.日期格式转换
+    stock_all_df.insert(0, 'ymd', formatted_date)
+
+    #  4.声明所有的列名，去除多余列
+    stock_all_df = stock_all_df[['ymd', 'htsc_code', 'name', 'exchange']]
+    filtered_df = stock_all_df[~stock_all_df['name'].str.contains('ST|退|B')]
+
+    #  5.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
+    filtered_df = filtered_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
+
+    pass
+
+
+
 def get_kline_daily_demo():
     """
         000001.SH    上证指数
@@ -305,7 +338,8 @@ def get_hk_stock_basic_info_demo():
 
 if __name__ == "__main__":
     login()
-    get_kline_daily_demo()
+    get_stock_code_demo()
+    # get_kline_daily_demo()
     # get_foreign_exchange_demo()
     # insight_billboard()
     # get_shareholder_num_demo()
