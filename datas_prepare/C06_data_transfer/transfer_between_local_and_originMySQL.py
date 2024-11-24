@@ -46,7 +46,14 @@ def transfer_local_to_origin_mysql():
                       'ods_tdx_stock_index_plate',
                       'ods_tdx_stock_industry_plate',
                       'ods_tdx_stock_region_plate',
-                      'ods_tdx_stock_style_plate']
+                      'ods_tdx_stock_style_plate',
+                      'ods_stock_kline_daily_insight',
+                      'dwd_stock_ZT_list',
+                      'dwd_stock_DT_list',
+                      'dwd_stock_a_total_plate',
+                      'ods_stock_exchange_market'
+
+                      ]
 
     table_temp_list = ['stock_chouma_insight']
 
@@ -61,7 +68,7 @@ def transfer_local_to_origin_mysql():
 @timing_decorator
 def transfer_origin_to_local_mysql():
     """
-    从 远端 向 本地 主机刷新 mysql 数据
+    从 远端 向 本地 主机刷新 mysql 数据   全删全插
     Returns:
 
     """
@@ -87,7 +94,13 @@ def transfer_origin_to_local_mysql():
                       'ods_tdx_stock_index_plate',
                       'ods_tdx_stock_industry_plate',
                       'ods_tdx_stock_region_plate',
-                      'ods_tdx_stock_style_plate']
+                      'ods_tdx_stock_style_plate',
+                      'ods_stock_kline_daily_insight',
+                      'dwd_stock_ZT_list',
+                      'dwd_stock_DT_list',
+                      'dwd_stock_a_total_plate',
+                      'ods_stock_exchange_market'
+                      ]
 
     for tableName in table_all_list:
         mysql_utils.full_replace_migrate(source_host=origin_host,
@@ -97,7 +110,7 @@ def transfer_origin_to_local_mysql():
                                          table_name=tableName)
 
 
-@timing_decorator
+# @timing_decorator
 def append_origin_to_local_mysql():
     """
     从 远端 向 本地 服务器刷新 mysql 数据   追加形式
@@ -121,13 +134,22 @@ def append_origin_to_local_mysql():
                       'ods_tdx_stock_industry_plate',
                       'ods_tdx_stock_region_plate',
                       'ods_tdx_stock_style_plate',
-                      'ods_stock_kline_daily_insight']
+                      'ods_stock_kline_daily_insight',
+                      'dwd_stock_ZT_list',
+                      'dwd_stock_DT_list',
+                      'dwd_stock_a_total_plate',
+                      'ods_stock_exchange_market'
+                      ]
 
-    table_all_list = ['ods_stock_kline_daily_insight']
+    table_all_list = [ 'ods_tdx_stock_concept_plate',
+                          'ods_tdx_stock_index_plate',
+                          'ods_tdx_stock_industry_plate',
+                          'ods_tdx_stock_region_plate',
+                          'ods_tdx_stock_style_plate',]
 
     #  设置起止时间，从source_table 中拉取数据
     start_date = '2024-10-01'
-    end_date = '2024-11-10'
+    end_date = '2024-11-23'
 
     for tableName in table_all_list:
         sourceTable = tableName
@@ -182,7 +204,12 @@ def append_local_to_origin_mysql():
                       'ods_tdx_stock_industry_plate',
                       'ods_tdx_stock_region_plate',
                       'ods_tdx_stock_style_plate',
-                      'stock_kline_daily_insight']
+                      'ods_stock_kline_daily_insight',
+                      'dwd_stock_ZT_list',
+                      'dwd_stock_DT_list',
+                      'dwd_stock_a_total_plate',
+                      'ods_stock_exchange_market'
+                      ]
 
     #  设置起止时间，从source_table 中拉取数据
     start_date = '2024-10-01'
@@ -224,10 +251,10 @@ if __name__ == "__main__":
     # transfer_local_to_origin_mysql()
 
     #  从 远端 往 本地  msyql迁移数据          全删全插   慎重使用
-    # transfer_origin_to_local_mysql()
+    transfer_origin_to_local_mysql()
 
     #  从 远端 向 本地 服务器刷新 mysql 数据    追加形式
-    append_origin_to_local_mysql()
+    # append_origin_to_local_mysql()
 
     #  从 本地 向 远端 服务器刷新 mysql 数据    追加形式
     # append_local_to_origin_mysql()

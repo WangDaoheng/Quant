@@ -1,6 +1,9 @@
 
 from sqlalchemy import create_engine, text
 import pymysql
+from sqlalchemy.exc import SQLAlchemyError
+
+
 import pandas as pd
 import logging
 import platform
@@ -500,14 +503,22 @@ def execute_sql_statements(user, password, host, database, sql_statements):
     # 创建数据库连接 URL
     db_url = f'mysql+pymysql://{user}:{password}@{host}:3306/{database}'
 
-    # 创建数据库引擎
-    engine = create_engine(db_url)
+    # 创建数据库引擎，设置连接池
+    engine = create_engine(db_url, pool_size=10, max_overflow=20, pool_recycle=3600)
 
-    # 执行 SQL 语句
-    with engine.connect() as connection:
-        for statement in sql_statements:
-            connection.execute(statement)
+    try:
+        # 使用连接池执行 SQL 语句
+        with engine.connect() as connection:
+            for statement in sql_statements:
+                # 使用 text() 来防止 SQL 注入
+                connection.execute(text(statement))
 
+    except SQLAlchemyError as e:
+        # 捕获数据库相关的错误
+        print(f"Error executing SQL: {e}")
+    finally:
+        # 确保连接被正确关闭
+        engine.dispose()
 
 
 

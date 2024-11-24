@@ -207,7 +207,7 @@ CREATE TABLE quant.ods_shareholder_num_now (
       ,avg_share              DOUBLE(10, 4)           --每个股东平均持股数
       ,pct_of_total_sh        DOUBLE(10, 4)           --股东数较上期环比波动百分比
       ,pct_of_avg_sh          DOUBLE(10, 4)           --每个股东平均持股数较上期环比波动百分比
-      UNIQUE KEY unique_industry_code (ymd, htsc_code)
+      UNIQUE KEY unique_ymd_stock_code (ymd, htsc_code)
 );
 
 CREATE TABLE quant.ods_shareholder_num (
@@ -218,7 +218,7 @@ CREATE TABLE quant.ods_shareholder_num (
       ,avg_share              DOUBLE(10, 4)           --每个股东平均持股数
       ,pct_of_total_sh        DOUBLE(10, 4)           --股东数较上期环比波动百分比
       ,pct_of_avg_sh          DOUBLE(10, 4)           --每个股东平均持股数较上期环比波动百分比
-      UNIQUE KEY unique_industry_code (ymd, htsc_code)
+      UNIQUE KEY unique_ymd_stock_code (ymd, htsc_code)
 );
 
 
@@ -230,7 +230,7 @@ CREATE TABLE quant.ods_north_bound_daily_now (
      ,ymd                  DATE
      ,sh_hkshare_hold      BIGINT
      ,pct_total_share      FLOAT
-   ,UNIQUE KEY unique_industry_code (ymd, htsc_code)
+   ,UNIQUE KEY unique_ymd_stock_code (ymd, htsc_code)
  );
 
 
@@ -239,7 +239,7 @@ CREATE TABLE quant.ods_north_bound_daily (
      ,ymd                  DATE
      ,sh_hkshare_hold      BIGINT
      ,pct_total_share      FLOAT
-   ,UNIQUE KEY unique_industry_code (ymd, htsc_code)
+   ,UNIQUE KEY unique_ymd_stock_code (ymd, htsc_code)
  );
 
 
@@ -254,7 +254,7 @@ CREATE TABLE quant.ods_us_stock_daily_vantage (
     ,low      FLOAT                         --最低价
     ,close    FLOAT                         --收盘价
     ,volume   BIGINT                        --成交量
-    UNIQUE KEY unique_ymd_stock_code (ymd, name)
+    UNIQUE KEY unique_ymd_name (ymd, name)
 ) ;
 
 
@@ -268,7 +268,7 @@ CREATE TABLE quant.ods_exchange_rate_vantage_detail (
     ,high      FLOAT                        --最高价
     ,low       FLOAT                        --最低价
     ,close     FLOAT                        --收盘价
-    UNIQUE KEY unique_ymd_stock_code (ymd, name)
+    UNIQUE KEY unique_ymd_name (ymd, name)
 ) ;
 
 
@@ -276,7 +276,7 @@ CREATE TABLE quant.ods_exchange_rate_vantage_detail (
 CREATE TABLE quant.ods_exchange_dxy_vantage (
     ymd DATE NOT NULL,
     name VARCHAR(50) NOT NULL,
-    UNIQUE KEY unique_ymd_stock_code (ymd, name)
+    UNIQUE KEY unique_ymd_name (ymd, name)
 ) ;
 
 
@@ -360,6 +360,15 @@ CREATE TABLE quant.dwd_stock_a_total_plate (
 ) ;
 
 
+--5.1        股票基本面数据 -- 所属交易所，主板/创业板/科创板/北证
+------------------  ods_stock_exchange_market
+CREATE TABLE quant.ods_stock_exchange_market (
+     ymd          DATE        NOT NULL      --日期
+    ,stock_code   VARCHAR(50)               --标的代码
+    ,stock_name   VARCHAR(50)               --标的名称
+    ,market       VARCHAR(50)               --市场特征主板创业板等
+    ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
+) ;
 
 
 
