@@ -96,10 +96,11 @@ def transfer_origin_to_local_mysql():
                       'ods_tdx_stock_region_plate',
                       'ods_tdx_stock_style_plate',
                       'ods_stock_kline_daily_insight',
+                      'ods_stock_exchange_market',
+                      'ods_stock_plate_redbook',
                       'dwd_stock_ZT_list',
                       'dwd_stock_DT_list',
-                      'dwd_stock_a_total_plate',
-                      'ods_stock_exchange_market'
+                      'dwd_stock_a_total_plate'
                       ]
 
     for tableName in table_all_list:
