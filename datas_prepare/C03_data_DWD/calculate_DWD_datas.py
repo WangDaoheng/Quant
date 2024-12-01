@@ -150,7 +150,7 @@ class CalDWD:
                 sql_statements=sql_statements)
 
 
-
+    @timing_decorator
     def cal_stock_exchange(self):
         """
         计算股票所归属的交易所，判断其是主办、创业板、科创板、北交所等等
@@ -213,9 +213,121 @@ class CalDWD:
                 sql_statements=sql_statements)
 
 
+    @timing_decorator
+    def cal_stock_base_info(self):
+
+        #  1.获取日期
+        # ymd = DateUtility.today()
+        ymd = "20241122"
+
+        # 2.定义 SQL 模板
+        sql_statements_template = [
+            """
+            DELETE  FROM quant.dwd_ashare_stock_base_info WHERE  ymd = '{ymd}';
+            """,
+            """
+            insert  into quant.dwd_ashare_stock_base_info 
+            select 
+                  tkline.ymd                                         
+                 ,tpbe.stock_code                                    
+                 ,tpbe.stock_name                                    
+                 ,tkline.close                                       
+                 ,tpbe.market_value                                  
+                 ,tpbe.total_capital*tkline.close   as  total_value  
+                 ,tpbe.total_asset                                   
+                 ,tpbe.net_asset                                     
+                 ,tpbe.total_capital                                 
+                 ,tpbe.float_capital                                 
+                 ,tpbe.shareholder_num                               
+                 ,tpbe.pb                                            
+                 ,tpbe.pe                                            
+                 ,texchange.market                                   
+                 ,tplate.plate_names                                 
+            from  
+             ( select
+                  htsc_code                                         
+                 ,ymd                                               
+                 ,open                                              
+                 ,close                                             
+                 ,high                                              
+                 ,low                                               
+                 ,num_trades                                        
+                 ,volume                                            
+              from  quant.ods_stock_kline_daily_insight   
+              where ymd = (SELECT MAX(ymd) FROM quant.ods_stock_kline_daily_insight)
+            ) tkline
+            left join 
+            ( select 
+                  ymd                                                
+                 ,stock_code                                         
+                 ,stock_name                                         
+                 ,market_value                                       
+                 ,total_asset                                        
+                 ,net_asset                                          
+                 ,total_capital                                      
+                 ,float_capital                                      
+                 ,shareholder_num                                    
+                 ,pb                                                 
+                 ,pe                                                 
+                 ,industry                                           
+              from  quant.ods_tdx_stock_pepb_info 
+              WHERE ymd = (SELECT MAX(ymd) FROM quant.ods_tdx_stock_pepb_info)
+            ) tpbe
+            ON SUBSTRING_INDEX(tkline.htsc_code, '.', 1) = tpbe.stock_code
+            left join 
+            ( select 
+                  ymd                                               
+                 ,stock_code                                        
+                 ,stock_name                                        
+                 ,market                                            
+              from  quant.ods_stock_exchange_market 
+              where ymd = (SELECT MAX(ymd) FROM quant.ods_stock_exchange_market)
+            ) texchange 
+            on tkline.htsc_code = texchange.stock_code
+            left join 
+            (
+              select 
+                  ymd                                              
+                 ,stock_code                                       
+                 ,stock_name                                       
+                 ,GROUP_CONCAT(plate_name ORDER BY plate_name SEPARATOR ',') AS plate_names   
+              from  quant.dwd_stock_a_total_plate  
+              where ymd = (SELECT MAX(ymd) FROM quant.dwd_stock_a_total_plate)
+              group by ymd, stock_code, stock_name 
+            ) tplate
+            ON SUBSTRING_INDEX(tkline.htsc_code, '.', 1) = tplate.stock_code
+            """]
+
+        # 3.主程序替换 {ymd} 占位符
+        sql_statements = [stmt.format(ymd=ymd) for stmt in sql_statements_template]
+
+        # 4.执行 SQL
+        if platform.system() == "Windows":
+
+            mysql_utils.execute_sql_statements(
+                user=local_user,
+                password=local_password,
+                host=local_host,
+                database=local_database,
+                sql_statements=sql_statements)
+
+            mysql_utils.execute_sql_statements(
+                user=origin_user,
+                password=origin_password,
+                host=origin_host,
+                database=origin_database,
+                sql_statements=sql_statements)
+        else:
+            mysql_utils.execute_sql_statements(
+                user=origin_user,
+                password=origin_password,
+                host=origin_host,
+                database=origin_database,
+                sql_statements=sql_statements)
 
 
-    # @timing_decorator
+
+    @timing_decorator
     def cal_ZT_DT(self):
         """
         计算一只股票是否 涨停 / 跌停

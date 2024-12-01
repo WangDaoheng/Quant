@@ -249,6 +249,7 @@ class SaveInsightHistoryData:
         000905.SH	 中证500
         399852.SZ    中证1000
         000688.SH    科创50
+        899050.BJ    北证50
 
         Returns:
              index_a_share   [htsc_code 	time	frequency	open	close	high	low	volume	value]
@@ -270,7 +271,8 @@ class SaveInsightHistoryData:
             , "000849.SH": "300非银"
             , "000905.SH": "中证500"
             , "399852.SZ": "中证1000"
-            , "000688.SH": "科创50"}
+            , "000688.SH": "科创50"
+            , "899050.BJ": "北证50"}
         index_list = list(index_dict.keys())
 
         #  3.index_a_share 的总和dataframe

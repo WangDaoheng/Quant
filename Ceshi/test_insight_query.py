@@ -26,14 +26,25 @@ def get_stock_code_demo():
     # formatted_date = '20240930'
 
     #  2.请求insight数据   get_all_stocks_info
-    get_stock_info(htsc_code='835368.BZ')
+    res = get_stock_info(htsc_code='873169.BJ')
+
+    listing_start_date = "2018-01-14"
+    listing_end_date = "2024-11-20"
+    listing_start_date = datetime.strptime(listing_start_date, '%Y-%m-%d')
+    listing_end_date = datetime.strptime(listing_end_date, '%Y-%m-%d')
+    # 获取股票603980.SH的基础信息
+    result = get_stock_info(htsc_code="873169.BJ",
+                                  listing_date=[listing_start_date, listing_end_date])
 
 
-    stock_all_df = get_all_stocks_info(exchange='XSHG', listing_state="上市交易")
-    stock_all_df.to_csv(r'F:\QDatas\tttt.csv')
+    # stock_all_df = get_all_stocks_info(exchange='XSHG', listing_state="上市交易")
+    # stock_all_df.to_csv(r'F:\QDatas\tttt.csv')
+    #
+    # df01 = get_all_stocks_info(exchange='XBJE')
+    # df01.to_csv(r'F:\QDatas\df01.csv')
 
-    df01 = get_all_stocks_info(exchange='XBJE')
-    df01.to_csv(r'F:\QDatas\df01.csv')
+    df011 = get_all_stocks_info(exchange='XBSE')
+    df011.to_csv(r'F:\QDatas\df01.csv')
 
     df02 = get_all_stocks_info(exchange=['XSHG', 'XSHE', 'XBSE'])
     df02.to_csv(r'F:\QDatas\df02.csv')
@@ -78,8 +89,10 @@ def get_kline_daily_demo():
     #               "000688.SH"]
 
 
-    index_list = ["240202.SH", "240202.SZ", "240202", "240202.sw", "240202.SW", "240202.HTSC", "240202.HT", ""
-                  "240202.sw_l3", "240202.SW_L3"]
+    # index_list = ["240202.SH", "240202.SZ", "240202", "240202.sw", "240202.SW", "240202.HTSC", "240202.HT", ""
+    #               "240202.sw_l3", "240202.SW_L3"]
+
+    index_list = ["873169.BJ"]
 
     # 定义要替换的部分和新值
     old_value = "240202"

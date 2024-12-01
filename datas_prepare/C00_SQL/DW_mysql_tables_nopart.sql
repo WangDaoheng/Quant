@@ -1,7 +1,25 @@
 
 --1.1
-------------------  dwd_stock_ZT_list   涨停股票清单
+------------------  dwd_ashare_stock_base_info   股票基本信息大宽表
 
+create table quant.dwd_ashare_stock_base_info (
+     ymd              DATE               --日期
+    ,stock_code       varchar(50)        --代码
+    ,stock_name       varchar(50)        --名称
+    ,close            double             --最新收盘价
+    ,market_value     double             --流通市值(亿)
+    ,total_value      double             --总市值(亿)
+    ,total_asset      double             --总资产(亿)
+    ,net_asset        double             --净资产(亿)
+    ,total_capital    double             --总股本(亿)
+    ,float_capital    double             --流通股(亿)
+    ,shareholder_num  bigint             --股东人数
+    ,pb               varchar(50)        --市净率
+    ,pe               varchar(50)        --市盈(动)
+    ,market           VARCHAR(50)        --市场特征主板创业板等
+    ,plate_names      VARCHAR(500)       --板块名称
+    ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
+) ;
 
 
 

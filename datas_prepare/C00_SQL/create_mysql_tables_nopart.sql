@@ -337,6 +337,28 @@ CREATE TABLE quant.ods_tdx_stock_index_plate (
 ) ;
 
 
+--3.6        通达信数据
+------------------  ods_tdx_stock_pepb_info   通达信个股PE/PB数据
+CREATE TABLE quant.ods_tdx_stock_pepb_info (
+     ymd              DATE               --日期
+    ,stock_code       varchar(50)        --代码
+    ,stock_name       varchar(50)        --名称
+    ,market_value     double             --流通市值(亿)
+    ,total_asset      double             --总资产(亿)
+    ,net_asset        double             --净资产(亿)
+    ,total_capital    double             --总股本(亿)
+    ,float_capital    double             --流通股(亿)
+    ,shareholder_num  bigint             --股东人数
+    ,pb               double             --市净率
+    ,pe               double             --市盈(动)
+    ,industry         varchar(50)        --细分行业
+     UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
+) ;
+
+
+
+
+
 --4.1        多渠道板块数据 -- 小红书
 ------------------  ods_stock_plate_redbook
 CREATE TABLE quant.ods_stock_plate_redbook (
