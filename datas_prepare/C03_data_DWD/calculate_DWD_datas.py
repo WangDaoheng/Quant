@@ -42,7 +42,7 @@ class CalDWD:
     def __init__(self):
         pass
 
-    @timing_decorator
+    # @timing_decorator
     def cal_ashare_plate(self):
         """
         聚合股票的板块，把各个板块数据聚合在一起
@@ -50,8 +50,8 @@ class CalDWD:
         """
 
         #  1.获取日期
-        # ymd = DateUtility.today()
-        ymd = "20241004"
+        ymd = DateUtility.today()
+        # ymd = "20241004"
 
         # 2.定义 SQL 模板
         sql_statements_template = [
@@ -150,7 +150,7 @@ class CalDWD:
                 sql_statements=sql_statements)
 
 
-    @timing_decorator
+    # @timing_decorator
     def cal_stock_exchange(self):
         """
         计算股票所归属的交易所，判断其是主办、创业板、科创板、北交所等等
@@ -158,8 +158,8 @@ class CalDWD:
         """
 
         #  1.获取日期
-        # ymd = DateUtility.today()
-        ymd = "20241122"
+        ymd = DateUtility.today()
+        # ymd = "20241122"
 
         # 2.定义 SQL 模板
         sql_statements_template = [
@@ -213,12 +213,16 @@ class CalDWD:
                 sql_statements=sql_statements)
 
 
-    @timing_decorator
+    # @timing_decorator
     def cal_stock_base_info(self):
+        """
+        计算股票基础信息，汇总表，名称、编码、板块、股本、市值、净资产
+        Returns:
+        """
 
         #  1.获取日期
-        # ymd = DateUtility.today()
-        ymd = "20241122"
+        ymd = DateUtility.today()
+        # ymd = "20241122"
 
         # 2.定义 SQL 模板
         sql_statements_template = [
@@ -226,7 +230,7 @@ class CalDWD:
             DELETE  FROM quant.dwd_ashare_stock_base_info WHERE  ymd = '{ymd}';
             """,
             """
-            insert  into quant.dwd_ashare_stock_base_info 
+            insert IGNORE  into quant.dwd_ashare_stock_base_info 
             select 
                   tkline.ymd                                         
                  ,tpbe.stock_code                                    
@@ -326,13 +330,11 @@ class CalDWD:
                 sql_statements=sql_statements)
 
 
-
     @timing_decorator
     def cal_ZT_DT(self):
         """
         计算一只股票是否 涨停 / 跌停
         Returns:
-
         """
 
         # 1.确定起止日期
@@ -357,9 +359,40 @@ class CalDWD:
         # 过滤掉没有昨日数据的行
         latest_15_days = latest_15_days.dropna(subset=['last_close'])
 
-        # 计算昨日的涨停价和跌停价
-        latest_15_days['昨日ZT价'] = (latest_15_days['last_close'] * 1.10).round(4)
-        latest_15_days['昨日DT价'] = (latest_15_days['last_close'] * 0.90).round(4)
+        # 获取市场特征
+        stock_market_init = mysql_utils.data_from_mysql_to_dataframe_latest(
+            user=origin_user, password=origin_password, host=origin_host,
+            database=origin_database, table_name='dwd_ashare_stock_base_info')
+
+        stock_base_info = stock_market_init[['stock_code', 'stock_name', 'market_value', 'total_value',
+                                           'total_asset', 'net_asset', 'total_capital', 'float_capital',
+                                           'shareholder_num', 'pb', 'pe', 'market', 'plate_names']]
+
+
+        # 合并市场信息到最新的15天数据
+        latest_15_days['stock_code'] = latest_15_days['stock_code'].str.split('.').str[0]
+
+        latest_15_days = latest_15_days[['ymd', 'stock_code', 'close', 'last_close']]
+
+        latest_15_days = pd.merge(latest_15_days, stock_base_info, on='stock_code', how='left', suffixes=('_latest', '_base'))
+
+
+        # 计算涨跌停价
+        def calculate_ZT_DT(row):
+            if row['market'] in ['创业板', '科创板']:
+                up_limit = row['last_close'] * 1.20
+                down_limit = row['last_close'] * 0.80
+            else:  # 上海主板、深圳主板
+                up_limit = row['last_close'] * 1.10
+                down_limit = row['last_close'] * 0.90
+            return up_limit, down_limit
+
+        # 应用计算
+        latest_15_days[['昨日ZT价', '昨日DT价']] = latest_15_days.apply(calculate_ZT_DT, axis=1, result_type='expand')
+
+        # # 计算昨日的涨停价和跌停价
+        # latest_15_days['昨日ZT价'] = (latest_15_days['last_close'] * 1.10).round(4)
+        # latest_15_days['昨日DT价'] = (latest_15_days['last_close'] * 0.90).round(4)
 
         def ZT_DT_orz(price, target_price):
             # 如果 price 和 target_price 之间的差距小于等于0.01，才进一步计算
@@ -390,12 +423,18 @@ class CalDWD:
         # 4. 筛选出涨停和跌停的记录，分别存入两个 DataFrame
         zt_records = latest_15_days[latest_15_days['是否涨停'] == True].copy()
         zt_records['rate'] = ((zt_records['close'] - zt_records['last_close']) / zt_records['last_close'] * 100).round(2)
-        zt_df = zt_records[['ymd', 'stock_code', 'last_close', 'open', 'high', 'low', 'close', 'rate']]
+        zt_df = zt_records[
+            ['ymd', 'stock_code', 'stock_name', 'last_close', 'close', 'rate', 'market_value', 'total_value',
+             'total_asset', 'net_asset', 'total_capital', 'float_capital', 'shareholder_num', 'pb', 'pe',
+             'market', 'plate_names']]
         zt_df = zt_df.sort_values(by=['ymd', 'stock_code'])
 
         dt_records = latest_15_days[latest_15_days['是否跌停'] == True].copy()
         dt_records['rate'] = ((dt_records['close'] - dt_records['last_close']) / dt_records['last_close'] * 100).round(2)
-        dt_df = dt_records[['ymd', 'stock_code', 'last_close', 'open', 'high', 'low', 'close', 'rate']]
+        dt_df = dt_records[
+            ['ymd', 'stock_code', 'stock_name', 'last_close', 'close', 'rate', 'market_value', 'total_value',
+             'total_asset', 'net_asset', 'total_capital', 'float_capital', 'shareholder_num', 'pb', 'pe',
+             'market', 'plate_names']]
         dt_df = dt_df.sort_values(by=['ymd', 'stock_code'])
 
         ############################   文件输出模块     ############################
@@ -458,12 +497,20 @@ class CalDWD:
 
 
     def setup(self):
-        #
-        # self.cal_ashare_plate()
 
+        # 聚合股票的板块，把各个板块数据聚合在一起
+        # self.cal_ashare_plate()
+        #
+        # # 计算股票所归属的交易所，判断其是主办、创业板、科创板、北交所等等
+        # self.cal_stock_exchange()
+        #
+        # # 计算股票基础信息，汇总表，名称、编码、板块、股本、市值、净资产
+        # self.cal_stock_base_info()
+
+        # 计算一只股票是否 涨停 / 跌停
         self.cal_ZT_DT()
 
-        # self.cal_stock_exchange()
+
 
 
 if __name__ == '__main__':

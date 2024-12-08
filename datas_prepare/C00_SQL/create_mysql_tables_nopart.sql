@@ -352,7 +352,7 @@ CREATE TABLE quant.ods_tdx_stock_pepb_info (
     ,pb               double             --市净率
     ,pe               double             --市盈(动)
     ,industry         varchar(50)        --细分行业
-     UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
+    ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
 ) ;
 
 

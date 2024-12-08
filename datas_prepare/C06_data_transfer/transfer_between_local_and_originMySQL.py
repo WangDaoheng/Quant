@@ -41,18 +41,20 @@ def transfer_local_to_origin_mysql():
                       'ods_stock_chouma_insight',
                       'ods_us_stock_daily_vantage',
                       'ods_exchange_rate_vantage_detail',
-                      'ods_exchange_dxy_vantage'
+                      'ods_exchange_dxy_vantage',
                       'ods_tdx_stock_concept_plate',
                       'ods_tdx_stock_index_plate',
                       'ods_tdx_stock_industry_plate',
                       'ods_tdx_stock_region_plate',
                       'ods_tdx_stock_style_plate',
+                      'ods_tdx_stock_pepb_info',
                       'ods_stock_kline_daily_insight',
-                      'dwd_stock_ZT_list',
-                      'dwd_stock_DT_list',
+                      'ods_stock_exchange_market',
+                      'ods_stock_plate_redbook',
+                      'dwd_stock_zt_list',
+                      'dwd_stock_dt_list',
                       'dwd_stock_a_total_plate',
-                      'ods_stock_exchange_market'
-
+                      'dwd_ashare_stock_base_info'
                       ]
 
     table_temp_list = ['stock_chouma_insight']
@@ -95,13 +97,18 @@ def transfer_origin_to_local_mysql():
                       'ods_tdx_stock_industry_plate',
                       'ods_tdx_stock_region_plate',
                       'ods_tdx_stock_style_plate',
+                      'ods_tdx_stock_pepb_info',
                       'ods_stock_kline_daily_insight',
                       'ods_stock_exchange_market',
                       'ods_stock_plate_redbook',
-                      'dwd_stock_ZT_list',
-                      'dwd_stock_DT_list',
-                      'dwd_stock_a_total_plate'
+                      'dwd_stock_zt_list',
+                      'dwd_stock_dt_list',
+                      'dwd_stock_a_total_plate',
+                      'dwd_ashare_stock_base_info'
                       ]
+
+
+    table_all_list = ['ods_tdx_stock_pepb_info']
 
     for tableName in table_all_list:
         mysql_utils.full_replace_migrate(source_host=origin_host,
@@ -111,7 +118,7 @@ def transfer_origin_to_local_mysql():
                                          table_name=tableName)
 
 
-# @timing_decorator
+@timing_decorator
 def append_origin_to_local_mysql():
     """
     从 远端 向 本地 服务器刷新 mysql 数据   追加形式
@@ -135,22 +142,20 @@ def append_origin_to_local_mysql():
                       'ods_tdx_stock_industry_plate',
                       'ods_tdx_stock_region_plate',
                       'ods_tdx_stock_style_plate',
+                      'ods_tdx_stock_pepb_info',
                       'ods_stock_kline_daily_insight',
-                      'dwd_stock_ZT_list',
-                      'dwd_stock_DT_list',
+                      'ods_stock_exchange_market',
+                      'ods_stock_plate_redbook',
+                      'dwd_stock_zt_list',
+                      'dwd_stock_dt_list',
                       'dwd_stock_a_total_plate',
-                      'ods_stock_exchange_market'
+                      'dwd_ashare_stock_base_info'
                       ]
 
-    table_all_list = [ 'ods_tdx_stock_concept_plate',
-                          'ods_tdx_stock_index_plate',
-                          'ods_tdx_stock_industry_plate',
-                          'ods_tdx_stock_region_plate',
-                          'ods_tdx_stock_style_plate',]
 
     #  设置起止时间，从source_table 中拉取数据
-    start_date = '2024-10-01'
-    end_date = '2024-11-23'
+    start_date = '2024-11-21'
+    end_date = '2024-12-08'
 
     for tableName in table_all_list:
         sourceTable = tableName
@@ -205,11 +210,14 @@ def append_local_to_origin_mysql():
                       'ods_tdx_stock_industry_plate',
                       'ods_tdx_stock_region_plate',
                       'ods_tdx_stock_style_plate',
+                      'ods_tdx_stock_pepb_info',
                       'ods_stock_kline_daily_insight',
-                      'dwd_stock_ZT_list',
-                      'dwd_stock_DT_list',
+                      'ods_stock_exchange_market',
+                      'ods_stock_plate_redbook',
+                      'dwd_stock_zt_list',
+                      'dwd_stock_dt_list',
                       'dwd_stock_a_total_plate',
-                      'ods_stock_exchange_market'
+                      'dwd_ashare_stock_base_info'
                       ]
 
     #  设置起止时间，从source_table 中拉取数据
@@ -252,10 +260,10 @@ if __name__ == "__main__":
     # transfer_local_to_origin_mysql()
 
     #  从 远端 往 本地  msyql迁移数据          全删全插   慎重使用
-    transfer_origin_to_local_mysql()
+    # transfer_origin_to_local_mysql()
 
     #  从 远端 向 本地 服务器刷新 mysql 数据    追加形式
-    # append_origin_to_local_mysql()
+    append_origin_to_local_mysql()
 
     #  从 本地 向 远端 服务器刷新 mysql 数据    追加形式
     # append_local_to_origin_mysql()
