@@ -338,7 +338,7 @@ class CalDWD:
         """
 
         # 1.确定起止日期
-        time_start_date = DateUtility.next_day(-15)
+        time_start_date = DateUtility.next_day(-2)
         time_end_date = DateUtility.next_day(0)
 
         # 2.获取起止日期范围内的日K线数据
@@ -499,13 +499,13 @@ class CalDWD:
     def setup(self):
 
         # 聚合股票的板块，把各个板块数据聚合在一起
-        # self.cal_ashare_plate()
-        #
-        # # 计算股票所归属的交易所，判断其是主办、创业板、科创板、北交所等等
-        # self.cal_stock_exchange()
-        #
-        # # 计算股票基础信息，汇总表，名称、编码、板块、股本、市值、净资产
-        # self.cal_stock_base_info()
+        self.cal_ashare_plate()
+
+        # 计算股票所归属的交易所，判断其是主办、创业板、科创板、北交所等等
+        self.cal_stock_exchange()
+
+        # 计算股票基础信息，汇总表，名称、编码、板块、股本、市值、净资产
+        self.cal_stock_base_info()
 
         # 计算一只股票是否 涨停 / 跌停
         self.cal_ZT_DT()

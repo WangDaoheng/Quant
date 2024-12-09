@@ -833,6 +833,12 @@ class SaveInsightData:
          industry_detail  ['ymd', 'htsc_code', 'name', 'industry_name', 'industry_code', 'l1_code', 'l1_name', 'l2_code', 'l2_name', 'l3_code', 'l3_name']
         """
 
+        # 如果今天不是周五，跳过逻辑
+        if not DateUtility.is_friday():
+            logging.info("今天不是周五，跳过行业信息获取逻辑。")
+            return
+
+
         #  1.当月数据的起止时间
         time_today = DateUtility.today()
         # time_today = '20240930'

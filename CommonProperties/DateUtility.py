@@ -15,6 +15,16 @@ class DateUtility:
 
 
     @staticmethod
+    def is_monday():
+        today = datetime.today()
+        return today.weekday() == 0  # 星期一的weekday()返回值是0
+
+    @staticmethod
+    def is_friday():
+        today = datetime.today()
+        return today.weekday() == 4  # 星期五的weekday()返回值是4
+
+    @staticmethod
     def is_weekend():
         today = datetime.today()
         # 在大多数国家，周末是周六和周日，即weekday()返回5（周六）或6（周日）
