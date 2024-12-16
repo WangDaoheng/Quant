@@ -1,0 +1,55 @@
+
+一、问题描述
+
+   F:\Quant\Backtrader_PJ1>git push origin master
+   ssh: connect to host github.com port 22: Connection refused
+   fatal: Could not read from remote repository.
+   
+   Please make sure you have the correct access rights
+   and the repository exists.
+
+
+   ssh -T  git@ssh.github.com  测试不通
+
+
+
+二、解决方案
+   
+   1. 在 ~/.ssh/ 下看看 .config 是否存在，.config的内容如下：
+Host github.com
+  HostName github.com
+  User git
+  Port 22
+  IdentityFile ~/.ssh/id_rsa
+
+
+   2.
+     git remote set-url origin git@ssh.github.com:WangDaoheng/Quant.git
+     git remote -v
+     看到输出如下：
+     origin  git@ssh.github.com:WangDaoheng/Quant.git (fetch)
+     origin  git@ssh.github.com:WangDaoheng/Quant.git (push)
+     
+     启动 SSH 代理并加载密钥：
+     eval $(ssh-agent -s)   # 启动 SSH 代理
+     ssh-add ~/.ssh/id_rsa  # 加载 SSH 密钥
+
+     测试 SSH 连接
+     ssh -T -p 443 git@ssh.github.com
+     
+     开始push数据，使用git命令（到这一般就正常了，不过用的是443端口）
+     git push origin master
+
+     测试 SSH连接
+     ssh -T git@ssh.github.com
+
+     测试git命令(也成功了)
+     git pull origin master
+
+
+
+
+
+
+
+
