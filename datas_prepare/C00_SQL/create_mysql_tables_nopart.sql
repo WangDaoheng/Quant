@@ -272,7 +272,8 @@ CREATE TABLE quant.ods_exchange_rate_vantage_detail (
 ) ;
 
 
-
+--2.3
+------------------  ods_exchange_dxy_vantage   美元指数 日K
 CREATE TABLE quant.ods_exchange_dxy_vantage (
     ymd DATE NOT NULL,
     name VARCHAR(50) NOT NULL,
@@ -338,7 +339,7 @@ CREATE TABLE quant.ods_tdx_stock_index_plate (
 
 
 --3.6        通达信数据
-------------------  ods_tdx_stock_pepb_info   通达信个股PE/PB数据
+------------------  ods_tdx_stock_pepb_info   股票基本面数据_资产数据
 CREATE TABLE quant.ods_tdx_stock_pepb_info (
      ymd              DATE               --日期
     ,stock_code       varchar(50)        --代码
@@ -382,7 +383,7 @@ CREATE TABLE quant.dwd_stock_a_total_plate (
 ) ;
 
 
---5.1        股票基本面数据 -- 所属交易所，主板/创业板/科创板/北证
+--5.1        股票基本面数据_所属交易所，主板/创业板/科创板/北证
 ------------------  ods_stock_exchange_market
 CREATE TABLE quant.ods_stock_exchange_market (
      ymd          DATE        NOT NULL      --日期

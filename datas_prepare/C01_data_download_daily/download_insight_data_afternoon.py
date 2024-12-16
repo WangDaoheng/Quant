@@ -210,9 +210,17 @@ class SaveInsightData:
          stock_kline_df  [ymd	htsc_code	name	exchange]
         """
 
-        #  1.当月数据的起止时间
-        time_start_date = DateUtility.first_day_of_month()
-        time_end_date = DateUtility.today()
+        # 1. 获取今天日期
+        today = DateUtility.today()
+
+        # 2. 计算当月15天前的日期
+        if int(today[6:8]) > 15:
+            time_start_date = DateUtility.next_day(-15)  # 15天前
+        else:
+            time_start_date = DateUtility.first_day_of_month()  # 当月1号
+
+        # 3. 设置结束日期为今天
+        time_end_date = today
 
         # time_start_date = '20241026'
         # time_end_date = '20241026'

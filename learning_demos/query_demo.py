@@ -93,11 +93,11 @@ def get_chip_distribution_demo():
     print('-------------- 进入get_chip_distribution_demo ---------------------')
     ##  筹码的end_date 只能大于等于当日(自然日)
     start_date = '2024-01-14'
-    end_date = '2024-08-14'
+    end_date = '2024-12-16'
     # 转为时间格式
     start_date = datetime.strptime(start_date, '%Y-%m-%d')
     end_date = datetime.strptime(end_date, '%Y-%m-%d')
-    result = get_chip_distribution(htsc_code=["601318.SH", "601688.SH", "601686.SH", "002747.SZ"], trading_day=[start_date, end_date])
+    result = get_chip_distribution(htsc_code=["601138.SH", "000679.SZ", "300308.SZ", "601156.SH"], trading_day=[start_date, end_date])
     print(result)
 
 
@@ -1444,7 +1444,7 @@ def main():
     # get_kline_demo()                          # K线数据
     # get_derived_demo()                        # 行情衍生指标
     # get_trade_distribution_demo()             # 成交分价
-    # get_chip_distribution_demo()              # 筹码分布
+    get_chip_distribution_demo()              # 筹码分布
     # chouma()
     # get_money_flow_demo()                     # 资金流向
     # get_change_summary_demo()                 # 涨跌分析
@@ -1478,7 +1478,7 @@ def main():
     # get_dividend_demo()                       # 股票分红
     # get_shareholders_top10_demo()             # 十大股东
     # get_shareholders_floating_top10_demo()    # 十大流通股东
-    get_north_bound_demo()                    # 沪深港通持股记录
+    # get_north_bound_demo()                    # 沪深港通持股记录
     # get_margin_target_demo()                  # 融资融券列表
     # get_margin_detail_demo()                  # 融资融券交易明细
     # get_margin_summary_demo()                 # 融资融券交易汇总
