@@ -196,6 +196,16 @@ if __name__ == '__main__':
 
     send_log_via_email()
 
-
+    # sender_email = '19801322932@139.com'
+    # # sender_password = '616f866b8417f84af800'
+    # sender_password = '04b78b87377067e47800'
+    #
+    # try:
+    #     server = smtplib.SMTP_SSL('smtp.139.com', 465)
+    #     server.login(sender_email, sender_password)
+    #     print("登录成功！")
+    #     server.quit()
+    # except smtplib.SMTPAuthenticationError as e:
+    #     print(f"登录失败: {e}")
 
 

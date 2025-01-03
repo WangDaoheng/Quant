@@ -378,6 +378,15 @@ class CalDWD:
 
 
         # 计算涨跌停价
+        # def calculate_ZT_DT(row):
+        #     if row['market'] in ['创业板', '科创板']:
+        #         up_limit = row['last_close'] * 1.20
+        #         down_limit = row['last_close'] * 0.80
+        #     else:  # 上海主板、深圳主板
+        #         up_limit = row['last_close'] * 1.10
+        #         down_limit = row['last_close'] * 0.90
+        #     return up_limit, down_limit
+
         def calculate_ZT_DT(row):
             if row['market'] in ['创业板', '科创板']:
                 up_limit = row['last_close'] * 1.20
@@ -385,14 +394,12 @@ class CalDWD:
             else:  # 上海主板、深圳主板
                 up_limit = row['last_close'] * 1.10
                 down_limit = row['last_close'] * 0.90
-            return up_limit, down_limit
+            return pd.Series([up_limit, down_limit])  # 确保返回两个值
 
         # 应用计算
         latest_15_days[['昨日ZT价', '昨日DT价']] = latest_15_days.apply(calculate_ZT_DT, axis=1, result_type='expand')
 
-        # # 计算昨日的涨停价和跌停价
-        # latest_15_days['昨日ZT价'] = (latest_15_days['last_close'] * 1.10).round(4)
-        # latest_15_days['昨日DT价'] = (latest_15_days['last_close'] * 0.90).round(4)
+
 
         def ZT_DT_orz(price, target_price):
             # 如果 price 和 target_price 之间的差距小于等于0.01，才进一步计算

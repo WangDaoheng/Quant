@@ -154,8 +154,8 @@ def append_origin_to_local_mysql():
 
 
     #  设置起止时间，从source_table 中拉取数据
-    start_date = '2024-11-21'
-    end_date = '2024-12-08'
+    start_date = '2024-12-11'
+    end_date = '2025-01-02'
 
     for tableName in table_all_list:
         sourceTable = tableName
