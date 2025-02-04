@@ -7,6 +7,8 @@ import pandas as pd
 from sqlalchemy import create_engine, text
 import time
 import platform
+import logging
+
 
 # import dataprepare_properties
 # import dataprepare_utils
@@ -16,6 +18,8 @@ from CommonProperties.DateUtility import DateUtility
 from CommonProperties.Base_utils import timing_decorator
 import CommonProperties.Mysql_Utils as mysql_utils
 
+from CommonProperties import set_config
+
 # ************************************************************************
 # 本代码的作用是下午收盘后针对 insight 行情源数据的本地保存部分开展merge
 # 需要下载的数据:
@@ -24,6 +28,8 @@ import CommonProperties.Mysql_Utils as mysql_utils
 
 
 # ************************************************************************
+#  调用日志配置
+set_config.setup_logging_config()
 
 ######################  mysql 配置信息  本地和远端服务器  ####################
 local_user = Base_Properties.local_mysql_user
@@ -42,7 +48,7 @@ class CalDWD:
     def __init__(self):
         pass
 
-    # @timing_decorator
+    @timing_decorator
     def cal_ashare_plate(self):
         """
         聚合股票的板块，把各个板块数据聚合在一起
@@ -150,7 +156,7 @@ class CalDWD:
                 sql_statements=sql_statements)
 
 
-    # @timing_decorator
+    @timing_decorator
     def cal_stock_exchange(self):
         """
         计算股票所归属的交易所，判断其是主办、创业板、科创板、北交所等等
@@ -213,7 +219,7 @@ class CalDWD:
                 sql_statements=sql_statements)
 
 
-    # @timing_decorator
+    @timing_decorator
     def cal_stock_base_info(self):
         """
         计算股票基础信息，汇总表，名称、编码、板块、股本、市值、净资产
@@ -246,7 +252,12 @@ class CalDWD:
                  ,tpbe.pb                                            
                  ,tpbe.pe                                            
                  ,texchange.market                                   
-                 ,tplate.plate_names                                 
+                 ,tplate.plate_names         
+                 ,tconcept.plate_names             as concept_plate
+                 ,tindex.plate_names               as index_plate
+                 ,tindustry.plate_names            as industry_plate
+                 ,tstyle.plate_names               as style_plate
+                 ,tout.plate_names                 as out_plate
             from  
              ( select
                   htsc_code                                         
@@ -300,6 +311,66 @@ class CalDWD:
               group by ymd, stock_code, stock_name 
             ) tplate
             ON SUBSTRING_INDEX(tkline.htsc_code, '.', 1) = tplate.stock_code
+            LEFT JOIN 
+                (
+                    SELECT 
+                        ymd,                                              
+                        stock_code,                                       
+                        GROUP_CONCAT(plate_name ORDER BY plate_name SEPARATOR ',') AS plate_names   
+                    FROM quant.dwd_stock_a_total_plate  
+                    WHERE ymd = (SELECT MAX(ymd) FROM quant.dwd_stock_a_total_plate)
+                      AND source_table = 'ods_tdx_stock_concept_plate'
+                    GROUP BY ymd, stock_code
+                ) tconcept
+            ON SUBSTRING_INDEX(tkline.htsc_code, '.', 1) = tconcept.stock_code
+            LEFT JOIN 
+                (
+                    SELECT 
+                        ymd,                                              
+                        stock_code,                                       
+                        GROUP_CONCAT(plate_name ORDER BY plate_name SEPARATOR ',') AS plate_names   
+                    FROM quant.dwd_stock_a_total_plate  
+                    WHERE ymd = (SELECT MAX(ymd) FROM quant.dwd_stock_a_total_plate)
+                      AND source_table = 'ods_tdx_stock_index_plate'
+                    GROUP BY ymd, stock_code
+                ) tindex
+            ON SUBSTRING_INDEX(tkline.htsc_code, '.', 1) = tindex.stock_code
+            LEFT JOIN 
+                (
+                    SELECT 
+                        ymd,                                              
+                        stock_code,                                       
+                        GROUP_CONCAT(plate_name ORDER BY plate_name SEPARATOR ',') AS plate_names   
+                    FROM quant.dwd_stock_a_total_plate  
+                    WHERE ymd = (SELECT MAX(ymd) FROM quant.dwd_stock_a_total_plate)
+                      AND source_table = 'ods_tdx_stock_industry_plate'
+                    GROUP BY ymd, stock_code
+                ) tindustry
+            ON SUBSTRING_INDEX(tkline.htsc_code, '.', 1) = tindustry.stock_code
+            LEFT JOIN 
+                (
+                    SELECT 
+                        ymd,                                              
+                        stock_code,                                       
+                        GROUP_CONCAT(plate_name ORDER BY plate_name SEPARATOR ',') AS plate_names   
+                    FROM quant.dwd_stock_a_total_plate  
+                    WHERE ymd = (SELECT MAX(ymd) FROM quant.dwd_stock_a_total_plate)
+                      AND source_table = 'ods_tdx_stock_style_plate'
+                    GROUP BY ymd, stock_code
+                ) tstyle
+            ON SUBSTRING_INDEX(tkline.htsc_code, '.', 1) = tstyle.stock_code
+            LEFT JOIN 
+                (
+                    SELECT 
+                        ymd,                                              
+                        stock_code,                                       
+                        GROUP_CONCAT(plate_name ORDER BY plate_name SEPARATOR ',') AS plate_names   
+                    FROM quant.dwd_stock_a_total_plate  
+                    WHERE ymd = (SELECT MAX(ymd) FROM quant.dwd_stock_a_total_plate)
+                      AND source_table = 'ods_stock_plate_redbook'
+                    GROUP BY ymd, stock_code
+                ) tout
+            ON SUBSTRING_INDEX(tkline.htsc_code, '.', 1) = tout.stock_code;
             """]
 
         # 3.主程序替换 {ymd} 占位符
@@ -330,7 +401,7 @@ class CalDWD:
                 sql_statements=sql_statements)
 
 
-    @timing_decorator
+    # @timing_decorator
     def cal_ZT_DT(self):
         """
         计算一只股票是否 涨停 / 跌停
@@ -338,7 +409,7 @@ class CalDWD:
         """
 
         # 1.确定起止日期
-        time_start_date = DateUtility.next_day(-2)
+        time_start_date = DateUtility.next_day(-7)
         time_end_date = DateUtility.next_day(0)
 
         # 2.获取起止日期范围内的日K线数据
@@ -346,7 +417,11 @@ class CalDWD:
                                                       database=origin_database,
                                                       table_name='ods_stock_kline_daily_insight',
                                                       start_date=time_start_date, end_date=time_end_date)
-        # df.loc[:, 'ymd'] = pd.to_datetime(df['ymd'], format='%Y-%m-%d')
+
+        if df.empty:
+            # print(f"{time_start_date} - {time_end_date}日期的K线数据为空，终止 cal_ZT_DT 运行！")
+            logging.info(f"{time_start_date} - {time_end_date}日期的K线数据为空，终止 cal_ZT_DT 运行！")
+            return
 
         df = df.rename(columns={'htsc_code': 'stock_code'})
 
@@ -358,6 +433,11 @@ class CalDWD:
 
         # 过滤掉没有昨日数据的行
         latest_15_days = latest_15_days.dropna(subset=['last_close'])
+
+        if latest_15_days.empty:
+            # print(f"{time_start_date} - {time_end_date}日期的日期差值时间为空，终止 cal_ZT_DT 运行！")
+            logging.info(f"{time_start_date} - {time_end_date}日期的日期差值时间为空，终止 cal_ZT_DT 运行！")
+            return
 
         # 获取市场特征
         stock_market_init = mysql_utils.data_from_mysql_to_dataframe_latest(
@@ -506,13 +586,13 @@ class CalDWD:
     def setup(self):
 
         # 聚合股票的板块，把各个板块数据聚合在一起
-        self.cal_ashare_plate()
+        # self.cal_ashare_plate()
 
         # 计算股票所归属的交易所，判断其是主办、创业板、科创板、北交所等等
-        self.cal_stock_exchange()
+        # self.cal_stock_exchange()
 
         # 计算股票基础信息，汇总表，名称、编码、板块、股本、市值、净资产
-        self.cal_stock_base_info()
+        # self.cal_stock_base_info()
 
         # 计算一只股票是否 涨停 / 跌停
         self.cal_ZT_DT()

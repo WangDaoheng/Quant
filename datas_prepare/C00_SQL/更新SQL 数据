@@ -1,0 +1,86 @@
+
+---------------------------  更新 concept 板块数据  -----------------------------
+UPDATE dwd_ashare_stock_base_info AS base
+JOIN (
+    SELECT stock_code, GROUP_CONCAT(plate_name ORDER BY plate_name SEPARATOR ',') AS plate_names
+    FROM dwd_stock_a_total_plate
+    WHERE source_table = 'ods_tdx_stock_concept_plate'
+      AND ymd = '2025-01-30'
+    GROUP BY stock_code
+) AS plate
+ON base.stock_code = plate.stock_code
+SET base.concept_plate = plate.plate_names
+WHERE base.ymd = '2025-01-27'
+
+
+
+---------------------------  更新 index 板块数据  -----------------------------
+UPDATE dwd_ashare_stock_base_info AS base
+JOIN (
+    SELECT stock_code, GROUP_CONCAT(plate_name ORDER BY plate_name SEPARATOR ',') AS plate_names
+    FROM dwd_stock_a_total_plate
+    WHERE source_table = 'ods_tdx_stock_index_plate'
+      AND ymd = '2025-01-30'
+    GROUP BY stock_code
+) AS plate
+ON base.stock_code = plate.stock_code
+SET base.index_plate = plate.plate_names
+WHERE base.ymd = '2025-01-27'
+
+
+---------------------------  更新 industry 板块数据  -----------------------------
+UPDATE dwd_ashare_stock_base_info AS base
+JOIN (
+    SELECT stock_code, GROUP_CONCAT(plate_name ORDER BY plate_name SEPARATOR ',') AS plate_names
+    FROM dwd_stock_a_total_plate
+    WHERE source_table = 'ods_tdx_stock_industry_plate'
+      AND ymd = '2025-01-30'
+    GROUP BY stock_code
+) AS plate
+ON base.stock_code = plate.stock_code
+SET base.industry_plate = plate.plate_names
+WHERE base.ymd = '2025-01-27'
+
+
+
+---------------------------  更新 style 板块数据  -----------------------------
+UPDATE dwd_ashare_stock_base_info AS base
+JOIN (
+    SELECT stock_code, GROUP_CONCAT(plate_name ORDER BY plate_name SEPARATOR ',') AS plate_names
+    FROM dwd_stock_a_total_plate
+    WHERE source_table = 'ods_tdx_stock_style_plate'
+      AND ymd = '2025-01-30'
+    GROUP BY stock_code
+) AS plate
+ON base.stock_code = plate.stock_code
+SET base.style_plate = plate.plate_names
+
+
+WHERE base.ymd = '2025-01-27'
+
+
+
+---------------------------  更新 自行收集 板块数据  -----------------------------
+UPDATE dwd_ashare_stock_base_info AS base
+JOIN (
+    SELECT stock_code, GROUP_CONCAT(plate_name ORDER BY plate_name SEPARATOR ',') AS plate_names
+    FROM dwd_stock_a_total_plate
+    WHERE source_table = 'ods_stock_plate_redbook'
+      AND ymd = '2025-01-30'
+    GROUP BY stock_code
+) AS plate
+ON base.stock_code = plate.stock_code
+SET base.out_plate = plate.plate_names
+WHERE base.ymd = '2025-01-27'
+
+
+
+
+
+
+
+
+
+
+
+
