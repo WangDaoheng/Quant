@@ -16,6 +16,7 @@ from CommonProperties import Base_Properties
 import CommonProperties.Base_utils as base_utils
 from CommonProperties.DateUtility import DateUtility
 from CommonProperties.Base_utils import timing_decorator
+
 import CommonProperties.Mysql_Utils as mysql_utils
 
 from CommonProperties import set_config

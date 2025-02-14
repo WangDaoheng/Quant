@@ -9,6 +9,7 @@ import logging
 import platform
 
 import CommonProperties.Base_Properties as base_properties
+import CommonProperties.Base_utils as base_utils
 from CommonProperties.set_config import setup_logging_config
 
 # 调用日志配置   这里要注释掉，不然日志重复打印
@@ -66,62 +67,39 @@ def data_from_dataframe_to_mysql(user, password, host, database='quant', df=pd.D
         database:
     Returns:
     """
-
     db_url = f'mysql+pymysql://{user}:{password}@{host}:3306/{database}'
     engine = create_engine(db_url)
 
-    # 将df中的ymd格式转换为DATE类型（如果merge_on包含'ymd'）
-    if 'ymd' in merge_on:
-        sample_value = df['ymd'].dropna().iloc[0] if not df['ymd'].dropna().empty else None
-        sample_str = sample_value.strftime('%Y-%m-%d') if isinstance(sample_value, pd.Timestamp) else str(sample_value)
+    # 确保 df 中的字段列顺序与表中的列顺序一致
+    columns = df.columns.tolist()
 
-        if isinstance(sample_str, str) and sample_str[4] == '-' and sample_str[7] == '-':
-            pass
-        else:
-            # df['ymd'] = df['ymd'].apply(lambda x: pd.to_datetime(str(x), format='%Y%m%d').strftime('%Y-%m-%d'))
-            df.loc[:, 'ymd'] = df['ymd'].apply(lambda x: pd.to_datetime(str(x), format='%Y%m%d') if pd.notnull(x) else pd.NaT)
-            df.loc[:, 'ymd'] = df['ymd'].apply(lambda x: x.strftime('%Y-%m-%d') if pd.notnull(x) else None)
+    # 检查是否存在重复数据，并将其去除
+    df.drop_duplicates(subset=merge_on, keep='first', inplace=True)
 
-        ymd_range = df['ymd'].unique()
-
-    # 预取数据库中这些日期的数据
-    # 动态构建SELECT语句和WHERE子句
-    select_columns = ", ".join(merge_on)
-    where_condition = f"ymd IN ({','.join(['%s'] * len(ymd_range))})"
-
-    # 构建 SQL 查询
-    existing_query = f"""
-    SELECT {select_columns} FROM {table_name}
-    WHERE {where_condition}
-    """
-
-    existing_data = pd.read_sql(existing_query, engine, params=ymd_range)
-    existing_data['ymd'] = existing_data['ymd'].astype(str)
-
-    # 从df中过滤掉已经存在的数据
-    merged_df = pd.merge(df, existing_data, on=merge_on, how='left', indicator=True)
-    new_data = merged_df[merged_df['_merge'] == 'left_only'].drop(columns=['_merge'])
-
-    total_rows = new_data.shape[0]
-
-    # 把 df 中的ymd列还原回去
-    df.loc[:, 'ymd'] = df['ymd'].apply(lambda x: pd.to_datetime(x).strftime('%Y%m%d'))
-
+    total_rows = df.shape[0]
     if total_rows == 0:
         logging.info(f"所有数据已存在，无需插入新的数据到 {host} 的 {table_name} 表中。")
         return
 
-    # 将结果批量写入 MySQL 数据库
-    chunk_size = 10000  # 根据系统内存情况调整
+    # 使用 INSERT IGNORE 来去重
+    insert_sql = f"""
+    INSERT IGNORE INTO {table_name} ({', '.join(columns)})
+    VALUES ({', '.join(['%s'] * len(columns))});
+    """
 
-    for i in range(0, total_rows, chunk_size):
-        chunk = new_data.iloc[i:i + chunk_size]
+    # 转换 df 为一个可以传递给 executemany 的列表
+    values = df.values.tolist()
 
+    with engine.connect() as connection:
+        transaction = connection.begin()
         try:
-            chunk.to_sql(name=table_name, con=engine, if_exists='append', index=False)
-
+            connection.execute(insert_sql, values)
+            transaction.commit()
+            logging.info(f"成功插入 {total_rows} 行数据到 {host} 的 {table_name} 表中。")
         except Exception as e:
-            logging.error(f"写入{host} 的表：{table_name}的 第 {i // chunk_size + 1} 批次时发生错误: {e}")
+            transaction.rollback()
+            logging.error(f"写入 {host} 的表：{table_name} 时发生错误: {e}")
+            raise
 
 
 def data_from_mysql_to_dataframe(user, password, host, database='quant', table_name='', start_date=None, end_date=None, cols=None):

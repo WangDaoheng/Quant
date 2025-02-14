@@ -1,6 +1,6 @@
 import os
 import sys
-from datetime import datetime
+from datetime import datetime,date
 import time
 import traceback
 import inspect
@@ -185,6 +185,50 @@ def get_with_retries(url, headers=None, timeout=10, max_retries=3, backoff_facto
 
     logging.error(f"在经历 {max_retries} 次尝试后还是不能捕获数据")
     return None
+
+
+def convert_ymd_format(df, column='ymd'):
+    """
+    将 ymd 列统一转换为 %Y-%m-%d 格式
+    Args:
+        df: 输入的 DataFrame
+        column: 需要转换的列名，默认为 'ymd'
+    Returns:
+        df: 转换后的 DataFrame
+    """
+    # 检查 ymd 列的格式
+    sample_value = df[column].dropna().iloc[0] if not df[column].dropna().empty else None
+    print(type(sample_value))
+
+    # 处理 sample_value 是 datetime.date 类型的情况
+    if isinstance(sample_value, date):
+        df.loc[:, column] = df[column].apply(
+            lambda x: x.strftime('%Y-%m-%d') if pd.notnull(x) else None
+        )
+        return df
+
+    # 将 sample_value 转换为字符串
+    if sample_value is not None:
+        sample_value = str(sample_value)
+
+    # 如果 sample_value 是字符串且格式为 %Y%m%d，则进行转换
+    if sample_value is not None and len(sample_value) == 8 and sample_value.isdigit():
+        df.loc[:, column] = df[column].apply(
+            lambda x: pd.to_datetime(str(x), format='%Y%m%d').strftime('%Y-%m-%d')
+            if pd.notnull(x) else None
+        )
+    # 如果 sample_value 已经是 %Y-%m-%d 格式，则不需要转换
+    elif sample_value is not None and len(sample_value) == 10 and sample_value[4] == '-' and sample_value[7] == '-':
+        pass  # 已经是目标格式，无需转换
+    # 如果 sample_value 是 datetime 类型，则直接格式化为 %Y-%m-%d
+    elif isinstance(sample_value, pd.Timestamp):
+        df.loc[:, column] = df[column].apply(
+            lambda x: x.strftime('%Y-%m-%d') if pd.notnull(x) else None
+        )
+    else:
+        raise ValueError(f"无法识别的 ymd 列格式: {sample_value}")
+
+    return df
 
 
 
