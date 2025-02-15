@@ -402,7 +402,7 @@ class CalDWD:
                 sql_statements=sql_statements)
 
 
-    # @timing_decorator
+    @timing_decorator
     def cal_ZT_DT(self):
         """
         计算一只股票是否 涨停 / 跌停
@@ -457,17 +457,6 @@ class CalDWD:
 
         latest_15_days = pd.merge(latest_15_days, stock_base_info, on='stock_code', how='left', suffixes=('_latest', '_base'))
 
-
-        # 计算涨跌停价
-        # def calculate_ZT_DT(row):
-        #     if row['market'] in ['创业板', '科创板']:
-        #         up_limit = row['last_close'] * 1.20
-        #         down_limit = row['last_close'] * 0.80
-        #     else:  # 上海主板、深圳主板
-        #         up_limit = row['last_close'] * 1.10
-        #         down_limit = row['last_close'] * 0.90
-        #     return up_limit, down_limit
-
         def calculate_ZT_DT(row):
             if row['market'] in ['创业板', '科创板']:
                 up_limit = row['last_close'] * 1.20
@@ -479,8 +468,6 @@ class CalDWD:
 
         # 应用计算
         latest_15_days[['昨日ZT价', '昨日DT价']] = latest_15_days.apply(calculate_ZT_DT, axis=1, result_type='expand')
-
-
 
         def ZT_DT_orz(price, target_price):
             # 如果 price 和 target_price 之间的差距小于等于0.01，才进一步计算
@@ -587,13 +574,13 @@ class CalDWD:
     def setup(self):
 
         # 聚合股票的板块，把各个板块数据聚合在一起
-        # self.cal_ashare_plate()
+        self.cal_ashare_plate()
 
         # 计算股票所归属的交易所，判断其是主办、创业板、科创板、北交所等等
-        # self.cal_stock_exchange()
+        self.cal_stock_exchange()
 
         # 计算股票基础信息，汇总表，名称、编码、板块、股本、市值、净资产
-        # self.cal_stock_base_info()
+        self.cal_stock_base_info()
 
         # 计算一只股票是否 涨停 / 跌停
         self.cal_ZT_DT()
