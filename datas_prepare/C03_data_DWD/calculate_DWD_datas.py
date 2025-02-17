@@ -47,6 +47,9 @@ origin_host = Base_Properties.origin_mysql_host
 class CalDWD:
 
     def __init__(self):
+
+
+
         pass
 
     @timing_decorator

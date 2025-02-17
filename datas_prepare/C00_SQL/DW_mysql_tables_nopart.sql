@@ -23,9 +23,6 @@ create table quant.dwd_ashare_stock_base_info (
 
 
 
-
-
-
 --1.2
 ------------------  dwd_stock_zt_list   涨停股票清单
 CREATE TABLE quant.dwd_stock_zt_list (
@@ -46,10 +43,13 @@ CREATE TABLE quant.dwd_stock_zt_list (
     ,pe                 varchar(50)              --市盈(动)
 	,market             VARCHAR(50)              --市场特征主板创业板等
     ,plate_names        VARCHAR(500)             --板块名称
+    ,concept_plate      VARCHAR(500)             --概念板块
+    ,index_plate        VARCHAR(500)             --指数板块
+    ,industry_plate     VARCHAR(500)             --行业板块
+    ,style_plate        VARCHAR(500)             --风格板块
+    ,out_plate          VARCHAR(500)             --外部数据板块
     ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
 );
-
-
 
 
 
@@ -75,10 +75,6 @@ CREATE TABLE quant.dwd_stock_dt_list (
     ,plate_names        VARCHAR(500)             --板块名称
     ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
 );
-
-
-
-
 
 
 

@@ -49,6 +49,30 @@ Host github.com
 
 
 
+--------------------------------  mysql window本地服务启动不了  ------------------
+
+1.通过 services.msc 查找服务名称
+  按 Win + R 打开“运行”对话框。
+
+
+2.输入 services.msc，然后按回车键。
+
+
+3.在“服务”窗口中，查找与MySQL相关的服务。服务的名称通常包含 MySQL 或 mysql，例如：
+
+  MySQL
+  MySQL57
+  MySQL80
+  mysql80
+  MySQL X.X（X.X为你安装的版本）
+
+
+
+
+
+
+
+
 
 
 
