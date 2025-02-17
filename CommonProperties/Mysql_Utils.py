@@ -5,6 +5,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 
 import pandas as pd
+import numpy as np
 import logging
 import platform
 
@@ -69,6 +70,10 @@ def data_from_dataframe_to_mysql(user, password, host, database='quant', df=pd.D
     """
     db_url = f'mysql+pymysql://{user}:{password}@{host}:3306/{database}'
     engine = create_engine(db_url)
+
+    # 对输入的df的空值做处理
+    # df = df.fillna(value=None)
+    df = df.replace({np.nan: None})
 
     # 确保 df 中的字段列顺序与表中的列顺序一致
     columns = df.columns.tolist()

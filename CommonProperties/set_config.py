@@ -162,6 +162,7 @@ def send_log_via_email():
     msg.attach(MIMEText(body, 'plain'))
 
     # 添加附件
+    logging.info("邮件开始发送........")
     filename = read_logfile()
     attachment = open(filename, "rb")
     part = MIMEBase('application', 'octet-stream')

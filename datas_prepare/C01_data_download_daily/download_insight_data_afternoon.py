@@ -518,7 +518,7 @@ class SaveInsightData:
             logging.info('    get_limit_summary 的返回值为空值')
 
 
-    @timing_decorator
+    # @timing_decorator
     def get_future_inside(self):
         """
         期货市场数据
@@ -586,6 +586,7 @@ class SaveInsightData:
 
             if platform.system() == "Windows":
                 #  9.本地csv文件的落盘保存
+                # future_inside_df = future_inside_df.fillna(value=None)
                 future_inside_df_filename = base_utils.save_out_filename(filehead='future_inside', file_type='csv')
                 future_inside_df_filedir = os.path.join(self.dir_future_inside_base, future_inside_df_filename)
                 future_inside_df.to_csv(future_inside_df_filedir, index=False)
@@ -1076,31 +1077,31 @@ class SaveInsightData:
         self.login()
 
         #  除去 ST |  退  | B 的股票集合
-        self.get_stock_codes()
+        # self.get_stock_codes()
 
         #  获取上述股票的当月日K
-        self.get_stock_kline()
+        # self.get_stock_kline()
 
         #  获取主要股指
-        self.get_index_a_share()
+        # self.get_index_a_share()
 
         #  大盘涨跌概览
-        self.get_limit_summary()
+        # self.get_limit_summary()
 
         #  期货__内盘
         self.get_future_inside()
 
         # 筹码概览
-        self.get_chouma_datas()
+        # self.get_chouma_datas()
 
         # 获取A股的行业分类数据, 是行业数据
-        self.get_Ashare_industry_overview()
+        # self.get_Ashare_industry_overview()
 
         # 获取A股的行业分类数据, 是stock_code & industry 关联后的大表数据
-        self.get_Ashare_industry_detail()
+        # self.get_Ashare_industry_detail()
 
         #  个股股东数
-        self.get_shareholder_north_bound_num()
+        # self.get_shareholder_north_bound_num()
 
 
 
