@@ -50,7 +50,7 @@ class CalDMART:
 
         pass
 
-    @timing_decorator
+    # @timing_decorator
     def cal_zt_details(self):
         """
         涨停股票的明细
@@ -58,37 +58,56 @@ class CalDMART:
         """
 
         #  1.获取日期
-        ymd = DateUtility.today()
-        time_start_date = DateUtility.next_day(-7)
-        # time_start_date = '2024'
+        # ymd = DateUtility.today()
+        time_start_date = DateUtility.next_day(-2)
         time_end_date = DateUtility.next_day(0)
-        # ymd = "20241004"
 
         # 2.定义 SQL 模板
         sql_statements_template = [
             """
-            DELETE FROM quant.mart_stock_zt_details WHERE ymd='{ymd}';
+            DELETE FROM quant.dmart_stock_zt_details WHERE ymd>= '{time_start_date}' and ymd <= '{time_end_date}';
             """,
             """
-            INSERT IGNORE INTO quant.mart_stock_zt_details
+            INSERT IGNORE INTO quant.dmart_stock_zt_details
             SELECT 
-                 t1.ymd
-                ,t1.stock_code
-                ,t1.stock_name
-                ,t2.concept_plate                 --概念板块
-                ,t2.index_plate                   --指数板块
-                ,t2.industry_plate                --行业板块
-                ,t2.style_plate                   --风格板块
-                ,t2.out_plate                     --外部数据板块
-            FROM quant.dwd_stock_zt_list                   t1
-            left join  quant.dwd_ashare_stock_base_info    t2
-                   on t1.stock_code = t2.stock_code
-            where t1.ymd >= '{time_start_date}' and  t1.ymd <= '{time_end_date}';
+                tzt.ymd
+               ,tzt.stock_code
+               ,tzt.stock_name
+               ,tbase.concept_plate
+               ,tbase.index_plate
+               ,tbase.industry_plate
+               ,tbase.style_plate
+               ,tbase.out_plate
+            FROM 
+                quant.dwd_stock_zt_list                     tzt
+            LEFT JOIN 
+                (
+                    SELECT 
+                        t2.ymd
+                       ,t2.stock_code
+                       ,t2.concept_plate
+                       ,t2.index_plate
+                       ,t2.industry_plate
+                       ,t2.style_plate
+                       ,t2.out_plate
+                    FROM 
+                        quant.dwd_ashare_stock_base_info    t2
+                    INNER JOIN 
+                        (
+                            SELECT 
+                                MAX(ymd) AS latest_ymd
+                            FROM 
+                                quant.dwd_ashare_stock_base_info
+                        ) latest 
+                    ON t2.ymd = latest.latest_ymd
+                ) tbase
+            ON     tzt.stock_code = tbase.stock_code
+            WHERE  tzt.ymd >= '{time_start_date}'  AND  tzt.ymd <= '{time_end_date}'  ;
             """
         ]
 
         # 3.主程序替换 {ymd} 占位符
-        sql_statements = [stmt.format(ymd=ymd, time_start_date=time_start_date, time_end_date=time_end_date) for stmt in sql_statements_template]
+        sql_statements = [stmt.format(time_start_date=time_start_date, time_end_date=time_end_date) for stmt in sql_statements_template]
 
         # 4.执行 SQL
         if platform.system() == "Windows":
@@ -115,18 +134,17 @@ class CalDMART:
                 sql_statements=sql_statements)
 
 
-
-
     def setup(self):
 
         # 涨停股票的明细
         self.cal_zt_details()
 
 
-
-
-
-
 if __name__ == '__main__':
     cal_dmart_data = CalDMART()
     cal_dmart_data.setup()
+
+
+
+
+
