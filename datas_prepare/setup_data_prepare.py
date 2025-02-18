@@ -6,7 +6,7 @@ from datas_prepare.C01_data_download_daily.download_vantage_data_afternoon impor
 
 from datas_prepare.C02_data_merge.merge_insight_data_afternoon import MergeInsightData
 from datas_prepare.C03_data_DWD.calculate_DWD_datas import CalDWD
-
+from datas_prepare.C04_data_MART.calculate_MART_datas import CalDMART
 
 
 import CommonProperties.set_config as set_config
@@ -36,6 +36,7 @@ class RunDataPrepare:
         self.save_vantage_now = SaveVantageData()
         self.merge_insight = MergeInsightData()
         self.dwd_cal = CalDWD()
+        self.dmart_cal = CalDMART()
 
 
     def send_logfile_email(self):
@@ -57,6 +58,9 @@ class RunDataPrepare:
 
         #  执行 DWD层逻辑
         self.dwd_cal.setup()
+
+        #  执行 MART层逻辑
+        self.dmart_cal.setup()
 
         #  下载 vantage 当日数据
         # self.save_vantage_now.setup()

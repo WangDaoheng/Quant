@@ -12,7 +12,7 @@ import plotly.express as px
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 from pyecharts import options as opts
-from pyecharts.charts import WordCloud, Timeline
+from pyecharts.charts import WordCloud, Timeline, Page, Grid
 from pyecharts.globals import SymbolType
 
 import dash
@@ -80,8 +80,7 @@ class ResShow:
             table_name='dmart_stock_zt_details',
             start_date=time_start_date,  # 根据需要调整日期范围
             end_date=time_end_date,
-            cols=['ymd', 'stock_code', 'stock_name', 'concept_plate', 'index_plate', 'industry_plate', 'style_plate',
-                  'out_plate'])
+            cols=['ymd', 'stock_code', 'stock_name', 'concept_plate', 'index_plate', 'industry_plate', 'style_plate', 'out_plate'])
 
         # 将空值替换为 'Unknown'
         zt_details_df.fillna('Unknown', inplace=True)
@@ -140,29 +139,37 @@ class ResShow:
 
         ############### 3.绘制词云——每日涨停股票板块分布
 
-        # 创建时间轴
-        timeline = Timeline()
+        # 遍历每个板块类型
+        for plate_type in plate_columns:
+            # 创建一个时间轴
+            timeline = Timeline()
 
-        # 遍历所有日期，生成词云
-        for target_date in zt_details_df['ymd'].unique():
-            plate_data = zt_details_df[zt_details_df['ymd'] == target_date]['concept_plate'].value_counts()
+            # 遍历所有日期
+            for target_date in zt_details_df['ymd'].unique():
+                # 获取当前板块和日期的数据
+                plate_data = zt_details_df[(zt_details_df['ymd'] == target_date) &
+                                           (zt_details_df[plate_type].notnull())][plate_type].value_counts()
+                # 将数据转换为 pyecharts 需要的格式
+                data = [(word, freq) for word, freq in plate_data.items()][:50]  # 限制词汇数量
 
-            # 将数据转换为 pyecharts 需要的格式
-            data = [(word, freq) for word, freq in plate_data.items()]
+                # 创建词云图
+                wordcloud = (
+                    WordCloud()
+                    .add("", data, word_size_range=[20, 100], shape=SymbolType.DIAMOND)
+                    .set_global_opts(
+                        title_opts=opts.TitleOpts(title=f"{target_date} - {plate_type} 板块词云"),
+                        tooltip_opts=opts.TooltipOpts(is_show=True)
+                    )
+                )
 
-            # 创建词云图
-            wordcloud = (
-                WordCloud()
-                .add("", data, word_size_range=[20, 100], shape=SymbolType.DIAMOND)
-                .set_global_opts(title_opts=opts.TitleOpts(title=f'{target_date} 概念板块涨停股票词云'))
-            )
+                # 将词云图添加到时间轴
+                timeline.add(wordcloud, time_point=target_date)
 
-            # 将每个日期的词云图添加到时间轴
-            timeline.add(wordcloud, target_date)
+            # 为每个板块生成一个独立的 HTML 文件
+            file_name = f"wordcloud_timeline_{plate_type}.html"
+            timeline.render(file_name)
 
-        # 渲染时间轴和词云图（生成 HTML 文件）
-        timeline.render("wordcloud_timeline.html")
-
+        print("每个板块的词云时间轴已生成并保存为独立的 HTML 文件。")
 
         ############### 4.绘制Dash——每日涨停股票板块分布
         # 创建 Dash 应用
