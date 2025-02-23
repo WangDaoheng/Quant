@@ -8,6 +8,7 @@ import pandas as pd
 import numpy as np
 import logging
 import platform
+from sqlalchemy.orm import sessionmaker
 
 import CommonProperties.Base_Properties as base_properties
 import CommonProperties.Base_utils as base_utils
@@ -421,31 +422,40 @@ def full_replace_migrate(source_host, source_db_url, target_host, target_db_url,
     """
     # 创建 源端 数据库的 SQLAlchemy 引擎
     source_engine = create_engine(source_db_url)
+    SourceSession = sessionmaker(bind=source_engine)
 
     # 创建 目标 数据库的 SQLAlchemy 引擎
     target_engine = create_engine(target_db_url)
+    TargetSession = sessionmaker(bind=target_engine)
 
     try:
-        # 从本地 MySQL 数据库分块读取数据
-        with source_engine.connect() as source_conn:
-            # 使用分块读取
-            chunks = pd.read_sql_table(table_name, source_conn, chunksize=chunk_size)
-            print(f"成功从{source_host} mysql库读取表 {table_name} 数据。")
+        # 打开源端和目标端的会话
+        with SourceSession() as source_session, TargetSession() as target_session:
+            # 开启事务
+            with target_session.begin():
+                # 第一次写入时，先清空表
+                target_session.execute(text(f"TRUNCATE TABLE {table_name}"))
+                print(f"成功清空目标表 {table_name}。")
 
-            # 将数据分块写入远程 MySQL 数据库
-            with target_engine.connect() as target_conn:
-                for i, chunk in enumerate(chunks):
-                    if i == 0:
-                        # 第一次写入时，先清空表
-                        target_conn.execute(text(f"TRUNCATE TABLE {table_name}"))
+            # 分批读取数据并插入目标数据库
+            offset = 0
+            while True:
+                # 从源端数据库分批读取数据
+                query = f"SELECT * FROM {table_name} LIMIT {chunk_size} OFFSET {offset}"
+                chunk = pd.read_sql(query, source_session.bind)
+                if chunk.empty:
+                    break
 
-                    # 使用批量插入
-                    chunk.to_sql(name=table_name, con=target_engine, if_exists='append', index=False)
-                    print(f"成功写入第 {i + 1} 块数据到{target_host} mysql库。")
+                # 使用批量插入
+                chunk.to_sql(name=table_name, con=target_engine, if_exists='append', index=False)
+                print(f"成功写入第 {offset // chunk_size + 1} 块数据到{target_host} mysql库。")
 
-                    # 释放内存
-                    del chunk
-                    gc.collect()
+                # 更新偏移量
+                offset += chunk_size
+
+                # 释放内存
+                del chunk
+                gc.collect()
 
         print(f"表 {table_name} 数据迁移完成。")
 

@@ -17,8 +17,17 @@ create table quant.dmart_stock_zt_details (
 
 
 
-
-
+------------------  dmart_stock_zt_details   股票涨停明细拆分
+CREATE TABLE quant.dmart_stock_zt_details_expanded (
+    ymd DATE,
+    stock_code VARCHAR(20),
+    stock_name VARCHAR(50),
+    concept_plate VARCHAR(500),
+    index_plate VARCHAR(500),
+    industry_plate VARCHAR(500),
+    style_plate VARCHAR(500),
+    out_plate VARCHAR(500)
+);
 
 
 
