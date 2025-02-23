@@ -2,7 +2,7 @@
 
 import pandas as pd
 from sqlalchemy import create_engine
-
+import gc
 from CommonProperties import Base_Properties
 from CommonProperties.Base_utils import timing_decorator
 import CommonProperties.Mysql_Utils as mysql_utils
@@ -78,37 +78,34 @@ def transfer_origin_to_local_mysql():
     local_db_url = f'mysql+pymysql://{local_user}:{local_password}@{local_host}:3306/{local_database}'
     origin_db_url = f'mysql+pymysql://{origin_user}:{origin_password}@{origin_host}:3306/{origin_database}'
 
-    # 'stock_kline_daily_insight',
-
-    table_all_list = ['ods_stock_code_daily_insight',
-                      'ods_index_a_share_insight',
-                      'ods_astock_industry_detail',
-                      'ods_astock_industry_overview',
-                      'ods_stock_limit_summary_insight',
-                      'ods_future_inside_insight',
-                      'ods_north_bound_daily',
-                      'ods_shareholder_num',
-                      'ods_stock_chouma_insight',
-                      'ods_us_stock_daily_vantage',
-                      'ods_exchange_rate_vantage_detail',
-                      'ods_exchange_dxy_vantage',
-                      'ods_tdx_stock_concept_plate',
-                      'ods_tdx_stock_index_plate',
-                      'ods_tdx_stock_industry_plate',
-                      'ods_tdx_stock_region_plate',
-                      'ods_tdx_stock_style_plate',
-                      'ods_tdx_stock_pepb_info',
-                      'ods_stock_kline_daily_insight',
-                      'ods_stock_exchange_market',
-                      'ods_stock_plate_redbook',
-                      'dwd_stock_zt_list',
-                      'dwd_stock_dt_list',
-                      'dwd_stock_a_total_plate',
-                      'dwd_ashare_stock_base_info'
-                      ]
-
-
-    table_all_list = ['ods_tdx_stock_pepb_info']
+    table_all_list = [
+        'ods_stock_code_daily_insight',
+        'ods_index_a_share_insight',
+        'ods_astock_industry_detail',
+        'ods_astock_industry_overview',
+        'ods_stock_limit_summary_insight',
+        'ods_future_inside_insight',
+        'ods_north_bound_daily',
+        'ods_shareholder_num',
+        'ods_stock_chouma_insight',
+        'ods_us_stock_daily_vantage',
+        'ods_exchange_rate_vantage_detail',
+        'ods_exchange_dxy_vantage',
+        'ods_tdx_stock_concept_plate',
+        'ods_tdx_stock_index_plate',
+        'ods_tdx_stock_industry_plate',
+        'ods_tdx_stock_region_plate',
+        'ods_tdx_stock_style_plate',
+        'ods_tdx_stock_pepb_info',
+        'ods_stock_kline_daily_insight',
+        'ods_stock_exchange_market',
+        'ods_stock_plate_redbook',
+        'dwd_stock_zt_list',
+        'dwd_stock_dt_list',
+        'dwd_stock_a_total_plate',
+        'dwd_ashare_stock_base_info',
+        'dmart_stock_zt_details'
+    ]
 
     for tableName in table_all_list:
         mysql_utils.full_replace_migrate(source_host=origin_host,
@@ -116,7 +113,6 @@ def transfer_origin_to_local_mysql():
                                          target_host=local_host,
                                          target_db_url=local_db_url,
                                          table_name=tableName)
-
 
 @timing_decorator
 def append_origin_to_local_mysql():
@@ -149,13 +145,16 @@ def append_origin_to_local_mysql():
                       'dwd_stock_zt_list',
                       'dwd_stock_dt_list',
                       'dwd_stock_a_total_plate',
-                      'dwd_ashare_stock_base_info'
+                      'dwd_ashare_stock_base_info',
+                      'dmart_stock_zt_details'
                       ]
 
-
     #  设置起止时间，从source_table 中拉取数据
-    start_date = '2024-12-11'
-    end_date = '2025-01-02'
+    # start_date = '2024-12-11'
+    # end_date = '2025-01-02'
+
+    start_date = '2025-01-03'
+    end_date = '2025-02-22'
 
     for tableName in table_all_list:
         sourceTable = tableName
@@ -253,22 +252,15 @@ def append_local_to_origin_mysql():
         #                                     target_table=targetTable)
 
 
-
 if __name__ == "__main__":
-
     #  从 本地 往 远端  msyql迁移数据          全删全插   慎重使用
     # transfer_local_to_origin_mysql()
 
     #  从 远端 往 本地  msyql迁移数据          全删全插   慎重使用
-    # transfer_origin_to_local_mysql()
+    transfer_origin_to_local_mysql()
 
     #  从 远端 向 本地 服务器刷新 mysql 数据    追加形式
-    append_origin_to_local_mysql()
+    # append_origin_to_local_mysql()
 
     #  从 本地 向 远端 服务器刷新 mysql 数据    追加形式
     # append_local_to_origin_mysql()
-
-
-
-
-
