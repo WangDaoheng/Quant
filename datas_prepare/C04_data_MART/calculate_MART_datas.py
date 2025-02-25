@@ -47,8 +47,8 @@ origin_host = Base_Properties.origin_mysql_host
 class CalDMART:
 
     def __init__(self):
-
         pass
+
 
     # @timing_decorator
     def cal_zt_details(self):
@@ -56,7 +56,6 @@ class CalDMART:
         涨停股票的明细
         Returns:
         """
-
         #  1.获取日期
         # ymd = DateUtility.today()
         time_start_date = DateUtility.next_day(-2)
@@ -132,6 +131,99 @@ class CalDMART:
                 host=origin_host,
                 database=origin_database,
                 sql_statements=sql_statements)
+
+    def cal_zt_details_explode(self):
+        """
+        涨停股票的明细的拆分
+        Returns:
+        """
+        # 1. 获取日期范围
+        time_start_date = DateUtility.next_day(-2)  # 2天前的日期
+        time_end_date = DateUtility.next_day(0)  # 当前日期
+
+        logging.info(f"开始处理涨停股票明细数据，日期范围：{time_start_date} 至 {time_end_date}")
+
+        # 2. 从 MySQL 获取起止日期范围内的数据
+        df = mysql_utils.data_from_mysql_to_dataframe(
+            user=origin_user,
+            password=origin_password,
+            host=origin_host,
+            database=origin_database,
+            table_name='dmart_stock_zt_details',
+            start_date=time_start_date,
+            end_date=time_end_date,
+            cols=['ymd', 'stock_code', 'stock_name', 'concept_plate', 'index_plate', 'industry_plate', 'style_plate',
+                  'out_plate']
+        )
+
+        if df.empty:
+            logging.warning("未获取到数据，可能日期范围内没有数据或表为空。")
+            return
+
+        logging.info(f"成功获取到 {len(df)} 条数据，开始拆解处理...")
+
+        # 3. 定义 unpack_plates 函数
+        def unpack_plates(df):
+            result = []
+            for _, row in df.iterrows():
+                ymd = row['ymd']
+                stock_code = row['stock_code']
+                stock_name = row['stock_name']
+
+                # 获取每个字段的分隔值
+                fields = {
+                    'concept_plate': row['concept_plate'].split(',') if pd.notna(row['concept_plate']) else [],
+                    'index_plate': row['index_plate'].split(',') if pd.notna(row['index_plate']) else [],
+                    'industry_plate': row['industry_plate'].split(',') if pd.notna(row['industry_plate']) else [],
+                    'style_plate': row['style_plate'].split(',') if pd.notna(row['style_plate']) else [],
+                    'out_plate': row['out_plate'].split(',') if pd.notna(row['out_plate']) else []
+                }
+
+                # 找到分隔值最多的字段
+                max_length = max(len(fields[field]) for field in fields)
+
+                # 按最大长度填充数据
+                for i in range(max_length):
+                    result_row = {
+                        'ymd': ymd,
+                        'stock_code': stock_code,
+                        'stock_name': stock_name,
+                        'concept_plate': fields['concept_plate'][i].strip() if i < len(
+                            fields['concept_plate']) else None,
+                        'index_plate': fields['index_plate'][i].strip() if i < len(fields['index_plate']) else None,
+                        'industry_plate': fields['industry_plate'][i].strip() if i < len(
+                            fields['industry_plate']) else None,
+                        'style_plate': fields['style_plate'][i].strip() if i < len(fields['style_plate']) else None,
+                        'out_plate': fields['out_plate'][i].strip() if i < len(fields['out_plate']) else None
+                    }
+                    result.append(result_row)
+
+            return pd.DataFrame(result)
+
+        # 4. 调用 unpack_plates 函数处理数据
+        output_df = unpack_plates(df)
+
+        # 5. 将处理后的数据保存到 MySQL
+        mysql_utils.data_from_dataframe_to_mysql(
+            user=local_user,
+            password=local_password,
+            host=local_host,
+            database=local_database,
+            df=output_df,
+            table_name="dwd_stock_zt_details_unpacked",
+            merge_on=['ymd', 'stock_code']
+        )
+
+        logging.info(
+            f"数据处理完成，已将结果保存到 {local_host} 的 {local_database}.dwd_stock_zt_details_unpacked 表中。")
+
+
+
+
+
+
+
+
 
 
     def setup(self):

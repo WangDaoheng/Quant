@@ -69,8 +69,8 @@ class ResShow:
 
         #  1.获取日期
         # ymd = DateUtility.today()
-        time_start_date = DateUtility.next_day(-45)
-        time_end_date = DateUtility.next_day(0)
+        time_start_date = DateUtility.next_day(-45)  # yyyymmdd 格式日期
+        time_end_date = DateUtility.next_day(0)      # yyyymmdd 格式日期
 
         zt_details_df = mysql_utils.data_from_mysql_to_dataframe(
             user=origin_user,
