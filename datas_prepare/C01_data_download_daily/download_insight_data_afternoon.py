@@ -129,7 +129,7 @@ class SaveInsightData:
         self.north_bound_df = pd.DataFrame()
 
 
-    @timing_decorator
+    # @timing_decorator
     def login(self):
         # 登陆前 初始化，没有密码可以访问进行自动化注册
         # https://findata-insight.htsc.com:9151/terminalWeb/#/signup
@@ -138,7 +138,7 @@ class SaveInsightData:
         common.login(market_service, user, password)
 
 
-    @timing_decorator
+    # @timing_decorator
     def get_stock_codes(self):
         """
         获取当日的stock代码合集
@@ -202,7 +202,7 @@ class SaveInsightData:
                                                      merge_on=['ymd', 'htsc_code'])
 
 
-    @timing_decorator
+    # @timing_decorator
     def get_stock_kline(self):
         """
         根据当日上市的stock_codes，来获得全部(去除ST|退|B)股票的历史数据
@@ -1077,10 +1077,10 @@ class SaveInsightData:
         self.login()
 
         #  除去 ST |  退  | B 的股票集合
-        # self.get_stock_codes()
+        self.get_stock_codes()
 
         #  获取上述股票的当月日K
-        # self.get_stock_kline()
+        self.get_stock_kline()
 
         #  获取主要股指
         # self.get_index_a_share()
