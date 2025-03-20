@@ -60,6 +60,56 @@ def check_data_written(total_rows, table_name, engine):
         return False
 
 
+# def data_from_dataframe_to_mysql(user, password, host, database='quant', df=pd.DataFrame(), table_name='', merge_on=[]):
+#     """
+#     把 dataframe 类型数据写入 mysql 表里面, 同时调用了
+#     Args:
+#         df:
+#         table_name:
+#         database:
+#     Returns:
+#     """
+#     db_url = f'mysql+pymysql://{user}:{password}@{host}:3306/{database}'
+#     engine = create_engine(db_url)
+#
+#     # 对输入的df的空值做处理
+#     # df = df.fillna(value=None)
+#     df = df.replace({np.nan: ''})
+#
+#     # 确保 df 中的字段列顺序与表中的列顺序一致
+#     columns = df.columns.tolist()
+#
+#     # 检查是否存在重复数据，并将其去除
+#     df.drop_duplicates(subset=merge_on, keep='first', inplace=True)
+#
+#     total_rows = df.shape[0]
+#     if total_rows == 0:
+#         logging.info(f"所有数据已存在，无需插入新的数据到 {host} 的 {table_name} 表中。")
+#         return
+#
+#     # 使用 INSERT IGNORE 来去重
+#     insert_sql = f"""
+#     INSERT IGNORE INTO {table_name} ({', '.join(columns)})
+#     VALUES ({', '.join(['%s'] * len(columns))});
+#     """
+#
+#     # # 转换 df 为一个可以传递给 executemany 的列表
+#     # values = df.values.tolist()
+#
+#     # 转换 df 为一个可以传递给 executemany 的元组列表
+#     values = [tuple(row) for row in df.to_numpy()]
+#
+#     with engine.connect() as connection:
+#         transaction = connection.begin()
+#         try:
+#             connection.execute(text(insert_sql), values)
+#             transaction.commit()
+#             logging.info(f"成功插入 {total_rows} 行数据到 {host} 的 {table_name} 表中。")
+#         except Exception as e:
+#             transaction.rollback()
+#             logging.error(f"写入 {host} 的表：{table_name} 时发生错误: {e}")
+#             raise
+
 def data_from_dataframe_to_mysql(user, password, host, database='quant', df=pd.DataFrame(), table_name='', merge_on=[]):
     """
     把 dataframe 类型数据写入 mysql 表里面, 同时调用了
@@ -73,7 +123,6 @@ def data_from_dataframe_to_mysql(user, password, host, database='quant', df=pd.D
     engine = create_engine(db_url)
 
     # 对输入的df的空值做处理
-    # df = df.fillna(value=None)
     df = df.replace({np.nan: None})
 
     # 确保 df 中的字段列顺序与表中的列顺序一致
@@ -90,16 +139,16 @@ def data_from_dataframe_to_mysql(user, password, host, database='quant', df=pd.D
     # 使用 INSERT IGNORE 来去重
     insert_sql = f"""
     INSERT IGNORE INTO {table_name} ({', '.join(columns)})
-    VALUES ({', '.join(['%s'] * len(columns))});
+    VALUES ({', '.join([f':{col}' for col in columns])});
     """
 
-    # 转换 df 为一个可以传递给 executemany 的列表
-    values = df.values.tolist()
+    # 转换 df 为一个可以传递给 executemany 的字典列表
+    values = df.to_dict('records')
 
     with engine.connect() as connection:
         transaction = connection.begin()
         try:
-            connection.execute(insert_sql, values)
+            connection.execute(text(insert_sql), values)
             transaction.commit()
             logging.info(f"成功插入 {total_rows} 行数据到 {host} 的 {table_name} 表中。")
         except Exception as e:
@@ -519,9 +568,11 @@ def execute_sql_statements(user, password, host, database, sql_statements):
     try:
         # 使用连接池执行 SQL 语句
         with engine.connect() as connection:
+            transaction = connection.begin()  # 开始事务
             for statement in sql_statements:
                 # 使用 text() 来防止 SQL 注入
                 connection.execute(text(statement))
+            transaction.commit()  # 提交事务
 
     except SQLAlchemyError as e:
         # 捕获数据库相关的错误

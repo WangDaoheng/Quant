@@ -59,7 +59,10 @@ class CalDMART:
         #  1.获取日期
         # ymd = DateUtility.today()
         time_start_date = DateUtility.next_day(-2)
+        time_start_date = '20250215'
+
         time_end_date = DateUtility.next_day(0)
+        time_end_date = '20250319'
 
         # 2.定义 SQL 模板
         sql_statements_template = [
@@ -139,7 +142,10 @@ class CalDMART:
         """
         # 1. 获取日期范围
         time_start_date = DateUtility.next_day(-2)  # 2天前的日期
+        time_start_date = '20241126'
+
         time_end_date = DateUtility.next_day(0)  # 当前日期
+        time_end_date = '20250318'
 
         logging.info(f"开始处理涨停股票明细数据，日期范围：{time_start_date} 至 {time_end_date}")
 
@@ -185,7 +191,7 @@ class CalDMART:
                 # 按最大长度填充数据
                 for i in range(max_length):
                     result_row = {
-                        'ymd': ymd,
+                        'ymd': ymd.strftime('%Y%m%d'),
                         'stock_code': stock_code,
                         'stock_name': stock_name,
                         'concept_plate': fields['concept_plate'][i].strip() if i < len(
@@ -210,12 +216,12 @@ class CalDMART:
             host=local_host,
             database=local_database,
             df=output_df,
-            table_name="dwd_stock_zt_details_unpacked",
-            merge_on=['ymd', 'stock_code']
+            table_name="dmart_stock_zt_details_expanded",
+            merge_on=['ymd', 'stock_code', 'concept_plate', 'index_plate', 'industry_plate', 'style_plate', 'out_plate']
         )
 
         logging.info(
-            f"数据处理完成，已将结果保存到 {local_host} 的 {local_database}.dwd_stock_zt_details_unpacked 表中。")
+            f"数据处理完成，已将结果保存到 {local_host} 的 {local_database}.dmart_stock_zt_details_expanded 表中。")
 
 
 
@@ -229,7 +235,9 @@ class CalDMART:
     def setup(self):
 
         # 涨停股票的明细
-        self.cal_zt_details()
+        # self.cal_zt_details()
+
+        self.cal_zt_details_explode()
 
 
 if __name__ == '__main__':
