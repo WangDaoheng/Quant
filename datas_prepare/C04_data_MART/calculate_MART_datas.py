@@ -210,25 +210,47 @@ class CalDMART:
         output_df = unpack_plates(df)
 
         # 5. 将处理后的数据保存到 MySQL
-        mysql_utils.data_from_dataframe_to_mysql(
-            user=local_user,
-            password=local_password,
-            host=local_host,
-            database=local_database,
-            df=output_df,
-            table_name="dmart_stock_zt_details_expanded",
-            merge_on=['ymd', 'stock_code', 'concept_plate', 'index_plate', 'industry_plate', 'style_plate', 'out_plate']
-        )
+        if platform.system() == "Windows":
+            mysql_utils.data_from_dataframe_to_mysql(
+                user=local_user,
+                password=local_password,
+                host=local_host,
+                database=local_database,
+                df=output_df,
+                table_name="dmart_stock_zt_details_expanded",
+                merge_on=['ymd', 'stock_code', 'concept_plate', 'index_plate', 'industry_plate', 'style_plate',
+                          'out_plate']
+            )
+            logging.info(
+                f"数据处理完成，已将结果保存到 {local_host} 的 {local_database}.dmart_stock_zt_details_expanded 表中。")
 
-        logging.info(
-            f"数据处理完成，已将结果保存到 {local_host} 的 {local_database}.dmart_stock_zt_details_expanded 表中。")
+            mysql_utils.data_from_dataframe_to_mysql(
+                user=origin_user,
+                password=origin_password,
+                host=origin_host,
+                database=origin_database,
+                df=output_df,
+                table_name="dmart_stock_zt_details_expanded",
+                merge_on=['ymd', 'stock_code', 'concept_plate', 'index_plate', 'industry_plate', 'style_plate',
+                          'out_plate']
+            )
+            logging.info(
+                f"数据处理完成，已将结果保存到 {origin_host} 的 {origin_database}.dmart_stock_zt_details_expanded 表中。")
 
 
-
-
-
-
-
+        else:
+            mysql_utils.data_from_dataframe_to_mysql(
+                user=origin_user,
+                password=origin_password,
+                host=origin_host,
+                database=origin_database,
+                df=output_df,
+                table_name="dmart_stock_zt_details_expanded",
+                merge_on=['ymd', 'stock_code', 'concept_plate', 'index_plate', 'industry_plate', 'style_plate',
+                          'out_plate']
+            )
+            logging.info(
+                f"数据处理完成，已将结果保存到 {origin_host} 的 {origin_database}.dmart_stock_zt_details_expanded 表中。")
 
 
 

@@ -1,4 +1,16 @@
 # -*- coding: utf-8 -*-
+import sys
+import os
+
+# 获取当前脚本所在目录（/opt/quants/Quant/datas_prepare）
+script_dir = os.path.dirname(os.path.abspath(__file__))
+# 获取项目根目录（/opt/quants/Quant/，即 script_dir 的父目录）
+project_root = os.path.dirname(script_dir)
+
+# 将项目根目录添加到 Python 搜索路径
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
 
 from datas_prepare.C01_data_download_daily.download_insight_data_afternoon import SaveInsightData
 from datas_prepare.C01_data_download_daily.download_insight_data_afternoon_of_history import SaveInsightHistoryData
@@ -66,7 +78,7 @@ class RunDataPrepare:
         # self.save_vantage_now.setup()
 
         #  下载历史数据
-        # self.save_insight_history.setup()
+        self.save_insight_history.setup()
 
         #  发送邮件
         self.send_logfile_email()

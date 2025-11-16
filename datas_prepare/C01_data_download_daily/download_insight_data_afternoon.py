@@ -152,7 +152,7 @@ class SaveInsightData:
 
         #  2.请求insight数据   get_all_stocks_info
         stock_all_df = get_all_stocks_info(listing_state="上市交易")
-
+        print(stock_all_df.shape)
         #  3.日期格式转换
         stock_all_df.insert(0, 'ymd', formatted_date)
 
@@ -324,7 +324,7 @@ class SaveInsightData:
         000905.SH	 中证500
         399852.SZ    中证1000
         000688.SH    科创50
-
+        当月至今的指数
         Returns:
              index_a_share   [htsc_code 	time	frequency	open	close	high	low	volume	value]
         """
@@ -1083,25 +1083,25 @@ class SaveInsightData:
         self.get_stock_kline()
 
         #  获取主要股指
-        # self.get_index_a_share()
+        self.get_index_a_share()
 
         #  大盘涨跌概览
-        # self.get_limit_summary()
+        self.get_limit_summary()
 
         #  期货__内盘
         self.get_future_inside()
 
         # 筹码概览
-        # self.get_chouma_datas()
+        self.get_chouma_datas()
 
         # 获取A股的行业分类数据, 是行业数据
-        # self.get_Ashare_industry_overview()
+        self.get_Ashare_industry_overview()
 
         # 获取A股的行业分类数据, 是stock_code & industry 关联后的大表数据
-        # self.get_Ashare_industry_detail()
+        self.get_Ashare_industry_detail()
 
         #  个股股东数
-        # self.get_shareholder_north_bound_num()
+        self.get_shareholder_north_bound_num()
 
 
 

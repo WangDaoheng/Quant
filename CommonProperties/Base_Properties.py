@@ -35,8 +35,9 @@ local_mysql_host = 'localhost'
 
 ######################  远程 mysql 账号信息  #############################
 origin_mysql_user = "root"
-origin_mysql_password = "000000"
-origin_mysql_host = "49.4.94.223"
+# origin_mysql_password = "000000"
+origin_mysql_password = "WZHwzh123!!!"
+origin_mysql_host = "117.72.162.13"
 origin_mysql_database = "quant"
 
 
@@ -49,7 +50,7 @@ log_file_window_path = r"F:\QDatas\logs"
 
 ######################  个人 配置 留存地址  #############################
 
-personal_linux_path = r"/root/Quant/ss_property"
+personal_linux_path = r"/opt/ss_property"
 personal_window_path = r"F:\QDatas\ss_property"
 personal_property_file = r"personal_property.txt"
 
