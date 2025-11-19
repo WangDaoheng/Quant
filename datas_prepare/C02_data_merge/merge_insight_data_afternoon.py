@@ -298,7 +298,7 @@ class MergeInsightData:
     @timing_decorator
     def merge_north_bound(self):
         """
-        A股市场的股东数
+        A股市场的北向资金数据
         Returns:
         """
         source_table = 'ods_north_bound_daily_now'
@@ -352,6 +352,8 @@ class MergeInsightData:
         #  股东数
         self.merge_shareholder_num()
 
+        #  北向
+        #self.merge_north_bound()
 
 
 
