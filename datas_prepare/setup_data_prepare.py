@@ -65,7 +65,7 @@ class RunDataPrepare:
         #  下载 insight 当日数据
         self.save_insight_now.setup()
 
-        #  合并 insight 当日数据至历史数据中
+        #  合并 insight 当日跑批的数据至历史数据中
         self.merge_insight.setup()
 
         #  执行 DWD层逻辑
