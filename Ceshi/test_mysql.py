@@ -85,7 +85,7 @@ def test_Origin_Mysql():
             print("MySQL连接已关闭")
 
 
-def test_Mysql_ymd():
+def CAL_mysql_table_ymds():
     """
     测试远程服务器的 mysql 是否联通，并统计 quant 库各表的 ymd 日期
     Returns:
@@ -161,9 +161,9 @@ def test_Mysql_ymd():
 
 if __name__ == '__main__':
     # test_Origin_Mysql()
-    test_Mysql_ymd()
-    print("hello world")
-    print(sys.version)
+    CAL_mysql_table_ymds()
+    # print("hello world")
+    # print(sys.version)
 
 
 

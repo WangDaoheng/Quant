@@ -257,7 +257,7 @@ class CalDMART:
     def setup(self):
 
         # 涨停股票的明细
-        # self.cal_zt_details()
+        self.cal_zt_details()
 
         self.cal_zt_details_explode()
 
