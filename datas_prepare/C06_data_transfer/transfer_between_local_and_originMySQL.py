@@ -104,7 +104,8 @@ def transfer_origin_to_local_mysql():
         'dwd_stock_dt_list',
         'dwd_stock_a_total_plate',
         'dwd_ashare_stock_base_info',
-        'dmart_stock_zt_details'
+        'dmart_stock_zt_details',
+        'dmart_stock_zt_details_expanded'
     ]
 
     for tableName in table_all_list:
