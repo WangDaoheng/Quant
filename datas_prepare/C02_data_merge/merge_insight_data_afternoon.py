@@ -15,7 +15,7 @@ import CommonProperties.Base_utils as base_utils
 from CommonProperties.DateUtility import DateUtility
 from CommonProperties.Base_utils import timing_decorator
 import CommonProperties.Mysql_Utils as mysql_utils
-
+from CommonProperties import set_config
 
 # ************************************************************************
 # 本代码的作用是下午收盘后针对 insight 行情源数据的本地保存部分开展merge
@@ -25,6 +25,8 @@ import CommonProperties.Mysql_Utils as mysql_utils
 
 
 # ************************************************************************
+#  调用日志配置
+set_config.setup_logging_config()
 
 ######################  mysql 配置信息  本地和远端服务器  ####################
 local_user = Base_Properties.local_mysql_user
@@ -57,7 +59,7 @@ class MergeInsightData:
         source_table = 'ods_stock_kline_daily_insight_now'
         target_table = 'ods_stock_kline_daily_insight'
         columns = ['htsc_code', 'ymd', 'open', 'close', 'high', 'low', 'num_trades', 'volume']
-
+        unique_key_cols = ['htsc_code', 'ymd']
         ############################   文件输出模块     ############################
         if platform.system() == "Windows":
             # 对本地 Mysql 做数据聚合
@@ -67,7 +69,8 @@ class MergeInsightData:
                                      database=local_database,
                                      source_table=source_table,
                                      target_table=target_table,
-                                     columns=columns)
+                                     columns=columns,
+                                     unique_key_cols=unique_key_cols)
 
             # 对远端 Mysql 做数据聚合
             mysql_utils.upsert_table(user=origin_user,
@@ -76,7 +79,8 @@ class MergeInsightData:
                                      database=origin_database,
                                      source_table=source_table,
                                      target_table=target_table,
-                                     columns=columns)
+                                     columns=columns,
+                                     unique_key_cols=unique_key_cols)
         else:
             # 对远端 Mysql 做数据聚合
             mysql_utils.upsert_table(user=origin_user,
@@ -85,7 +89,8 @@ class MergeInsightData:
                                      database=origin_database,
                                      source_table=source_table,
                                      target_table=target_table,
-                                     columns=columns)
+                                     columns=columns,
+                                     unique_key_cols=unique_key_cols)
 
 
     @timing_decorator
@@ -107,7 +112,6 @@ class MergeInsightData:
         target_table = 'ods_index_a_share_insight'
         columns = ['htsc_code', 'name', 'ymd', 'open', 'close', 'high', 'low', 'volume']
         unique_key_cols = ['htsc_code', 'ymd']
-
         ############################   文件输出模块     ############################
         if platform.system() == "Windows":
             # 对本地 Mysql 做数据聚合
