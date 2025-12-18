@@ -322,7 +322,6 @@ def create_partition_if_not_exists(engine, partition_name, year, month):
 #     with engine.connect() as connection:
 #         connection.execute(text(sql))
 
-
 def upsert_table(
         user: str,
         password: str,
@@ -477,6 +476,8 @@ def upsert_table(
         print(f"\n🔌 数据库连接已关闭")
 
     return affected_rows
+
+
 
 
 def cross_server_upsert_all(source_user, source_password, source_host, source_database,
