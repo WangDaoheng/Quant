@@ -59,7 +59,6 @@ class MergeInsightData:
         source_table = 'ods_stock_kline_daily_insight_now'
         target_table = 'ods_stock_kline_daily_insight'
         columns = ['htsc_code', 'ymd', 'open', 'close', 'high', 'low', 'num_trades', 'volume']
-        unique_key_cols = ['htsc_code', 'ymd']
         ############################   文件输出模块     ############################
         if platform.system() == "Windows":
             # 对本地 Mysql 做数据聚合
@@ -69,8 +68,7 @@ class MergeInsightData:
                                      database=local_database,
                                      source_table=source_table,
                                      target_table=target_table,
-                                     columns=columns,
-                                     unique_key_cols=unique_key_cols)
+                                     columns=columns)
 
             # 对远端 Mysql 做数据聚合
             mysql_utils.upsert_table(user=origin_user,
@@ -79,8 +77,7 @@ class MergeInsightData:
                                      database=origin_database,
                                      source_table=source_table,
                                      target_table=target_table,
-                                     columns=columns,
-                                     unique_key_cols=unique_key_cols)
+                                     columns=columns)
         else:
             # 对远端 Mysql 做数据聚合
             mysql_utils.upsert_table(user=origin_user,
@@ -89,8 +86,7 @@ class MergeInsightData:
                                      database=origin_database,
                                      source_table=source_table,
                                      target_table=target_table,
-                                     columns=columns,
-                                     unique_key_cols=unique_key_cols)
+                                     columns=columns)
 
 
     @timing_decorator
@@ -111,7 +107,6 @@ class MergeInsightData:
         source_table = 'ods_index_a_share_insight_now'
         target_table = 'ods_index_a_share_insight'
         columns = ['htsc_code', 'name', 'ymd', 'open', 'close', 'high', 'low', 'volume']
-        unique_key_cols = ['htsc_code', 'ymd']
         ############################   文件输出模块     ############################
         if platform.system() == "Windows":
             # 对本地 Mysql 做数据聚合
@@ -121,8 +116,7 @@ class MergeInsightData:
                                      database=local_database,
                                      source_table=source_table,
                                      target_table=target_table,
-                                     columns=columns,
-                                     unique_key_cols=unique_key_cols)
+                                     columns=columns)
 
             # 对远端 Mysql 做数据聚合
             mysql_utils.upsert_table(user=origin_user,
@@ -131,8 +125,7 @@ class MergeInsightData:
                                      database=origin_database,
                                      source_table=source_table,
                                      target_table=target_table,
-                                     columns=columns,
-                                     unique_key_cols=unique_key_cols)
+                                     columns=columns)
         else:
             # 对远端 Mysql 做数据聚合
             mysql_utils.upsert_table(user=origin_user,
@@ -141,8 +134,7 @@ class MergeInsightData:
                                      database=origin_database,
                                      source_table=source_table,
                                      target_table=target_table,
-                                     columns=columns,
-                                     unique_key_cols=unique_key_cols)
+                                     columns=columns)
 
 
     @timing_decorator
@@ -171,8 +163,6 @@ class MergeInsightData:
         source_table = 'ods_stock_limit_summary_insight_now'
         target_table = 'ods_stock_limit_summary_insight'
         columns = ['ymd', 'name', 'today_ZT', 'today_DT', 'yesterday_ZT', 'yesterday_DT', 'yesterday_ZT_rate']
-        unique_key_cols = ['ymd', 'name']
-
         ############################   文件输出模块     ############################
         if platform.system() == "Windows":
             # 对本地 Mysql 做数据聚合
@@ -182,8 +172,7 @@ class MergeInsightData:
                                      database=local_database,
                                      source_table=source_table,
                                      target_table=target_table,
-                                     columns=columns,
-                                     unique_key_cols=unique_key_cols)
+                                     columns=columns)
 
             # 对远端 Mysql 做数据聚合
             mysql_utils.upsert_table(user=origin_user,
@@ -192,8 +181,7 @@ class MergeInsightData:
                                      database=origin_database,
                                      source_table=source_table,
                                      target_table=target_table,
-                                     columns=columns,
-                                     unique_key_cols=unique_key_cols)
+                                     columns=columns)
         else:
             # 对远端 Mysql 做数据聚合
             mysql_utils.upsert_table(user=origin_user,
@@ -202,8 +190,7 @@ class MergeInsightData:
                                      database=origin_database,
                                      source_table=source_table,
                                      target_table=target_table,
-                                     columns=columns,
-                                     unique_key_cols=unique_key_cols)
+                                     columns=columns)
 
 
     @timing_decorator
@@ -235,8 +222,6 @@ class MergeInsightData:
         source_table = 'ods_future_inside_insight_now'
         target_table = 'ods_future_inside_insight'
         columns = ['htsc_code', 'ymd', 'open', 'close', 'high', 'low', 'volume', 'open_interest', 'settle']
-        unique_key_cols= ['htsc_code', 'ymd']
-
         ############################   文件输出模块     ############################
         if platform.system() == "Windows":
             # 对本地 Mysql 做数据聚合
@@ -246,8 +231,7 @@ class MergeInsightData:
                                      database=local_database,
                                      source_table=source_table,
                                      target_table=target_table,
-                                     columns=columns,
-                                     unique_key_cols=unique_key_cols)
+                                     columns=columns)
 
             # 对远端 Mysql 做数据聚合
             mysql_utils.upsert_table(user=origin_user,
@@ -256,8 +240,7 @@ class MergeInsightData:
                                      database=origin_database,
                                      source_table=source_table,
                                      target_table=target_table,
-                                     columns=columns,
-                                     unique_key_cols=unique_key_cols)
+                                     columns=columns)
         else:
             # 对远端 Mysql 做数据聚合
             mysql_utils.upsert_table(user=origin_user,
@@ -266,8 +249,7 @@ class MergeInsightData:
                                      database=origin_database,
                                      source_table=source_table,
                                      target_table=target_table,
-                                     columns=columns,
-                                     unique_key_cols=unique_key_cols)
+                                     columns=columns)
 
 
     @timing_decorator
@@ -279,7 +261,6 @@ class MergeInsightData:
         source_table = 'ods_shareholder_num_now'
         target_table = 'ods_shareholder_num'
         columns = ['htsc_code', 'name', 'ymd', 'total_sh', 'avg_share', 'pct_of_total_sh', 'pct_of_avg_sh']
-        unique_key_cols = ['htsc_code', 'ymd']
         ############################   文件输出模块     ############################
         if platform.system() == "Windows":
             # 对本地 Mysql 做数据聚合
@@ -289,8 +270,7 @@ class MergeInsightData:
                                      database=local_database,
                                      source_table=source_table,
                                      target_table=target_table,
-                                     columns=columns,
-                                     unique_key_cols=unique_key_cols)
+                                     columns=columns)
 
             # 对远端 Mysql 做数据聚合
             mysql_utils.upsert_table(user=origin_user,
@@ -299,8 +279,7 @@ class MergeInsightData:
                                      database=origin_database,
                                      source_table=source_table,
                                      target_table=target_table,
-                                     columns=columns,
-                                     unique_key_cols=unique_key_cols)
+                                     columns=columns)
         else:
             # 对远端 Mysql 做数据聚合
             mysql_utils.upsert_table(user=origin_user,
@@ -309,8 +288,7 @@ class MergeInsightData:
                                      database=origin_database,
                                      source_table=source_table,
                                      target_table=target_table,
-                                     columns=columns,
-                                     unique_key_cols=unique_key_cols)
+                                     columns=columns)
 
 
     @timing_decorator
@@ -322,7 +300,6 @@ class MergeInsightData:
         source_table = 'ods_north_bound_daily_now'
         target_table = 'ods_north_bound_daily'
         columns = ['htsc_code', 'ymd', 'sh_hkshare_hold', 'pct_total_share']
-        unique_key_cols = ['htsc_code', 'ymd']
         ############################   文件输出模块     ############################
         if platform.system() == "Windows":
             # 对本地 Mysql 做数据聚合
@@ -332,8 +309,7 @@ class MergeInsightData:
                                      database=local_database,
                                      source_table=source_table,
                                      target_table=target_table,
-                                     columns=columns,
-                                     unique_key_cols=unique_key_cols)
+                                     columns=columns)
 
             # 对远端 Mysql 做数据聚合
             mysql_utils.upsert_table(user=origin_user,
@@ -342,8 +318,7 @@ class MergeInsightData:
                                      database=origin_database,
                                      source_table=source_table,
                                      target_table=target_table,
-                                     columns=columns,
-                                     unique_key_cols=unique_key_cols)
+                                     columns=columns)
         else:
             # 对远端 Mysql 做数据聚合
             mysql_utils.upsert_table(user=origin_user,
@@ -352,8 +327,7 @@ class MergeInsightData:
                                      database=origin_database,
                                      source_table=source_table,
                                      target_table=target_table,
-                                     columns=columns,
-                                     unique_key_cols=unique_key_cols)
+                                     columns=columns)
 
 
     def setup(self):

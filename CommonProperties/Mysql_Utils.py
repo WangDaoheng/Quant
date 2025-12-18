@@ -322,162 +322,46 @@ def create_partition_if_not_exists(engine, partition_name, year, month):
 #     with engine.connect() as connection:
 #         connection.execute(text(sql))
 
-def upsert_table(
-        user: str,
-        password: str,
-        host: str,
-        database: str,
-        source_table: str,
-        target_table: str,
-        columns: List[str],
-        unique_key_cols: List[str],  # 必须指定联合唯一键字段（如 ['htsc_code', 'ymd']）
-        sync_months: int = 6,  # 仅保留时间范围默认值（可手动传参覆盖）
-        use_ignore: bool = True,  # 冲突忽略默认启用（可手动关闭）
-        date_column: str = "ymd"  # 日期筛选字段（默认 ymd，可适配其他日期字段如 create_time）
-) -> int:
+
+def upsert_table(user, password, host, database, source_table, target_table, columns):
     """
-    通用 MySQL upsert 函数：增量同步指定时间范围内的数据，冲突时不中断执行
-    核心功能：存在则更新，不存在则插入；支持任意表、任意联合唯一键、任意字段同步
+    使用 source_table 中的数据来更新或插入到 target_table 中（极简版）
+    核心功能：存在则更新，不存在则插入；冲突时忽略（避免中断）
 
-    :param user: 数据库用户名（必填）
-    :param password: 数据库密码（必填）
-    :param host: 数据库主机IP（如 192.168.1.100/localhost，必填）
-    :param database: 数据库名称（必填）
-    :param source_table: 源表名称（必填）
-    :param target_table: 目标表名称（必填）
-    :param columns: 同步的字段列表（必填，如 ['col1', 'col2']）
-    :param unique_key_cols: 联合唯一键字段列表（必填，如 ['code', 'date']，需与目标表唯一约束一致）
-    :param sync_months: 同步时间范围（单位：月，默认 6 个月，可传参覆盖）
-    :param use_ignore: 是否忽略主键冲突（默认 True，冲突时继续执行其他数据）
-    :param date_column: 日期筛选字段名（默认 'ymd'，适配其他日期字段如 'create_time'）
-    :return: 影响行数（插入+更新的总条数）
+    :param user: 数据库用户名
+    :param password: 数据库密码
+    :param host: 数据库主机IP
+    :param database: 数据库名称（默认为 quant）
+    :param source_table: 源表名称（字符串）
+    :param target_table: 目标表名称（字符串）
+    :param columns: 需要更新或插入的列名列表（列表）
     """
-    # -------------------------- 1. 入参合法性校验（必填项不能为空） --------------------------
-    required_params = [
-        ("user", user), ("password", password), ("host", host),
-        ("database", database), ("source_table", source_table),
-        ("target_table", target_table), ("columns", columns),
-        ("unique_key_cols", unique_key_cols)
-    ]
-    for param_name, param_value in required_params:
-        if not param_value:
-            raise ValueError(f"❌ 必填参数 '{param_name}' 不能为空")
-
-    if len(columns) == 0:
-        raise ValueError("❌ 同步字段列表 columns 不能为空")
-
-    if len(unique_key_cols) == 0:
-        raise ValueError("❌ 联合唯一键列表 unique_key_cols 不能为空")
-
-    # -------------------------- 2. 计算同步时间范围 --------------------------
-    current_date = datetime.now()
-    start_date = current_date - timedelta(days=sync_months * 30)  # 每月按30天简化计算
-    start_date_str = start_date.strftime("%Y-%m-%d")
-    end_date_str = current_date.strftime("%Y-%m-%d")
-
-    print(f"📅 同步时间范围：{start_date_str} 至 {end_date_str}（日期字段：{date_column}）")
-    print(f"📥 源表：{source_table} | 📤 目标表：{target_table}")
-    print(f"🔍 同步字段：{', '.join(columns)}")
-    print(f"🔑 联合唯一键：{', '.join(unique_key_cols)}")
-
-    # -------------------------- 3. 字段安全校验（防 SQL 注入） --------------------------
-    def is_valid_field(field: str) -> bool:
-        """校验字段名是否合法（仅允许字母、数字、下划线，且不以数字开头）"""
-        return field.replace('_', '').isalnum() and not field[0].isdigit()
-
-    # 过滤非法字段
-    valid_columns = []
-    for col in columns:
-        if is_valid_field(col):
-            valid_columns.append(col)
-        else:
-            print(f"⚠️  忽略非法字段名：{col}（仅允许字母、数字、下划线，且不以数字开头）")
-
-    valid_unique_keys = []
-    for key in unique_key_cols:
-        if is_valid_field(key):
-            valid_unique_keys.append(key)
-        else:
-            print(f"⚠️  忽略非法唯一键字段名：{key}（仅允许字母、数字、下划线，且不以数字开头）")
-
-    if not valid_columns:
-        raise ValueError("❌ 无有效同步字段，请检查 columns 参数")
-    if not valid_unique_keys:
-        raise ValueError("❌ 无有效联合唯一键字段，请检查 unique_key_cols 参数")
-
-    # -------------------------- 4. 构建数据库连接 --------------------------
+    # 1. 构建数据库连接（原代码逻辑，无charset参数，解决TypeError错误）
     db_url = f'mysql+pymysql://{user}:{password}@{host}:3306/{database}'
-    engine = create_engine(
-        db_url,
-        charset='utf8mb4',  # 支持中文和特殊字符
-        pool_pre_ping=True,  # 连接前检测存活
-        pool_size=5,
-        max_overflow=10,
-        connect_args={
-            "options": "--sql_mode=NO_ENGINE_SUBSTITUTION",
-            "connect_timeout": 10
-        }
-    )
+    engine = create_engine(db_url)
 
-    # -------------------------- 5. 构建 SQL 语句 --------------------------
-    # 用反引号包裹表名和字段名，避免关键字冲突
-    columns_str = ", ".join([f"`{col}`" for col in valid_columns])
-    select_str = columns_str
+    # 2. 构建列名、更新语句、查询语句（原代码逻辑，保持不变）
+    columns_str = ", ".join(columns)
+    update_str = ", ".join([f"{col} = VALUES({col})" for col in columns])
+    select_str = ", ".join(columns)
 
-    # ON DUPLICATE KEY UPDATE 部分（仅更新同步字段）
-    update_str = ", ".join([f"`{col}` = VALUES(`{col}`)" for col in valid_columns])
-
-    # 插入关键字（冲突忽略）
-    insert_keyword = "INSERT IGNORE INTO" if use_ignore else "INSERT INTO"
-
-    # 过滤条件：日期范围 + 唯一键字段非空（避免无效数据）
-    non_null_conditions = " AND ".join([f"`{key}` IS NOT NULL" for key in valid_unique_keys])
-    where_clause = f"`{date_column}` >= '{start_date_str}' AND `{date_column}` <= '{end_date_str}' AND {non_null_conditions}"
-
-    # 完整 SQL
+    # 3. 构建SQL语句（关键修改：添加IGNORE，解决唯一键冲突中断问题）
+    # 原代码：INSERT INTO {target_table} ({columns_str})
     sql = f"""
-    {insert_keyword} `{target_table}` ({columns_str})
+    INSERT IGNORE INTO {target_table} ({columns_str})
     SELECT {select_str}
-    FROM `{source_table}`
-    WHERE {where_clause}
-    ON DUPLICATE KEY UPDATE {update_str};
+    FROM {source_table}
+    ON DUPLICATE KEY UPDATE
+    {update_str};
     """
 
-    print(f"\n⚙️  执行的 SQL 语句：\n{sql.strip()}")
-
-    # -------------------------- 6. 执行 SQL 并处理结果 --------------------------
-    affected_rows = 0
-    try:
-        with engine.connect() as connection:
-            with connection.begin():  # 事务支持
-                result = connection.execute(text(sql))
-                connection.commit()
-                affected_rows = result.rowcount
-                print(f"\n✅ 执行成功！影响行数：{affected_rows}（插入+更新）")
-
-    except SQLAlchemyError as e:
-        error_msg = str(e)
-        if "1062 (23000)" in error_msg:
-            print(f"\n⚠️  警告：部分数据存在唯一键冲突（已自动跳过），错误摘要：{error_msg[:500]}")
-            affected_rows = 0
-        elif "Timeout" in error_msg or "timed out" in error_msg:
-            print(f"\n❌ 错误：数据库连接超时，请检查主机 IP、端口是否可达")
-            raise
-        else:
-            print(f"\n❌ 错误：SQL 执行失败，错误详情：{error_msg[:500]}")
-            raise
-
-    except Exception as e:
-        print(f"\n❌ 错误：程序执行失败，原因：{str(e)}")
-        raise
-
-    finally:
-        engine.dispose()
-        print(f"\n🔌 数据库连接已关闭")
-
-    return affected_rows
-
-
+    # 4. 执行SQL语句（原代码逻辑，保持不变）
+    with engine.connect() as connection:
+        # 添加事务提交（原代码缺少，补充后修改才会生效）
+        with connection.begin():
+            connection.execute(text(sql))
+    # 可选：关闭引擎（非必须，但养成好习惯）
+    engine.dispose()
 
 
 def cross_server_upsert_all(source_user, source_password, source_host, source_database,
