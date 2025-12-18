@@ -1,0 +1,65 @@
+
+
+一、目录准备
+    ## logger 输出日志的文件，用于发邮件用
+    /opt/Logs/                
+
+    ## 运行日志的文件，nohup 过程中诞生的文件
+    /opt/Logs/                
+
+    ## 主程序
+    /opt/Quant
+
+    ## 秘钥
+    /opt/ss_property
+
+
+二、设置运行程序
+
+    ## 更新并部署代码
+    rm -rf /opt/Quant
+
+    rz Backtrader_PJ1.zip
+    
+    mkdir -p Quant && unzip Backtrader_PJ1.zip -d temp && mv temp/Backtrader_PJ1/* Quant/ && rm -rf temp
+    
+
+    ## 设置定时任务
+    crontab -l
+    30 17 * * 1-5 /opt/Quant/datas_prepare/run_data_prepare.sh
+
+    ## 定时脚本
+#!/bin/bash
+# 定义日志文件名（格式：run_log_YYYY-MM-DD.txt）
+LOG_FILE="/opt/run_logs/run_log_$(date +%Y-%m-%d).txt"
+# 执行Python脚本，并将输出（stdout和stderr）写入日志文件
+python3 /opt/Quant/datas_prepare/setup_data_prepare.py >> "$LOG_FILE" 2>&1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
