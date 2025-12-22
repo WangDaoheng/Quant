@@ -67,7 +67,7 @@ def transfer_local_to_origin_mysql():
                                          table_name=tableName)
 
 
-@timing_decorator
+# @timing_decorator
 def transfer_origin_to_local_mysql():
     """
     从 远端 向 本地 主机刷新 mysql 数据   全删全插
@@ -80,30 +80,30 @@ def transfer_origin_to_local_mysql():
 
     table_all_list = [
         'ods_stock_code_daily_insight',
-        'ods_index_a_share_insight',
-        'ods_astock_industry_detail',
-        'ods_astock_industry_overview',
-        'ods_stock_limit_summary_insight',
-        'ods_future_inside_insight',
-        'ods_north_bound_daily',
-        'ods_shareholder_num',
         'ods_stock_chouma_insight',
+        'ods_shareholder_num',
+        'ods_north_bound_daily',
+        'ods_stock_exchange_market',
+        'ods_tdx_stock_pepb_info',
+        'ods_stock_kline_daily_insight',
+        'ods_index_a_share_insight',
+        'ods_future_inside_insight',
         'ods_us_stock_daily_vantage',
         'ods_exchange_rate_vantage_detail',
         'ods_exchange_dxy_vantage',
+        'ods_stock_limit_summary_insight',
+        'ods_astock_industry_overview',
+        'ods_astock_industry_detail',
         'ods_tdx_stock_concept_plate',
-        'ods_tdx_stock_index_plate',
-        'ods_tdx_stock_industry_plate',
         'ods_tdx_stock_region_plate',
+        'ods_tdx_stock_industry_plate',
         'ods_tdx_stock_style_plate',
-        'ods_tdx_stock_pepb_info',
-        'ods_stock_kline_daily_insight',
-        'ods_stock_exchange_market',
+        'ods_tdx_stock_index_plate',
         'ods_stock_plate_redbook',
-        'dwd_stock_zt_list',
-        'dwd_stock_dt_list',
         'dwd_stock_a_total_plate',
         'dwd_ashare_stock_base_info',
+        'dwd_stock_zt_list',
+        'dwd_stock_dt_list',
         'dmart_stock_zt_details',
         'dmart_stock_zt_details_expanded'
     ]

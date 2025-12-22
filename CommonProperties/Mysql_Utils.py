@@ -1,16 +1,17 @@
 
-from sqlalchemy import create_engine, text
 import pymysql
+from sqlalchemy import create_engine, text
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import sessionmaker
 import gc
 from datetime import datetime, timedelta
 from typing import List, Optional
+import traceback  # 用于打印详细的错误堆栈
 
 import pandas as pd
 import numpy as np
 import logging
 import platform
-from sqlalchemy.orm import sessionmaker
 
 import CommonProperties.Base_Properties as base_properties
 import CommonProperties.Base_utils as base_utils
@@ -499,6 +500,62 @@ def cross_server_upsert_ymd(source_user, source_password, source_host, source_da
 
 
 
+# def full_replace_migrate(source_host, source_db_url, target_host, target_db_url, table_name, chunk_size=10000):
+#     """
+#     将本地 MySQL 数据库中的表数据导入到远程 MySQL 数据库中。
+#     整体暴力迁移，全删全插
+#
+#     Args:
+#         source_host   (str): 源端 主机
+#         source_db_url (str): 源端 MySQL 数据库的连接 URL
+#         target_host   (str): 目标 主机
+#         target_db_url (str): 目标 MySQL 数据库的连接 URL
+#         table_name    (str): 要迁移的表名
+#         chunk_size    (int): 每次读取和写入的数据块大小，默认 10000 行
+#     """
+#     # 创建 源端 数据库的 SQLAlchemy 引擎
+#     source_engine = create_engine(source_db_url)
+#     SourceSession = sessionmaker(bind=source_engine)
+#
+#     # 创建 目标 数据库的 SQLAlchemy 引擎
+#     target_engine = create_engine(target_db_url)
+#     TargetSession = sessionmaker(bind=target_engine)
+#
+#     try:
+#         # 打开源端和目标端的会话
+#         with SourceSession() as source_session, TargetSession() as target_session:
+#             # 开启事务
+#             with target_session.begin():
+#                 # 第一次写入时，先清空表
+#                 target_session.execute(text(f"TRUNCATE TABLE {table_name}"))
+#                 print(f"成功清空目标表 {table_name}。")
+#
+#             # 分批读取数据并插入目标数据库
+#             offset = 0
+#             while True:
+#                 # 从源端数据库分批读取数据
+#                 query = f"SELECT * FROM {table_name} LIMIT {chunk_size} OFFSET {offset}"
+#                 chunk = pd.read_sql(query, source_session.bind)
+#                 if chunk.empty:
+#                     break
+#
+#                 # 使用批量插入
+#                 chunk.to_sql(name=table_name, con=target_engine, if_exists='append', index=False)
+#                 print(f"成功写入第 {offset // chunk_size + 1} 块数据到{target_host} mysql库。")
+#
+#                 # 更新偏移量
+#                 offset += chunk_size
+#
+#                 # 释放内存
+#                 del chunk
+#                 gc.collect()
+#
+#         print(f"表 {table_name} 数据迁移完成。")
+#
+#     except Exception as e:
+#         print(f"数据迁移过程中发生错误: {e}")
+
+
 def full_replace_migrate(source_host, source_db_url, target_host, target_db_url, table_name, chunk_size=10000):
     """
     将本地 MySQL 数据库中的表数据导入到远程 MySQL 数据库中。
@@ -512,47 +569,62 @@ def full_replace_migrate(source_host, source_db_url, target_host, target_db_url,
         table_name    (str): 要迁移的表名
         chunk_size    (int): 每次读取和写入的数据块大小，默认 10000 行
     """
-    # 创建 源端 数据库的 SQLAlchemy 引擎
+    # 创建源端数据库的SQLAlchemy引擎
     source_engine = create_engine(source_db_url)
-    SourceSession = sessionmaker(bind=source_engine)
-
-    # 创建 目标 数据库的 SQLAlchemy 引擎
+    # 创建目标数据库的SQLAlchemy引擎
     target_engine = create_engine(target_db_url)
-    TargetSession = sessionmaker(bind=target_engine)
 
     try:
-        # 打开源端和目标端的会话
-        with SourceSession() as source_session, TargetSession() as target_session:
-            # 开启事务
-            with target_session.begin():
-                # 第一次写入时，先清空表
-                target_session.execute(text(f"TRUNCATE TABLE {table_name}"))
-                print(f"成功清空目标表 {table_name}。")
+        # 1. 清空目标表（使用text语句，避免SQL注入，且单独执行）
+        # 不使用Session，直接用engine执行，避免事务隐式提交问题
+        with target_engine.connect() as target_conn:
+            # 开启事务执行TRUNCATE
+            with target_conn.begin():
+                target_conn.execute(text(f"TRUNCATE TABLE {table_name}"))
+            print(f"成功清空目标表 {table_name}。")
 
-            # 分批读取数据并插入目标数据库
-            offset = 0
-            while True:
-                # 从源端数据库分批读取数据
-                query = f"SELECT * FROM {table_name} LIMIT {chunk_size} OFFSET {offset}"
-                chunk = pd.read_sql(query, source_session.bind)
-                if chunk.empty:
-                    break
+        # 2. 分批读取源数据并插入目标库
+        offset = 0
+        while True:
+            # 分批读取数据：使用参数化查询（虽然LIMIT/OFFSET无法参数化，但用text封装更规范）
+            # 注意：table_name如果是外部传入，需做合法性校验，避免SQL注入
+            query = text(f"SELECT * FROM {table_name} LIMIT :chunk_size OFFSET :offset")
+            # 用pandas读取数据，直接使用engine，无需Session
+            chunk = pd.read_sql(
+                query,
+                con=source_engine,
+                params={"chunk_size": chunk_size, "offset": offset}  # 参数化传递数值，避免注入
+            )
 
-                # 使用批量插入
-                chunk.to_sql(name=table_name, con=target_engine, if_exists='append', index=False)
-                print(f"成功写入第 {offset // chunk_size + 1} 块数据到{target_host} mysql库。")
+            if chunk.empty:
+                break
 
-                # 更新偏移量
-                offset += chunk_size
+            # 批量插入目标数据库
+            chunk.to_sql(
+                name=table_name,
+                con=target_engine,
+                if_exists='append',
+                index=False,
+                chunksize=chunk_size  # 再分块写入，提升大数量插入性能
+            )
+            print(f"成功写入第 {offset // chunk_size + 1} 块数据到{target_host} mysql库。")
 
-                # 释放内存
-                del chunk
-                gc.collect()
+            # 更新偏移量
+            offset += chunk_size
+
+            # 释放内存
+            del chunk
+            gc.collect()
 
         print(f"表 {table_name} 数据迁移完成。")
 
     except Exception as e:
-        print(f"数据迁移过程中发生错误: {e}")
+        # 打印详细的错误信息和堆栈，方便定位问题
+        print(f"数据迁移过程中发生错误: {str(e)}")
+        print("错误堆栈信息：")
+        traceback.print_exc()
+
+
 
 
 def get_stock_codes_latest(df):
@@ -566,10 +638,14 @@ def get_stock_codes_latest(df):
     if df is None or df.empty:
 
         if platform.system() == "Windows":
-            user = local_user
-            password = local_password
-            host = local_host
-            database = local_database
+            # user = local_user
+            # password = local_password
+            # host = local_host
+            # database = local_database
+            user = origin_user
+            password = origin_password
+            host = origin_host
+            database = origin_database
         else:
             user = origin_user
             password = origin_password

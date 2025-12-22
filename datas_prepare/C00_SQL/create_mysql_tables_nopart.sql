@@ -207,7 +207,7 @@ CREATE TABLE quant.ods_shareholder_num_now (
       ,avg_share              DOUBLE(10, 4)           --每个股东平均持股数
       ,pct_of_total_sh        DOUBLE(10, 4)           --股东数较上期环比波动百分比
       ,pct_of_avg_sh          DOUBLE(10, 4)           --每个股东平均持股数较上期环比波动百分比
-      UNIQUE KEY unique_ymd_stock_code (ymd, htsc_code)
+      ,UNIQUE KEY unique_ymd_stock_code (ymd, htsc_code)
 );
 
 CREATE TABLE quant.ods_shareholder_num (
@@ -218,7 +218,7 @@ CREATE TABLE quant.ods_shareholder_num (
       ,avg_share              DOUBLE(10, 4)           --每个股东平均持股数
       ,pct_of_total_sh        DOUBLE(10, 4)           --股东数较上期环比波动百分比
       ,pct_of_avg_sh          DOUBLE(10, 4)           --每个股东平均持股数较上期环比波动百分比
-      UNIQUE KEY unique_ymd_stock_code (ymd, htsc_code)
+      ,UNIQUE KEY unique_ymd_stock_code (ymd, htsc_code)
 );
 
 
@@ -230,7 +230,7 @@ CREATE TABLE quant.ods_north_bound_daily_now (
      ,ymd                  DATE
      ,sh_hkshare_hold      BIGINT
      ,pct_total_share      FLOAT
-   ,UNIQUE KEY unique_ymd_stock_code (ymd, htsc_code)
+     ,UNIQUE KEY unique_ymd_stock_code (ymd, htsc_code)
  );
 
 
@@ -239,7 +239,7 @@ CREATE TABLE quant.ods_north_bound_daily (
      ,ymd                  DATE
      ,sh_hkshare_hold      BIGINT
      ,pct_total_share      FLOAT
-   ,UNIQUE KEY unique_ymd_stock_code (ymd, htsc_code)
+     ,UNIQUE KEY unique_ymd_stock_code (ymd, htsc_code)
  );
 
 
@@ -254,7 +254,7 @@ CREATE TABLE quant.ods_us_stock_daily_vantage (
     ,low      FLOAT                         --最低价
     ,close    FLOAT                         --收盘价
     ,volume   BIGINT                        --成交量
-    UNIQUE KEY unique_ymd_name (ymd, name)
+    ,UNIQUE KEY unique_ymd_name (ymd, name)
 ) ;
 
 
@@ -268,7 +268,7 @@ CREATE TABLE quant.ods_exchange_rate_vantage_detail (
     ,high      FLOAT                        --最高价
     ,low       FLOAT                        --最低价
     ,close     FLOAT                        --收盘价
-    UNIQUE KEY unique_ymd_name (ymd, name)
+    ,UNIQUE KEY unique_ymd_name (ymd, name)
 ) ;
 
 
