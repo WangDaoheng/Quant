@@ -23,6 +23,7 @@
     
     mkdir -p Quant && unzip Backtrader_PJ1.zip -d temp && mv temp/Backtrader_PJ1/* Quant/ && rm -rf temp
     
+    chmod +x run_data_prepare.sh
 
     ## 设置定时任务
     crontab -l
