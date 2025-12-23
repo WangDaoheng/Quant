@@ -638,14 +638,10 @@ def get_stock_codes_latest(df):
     if df is None or df.empty:
 
         if platform.system() == "Windows":
-            # user = local_user
-            # password = local_password
-            # host = local_host
-            # database = local_database
-            user = origin_user
-            password = origin_password
-            host = origin_host
-            database = origin_database
+            user = local_user
+            password = local_password
+            host = local_host
+            database = local_database
         else:
             user = origin_user
             password = origin_password
