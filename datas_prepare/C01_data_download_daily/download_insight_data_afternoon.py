@@ -546,7 +546,7 @@ class SaveInsightData:
         """
 
         #  1.起止时间 查询起始时间写2月前的月初第1天
-        time_start_date = DateUtility.first_day_of_month_after_n_months(-2)
+        time_start_date = DateUtility.first_day_of_month(-2)
         time_end_date = DateUtility.today()
 
         time_start_date = datetime.strptime(time_start_date, '%Y%m%d')
@@ -554,7 +554,7 @@ class SaveInsightData:
 
         #  2.查询标的
         index_list = ["AU{}.SHF", "AG{}.SHF", "CU{}.SHF", "EC{}.INE", "SC{}.INE", "V{}.DCE"]
-        replacement = DateUtility.first_day_of_month_after_n_months(2)[2:6]
+        replacement = DateUtility.first_day_of_month(2)[2:6]
 
         future_index_list = [index.format(replacement) for index in index_list]
 
@@ -1072,7 +1072,7 @@ class SaveInsightData:
         """
 
         #  1.起止时间 查询起始时间写 2月前的月初
-        time_start_date = DateUtility.first_day_of_month_after_n_months(-2)
+        time_start_date = DateUtility.first_day_of_month(-2)
         #  结束时间必须大于等于当日，这里取明天的日期
         time_end_date = DateUtility.next_day(1)
 

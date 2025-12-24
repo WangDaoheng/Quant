@@ -31,7 +31,7 @@ def use_vantage_for_US_stock(function='TIME_SERIES_DAILY', symbol_list=key_US_st
     """
 
     # 开始日期   取24个月之前     结束日期为今天
-    start_date = DateUtility.first_day_of_month_after_n_months(-36)
+    start_date = DateUtility.first_day_of_month(-36)
     end_date = DateUtility.today()
 
     res_df = pd.DataFrame()

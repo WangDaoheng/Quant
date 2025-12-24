@@ -38,10 +38,32 @@ class DateUtility:
         return start_of_week.strftime('%Y%m%d')
 
     @staticmethod
-    def first_day_of_month():
+    def first_day_of_month(n=0):
+        """
+         n月后的月的第一天, n=0 就是本月的第1天; n=1 就是1月后的第1天; n=-1 就是上1月的第1天
+        """
         today = datetime.today()
-        first_day = today.replace(day=1)
+        month = today.month - 1 + n  ## 先转0-11月（便于计算）
+        year = today.year + month // 12
+        month = month % 12 + 1  ## 转回1-12月
+        first_day = datetime(year, month, 1)
         return first_day.strftime('%Y%m%d')
+
+    @staticmethod
+    def last_day_of_month(n=0):
+        """
+        获取指定偏移月的最后一天（默认本月）
+        :param n: 月份偏移量【可选】，0=本月，正数=往后n月，负数=往前n月
+        :return: 日期字符串（YYYYMMDD）
+        """
+        today = datetime.today()
+        month = today.month - 1 + n
+        year = today.year + month // 12
+        month = month % 12 + 1
+        last_day = calendar.monthrange(year, month)[1]  # 获取当月最后一天
+        last_day_date = datetime(year, month, last_day)
+        return last_day_date.strftime('%Y%m%d')
+
 
     @staticmethod
     def first_day_of_quarter():
@@ -69,20 +91,6 @@ class DateUtility:
         end_of_nth_last_week = start_of_this_week - timedelta(days=1 + (n - 1) * 7)
         return end_of_nth_last_week.strftime('%Y%m%d')
 
-    @staticmethod
-    def last_day_of_month_before_n_months(n=0):
-        """
-        n月前的月的最后一天, n=0 就是本月的最后一天; n=1 就是上月的最后一天; n=-1 就是下1月的最后一天
-        """
-        today = datetime.today()
-        month = today.month - n
-        year = today.year
-        while month <= 0:
-            month += 12
-            year -= 1
-        last_day = calendar.monthrange(year, month)[1]
-        last_day_of_nth_last_month = datetime(year, month, last_day)
-        return last_day_of_nth_last_month.strftime('%Y%m%d')
 
     @staticmethod
     def last_day_of_quarter_before_n_quarters(n=0):
@@ -119,19 +127,6 @@ class DateUtility:
         today = datetime.today()
         start_of_nth_week = today + timedelta(days=(7 - today.weekday()) + (n - 1) * 7)
         return start_of_nth_week.strftime('%Y%m%d')
-
-
-    @staticmethod
-    def first_day_of_month_after_n_months(n):
-        """
-        n月后的月的第一天, n=0 就是本月的第1天; n=1 就是1月后的第1天; n=-1 就是上1月的第1天
-        """
-        today = datetime.today()
-        month = today.month - 1 + n
-        year = today.year + month // 12
-        month = month % 12 + 1
-        first_day = datetime(year, month, 1)
-        return first_day.strftime('%Y%m%d')
 
 
     @staticmethod
@@ -173,7 +168,7 @@ if __name__ == "__main__":
     print("本月第1天日期:", date_utility.first_day_of_month())
     print("本季度第一天日期:", date_utility.first_day_of_quarter())
     print("本年第一天日期:", date_utility.first_day_of_year())
-    print("-----------------------------------------------")
+    print("------------------zhangshiyang z-----------------------------")
     print("上个周最后一天日期:", date_utility.last_day_of_last_week())
     print("上个月最后一天日期:", date_utility.last_day_of_last_month())
     print("上个季度最后一天日期:", date_utility.last_day_of_last_quarter())
