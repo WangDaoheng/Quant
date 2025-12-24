@@ -32,10 +32,22 @@ class DateUtility:
 
 
     @staticmethod
-    def first_day_of_week():
+    def first_day_of_week(n=0):
+        """获取指定偏移周的第一天（周一，默认本周）"""
         today = datetime.today()
-        start_of_week = today - timedelta(days=today.weekday())
+        offset_days = -today.weekday() + n * 7
+        start_of_week = today + timedelta(days=offset_days)
         return start_of_week.strftime('%Y%m%d')
+
+
+    @staticmethod
+    def last_day_of_week(n=0):
+        """获取指定偏移周的最后一天（周日，默认本周）"""
+        today = datetime.today()
+        offset_days = (6 - today.weekday()) + n * 7
+        last_day = today + timedelta(days=offset_days)
+        return last_day.strftime('%Y%m%d')
+
 
     @staticmethod
     def first_day_of_month(n=0):
@@ -64,96 +76,48 @@ class DateUtility:
         last_day_date = datetime(year, month, last_day)
         return last_day_date.strftime('%Y%m%d')
 
-
+    # 季度相关
     @staticmethod
-    def first_day_of_quarter():
+    def first_day_of_quarter(n=0):
+        """获取指定偏移季度的第一天（默认本季度）"""
         today = datetime.today()
-        current_month = today.month
-        # Determine the first month of the current quarter
-        first_month_of_quarter = current_month - (current_month - 1) % 3
-        first_day = today.replace(month=first_month_of_quarter, day=1)
+        current_quarter = (today.month - 1) // 3 + 1
+        target_quarter = current_quarter + n
+
+        year = today.year + (target_quarter - 1) // 4
+        quarter_month = ((target_quarter - 1) % 4) * 3 + 1
+        first_day = datetime(year, quarter_month, 1)
         return first_day.strftime('%Y%m%d')
 
     @staticmethod
-    def first_day_of_year():
+    def last_day_of_quarter(n=0):
+        """获取指定偏移季度的最后一天（默认本季度）"""
         today = datetime.today()
-        first_day = today.replace(month=1, day=1)
+        current_quarter = (today.month - 1) // 3 + 1
+        target_quarter = current_quarter + n
+
+        year = today.year + (target_quarter - 1) // 4
+        quarter_month = ((target_quarter - 1) % 4) * 3 + 3
+        last_day = calendar.monthrange(year, quarter_month)[1]
+
+        last_day_date = datetime(year, quarter_month, last_day)
+        return last_day_date.strftime('%Y%m%d')
+
+
+    @staticmethod
+    def first_day_of_year(n=0):
+        """获取指定偏移年的第一天（默认本年）"""
+        today = datetime.today()
+        first_day = datetime(today.year + n, 1, 1)
         return first_day.strftime('%Y%m%d')
 
 
     @staticmethod
-    def last_day_of_week_before_n_weeks(n=0):
-        """
-        n周前的周的最后一天, n=0 就是本周的最后一天; n=1 就是上周的最后一天; n=-1 就是下1周的最后一天
-        """
+    def last_day_of_year(n=0):
+        """获取指定偏移年的最后一天（默认本年）"""
         today = datetime.today()
-        start_of_this_week = today - timedelta(days=today.weekday())
-        end_of_nth_last_week = start_of_this_week - timedelta(days=1 + (n - 1) * 7)
-        return end_of_nth_last_week.strftime('%Y%m%d')
-
-
-    @staticmethod
-    def last_day_of_quarter_before_n_quarters(n=0):
-        """
-        n季前的季的最后一天, n=0 就是本季的最后一天; n=1 就是上季的最后一天; n=-1 就是下1季的最后一天
-        """
-        today = datetime.today()
-        current_month = today.month
-        current_quarter = (current_month - 1) // 3 + 1
-        last_quarter = current_quarter - n
-        year = today.year
-        while last_quarter <= 0:
-            last_quarter += 4
-            year -= 1
-        quarter_month = (last_quarter - 1) * 3 + 3
-        last_day_of_nth_last_quarter = datetime(year, quarter_month, calendar.monthrange(year, quarter_month)[1])
-        return last_day_of_nth_last_quarter.strftime('%Y%m%d')
-
-    @staticmethod
-    def last_day_of_year_before_n_years(n):
-        """
-        n年前的年的最后一天, n=0 就是本年的最后一天; n=1 就是上年的最后一天; n=-1 就是下1年的最后一天
-        """
-        today = datetime.today()
-        last_day_of_nth_last_year = today.replace(year=today.year - n, month=12, day=31)
-        return last_day_of_nth_last_year.strftime('%Y%m%d')
-
-
-    @staticmethod
-    def first_day_of_week_after_n_weeks(n):
-        """
-        n周后的周的第一天, n=0 就是本周的第1天; n=1 就是1周后的第1天; n=-1 就是上1周的第1天
-        """
-        today = datetime.today()
-        start_of_nth_week = today + timedelta(days=(7 - today.weekday()) + (n - 1) * 7)
-        return start_of_nth_week.strftime('%Y%m%d')
-
-
-    @staticmethod
-    def first_day_of_quarter_after_n_quarters(n):
-        """
-        n季后的季的第一天, n=0 就是本季的第1天; n=1 就是1季后的第1天; n=-1 就是上1季的第1天
-        """
-        today = datetime.today()
-        current_month = today.month
-        current_quarter = (current_month - 1) // 3 + 1
-        next_quarter = current_quarter + n
-        year = today.year + (next_quarter - 1) // 4
-        quarter_month = ((next_quarter - 1) % 4) * 3 + 1
-        first_day_of_nth_quarter = datetime(year, quarter_month, 1)
-        return first_day_of_nth_quarter.strftime('%Y%m%d')
-
-
-    @staticmethod
-    def first_day_of_year_after_n_years(n):
-        """
-        n年后的年初的第一天, n=0 就是本年的第1天; n=1 就是1年后的第1天; n=-1 就是上1年的第1天
-        """
-        today = datetime.today()
-        first_day_of_nth_year = today.replace(year=today.year + n, month=1, day=1)
-        return first_day_of_nth_year.strftime('%Y%m%d')
-
-
+        last_day = datetime(today.year + n, 12, 31)
+        return last_day.strftime('%Y%m%d')
 
 
 
@@ -168,16 +132,6 @@ if __name__ == "__main__":
     print("本月第1天日期:", date_utility.first_day_of_month())
     print("本季度第一天日期:", date_utility.first_day_of_quarter())
     print("本年第一天日期:", date_utility.first_day_of_year())
-    print("------------------zhangshiyang z-----------------------------")
-    print("上个周最后一天日期:", date_utility.last_day_of_last_week())
-    print("上个月最后一天日期:", date_utility.last_day_of_last_month())
-    print("上个季度最后一天日期:", date_utility.last_day_of_last_quarter())
-    print("上年最后一天日期:", date_utility.last_day_of_last_year())
-    print("-----------------------------------------------")
-    print("下个周周一的日期:", date_utility.first_day_of_next_week())
-    print("下个月第一天日期:", date_utility.first_day_of_next_month())
-    print("下个季度第一天日期:", date_utility.first_day_of_next_quarter())
-    print("下年第一天日期:", date_utility.first_day_of_next_year())
 
 
 

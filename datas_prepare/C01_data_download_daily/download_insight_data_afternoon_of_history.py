@@ -152,7 +152,7 @@ class SaveInsightHistoryData:
         """
 
         #  1.历史数据的起止时间
-        time_start_date = DateUtility.first_day_of_year_after_n_years(-3)
+        time_start_date = DateUtility.first_day_of_year(-3)
         time_end_date = DateUtility.today()
 
         time_start_date = datetime.strptime(time_start_date, '%Y%m%d')
@@ -256,7 +256,7 @@ class SaveInsightHistoryData:
         """
 
         #  1.当月数据的起止时间
-        time_start_date = DateUtility.first_day_of_year_after_n_years(-3)
+        time_start_date = DateUtility.first_day_of_year(-3)
         time_end_date = DateUtility.today()
 
         time_start_date = datetime.strptime(time_start_date, '%Y%m%d')
@@ -360,7 +360,7 @@ class SaveInsightHistoryData:
         """
 
         #  1.当月数据的起止时间
-        start_date = DateUtility.first_day_of_year_after_n_years(-3)
+        start_date = DateUtility.first_day_of_year(-3)
         end_date = DateUtility.today()
 
         start_date = datetime.strptime(start_date, '%Y%m%d')
