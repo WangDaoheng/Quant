@@ -22,7 +22,7 @@ class FactorLibrary:
     def load_base_data(self, start_date=None, end_date=None):
         """加载基础宽表数据（DWD层）"""
         if not start_date:
-            start_date = DateUtility.first_day_of_month_before_n_months(3)  # 默认近3个月
+            start_date = DateUtility.first_day_of_month(-3)  # 默认近3个月
         if not end_date:
             end_date = DateUtility.today()
 
@@ -45,9 +45,14 @@ class FactorLibrary:
     @staticmethod
     def _fill_missing_data(df):
         """缺失值填充（复用基础逻辑）"""
+        # 定义需要填充缺失值的核心字段（这些字段是因子计算的关键）
         fill_cols = ['close', 'market_value', 'pb', 'pe', 'shareholder_num']
+        # 遍历每个需要填充的字段
         for col in fill_cols:
+            # 按股票代码分组 → 避免跨股票填充（比如不能用茅台的PB填充五粮液的PB）
+            # ffill：前向填充（用最近的非缺失值填充当前缺失值）
             df[col] = df.groupby('stock_code')[col].fillna(method='ffill')
+        # 返回填充后的完整DataFrame（保留所有原始字段）
         return df
 
     @timing_decorator
@@ -65,7 +70,7 @@ class FactorLibrary:
     def zt_factor(self, window=5, start_date=None, end_date=None):
         """情绪因子：近N日涨停数"""
         if not start_date:
-            start_date = DateUtility.first_day_of_month_before_n_months(1)
+            start_date = DateUtility.first_day_of_month(-1)
         if not end_date:
             end_date = DateUtility.today()
 
@@ -94,7 +99,7 @@ class FactorLibrary:
     def shareholder_factor(self, start_date=None, end_date=None):
         """筹码因子：股东数环比下降（筹码集中）"""
         if not start_date:
-            start_date = DateUtility.first_day_of_month_before_n_months(1)
+            start_date = DateUtility.first_day_of_month(-1)
         if not end_date:
             end_date = DateUtility.today()
 
@@ -117,7 +122,7 @@ class FactorLibrary:
     def north_bound_factor(self, quantile=0.7, start_date=None, end_date=None):
         """北向资金因子：持仓占比前30%"""
         if not start_date:
-            start_date = DateUtility.first_day_of_month_before_n_months(1)
+            start_date = DateUtility.first_day_of_month(-1)
         if not end_date:
             end_date = DateUtility.today()
 
