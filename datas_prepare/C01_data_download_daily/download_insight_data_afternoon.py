@@ -202,7 +202,7 @@ class SaveInsightData:
                                                      merge_on=['ymd', 'htsc_code'])
 
 
-    # @timing_decorator
+    @timing_decorator
     def get_stock_kline(self):
         """
         根据当日上市的stock_codes，来获得全部(去除ST|退|B)股票的历史数据

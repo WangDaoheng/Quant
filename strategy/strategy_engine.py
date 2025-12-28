@@ -95,8 +95,8 @@ class StrategyEngine:
 
 if __name__ == '__main__':
     # 1. 初始化因子库和策略引擎
-    from strategies.factor_library import FactorLibrary
-    from strategies.strategy_engine import StrategyEngine
+    from strategy.factor_library import FactorLibrary
+    from strategy.strategy_engine import StrategyEngine
 
     factor_lib = FactorLibrary()
     engine = StrategyEngine(factor_lib)
