@@ -17,7 +17,6 @@ from CommonProperties.Base_utils import timing_decorator
 from CommonProperties.set_config import setup_logging_config
 
 
-
 # 配置日志处理器
 # 调用日志配置
 setup_logging_config()
@@ -52,14 +51,9 @@ origin_host = base_properties.origin_mysql_host
 
 
 class SaveVantageData:
-
     def __init__(self):
-
         self.init_dirs()
-
         self.init_variant()
-
-
 
     def init_dirs(self):
         """
@@ -76,7 +70,6 @@ class SaveVantageData:
 
         #  文件路径_____USD 的 美元指数
         self.dir_USD_FX_base = os.path.join(self.dir_vantage_base, 'USD_FX')
-
 
 
     def init_variant(self):
@@ -347,24 +340,8 @@ class SaveVantageData:
         self.get_USD_FX_from_vantage()
 
 
-
-
-
 if __name__ == '__main__':
     save_vantage_data = SaveVantageData()
     save_vantage_data.setup()
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 

@@ -23,86 +23,83 @@ class StockBacktestEngine:
         # 初始化因子库
         self.factor_lib = FactorLibrary()
 
-    @timing_decorator  # 复用你的计时装饰器
+    @timing_decorator
     def _prepare_feed(self, stock_code, start_date, end_date):
         """
-        准备Backtrader数据馈送：复用Mysql_Utils读取数据
-        :param stock_code: 股票代码（如600000）
-        :param start_date: 开始日期（YYYYMMDD）
-        :param end_date: 结束日期（YYYYMMDD）
-        :return: Backtrader PandasData对象
+        准备Backtrader数据馈送
         """
         try:
-            # 1. 复用你的Mysql_Utils读取K线数据
-            kline_df = Mysql_Utils.data_from_mysql_to_dataframe(
-                user=self.user,
-                password=self.password,
-                host=self.host,
-                database=self.database,
-                table_name='ods_stock_kline_daily_insight',
+            # 使用factor_lib获取K线数据
+            kline_df = self.factor_lib.get_stock_kline_data(
+                stock_code=stock_code,
                 start_date=start_date,
-                end_date=end_date,
-                cols=['htsc_code', 'ymd', 'open', 'close', 'high', 'low', 'volume']
+                end_date=end_date
             )
-
-            # 2. 股票代码格式适配（去除.SH/.SZ后缀）
-            if '.' in stock_code:
-                stock_code = stock_code.split('.')[0]
-            kline_df = kline_df[kline_df['htsc_code'].str.startswith(stock_code)]
 
             if kline_df.empty:
                 logger.warning(f"股票[{stock_code}]在{start_date}-{end_date}无数据")
                 return None
 
-            # 3. 复用你的日期格式化函数
-            kline_df = convert_ymd_format(kline_df, 'ymd')
+            # 数据格式转换
             kline_df['ymd'] = pd.to_datetime(kline_df['ymd'])
+            kline_df = kline_df.set_index('ymd')
+            kline_df.index.name = 'datetime'
+
+            # 确保列名正确
             kline_df = kline_df.rename(columns={
-                'ymd': 'datetime',
-                'htsc_code': 'stock_code',
                 'open': 'open',
                 'high': 'high',
                 'low': 'low',
                 'close': 'close',
                 'volume': 'volume'
-            }).set_index('datetime')
+            })
 
-            # 4. 转换为Backtrader数据格式
+            # 转换为Backtrader数据格式
             feed = bt.feeds.PandasData(dataname=kline_df)
             return feed
         except Exception as e:
             logger.error(f"准备{stock_code}数据失败：{str(e)}")
             return None
 
+
     @timing_decorator
     def get_factor_value(self, stock_code, date, factor_type='pb'):
         """
         查询指定股票/日期的因子信号
-        :param stock_code: 股票代码
-        :param date: 日期（datetime.date格式）
-        :param factor_type: 因子类型（pb/zt/shareholder/north）
-        :return: 因子信号（True/False）
         """
         try:
             date_str = date.strftime('%Y%m%d')
 
+            # 清理股票代码格式
+            stock_code_clean = stock_code.split('.')[0] if '.' in stock_code else stock_code
+
             if factor_type == 'pb':
-                # PB因子：低PB返回True
+                # PB因子
                 pb_df = self.factor_lib.pb_factor(start_date=date_str, end_date=date_str)
-                pb_df = pb_df[pb_df['stock_code'].str.startswith(stock_code)]
-                return pb_df['pb_signal'].iloc[0] if not pb_df.empty else False
+                if not pb_df.empty:
+                    # 精确匹配股票代码
+                    pb_df_filtered = pb_df[pb_df['stock_code'] == stock_code_clean]
+                    if not pb_df_filtered.empty:
+                        return bool(pb_df_filtered['pb_signal'].iloc[0])
+                return False
 
             elif factor_type == 'zt':
-                # 涨停因子：近5日涨停返回True
+                # 涨停因子
                 zt_df = self.factor_lib.zt_factor(start_date=date_str, end_date=date_str)
-                zt_df = zt_df[zt_df['stock_code'].str.startswith(stock_code)]
-                return zt_df['zt_signal'].iloc[0] if not zt_df.empty else False
+                if not zt_df.empty:
+                    zt_df_filtered = zt_df[zt_df['stock_code'] == stock_code_clean]
+                    if not zt_df_filtered.empty:
+                        return bool(zt_df_filtered['zt_signal'].iloc[0])
+                return False
 
             elif factor_type == 'shareholder':
-                # 筹码因子：股东数下降返回True
+                # 筹码因子
                 shareholder_df = self.factor_lib.shareholder_factor(start_date=date_str, end_date=date_str)
-                shareholder_df = shareholder_df[shareholder_df['stock_code'].str.startswith(stock_code)]
-                return shareholder_df['shareholder_signal'].iloc[0] if not shareholder_df.empty else False
+                if not shareholder_df.empty:
+                    shareholder_df_filtered = shareholder_df[shareholder_df['stock_code'] == stock_code_clean]
+                    if not shareholder_df_filtered.empty:
+                        return bool(shareholder_df_filtered['shareholder_signal'].iloc[0])
+                return False
 
             else:
                 logger.warning(f"不支持的因子类型：{factor_type}")

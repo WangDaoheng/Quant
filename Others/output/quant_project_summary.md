@@ -1,16 +1,16 @@
 # 量化工程V1.0 代码梳理文档
-*生成时间: 2025-12-29 10:18:50*
+*生成时间: 2026-01-04 16:57:05*
 
 ## 项目统计信息
 - 项目根目录: F:\Quant\Backtrader_PJ1
-- 总文件数: 47
-- Python文件数: 41
+- 总文件数: 48
+- Python文件数: 42
 - SQL文件数: 4
 - Shell文件数: 1
 - 有效目录数: 15
 
 # Backtrader_PJ1 项目目录结构
-*生成时间: 2025-12-29 10:18:50*
+*生成时间: 2026-01-04 16:57:05*
 
 📁 Backtrader_PJ1/
     📄 main.py
@@ -61,6 +61,7 @@
             📄 res_show.py
         📁 C06_data_transfer/
             📄 __init__.py
+            📄 get_example_tables.py
             📄 put_df_to_mysql.py
             📄 transfer_between_local_and_originMySQL.py
     📁 monitor/
@@ -213,86 +214,83 @@ class StockBacktestEngine:
         # 初始化因子库
         self.factor_lib = FactorLibrary()
 
-    @timing_decorator  # 复用你的计时装饰器
+    @timing_decorator
     def _prepare_feed(self, stock_code, start_date, end_date):
         """
-        准备Backtrader数据馈送：复用Mysql_Utils读取数据
-        :param stock_code: 股票代码（如600000）
-        :param start_date: 开始日期（YYYYMMDD）
-        :param end_date: 结束日期（YYYYMMDD）
-        :return: Backtrader PandasData对象
+        准备Backtrader数据馈送
         """
         try:
-            # 1. 复用你的Mysql_Utils读取K线数据
-            kline_df = Mysql_Utils.data_from_mysql_to_dataframe(
-                user=self.user,
-                password=self.password,
-                host=self.host,
-                database=self.database,
-                table_name='ods_stock_kline_daily_insight',
+            # 使用factor_lib获取K线数据
+            kline_df = self.factor_lib.get_stock_kline_data(
+                stock_code=stock_code,
                 start_date=start_date,
-                end_date=end_date,
-                cols=['htsc_code', 'ymd', 'open', 'close', 'high', 'low', 'volume']
+                end_date=end_date
             )
-
-            # 2. 股票代码格式适配（去除.SH/.SZ后缀）
-            if '.' in stock_code:
-                stock_code = stock_code.split('.')[0]
-            kline_df = kline_df[kline_df['htsc_code'].str.startswith(stock_code)]
 
             if kline_df.empty:
                 logger.warning(f"股票[{stock_code}]在{start_date}-{end_date}无数据")
                 return None
 
-            # 3. 复用你的日期格式化函数
-            kline_df = convert_ymd_format(kline_df, 'ymd')
+            # 数据格式转换
             kline_df['ymd'] = pd.to_datetime(kline_df['ymd'])
+            kline_df = kline_df.set_index('ymd')
+            kline_df.index.name = 'datetime'
+
+            # 确保列名正确
             kline_df = kline_df.rename(columns={
-                'ymd': 'datetime',
-                'htsc_code': 'stock_code',
                 'open': 'open',
                 'high': 'high',
                 'low': 'low',
                 'close': 'close',
                 'volume': 'volume'
-            }).set_index('datetime')
+            })
 
-            # 4. 转换为Backtrader数据格式
+            # 转换为Backtrader数据格式
             feed = bt.feeds.PandasData(dataname=kline_df)
             return feed
         except Exception as e:
             logger.error(f"准备{stock_code}数据失败：{str(e)}")
             return None
 
+
     @timing_decorator
     def get_factor_value(self, stock_code, date, factor_type='pb'):
         """
         查询指定股票/日期的因子信号
-        :param stock_code: 股票代码
-        :param date: 日期（datetime.date格式）
-        :param factor_type: 因子类型（pb/zt/shareholder/north）
-        :return: 因子信号（True/False）
         """
         try:
             date_str = date.strftime('%Y%m%d')
 
+            # 清理股票代码格式
+            stock_code_clean = stock_code.split('.')[0] if '.' in stock_code else stock_code
+
             if factor_type == 'pb':
-                # PB因子：低PB返回True
+                # PB因子
                 pb_df = self.factor_lib.pb_factor(start_date=date_str, end_date=date_str)
-                pb_df = pb_df[pb_df['stock_code'].str.startswith(stock_code)]
-                return pb_df['pb_signal'].iloc[0] if not pb_df.empty else False
+                if not pb_df.empty:
+                    # 精确匹配股票代码
+                    pb_df_filtered = pb_df[pb_df['stock_code'] == stock_code_clean]
+                    if not pb_df_filtered.empty:
+                        return bool(pb_df_filtered['pb_signal'].iloc[0])
+                return False
 
             elif factor_type == 'zt':
-                # 涨停因子：近5日涨停返回True
+                # 涨停因子
                 zt_df = self.factor_lib.zt_factor(start_date=date_str, end_date=date_str)
-                zt_df = zt_df[zt_df['stock_code'].str.startswith(stock_code)]
-                return zt_df['zt_signal'].iloc[0] if not zt_df.empty else False
+                if not zt_df.empty:
+                    zt_df_filtered = zt_df[zt_df['stock_code'] == stock_code_clean]
+                    if not zt_df_filtered.empty:
+                        return bool(zt_df_filtered['zt_signal'].iloc[0])
+                return False
 
             elif factor_type == 'shareholder':
-                # 筹码因子：股东数下降返回True
+                # 筹码因子
                 shareholder_df = self.factor_lib.shareholder_factor(start_date=date_str, end_date=date_str)
-                shareholder_df = shareholder_df[shareholder_df['stock_code'].str.startswith(stock_code)]
-                return shareholder_df['shareholder_signal'].iloc[0] if not shareholder_df.empty else False
+                if not shareholder_df.empty:
+                    shareholder_df_filtered = shareholder_df[shareholder_df['stock_code'] == stock_code_clean]
+                    if not shareholder_df_filtered.empty:
+                        return bool(shareholder_df_filtered['shareholder_signal'].iloc[0])
+                return False
 
             else:
                 logger.warning(f"不支持的因子类型：{factor_type}")
@@ -7704,6 +7702,388 @@ if __name__ == '__main__':
 ```
 
 --------------------------------------------------------------------------------
+## datas_prepare\C06_data_transfer\get_example_tables.py
+
+```python
+# export_table_samples_full.py
+import os
+import pandas as pd
+import logging
+from datetime import datetime
+from sqlalchemy import create_engine, text
+import CommonProperties.Base_Properties as Base_Properties
+from CommonProperties.set_config import setup_logging_config
+
+# 配置日志
+setup_logging_config()
+logger = logging.getLogger(__name__)
+
+
+class TableDataExporterFull:
+    """导出数据库表数据样例到单个文件 - 显示完整数据"""
+
+    def __init__(self):
+        # 使用您的MySQL配置
+        self.user = Base_Properties.origin_mysql_user
+        self.password = Base_Properties.origin_mysql_password
+        self.host = Base_Properties.origin_mysql_host
+        self.database = Base_Properties.origin_mysql_database
+
+        # 输出文件
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        self.output_file = f"quant_tables_full_{timestamp}.txt"
+
+        print(f"数据库配置:")
+        print(f"  主机: {self.host}")
+        print(f"  数据库: {self.database}")
+        print(f"  用户: {self.user}")
+        print("-" * 50)
+
+    def test_connection(self):
+        """测试数据库连接"""
+        try:
+            db_url = f'mysql+pymysql://{self.user}:{self.password}@{self.host}:3306/{self.database}'
+            engine = create_engine(db_url)
+            with engine.connect() as connection:
+                result = connection.execute(text("SELECT 1"))
+                print("✓ 数据库连接成功")
+                return True
+        except Exception as e:
+            print(f"✗ 数据库连接失败: {str(e)}")
+            return False
+
+    def get_all_tables(self):
+        """获取数据库中的所有表名"""
+        try:
+            db_url = f'mysql+pymysql://{self.user}:{self.password}@{self.host}:3306/{self.database}'
+            engine = create_engine(db_url)
+
+            print("正在获取表列表...")
+
+            # 使用SHOW TABLES
+            with engine.connect() as connection:
+                result = connection.execute(text("SHOW TABLES"))
+                tables = [row[0] for row in result]
+
+            print(f"✓ 找到 {len(tables)} 张表")
+            return tables
+
+        except Exception as e:
+            print(f"✗ 获取表列表失败: {str(e)}")
+            return []
+
+    def get_table_info(self, table_name):
+        """获取表的完整信息"""
+        try:
+            db_url = f'mysql+pymysql://{self.user}:{self.password}@{self.host}:3306/{self.database}'
+            engine = create_engine(db_url)
+
+            info = {
+                'table_name': table_name,
+                'structure': None,
+                'sample_data': None,
+                'row_count': 0,
+                'column_count': 0
+            }
+
+            with engine.connect() as connection:
+                # 1. 获取表结构
+                try:
+                    result = connection.execute(text(f"SHOW CREATE TABLE `{table_name}`"))
+                    create_table_sql = result.fetchone()[1]
+                    info['create_sql'] = create_table_sql
+                except:
+                    info['create_sql'] = None
+
+                # 2. 获取表描述
+                try:
+                    result = connection.execute(text(f"DESCRIBE `{table_name}`"))
+                    columns_info = []
+                    for row in result:
+                        col_info = {
+                            'Field': row[0],
+                            'Type': row[1],
+                            'Null': row[2],
+                            'Key': row[3],
+                            'Default': row[4],
+                            'Extra': row[5] if len(row) > 5 else ''
+                        }
+                        columns_info.append(col_info)
+                    info['structure'] = columns_info
+                    info['column_count'] = len(columns_info)
+                except:
+                    pass
+
+                # 3. 获取行数
+                try:
+                    result = connection.execute(text(f"SELECT COUNT(*) FROM `{table_name}`"))
+                    info['row_count'] = result.fetchone()[0]
+                except:
+                    pass
+
+                # 4. 获取样例数据（最多5行）
+                if info['row_count'] > 0:
+                    try:
+                        limit = min(5, info['row_count'])
+                        query = text(f"SELECT * FROM `{table_name}` LIMIT {limit}")
+                        df = pd.read_sql(query, connection)
+                        info['sample_data'] = df
+                    except:
+                        pass
+
+            return info
+
+        except Exception as e:
+            print(f"  表 {table_name} 信息获取失败: {str(e)[:50]}...")
+            return None
+
+    def write_table_info(self, f, table_info, table_num, total_tables):
+        """写入单个表的完整信息到文件"""
+        if not table_info:
+            return
+
+        table_name = table_info['table_name']
+
+        f.write(f"\n【表 {table_num}/{total_tables}】{table_name}\n")
+        f.write("=" * 100 + "\n")
+
+        # 1. 基本信息
+        f.write(f"基本信息:\n")
+        f.write(f"  行数: {table_info.get('row_count', '未知')}\n")
+        f.write(f"  列数: {table_info.get('column_count', '未知')}\n")
+        f.write("\n")
+
+        # 2. 表结构（完整）
+        if table_info.get('structure'):
+            f.write("表结构（完整）:\n")
+            f.write("-" * 80 + "\n")
+            f.write(f"{'字段名':<20} {'类型':<20} {'可空':<5} {'键':<5} {'默认值':<15} {'额外':<10}\n")
+            f.write("-" * 80 + "\n")
+            for col in table_info['structure']:
+                field = col.get('Field', '')
+                type_ = col.get('Type', '')
+                null = col.get('Null', '')
+                key = col.get('Key', '')
+                default = str(col.get('Default', '')) if col.get('Default') is not None else 'NULL'
+                extra = col.get('Extra', '')
+
+                f.write(f"{field:<20} {type_:<20} {null:<5} {key:<5} {default:<15} {extra:<10}\n")
+        f.write("\n")
+
+        # 3. 样例数据（完整显示所有列）
+        if table_info.get('sample_data') is not None and not table_info['sample_data'].empty:
+            df = table_info['sample_data']
+            f.write(f"数据样例（前{len(df)}行，完整列）:\n")
+            f.write("-" * 80 + "\n")
+
+            # 显示所有列名
+            columns = df.columns.tolist()
+            f.write(f"所有列({len(columns)}个):\n")
+            for i, col in enumerate(columns, 1):
+                f.write(f"  {i:2d}. {col}\n")
+            f.write("\n")
+
+            # 显示数据（表格格式）
+            # 设置pandas显示选项
+            pd.set_option('display.max_columns', None)
+            pd.set_option('display.width', None)
+            pd.set_option('display.max_colwidth', 50)
+
+            # 转换为字符串
+            data_str = df.to_string(index=False)
+
+            # 如果数据太长，分块显示
+            if len(data_str) > 5000:
+                f.write("数据预览（前5000字符）:\n")
+                f.write(data_str[:5000])
+                f.write(f"\n... (数据过长，已截断，原始{len(data_str)}字符)\n")
+            else:
+                f.write(data_str)
+        else:
+            f.write("数据样例: 表为空或无法读取数据\n")
+
+        f.write("\n" * 2)
+
+    def export_important_tables(self):
+        """导出重要的表（按前缀筛选）"""
+        print("开始导出数据库表信息...")
+
+        # 测试连接
+        if not self.test_connection():
+            return
+
+        # 获取所有表
+        tables = self.get_all_tables()
+        if not tables:
+            print("错误：数据库中没有找到任何表")
+            return
+
+        # 按重要性筛选表（先导出关键表）
+        important_prefixes = ['ods_', 'dwd_', 'dmart_', 'dwt_']
+        important_tables = []
+        other_tables = []
+
+        for table in tables:
+            is_important = False
+            for prefix in important_prefixes:
+                if table.startswith(prefix):
+                    important_tables.append(table)
+                    is_important = True
+                    break
+            if not is_important:
+                other_tables.append(table)
+
+        print(f"找到 {len(tables)} 张表，其中:")
+        print(f"  重要表（ods/dwd/dmart）: {len(important_tables)} 张")
+        print(f"  其他表: {len(other_tables)} 张")
+
+        # 询问用户要导出哪些表
+        print("\n导出选项:")
+        print("1. 只导出重要表（ods/dwd/dmart开头）")
+        print("2. 导出所有表")
+        print("3. 导出指定前缀的表")
+
+        choice = input("请选择 (1/2/3, 默认1): ").strip()
+
+        if choice == '2':
+            tables_to_export = important_tables + other_tables
+        elif choice == '3':
+            prefix = input("请输入表前缀 (如 ods_): ").strip()
+            tables_to_export = [t for t in tables if t.startswith(prefix)]
+            if not tables_to_export:
+                print(f"没有以 {prefix} 开头的表")
+                return
+        else:  # 默认选择1
+            tables_to_export = important_tables
+
+        print(f"\n开始导出 {len(tables_to_export)} 张表...")
+
+        with open(self.output_file, 'w', encoding='utf-8') as f:
+            # 写入文件头
+            f.write("QUANT数据库表结构及数据样例报告（完整版）\n")
+            f.write("=" * 100 + "\n")
+            f.write(f"生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+            f.write(f"数据库: {self.database} @ {self.host}\n")
+            f.write(f"总表数: {len(tables)}\n")
+            f.write(f"本次导出表数: {len(tables_to_export)}\n")
+            f.write("=" * 100 + "\n\n")
+
+            # 表目录
+            f.write("导出表目录:\n")
+            for i, table in enumerate(tables_to_export, 1):
+                f.write(f"{i:3d}. {table}\n")
+            f.write("\n" + "=" * 100 + "\n\n")
+
+            # 按前缀分组导出
+            table_groups = {}
+            for table in tables_to_export:
+                if '_' in table:
+                    prefix = table.split('_')[0]
+                else:
+                    prefix = '其他'
+                if prefix not in table_groups:
+                    table_groups[prefix] = []
+                table_groups[prefix].append(table)
+
+            # 导出每个表
+            total_exported = 0
+            for prefix in sorted(table_groups.keys()):
+                f.write(f"\n【{prefix.upper()}层】({len(table_groups[prefix])}张表)\n")
+                f.write("=" * 80 + "\n\n")
+
+                group_tables = sorted(table_groups[prefix])
+                for i, table in enumerate(group_tables, 1):
+                    print(f"处理: {table} ({total_exported + 1}/{len(tables_to_export)})")
+
+                    try:
+                        # 获取表信息
+                        table_info = self.get_table_info(table)
+
+                        if table_info:
+                            # 写入文件
+                            self.write_table_info(f, table_info, total_exported + 1, len(tables_to_export))
+                            total_exported += 1
+
+                    except Exception as e:
+                        f.write(f"处理表 {table} 时出错: {str(e)[:100]}...\n\n")
+                    print(f"  完成")
+
+        # 完成提示
+        if os.path.exists(self.output_file):
+            file_size = os.path.getsize(self.output_file) / 1024  # KB
+            print("\n" + "=" * 60)
+            print("导出完成！")
+            print("=" * 60)
+            print(f"输出文件: {self.output_file}")
+            print(f"文件大小: {file_size:.1f} KB")
+            print(f"导出表数: {total_exported}/{len(tables_to_export)}")
+            print("=" * 60)
+
+            # 显示文件内容建议
+            print("\n文件内容包含:")
+            print("1. 完整的表结构（所有字段、类型、可空、默认值等）")
+            print("2. 完整的数据样例（所有列，最多5行）")
+            print("3. 每个表的基本信息（行数、列数）")
+
+            if file_size > 200:
+                print(f"\n⚠️  文件较大 ({file_size:.1f}KB)，建议:")
+                print("1. 用Notepad++或VSCode打开查看")
+                print("2. 可以分多次发送内容")
+                print("3. 或压缩后发送文件")
+            else:
+                print(f"\n✓ 文件大小合适 ({file_size:.1f}KB)，可直接复制粘贴")
+
+            # 显示文件头
+            print("\n文件开头预览:")
+            print("-" * 60)
+            try:
+                with open(self.output_file, 'r', encoding='utf-8') as f:
+                    lines = []
+                    for i in range(50):  # 显示前50行
+                        line = f.readline()
+                        if not line:
+                            break
+                        lines.append(line.rstrip())
+
+                    for line in lines[:30]:  # 只显示前30行避免太长
+                        if len(line) > 100:
+                            print(line[:97] + "...")
+                        else:
+                            print(line)
+
+                    if len(lines) > 30:
+                        print("... (还有更多内容)")
+            except Exception as e:
+                print(f"预览失败: {str(e)}")
+
+            print("\n" + "=" * 60)
+            print("操作说明:")
+            print("1. 打开文件，复制需要的内容发送给我")
+            print("2. 重要表优先：ods_*, dwd_*, dmart_*")
+            print("=" * 60)
+        else:
+            print("错误：文件未生成")
+
+
+def main():
+    """主函数"""
+    print("QUANT数据库表结构导出工具（完整版）")
+    print("=" * 60)
+    print("本工具将导出完整的表结构和数据")
+    print("=" * 60)
+
+    # 创建导出器
+    exporter = TableDataExporterFull()
+
+    # 导出表
+    exporter.export_important_tables()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+--------------------------------------------------------------------------------
 ## datas_prepare\C06_data_transfer\put_df_to_mysql.py
 
 ```python
@@ -8725,6 +9105,7 @@ __all__ = ['FactorLibrary']
 ## strategy\factor_library.py
 
 ```python
+# strategy/factor_library.py
 import pandas as pd
 import logging
 from CommonProperties import Mysql_Utils
@@ -8732,8 +9113,10 @@ from CommonProperties.Base_utils import timing_decorator, convert_ymd_format
 
 logger = logging.getLogger(__name__)
 
+
 class FactorLibrary:
-    """因子计算库：基于MySQL数据计算PB/涨停/筹码等因子"""
+    """因子计算库：基于现有MySQL数据计算PB/涨停/筹码等因子"""
+
     def __init__(self):
         # 复用MySQL配置
         self.user = Mysql_Utils.origin_user
@@ -8745,79 +9128,96 @@ class FactorLibrary:
     def pb_factor(self, start_date, end_date, pb_percentile=0.3):
         """
         计算PB因子：低于30分位数的股票标记为True
-        :param start_date: 开始日期（YYYYMMDD）
-        :param end_date: 结束日期（YYYYMMDD）
-        :param pb_percentile: 分位数阈值
-        :return: 包含stock_code和pb_signal的DataFrame
+        使用 dwd_ashare_stock_base_info 表
         """
         try:
-            # 从MART层读取PB数据
+            # 从DWD层读取PB数据
             pb_df = Mysql_Utils.data_from_mysql_to_dataframe(
                 user=self.user,
                 password=self.password,
                 host=self.host,
                 database=self.database,
-                table_name='mart_stock_financial_indicator_daily',
+                table_name='dwd_ashare_stock_base_info',  # 使用现有表
                 start_date=start_date,
                 end_date=end_date,
-                cols=['htsc_code', 'ymd', 'pb']
+                cols=['ymd', 'stock_code', 'pb']
             )
+
+            if pb_df.empty:
+                logger.warning(f"PB因子数据为空: {start_date}~{end_date}")
+                return pd.DataFrame(columns=['stock_code', 'ymd', 'pb', 'pb_signal'])
 
             # 数据预处理
             pb_df = convert_ymd_format(pb_df, 'ymd')
-            pb_df.rename(columns={'htsc_code': 'stock_code'}, inplace=True)
+            pb_df = pb_df.dropna(subset=['pb'])
+
+            # 转换pb列为数值类型
+            try:
+                pb_df['pb'] = pd.to_numeric(pb_df['pb'], errors='coerce')
+            except:
+                # 如果pb列是字符串，尝试提取数值
+                pb_df['pb'] = pb_df['pb'].astype(str).str.extract(r'([\d\.]+)')[0].astype(float)
+
             pb_df = pb_df.dropna(subset=['pb'])
 
             # 计算分位数，标记低PB股票
-            pb_threshold = pb_df['pb'].quantile(pb_percentile)
-            pb_df['pb_signal'] = pb_df['pb'] < pb_threshold
+            if len(pb_df) > 0:
+                pb_threshold = pb_df['pb'].quantile(pb_percentile)
+                pb_df['pb_signal'] = pb_df['pb'] < pb_threshold
+            else:
+                pb_df['pb_signal'] = False
 
-            logger.info(f"PB因子计算完成：共{len(pb_df)}只股票，低PB股票{pb_df['pb_signal'].sum()}只")
+            logger.info(f"PB因子计算完成：共{len(pb_df)}只股票")
             return pb_df[['stock_code', 'ymd', 'pb', 'pb_signal']]
         except Exception as e:
             logger.error(f"计算PB因子失败：{str(e)}")
             return pd.DataFrame(columns=['stock_code', 'ymd', 'pb', 'pb_signal'])
 
     @timing_decorator
-    def zt_factor(self, start_date, end_date, days=5):
+    def zt_factor(self, start_date, end_date, lookback_days=5):
         """
-        计算涨停因子：近5日有涨停的股票标记为True
-        :param start_date: 开始日期（YYYYMMDD）
-        :param end_date: 结束日期（YYYYMMDD）
-        :param days: 统计天数
-        :return: 包含stock_code和zt_signal的DataFrame
+        计算涨停因子：近N日有涨停的股票标记为True
+        使用 dwd_stock_zt_list 表
         """
         try:
-            # 从DWD层读取价格数据
-            price_df = Mysql_Utils.data_from_mysql_to_dataframe(
+            # 从DWD层读取涨停数据
+            zt_df = Mysql_Utils.data_from_mysql_to_dataframe(
                 user=self.user,
                 password=self.password,
                 host=self.host,
                 database=self.database,
-                table_name='dwd_stock_price_daily',
+                table_name='dwd_stock_zt_list',  # 使用现有表
                 start_date=start_date,
                 end_date=end_date,
-                cols=['htsc_code', 'ymd', 'close', 'pct_change']
+                cols=['ymd', 'stock_code']
             )
 
+            if zt_df.empty:
+                logger.warning(f"涨停因子数据为空: {start_date}~{end_date}")
+                return pd.DataFrame(columns=['stock_code', 'ymd', 'zt_signal'])
+
             # 数据预处理
-            price_df = convert_ymd_format(price_df, 'ymd')
-            price_df.rename(columns={'htsc_code': 'stock_code'}, inplace=True)
-            price_df = price_df.dropna(subset=['pct_change'])
+            zt_df = convert_ymd_format(zt_df, 'ymd')
+            zt_df['ymd'] = pd.to_datetime(zt_df['ymd'])
 
-            # 定义涨停阈值（A股涨停为9.8%以上）
-            zt_threshold = 9.8
-            price_df['is_zt'] = price_df['pct_change'] >= zt_threshold
+            # 按股票分组，找到每个股票的最新涨停日期
+            latest_zt = zt_df.groupby('stock_code')['ymd'].max().reset_index()
+            latest_zt['zt_signal'] = True
+            latest_zt = latest_zt.rename(columns={'ymd': 'latest_zt_date'})
 
-            # 按股票分组，判断近days天是否有涨停
-            zt_df = price_df.groupby('stock_code').agg({
-                'is_zt': 'any',
-                'ymd': 'last'
-            }).reset_index()
-            zt_df.rename(columns={'is_zt': 'zt_signal'}, inplace=True)
+            # 获取查询结束日期
+            end_date_dt = pd.to_datetime(end_date, format='%Y%m%d')
 
-            logger.info(f"涨停因子计算完成：共{len(zt_df)}只股票，涨停股票{zt_df['zt_signal'].sum()}只")
-            return zt_df[['stock_code', 'ymd', 'zt_signal']]
+            # 计算每个股票最新涨停日距离查询结束日的天数
+            latest_zt['days_since_zt'] = (end_date_dt - latest_zt['latest_zt_date']).dt.days
+
+            # 近lookback_days天有涨停的标记为True
+            latest_zt['zt_signal'] = latest_zt['days_since_zt'] <= lookback_days
+
+            logger.info(f"涨停因子计算完成：共{len(latest_zt)}只股票，"
+                        f"近{lookback_days}天涨停{latest_zt['zt_signal'].sum()}只")
+
+            return latest_zt[['stock_code', 'latest_zt_date', 'zt_signal']]
         except Exception as e:
             logger.error(f"计算涨停因子失败：{str(e)}")
             return pd.DataFrame(columns=['stock_code', 'ymd', 'zt_signal'])
@@ -8826,42 +9226,89 @@ class FactorLibrary:
     def shareholder_factor(self, start_date, end_date):
         """
         计算筹码因子：股东数环比下降的股票标记为True
-        :param start_date: 开始日期（YYYYMMDD）
-        :param end_date: 结束日期（YYYYMMDD）
-        :return: 包含stock_code和shareholder_signal的DataFrame
+        使用 ods_shareholder_num 表
         """
         try:
-            # 从MART层读取股东数据
+            # 从ODS层读取股东数据
             shareholder_df = Mysql_Utils.data_from_mysql_to_dataframe(
                 user=self.user,
                 password=self.password,
                 host=self.host,
                 database=self.database,
-                table_name='mart_stock_shareholder_daily',
+                table_name='ods_shareholder_num',  # 使用现有表
                 start_date=start_date,
                 end_date=end_date,
-                cols=['htsc_code', 'ymd', 'shareholder_count']
+                cols=['htsc_code', 'ymd', 'total_sh', 'pct_of_total_sh']
             )
+
+            if shareholder_df.empty:
+                logger.warning(f"股东因子数据为空: {start_date}~{end_date}")
+                return pd.DataFrame(columns=['stock_code', 'ymd', 'total_sh', 'shareholder_signal'])
 
             # 数据预处理
             shareholder_df = convert_ymd_format(shareholder_df, 'ymd')
             shareholder_df.rename(columns={'htsc_code': 'stock_code'}, inplace=True)
-            shareholder_df = shareholder_df.dropna(subset=['shareholder_count'])
 
-            # 按股票分组，计算股东数环比变化
-            shareholder_df = shareholder_df.sort_values(['stock_code', 'ymd'])
-            shareholder_df['prev_count'] = shareholder_df.groupby('stock_code')['shareholder_count'].shift(1)
-            shareholder_df['shareholder_change'] = (shareholder_df['shareholder_count'] - shareholder_df['prev_count']) / shareholder_df['prev_count']
-            shareholder_df['shareholder_signal'] = shareholder_df['shareholder_change'] < 0  # 股东数下降
+            # 清理股票代码格式（移除后缀）
+            shareholder_df['stock_code'] = shareholder_df['stock_code'].astype(str)
+            shareholder_df['stock_code'] = shareholder_df['stock_code'].str.split('.').str[0]
 
-            # 去重，保留最新数据
-            shareholder_df = shareholder_df.drop_duplicates('stock_code', keep='last')
+            # 转换数据为数值类型
+            shareholder_df['total_sh'] = pd.to_numeric(shareholder_df['total_sh'], errors='coerce')
+            shareholder_df['pct_of_total_sh'] = pd.to_numeric(shareholder_df['pct_of_total_sh'], errors='coerce')
+            shareholder_df = shareholder_df.dropna(subset=['total_sh', 'pct_of_total_sh'])
 
-            logger.info(f"筹码因子计算完成：共{len(shareholder_df)}只股票，股东数下降{shareholder_df['shareholder_signal'].sum()}只")
-            return shareholder_df[['stock_code', 'ymd', 'shareholder_count', 'shareholder_signal']]
+            # 按股票分组，找到最新数据
+            shareholder_df = shareholder_df.sort_values(['stock_code', 'ymd'], ascending=[True, False])
+            latest_data = shareholder_df.drop_duplicates('stock_code', keep='first')
+
+            # 股东数环比下降标记为True
+            latest_data['shareholder_signal'] = latest_data['pct_of_total_sh'] < 0
+
+            logger.info(f"筹码因子计算完成：共{len(latest_data)}只股票，"
+                        f"股东数下降{latest_data['shareholder_signal'].sum()}只")
+
+            return latest_data[['stock_code', 'ymd', 'total_sh', 'pct_of_total_sh', 'shareholder_signal']]
         except Exception as e:
             logger.error(f"计算筹码因子失败：{str(e)}")
-            return pd.DataFrame(columns=['stock_code', 'ymd', 'shareholder_count', 'shareholder_signal'])
+            return pd.DataFrame(columns=['stock_code', 'ymd', 'total_sh', 'shareholder_signal'])
+
+    @timing_decorator
+    def get_stock_kline_data(self, stock_code, start_date, end_date):
+        """
+        获取股票K线数据（用于回测）
+        使用 ods_stock_kline_daily_insight 表
+        """
+        try:
+            # 处理股票代码格式
+            stock_code_clean = stock_code.split('.')[0] if '.' in stock_code else stock_code
+
+            # 读取K线数据
+            kline_df = Mysql_Utils.data_from_mysql_to_dataframe(
+                user=self.user,
+                password=self.password,
+                host=self.host,
+                database=self.database,
+                table_name='ods_stock_kline_daily_insight',
+                start_date=start_date,
+                end_date=end_date,
+                cols=['htsc_code', 'ymd', 'open', 'high', 'low', 'close', 'volume']
+            )
+
+            if kline_df.empty:
+                return pd.DataFrame()
+
+            # 过滤指定股票代码
+            kline_df = kline_df[kline_df['htsc_code'].str.contains(stock_code_clean)]
+
+            # 数据预处理
+            kline_df = convert_ymd_format(kline_df, 'ymd')
+            kline_df.rename(columns={'htsc_code': 'stock_code'}, inplace=True)
+
+            return kline_df
+        except Exception as e:
+            logger.error(f"获取K线数据失败 {stock_code}: {str(e)}")
+            return pd.DataFrame()
 ```
 
 --------------------------------------------------------------------------------

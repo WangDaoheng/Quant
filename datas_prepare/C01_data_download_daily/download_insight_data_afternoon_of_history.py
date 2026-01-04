@@ -427,7 +427,6 @@ class SaveInsightHistoryData:
                                                      table_name="ods_stock_limit_summary_insight",
                                                      merge_on=['ymd', 'name'])
 
-
     @timing_decorator
     def get_future_inside(self):
         """
@@ -683,7 +682,6 @@ class SaveInsightHistoryData:
 
         #  个股股东数
         self.get_shareholder_north_bound_num()
-
 
 
 if __name__ == '__main__':

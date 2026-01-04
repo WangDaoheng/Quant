@@ -181,22 +181,13 @@ def send_log_via_email():
 
     # 关闭连接
     server.quit()
-
     logging.info("邮件发送成功！")
-
-
-
-
-
-
-
 
 
 
 if __name__ == '__main__':
 
     # send_log_via_email()
-
     sender_email = '19801322932@139.com'
     sender_password = '04b78b87377067e47800'
 

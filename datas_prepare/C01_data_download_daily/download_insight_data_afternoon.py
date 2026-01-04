@@ -518,7 +518,7 @@ class SaveInsightData:
             logging.info('    get_limit_summary 的返回值为空值')
 
 
-    # @timing_decorator
+    @timing_decorator
     def get_future_inside(self):
         """
         期货市场数据
@@ -544,7 +544,6 @@ class SaveInsightData:
 
         Returns:
         """
-
         #  1.起止时间 查询起始时间写2月前的月初第1天
         time_start_date = DateUtility.first_day_of_month(-2)
         time_end_date = DateUtility.today()
@@ -617,144 +616,12 @@ class SaveInsightData:
                                                          df=future_inside_df,
                                                          table_name="ods_future_inside_insight_now",
                                                          merge_on=['ymd', 'htsc_code'])
-
         else:
             ## insight 返回为空值
             logging.info('    get_future_inside 的返回值为空值')
 
 
-
     @timing_decorator
-    # def get_chouma_datas(self):
-    #     """
-    #     1.获取每日的筹码分布数据
-    #     2.找到那些当日能够拿到筹码数据的codes
-    #     :return:
-    #     """
-    #     #  1.起止时间 查询起始时间写本月月初
-    #     time_start_date = DateUtility.first_day_of_month()
-    #     #  结束时间必须大于等于当日，这里取明天的日期
-    #     time_end_date = DateUtility.next_day(1)
-    #
-    #     time_start_date = datetime.strptime(time_start_date, '%Y%m%d')
-    #     time_end_date = datetime.strptime(time_end_date, '%Y%m%d')
-    #
-    #     #  2.每个批次取 100 个元素
-    #     batch_size = 1
-    #
-    #     #  3.这是一个切分批次的内部函数
-    #     def get_batches(lst, batch_size):
-    #         for start in range(0, len(lst), batch_size):
-    #             yield lst[start:start + batch_size]
-    #
-    #     #  4.获取最新的stock_code_list
-    #     stock_code_list = mysql_utils.get_stock_codes_latest(self.stock_code_df)
-    #
-    #     #  5.计算总批次数
-    #     total_batches = (len(stock_code_list) + batch_size - 1) // batch_size
-    #
-    #     #  6.chouma 的总和dataframe
-    #     chouma_total_df = pd.DataFrame()
-    #
-    #     #  7.调用insight数据  get_chip_distribution
-    #     # valid_num = 0
-    #
-    #     for i, code_list in enumerate(get_batches(stock_code_list, batch_size), start=1):
-    #         #  一种非常巧妙的循环打印日志的方式
-    #         valid_num = chouma_total_df.shape[0]
-    #         sys.stdout.write(f"\r当前执行 get_chouma_datas  第 {i} 次循环，总共 {total_batches} 个批次, {valid_num}个有效筹码数据")
-    #         sys.stdout.flush()
-    #         time.sleep(0.01)
-    #
-    #         try:
-    #             res = get_chip_distribution(htsc_code=code_list, trading_day=[time_start_date, time_end_date])
-    #             chouma_total_df = pd.concat([chouma_total_df, res], ignore_index=True)
-    #             # valid_num += 1
-    #         except Exception as e:
-    #             continue
-    #         time.sleep(0.1)
-    #
-    #     sys.stdout.write("\n")
-    #
-    #     ##  insight 返回值的非空判断
-    #     if not chouma_total_df.empty:
-    #         #  8.日期格式转换
-    #         chouma_total_df['time'] = pd.to_datetime(chouma_total_df['time']).dt.strftime('%Y%m%d')
-    #         chouma_total_df.rename(columns={'time': 'ymd'}, inplace=True)
-    #
-    #         #  9.数据格式调整
-    #         cols_to_clean = ['last', 'prev_close', 'avg_cost', 'max_cost', 'min_cost', 'winner_rate', 'diversity',
-    #                            'pre_winner_rate', 'restricted_avg_cost', 'restricted_max_cost', 'restricted_min_cost',
-    #                            'large_shareholders_avg_cost', 'large_shareholders_total_share_pct']
-    #
-    #         for col in cols_to_clean:
-    #             # # 将字符串转换为 float，遇到错误时返回 NaN
-    #             # chouma_total_df[col] = pd.to_numeric(chouma_total_df[col].replace({'': np.nan, 'nan': np.nan}), errors='coerce')
-    #             #
-    #             # # 将 NaN 填充为 0
-    #             # chouma_total_df[col] = chouma_total_df[col].fillna(0)
-    #             #
-    #             # # 对价格进行转换
-    #             # chouma_total_df[col] = chouma_total_df[col].apply(lambda x: round(x * 10000, 2) if x < 1 else x)
-    #
-    #             # 确保列的数据是字符串类型
-    #             chouma_total_df[col] = chouma_total_df[col].astype(str)
-    #
-    #             # 将空字符串和 'nan' 替换为 NaN
-    #             chouma_total_df[col].replace({'': np.nan, 'nan': np.nan}, inplace=True)
-    #
-    #             # 将字符串转换为 float，遇到错误时返回 NaN
-    #             chouma_total_df[col] = pd.to_numeric(chouma_total_df[col], errors='coerce')
-    #
-    #             # 将 NaN 填充为 0
-    #             chouma_total_df[col].fillna(0, inplace=True)
-    #
-    #             # 对价格进行转换
-    #             chouma_total_df[col] = chouma_total_df[col].apply(lambda x: round(x * 10000, 2) if x < 1 else x)
-    #
-    #
-    #         chouma_total_df[cols_to_clean] = chouma_total_df[cols_to_clean].applymap(lambda x: f"{x:.2f}")
-    #
-    #         ############################   文件输出模块     ############################
-    #         #  9.更新dataframe
-    #         self.stock_chouma_available = chouma_total_df
-    #
-    #         if platform.system() == "Windows":
-    #             #  10.本地csv文件的落盘保存
-    #             chouma_filename = base_utils.save_out_filename(filehead=f"stock_chouma", file_type='csv')
-    #             chouma_data_filedir = os.path.join(self.dir_chouma_base, 'chouma_data', chouma_filename)
-    #             chouma_total_df.to_csv(chouma_data_filedir, index=False)
-    #
-    #             #  11.结果数据保存到 本地 mysql中
-    #             mysql_utils.data_from_dataframe_to_mysql(user=local_user,
-    #                                                      password=local_password,
-    #                                                      host=local_host,
-    #                                                      database=local_database,
-    #                                                      df=chouma_total_df,
-    #                                                      table_name="ods_stock_chouma_insight",
-    #                                                      merge_on=['ymd', 'htsc_code'])
-    #
-    #             #  12.结果数据保存到 远端 mysql中
-    #             mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
-    #                                                      password=origin_password,
-    #                                                      host=origin_host,
-    #                                                      database=origin_database,
-    #                                                      df=chouma_total_df,
-    #                                                      table_name="ods_stock_chouma_insight",
-    #                                                      merge_on=['ymd', 'htsc_code'])
-    #         else:
-    #             #  12.结果数据保存到 远端 mysql中
-    #             mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
-    #                                                      password=origin_password,
-    #                                                      host=origin_host,
-    #                                                      database=origin_database,
-    #                                                      df=chouma_total_df,
-    #                                                      table_name="ods_stock_chouma_insight",
-    #                                                      merge_on=['ymd', 'htsc_code'])
-    #     else:
-    #         ## insight 返回为空值
-    #         logging.info('    get_chouma_datas 的返回值为空值')
-
     def get_chouma_datas(self):
         """
         1.获取每日的筹码分布数据
@@ -896,9 +763,7 @@ class SaveInsightData:
         time_today = DateUtility.today()
         # time_today = '20240930'
 
-
         time_today = datetime.strptime(time_today, '%Y%m%d')
-
 
         #  2.行业信息的总和dataframe
         industry_df = pd.DataFrame()
@@ -979,7 +844,6 @@ class SaveInsightData:
         #  1.当月数据的起止时间
         time_today = DateUtility.today()
         # time_today = '20240930'
-
 
         time_today = datetime.strptime(time_today, '%Y%m%d')
 
@@ -1063,7 +927,6 @@ class SaveInsightData:
 
 
 
-
     @timing_decorator
     def get_shareholder_north_bound_num(self):
         """
@@ -1105,11 +968,6 @@ class SaveInsightData:
                 shareholder_num_df = pd.concat([shareholder_num_df, res_shareholder], ignore_index=True)
                 sys.stdout.write(f"\r当前执行 get_shareholder_num  第 {i} 次循环，总共 {total_xunhuan} 个批次, {valid_shareholder}个有效股东数据")
                 sys.stdout.flush()
-
-            # if res_north_bound is not None:
-            #     north_bound_df = pd.concat([north_bound_df, res_north_bound], ignore_index=True)
-            #     sys.stdout.write(f"\r当前执行 get_north_bound  第 {i} 次循环，总共 {total_xunhuan} 个批次, {valid_north_bound}个有效北向持仓数据")
-            #     sys.stdout.flush()
 
             time.sleep(0.03)
 

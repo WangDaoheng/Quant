@@ -225,6 +225,3 @@ if __name__ == '__main__':
     res_show_data.setup()
 
 
-
-
-

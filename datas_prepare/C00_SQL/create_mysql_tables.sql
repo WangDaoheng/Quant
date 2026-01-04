@@ -346,26 +346,3 @@ CREATE TABLE quant.ods_exchange_dxy_vantage (
 ) ;
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

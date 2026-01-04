@@ -17,8 +17,6 @@ import CommonProperties.Base_Properties as base_properties
 import CommonProperties.Base_utils as base_utils
 from CommonProperties.set_config import setup_logging_config
 
-# 调用日志配置   这里要注释掉，不然日志重复打印
-# setup_logging()
 
 ###################  mysql 配置   ######################
 local_user = base_properties.local_mysql_user
@@ -62,56 +60,6 @@ def check_data_written(total_rows, table_name, engine):
         logging.error(f"检查数据写入时发生错误: {e}")
         return False
 
-
-# def data_from_dataframe_to_mysql(user, password, host, database='quant', df=pd.DataFrame(), table_name='', merge_on=[]):
-#     """
-#     把 dataframe 类型数据写入 mysql 表里面, 同时调用了
-#     Args:
-#         df:
-#         table_name:
-#         database:
-#     Returns:
-#     """
-#     db_url = f'mysql+pymysql://{user}:{password}@{host}:3306/{database}'
-#     engine = create_engine(db_url)
-#
-#     # 对输入的df的空值做处理
-#     # df = df.fillna(value=None)
-#     df = df.replace({np.nan: ''})
-#
-#     # 确保 df 中的字段列顺序与表中的列顺序一致
-#     columns = df.columns.tolist()
-#
-#     # 检查是否存在重复数据，并将其去除
-#     df.drop_duplicates(subset=merge_on, keep='first', inplace=True)
-#
-#     total_rows = df.shape[0]
-#     if total_rows == 0:
-#         logging.info(f"所有数据已存在，无需插入新的数据到 {host} 的 {table_name} 表中。")
-#         return
-#
-#     # 使用 INSERT IGNORE 来去重
-#     insert_sql = f"""
-#     INSERT IGNORE INTO {table_name} ({', '.join(columns)})
-#     VALUES ({', '.join(['%s'] * len(columns))});
-#     """
-#
-#     # # 转换 df 为一个可以传递给 executemany 的列表
-#     # values = df.values.tolist()
-#
-#     # 转换 df 为一个可以传递给 executemany 的元组列表
-#     values = [tuple(row) for row in df.to_numpy()]
-#
-#     with engine.connect() as connection:
-#         transaction = connection.begin()
-#         try:
-#             connection.execute(text(insert_sql), values)
-#             transaction.commit()
-#             logging.info(f"成功插入 {total_rows} 行数据到 {host} 的 {table_name} 表中。")
-#         except Exception as e:
-#             transaction.rollback()
-#             logging.error(f"写入 {host} 的表：{table_name} 时发生错误: {e}")
-#             raise
 
 def data_from_dataframe_to_mysql(user, password, host, database='quant', df=pd.DataFrame(), table_name='', merge_on=[]):
     """
@@ -285,43 +233,6 @@ def create_partition_if_not_exists(engine, partition_name, year, month):
         );
         """)
         conn.execute(query)
-
-
-# def upsert_table(user, password, host, database, source_table, target_table, columns):
-#     """
-#     使用 source_table 中的数据来更新或插入到 target_table 中。
-#     这是一种追加取并集的方式
-#
-#     :param database:     默认为 quant
-#     :param source_table: 源表名称（字符串）
-#     :param target_table: 目标表名称（字符串）
-#     :param columns: 需要更新或插入的列名列表（列表）
-#     """
-#
-#     db_url = f'mysql+pymysql://{user}:{password}@{host}:3306/{database}'
-#     engine = create_engine(db_url)
-#
-#     # 构建列名部分
-#     columns_str = ", ".join(columns)
-#
-#     # 构建 ON DUPLICATE KEY UPDATE 部分
-#     update_str = ", ".join([f"{col} = VALUES({col})" for col in columns])
-#
-#     # 构建 SELECT 部分
-#     select_str = ", ".join(columns)
-#
-#     # 构建完整的 SQL 语句
-#     sql = f"""
-#     INSERT INTO {target_table} ({columns_str})
-#     SELECT {select_str}
-#     FROM {source_table}
-#     ON DUPLICATE KEY UPDATE
-#     {update_str};
-#     """
-#
-#     # 执行 SQL 语句
-#     with engine.connect() as connection:
-#         connection.execute(text(sql))
 
 
 def upsert_table(user, password, host, database, source_table, target_table, columns):
@@ -499,63 +410,6 @@ def cross_server_upsert_ymd(source_user, source_password, source_host, source_da
     print(f"数据已从 {source_table} 迁移并合并到 {target_table}。")
 
 
-
-# def full_replace_migrate(source_host, source_db_url, target_host, target_db_url, table_name, chunk_size=10000):
-#     """
-#     将本地 MySQL 数据库中的表数据导入到远程 MySQL 数据库中。
-#     整体暴力迁移，全删全插
-#
-#     Args:
-#         source_host   (str): 源端 主机
-#         source_db_url (str): 源端 MySQL 数据库的连接 URL
-#         target_host   (str): 目标 主机
-#         target_db_url (str): 目标 MySQL 数据库的连接 URL
-#         table_name    (str): 要迁移的表名
-#         chunk_size    (int): 每次读取和写入的数据块大小，默认 10000 行
-#     """
-#     # 创建 源端 数据库的 SQLAlchemy 引擎
-#     source_engine = create_engine(source_db_url)
-#     SourceSession = sessionmaker(bind=source_engine)
-#
-#     # 创建 目标 数据库的 SQLAlchemy 引擎
-#     target_engine = create_engine(target_db_url)
-#     TargetSession = sessionmaker(bind=target_engine)
-#
-#     try:
-#         # 打开源端和目标端的会话
-#         with SourceSession() as source_session, TargetSession() as target_session:
-#             # 开启事务
-#             with target_session.begin():
-#                 # 第一次写入时，先清空表
-#                 target_session.execute(text(f"TRUNCATE TABLE {table_name}"))
-#                 print(f"成功清空目标表 {table_name}。")
-#
-#             # 分批读取数据并插入目标数据库
-#             offset = 0
-#             while True:
-#                 # 从源端数据库分批读取数据
-#                 query = f"SELECT * FROM {table_name} LIMIT {chunk_size} OFFSET {offset}"
-#                 chunk = pd.read_sql(query, source_session.bind)
-#                 if chunk.empty:
-#                     break
-#
-#                 # 使用批量插入
-#                 chunk.to_sql(name=table_name, con=target_engine, if_exists='append', index=False)
-#                 print(f"成功写入第 {offset // chunk_size + 1} 块数据到{target_host} mysql库。")
-#
-#                 # 更新偏移量
-#                 offset += chunk_size
-#
-#                 # 释放内存
-#                 del chunk
-#                 gc.collect()
-#
-#         print(f"表 {table_name} 数据迁移完成。")
-#
-#     except Exception as e:
-#         print(f"数据迁移过程中发生错误: {e}")
-
-
 def full_replace_migrate(source_host, source_db_url, target_host, target_db_url, table_name, chunk_size=10000):
     """
     将本地 MySQL 数据库中的表数据导入到远程 MySQL 数据库中。
@@ -695,25 +549,5 @@ def execute_sql_statements(user, password, host, database, sql_statements):
     finally:
         # 确保连接被正确关闭
         engine.dispose()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 

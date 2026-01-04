@@ -572,8 +572,6 @@ class CalDWD:
                                                      merge_on=['ymd', 'stock_code'])
 
 
-
-
     def setup(self):
 
         # 聚合股票的板块，把各个板块数据聚合在一起
@@ -587,8 +585,6 @@ class CalDWD:
 
         # 计算一只股票是否 涨停 / 跌停
         self.cal_ZT_DT()
-
-
 
 
 if __name__ == '__main__':

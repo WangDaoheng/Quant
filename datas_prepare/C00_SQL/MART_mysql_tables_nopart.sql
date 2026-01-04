@@ -1,7 +1,6 @@
 
 --1.1
 ------------------  dmart_stock_zt_details   股票涨停明细
-
 create table quant.dmart_stock_zt_details (
      ymd                DATE                     --日期
     ,stock_code         varchar(50)              --代码
@@ -15,8 +14,6 @@ create table quant.dmart_stock_zt_details (
 ) ;
 
 
-
-
 ------------------  dmart_stock_zt_details   股票涨停明细拆分
 CREATE TABLE quant.dmart_stock_zt_details_expanded (
     ymd DATE,
@@ -28,11 +25,4 @@ CREATE TABLE quant.dmart_stock_zt_details_expanded (
     style_plate VARCHAR(500),
     out_plate VARCHAR(500)
 );
-
-
-
-
-
-
-
 

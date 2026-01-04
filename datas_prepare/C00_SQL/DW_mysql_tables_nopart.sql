@@ -1,7 +1,6 @@
 
 --1.1
 ------------------  dwd_ashare_stock_base_info   股票基本信息大宽表
-
 create table quant.dwd_ashare_stock_base_info (
      ymd              DATE               --日期
     ,stock_code       varchar(50)        --代码
@@ -20,7 +19,6 @@ create table quant.dwd_ashare_stock_base_info (
     ,plate_names      VARCHAR(500)       --板块名称
     ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
 ) ;
-
 
 
 --1.2
@@ -77,7 +75,6 @@ CREATE TABLE quant.dwd_stock_dt_list (
 );
 
 
-
 --4.2        多渠道板块数据 -- 多渠道汇总
 ------------------  dwd_stock_a_total_plate
 CREATE TABLE quant.dwd_stock_a_total_plate (
@@ -89,14 +86,4 @@ CREATE TABLE quant.dwd_stock_a_total_plate (
     ,remark       VARCHAR(50)               --备注
     ,UNIQUE KEY unique_ymd_plate_code (ymd, plate_name, stock_code)
 ) ;
-
-
-
-
-
-
-
-
-
-
 

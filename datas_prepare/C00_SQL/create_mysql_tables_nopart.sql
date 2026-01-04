@@ -122,10 +122,8 @@ CREATE TABLE quant.ods_future_inside_insight (
 ) ;
 
 
-
 --1.6
 ------------------  ods_stock_chouma_insight   A股的筹码分布数据
-
 CREATE TABLE quant.ods_stock_chouma_insight (
     htsc_code                                VARCHAR(50) NOT NULL     --证券代码
    ,ymd                                      DATE NOT NULL            --交易日
@@ -156,8 +154,6 @@ CREATE TABLE quant.ods_stock_chouma_insight (
    ,large_shareholders_total_share_pct       FLOAT                    --大流通股股东持股占总股本的比例
    ,UNIQUE KEY unique_ymd_stock_code (ymd, htsc_code)
  );
-
-
 
 
 
@@ -198,7 +194,6 @@ CREATE TABLE quant.ods_astock_industry_detail (
 
 --1.9
 ------------------  ods_shareholder_num   个股的股东数
-
 CREATE TABLE quant.ods_shareholder_num_now (
        htsc_code              varchar(100)            --股票代码
       ,name                   varchar(100)            --股票名称
@@ -222,7 +217,6 @@ CREATE TABLE quant.ods_shareholder_num (
 );
 
 
-
 --1.10
 ------------------  ods_north_bound_daily   北向持仓数据
 CREATE TABLE quant.ods_north_bound_daily_now (
@@ -243,7 +237,6 @@ CREATE TABLE quant.ods_north_bound_daily (
  );
 
 
-
 --2.1
 ------------------  ods_us_stock_daily_vantage   美股 日K
 CREATE TABLE quant.ods_us_stock_daily_vantage (
@@ -256,7 +249,6 @@ CREATE TABLE quant.ods_us_stock_daily_vantage (
     ,volume   BIGINT                        --成交量
     ,UNIQUE KEY unique_ymd_name (ymd, name)
 ) ;
-
 
 
 --2.2
@@ -279,8 +271,6 @@ CREATE TABLE quant.ods_exchange_dxy_vantage (
     name VARCHAR(50) NOT NULL,
     UNIQUE KEY unique_ymd_name (ymd, name)
 ) ;
-
-
 
 
 --3.1        通达信数据
@@ -357,9 +347,6 @@ CREATE TABLE quant.ods_tdx_stock_pepb_info (
 ) ;
 
 
-
-
-
 --4.1        多渠道板块数据 -- 小红书
 ------------------  ods_stock_plate_redbook
 CREATE TABLE quant.ods_stock_plate_redbook (
@@ -392,20 +379,5 @@ CREATE TABLE quant.ods_stock_exchange_market (
     ,market       VARCHAR(50)               --市场特征主板创业板等
     ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
 ) ;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 

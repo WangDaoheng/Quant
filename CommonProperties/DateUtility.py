@@ -150,11 +150,9 @@ class DateUtility:
         return last_day.strftime('%Y%m%d')
 
 
-
 # 测试
 if __name__ == "__main__":
     date_utility = DateUtility()
-
     print("今日日期:", date_utility.today())
     print("当前是否是周末:", date_utility.is_weekend())
     print("-----------------------------------------------")
@@ -162,28 +160,5 @@ if __name__ == "__main__":
     print("本月第1天日期:", date_utility.first_day_of_month())
     print("本季度第一天日期:", date_utility.first_day_of_quarter())
     print("本年第一天日期:", date_utility.first_day_of_year())
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 

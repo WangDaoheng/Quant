@@ -2,16 +2,10 @@
 import pandas as pd
 from yahoo_fin.stock_info import *
 
-
-
 from CommonProperties.DateUtility import DateUtility
 import CommonProperties.Base_Properties as base_properties
 import CommonProperties.Mysql_Utils as mysql_utils
 from CommonProperties.Base_utils import timing_decorator
-
-
-
-
 
 
 def put_csv_to_mysql():

@@ -72,15 +72,3 @@ JOIN (
 ON base.stock_code = plate.stock_code
 SET base.out_plate = plate.plate_names
 WHERE base.ymd = '2025-01-27'
-
-
-
-
-
-
-
-
-
-
-
-
