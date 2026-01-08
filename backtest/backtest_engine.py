@@ -199,11 +199,11 @@ class StockBacktestEngine:
         strat = results[0]
 
         # 6. 提取绩效指标
-        perf = self._extract_performance_metrics(strat, initial_cash, self.cerebro)
+        perf = self._extract_performance_metrics(strat, initial_cash, self.cerebro, start_date, end_date)
         logger.info(f"回测完成，最终资金：{perf['最终资金']}元")
         return perf
 
-    def _extract_performance_metrics(self, strat, initial_cash, cerebro):
+    def _extract_performance_metrics(self, strat, initial_cash, cerebro, start_date, end_date):
         """提取标准化绩效指标（含胜率）"""
         # 基础收益指标
         final_cash = round(cerebro.broker.getvalue(), 2)
