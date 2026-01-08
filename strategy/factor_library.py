@@ -153,7 +153,7 @@ class FactorLibrary:
             shareholder_df['pct_of_total_sh'] = pd.to_numeric(shareholder_df['pct_of_total_sh'], errors='coerce')
             shareholder_df = shareholder_df.dropna(subset=['total_sh', 'pct_of_total_sh'])
 
-            # 按股票分组，找到最新数据
+            # 按股票分组，找到最新数据  ascending True:升序  False:降序
             shareholder_df = shareholder_df.sort_values(['stock_code', 'ymd'], ascending=[True, False])
             latest_data = shareholder_df.drop_duplicates('stock_code', keep='first')
 
