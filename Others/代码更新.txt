@@ -38,29 +38,3 @@ python3 /opt/Quant/datas_prepare/setup_data_prepare.py >> "$LOG_FILE" 2>&1
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

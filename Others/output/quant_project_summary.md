@@ -1,16 +1,16 @@
 # 量化工程V1.0 代码梳理文档
-*生成时间: 2026-01-04 16:57:05*
+*生成时间: 2026-01-08 10:30:01*
 
 ## 项目统计信息
 - 项目根目录: F:\Quant\Backtrader_PJ1
-- 总文件数: 48
-- Python文件数: 42
+- 总文件数: 46
+- Python文件数: 41
 - SQL文件数: 4
 - Shell文件数: 1
 - 有效目录数: 15
 
 # Backtrader_PJ1 项目目录结构
-*生成时间: 2026-01-04 16:57:05*
+*生成时间: 2026-01-08 10:30:01*
 
 📁 Backtrader_PJ1/
     📄 main.py
@@ -42,7 +42,6 @@
             📄 create_mysql_tables_nopart.sql
         📁 C01_data_download_daily/
             📄 __init__.py
-            📄 download_akshare_data.py
             📄 download_insight_data_afternoon.py
             📄 download_insight_data_afternoon_of_history.py
             📄 download_vantage_data_afternoon.py
@@ -52,7 +51,6 @@
         📁 C03_data_DWD/
             📄 __init__.py
             📄 calculate_DWD_datas.py
-            📄 sqls.txt
         📁 C04_data_MART/
             📄 __init__.py
             📄 calculate_MART_datas.py
@@ -164,8 +162,11 @@ def main():
 
     logger.info("======= 量化策略分析流程完成 =======")
 
+
 if __name__ == "__main__":
     main()
+
+
 ```
 
 --------------------------------------------------------------------------------
@@ -962,15 +963,8 @@ def convert_ymd_format(df, column='ymd'):
     return df
 
 
-
-
 # 调用日志配置
 setup_logging_config()
-
-
-
-
-
 
 
 
@@ -1132,11 +1126,9 @@ class DateUtility:
         return last_day.strftime('%Y%m%d')
 
 
-
 # 测试
 if __name__ == "__main__":
     date_utility = DateUtility()
-
     print("今日日期:", date_utility.today())
     print("当前是否是周末:", date_utility.is_weekend())
     print("-----------------------------------------------")
@@ -1144,29 +1136,6 @@ if __name__ == "__main__":
     print("本月第1天日期:", date_utility.first_day_of_month())
     print("本季度第一天日期:", date_utility.first_day_of_quarter())
     print("本年第一天日期:", date_utility.first_day_of_year())
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -1195,8 +1164,6 @@ import CommonProperties.Base_Properties as base_properties
 import CommonProperties.Base_utils as base_utils
 from CommonProperties.set_config import setup_logging_config
 
-# 调用日志配置   这里要注释掉，不然日志重复打印
-# setup_logging()
 
 ###################  mysql 配置   ######################
 local_user = base_properties.local_mysql_user
@@ -1240,56 +1207,6 @@ def check_data_written(total_rows, table_name, engine):
         logging.error(f"检查数据写入时发生错误: {e}")
         return False
 
-
-# def data_from_dataframe_to_mysql(user, password, host, database='quant', df=pd.DataFrame(), table_name='', merge_on=[]):
-#     """
-#     把 dataframe 类型数据写入 mysql 表里面, 同时调用了
-#     Args:
-#         df:
-#         table_name:
-#         database:
-#     Returns:
-#     """
-#     db_url = f'mysql+pymysql://{user}:{password}@{host}:3306/{database}'
-#     engine = create_engine(db_url)
-#
-#     # 对输入的df的空值做处理
-#     # df = df.fillna(value=None)
-#     df = df.replace({np.nan: ''})
-#
-#     # 确保 df 中的字段列顺序与表中的列顺序一致
-#     columns = df.columns.tolist()
-#
-#     # 检查是否存在重复数据，并将其去除
-#     df.drop_duplicates(subset=merge_on, keep='first', inplace=True)
-#
-#     total_rows = df.shape[0]
-#     if total_rows == 0:
-#         logging.info(f"所有数据已存在，无需插入新的数据到 {host} 的 {table_name} 表中。")
-#         return
-#
-#     # 使用 INSERT IGNORE 来去重
-#     insert_sql = f"""
-#     INSERT IGNORE INTO {table_name} ({', '.join(columns)})
-#     VALUES ({', '.join(['%s'] * len(columns))});
-#     """
-#
-#     # # 转换 df 为一个可以传递给 executemany 的列表
-#     # values = df.values.tolist()
-#
-#     # 转换 df 为一个可以传递给 executemany 的元组列表
-#     values = [tuple(row) for row in df.to_numpy()]
-#
-#     with engine.connect() as connection:
-#         transaction = connection.begin()
-#         try:
-#             connection.execute(text(insert_sql), values)
-#             transaction.commit()
-#             logging.info(f"成功插入 {total_rows} 行数据到 {host} 的 {table_name} 表中。")
-#         except Exception as e:
-#             transaction.rollback()
-#             logging.error(f"写入 {host} 的表：{table_name} 时发生错误: {e}")
-#             raise
 
 def data_from_dataframe_to_mysql(user, password, host, database='quant', df=pd.DataFrame(), table_name='', merge_on=[]):
     """
@@ -1463,43 +1380,6 @@ def create_partition_if_not_exists(engine, partition_name, year, month):
         );
         """)
         conn.execute(query)
-
-
-# def upsert_table(user, password, host, database, source_table, target_table, columns):
-#     """
-#     使用 source_table 中的数据来更新或插入到 target_table 中。
-#     这是一种追加取并集的方式
-#
-#     :param database:     默认为 quant
-#     :param source_table: 源表名称（字符串）
-#     :param target_table: 目标表名称（字符串）
-#     :param columns: 需要更新或插入的列名列表（列表）
-#     """
-#
-#     db_url = f'mysql+pymysql://{user}:{password}@{host}:3306/{database}'
-#     engine = create_engine(db_url)
-#
-#     # 构建列名部分
-#     columns_str = ", ".join(columns)
-#
-#     # 构建 ON DUPLICATE KEY UPDATE 部分
-#     update_str = ", ".join([f"{col} = VALUES({col})" for col in columns])
-#
-#     # 构建 SELECT 部分
-#     select_str = ", ".join(columns)
-#
-#     # 构建完整的 SQL 语句
-#     sql = f"""
-#     INSERT INTO {target_table} ({columns_str})
-#     SELECT {select_str}
-#     FROM {source_table}
-#     ON DUPLICATE KEY UPDATE
-#     {update_str};
-#     """
-#
-#     # 执行 SQL 语句
-#     with engine.connect() as connection:
-#         connection.execute(text(sql))
 
 
 def upsert_table(user, password, host, database, source_table, target_table, columns):
@@ -1677,63 +1557,6 @@ def cross_server_upsert_ymd(source_user, source_password, source_host, source_da
     print(f"数据已从 {source_table} 迁移并合并到 {target_table}。")
 
 
-
-# def full_replace_migrate(source_host, source_db_url, target_host, target_db_url, table_name, chunk_size=10000):
-#     """
-#     将本地 MySQL 数据库中的表数据导入到远程 MySQL 数据库中。
-#     整体暴力迁移，全删全插
-#
-#     Args:
-#         source_host   (str): 源端 主机
-#         source_db_url (str): 源端 MySQL 数据库的连接 URL
-#         target_host   (str): 目标 主机
-#         target_db_url (str): 目标 MySQL 数据库的连接 URL
-#         table_name    (str): 要迁移的表名
-#         chunk_size    (int): 每次读取和写入的数据块大小，默认 10000 行
-#     """
-#     # 创建 源端 数据库的 SQLAlchemy 引擎
-#     source_engine = create_engine(source_db_url)
-#     SourceSession = sessionmaker(bind=source_engine)
-#
-#     # 创建 目标 数据库的 SQLAlchemy 引擎
-#     target_engine = create_engine(target_db_url)
-#     TargetSession = sessionmaker(bind=target_engine)
-#
-#     try:
-#         # 打开源端和目标端的会话
-#         with SourceSession() as source_session, TargetSession() as target_session:
-#             # 开启事务
-#             with target_session.begin():
-#                 # 第一次写入时，先清空表
-#                 target_session.execute(text(f"TRUNCATE TABLE {table_name}"))
-#                 print(f"成功清空目标表 {table_name}。")
-#
-#             # 分批读取数据并插入目标数据库
-#             offset = 0
-#             while True:
-#                 # 从源端数据库分批读取数据
-#                 query = f"SELECT * FROM {table_name} LIMIT {chunk_size} OFFSET {offset}"
-#                 chunk = pd.read_sql(query, source_session.bind)
-#                 if chunk.empty:
-#                     break
-#
-#                 # 使用批量插入
-#                 chunk.to_sql(name=table_name, con=target_engine, if_exists='append', index=False)
-#                 print(f"成功写入第 {offset // chunk_size + 1} 块数据到{target_host} mysql库。")
-#
-#                 # 更新偏移量
-#                 offset += chunk_size
-#
-#                 # 释放内存
-#                 del chunk
-#                 gc.collect()
-#
-#         print(f"表 {table_name} 数据迁移完成。")
-#
-#     except Exception as e:
-#         print(f"数据迁移过程中发生错误: {e}")
-
-
 def full_replace_migrate(source_host, source_db_url, target_host, target_db_url, table_name, chunk_size=10000):
     """
     将本地 MySQL 数据库中的表数据导入到远程 MySQL 数据库中。
@@ -1873,26 +1696,6 @@ def execute_sql_statements(user, password, host, database, sql_statements):
     finally:
         # 确保连接被正确关闭
         engine.dispose()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -2092,22 +1895,13 @@ def send_log_via_email():
 
     # 关闭连接
     server.quit()
-
     logging.info("邮件发送成功！")
-
-
-
-
-
-
-
 
 
 
 if __name__ == '__main__':
 
     # send_log_via_email()
-
     sender_email = '19801322932@139.com'
     sender_password = '04b78b87377067e47800'
 
@@ -2619,36 +2413,9 @@ class RunDataPrepare:
         self.send_logfile_email()
 
 
-
 if __name__ == '__main__':
     run_data_prepare = RunDataPrepare()
     run_data_prepare.setup()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 ```
@@ -2660,7 +2427,6 @@ if __name__ == '__main__':
 
 --1.1
 ------------------  dwd_ashare_stock_base_info   股票基本信息大宽表
-
 create table quant.dwd_ashare_stock_base_info (
      ymd              DATE               --日期
     ,stock_code       varchar(50)        --代码
@@ -2679,7 +2445,6 @@ create table quant.dwd_ashare_stock_base_info (
     ,plate_names      VARCHAR(500)       --板块名称
     ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
 ) ;
-
 
 
 --1.2
@@ -2736,7 +2501,6 @@ CREATE TABLE quant.dwd_stock_dt_list (
 );
 
 
-
 --4.2        多渠道板块数据 -- 多渠道汇总
 ------------------  dwd_stock_a_total_plate
 CREATE TABLE quant.dwd_stock_a_total_plate (
@@ -2750,16 +2514,6 @@ CREATE TABLE quant.dwd_stock_a_total_plate (
 ) ;
 
 
-
-
-
-
-
-
-
-
-
-
 ```
 
 --------------------------------------------------------------------------------
@@ -2769,7 +2523,6 @@ CREATE TABLE quant.dwd_stock_a_total_plate (
 
 --1.1
 ------------------  dmart_stock_zt_details   股票涨停明细
-
 create table quant.dmart_stock_zt_details (
      ymd                DATE                     --日期
     ,stock_code         varchar(50)              --代码
@@ -2783,8 +2536,6 @@ create table quant.dmart_stock_zt_details (
 ) ;
 
 
-
-
 ------------------  dmart_stock_zt_details   股票涨停明细拆分
 CREATE TABLE quant.dmart_stock_zt_details_expanded (
     ymd DATE,
@@ -2796,13 +2547,6 @@ CREATE TABLE quant.dmart_stock_zt_details_expanded (
     style_plate VARCHAR(500),
     out_plate VARCHAR(500)
 );
-
-
-
-
-
-
-
 
 
 ```
@@ -3167,29 +2911,6 @@ CREATE TABLE quant.ods_exchange_dxy_vantage (
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ```
 
 --------------------------------------------------------------------------------
@@ -3320,10 +3041,8 @@ CREATE TABLE quant.ods_future_inside_insight (
 ) ;
 
 
-
 --1.6
 ------------------  ods_stock_chouma_insight   A股的筹码分布数据
-
 CREATE TABLE quant.ods_stock_chouma_insight (
     htsc_code                                VARCHAR(50) NOT NULL     --证券代码
    ,ymd                                      DATE NOT NULL            --交易日
@@ -3354,8 +3073,6 @@ CREATE TABLE quant.ods_stock_chouma_insight (
    ,large_shareholders_total_share_pct       FLOAT                    --大流通股股东持股占总股本的比例
    ,UNIQUE KEY unique_ymd_stock_code (ymd, htsc_code)
  );
-
-
 
 
 
@@ -3396,7 +3113,6 @@ CREATE TABLE quant.ods_astock_industry_detail (
 
 --1.9
 ------------------  ods_shareholder_num   个股的股东数
-
 CREATE TABLE quant.ods_shareholder_num_now (
        htsc_code              varchar(100)            --股票代码
       ,name                   varchar(100)            --股票名称
@@ -3420,7 +3136,6 @@ CREATE TABLE quant.ods_shareholder_num (
 );
 
 
-
 --1.10
 ------------------  ods_north_bound_daily   北向持仓数据
 CREATE TABLE quant.ods_north_bound_daily_now (
@@ -3441,7 +3156,6 @@ CREATE TABLE quant.ods_north_bound_daily (
  );
 
 
-
 --2.1
 ------------------  ods_us_stock_daily_vantage   美股 日K
 CREATE TABLE quant.ods_us_stock_daily_vantage (
@@ -3454,7 +3168,6 @@ CREATE TABLE quant.ods_us_stock_daily_vantage (
     ,volume   BIGINT                        --成交量
     ,UNIQUE KEY unique_ymd_name (ymd, name)
 ) ;
-
 
 
 --2.2
@@ -3477,8 +3190,6 @@ CREATE TABLE quant.ods_exchange_dxy_vantage (
     name VARCHAR(50) NOT NULL,
     UNIQUE KEY unique_ymd_name (ymd, name)
 ) ;
-
-
 
 
 --3.1        通达信数据
@@ -3555,9 +3266,6 @@ CREATE TABLE quant.ods_tdx_stock_pepb_info (
 ) ;
 
 
-
-
-
 --4.1        多渠道板块数据 -- 小红书
 ------------------  ods_stock_plate_redbook
 CREATE TABLE quant.ods_stock_plate_redbook (
@@ -3593,150 +3301,12 @@ CREATE TABLE quant.ods_stock_exchange_market (
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ```
 
 --------------------------------------------------------------------------------
 ## datas_prepare\C01_data_download_daily\__init__.py
 
 ```python
-
-```
-
---------------------------------------------------------------------------------
-## datas_prepare\C01_data_download_daily\download_akshare_data.py
-
-```python
-
-# -*- coding: utf-8 -*-
-
-import os
-import sys
-import io
-import numpy as np
-from insight_python.com.insight import common
-from insight_python.com.insight.query import *
-from insight_python.com.insight.market_service import market_service
-from datetime import datetime
-import contextlib
-
-import time
-import logging
-import platform
-import akshare as ak
-import pandas as pd
-
-
-import CommonProperties.Base_Properties as base_properties
-import CommonProperties.Base_utils as base_utils
-import CommonProperties.Mysql_Utils as mysql_utils
-from CommonProperties.DateUtility import DateUtility
-from CommonProperties.Base_utils import timing_decorator
-from CommonProperties import set_config
-
-# ************************************************************************
-# 本代码的作用是下午收盘后下载 insight 行情源数据, 本地保存,用于后续分析
-# 需要下载的数据:
-# 1.上市股票代码   get_all_stocks()
-# 2.筹码分布数据   get_chouma_datas()
-
-
-# ************************************************************************
-
-
-# ************************************************************************
-#  调用日志配置
-set_config.setup_logging_config()
-#  调用mysql日志配置
-local_user = base_properties.local_mysql_user
-local_password = base_properties.local_mysql_password
-local_database = base_properties.local_mysql_database
-local_host = base_properties.local_mysql_host
-
-origin_user = base_properties.origin_mysql_user
-origin_password = base_properties.origin_mysql_password
-origin_database = base_properties.origin_mysql_database
-origin_host = base_properties.origin_mysql_host
-# ************************************************************************
-
-
-class SaveInsightData:
-
-    def __init__(self):
-        pass
-
-    def get_stock_kline_data(self):
-        """
-        获取k线数据: ymd,open,high,low,close,volumn,TurnoverRate 等
-        Returns:
-
-        """
-
-
-        # 1.确定起止日期
-        time_start_date = DateUtility.next_day(-7)
-        time_end_date = DateUtility.next_day(0)
-
-        # 2.获取起止日期范围内的日K线数据
-        df = mysql_utils.data_from_mysql_to_dataframe(user=origin_user, password=origin_password, host=origin_host,
-                                                      database=origin_database,
-                                                      table_name='ods_stock_kline_daily_insight',
-                                                      start_date=time_start_date, end_date=time_end_date)
-
-
-        # 获取K线数据
-        df = ak.stock_zh_a_hist(symbol=stock_code, period="daily", start_date=start_date, end_date=end_date)
-
-        return df
-
-
-
-
-
-
-
-
-# 获取股票K线数据
-
-
-
-
-
-if __name__ == '__main__':
-    # 示例：获取股票603065的K线数据
-    stock_code = '603065'
-    start_date = '20250301'
-    end_date = '20250306'
-
-    df_kline = get_stock_kline_data(stock_code, start_date, end_date)
-    df_kline.to_csv('./df_kline.csv')
-    # 打印结果
-    print(df_kline.head())
-
-
-
-
-
-
-
-
-
-
-
 
 ```
 
@@ -4264,7 +3834,7 @@ class SaveInsightData:
             logging.info('    get_limit_summary 的返回值为空值')
 
 
-    # @timing_decorator
+    @timing_decorator
     def get_future_inside(self):
         """
         期货市场数据
@@ -4290,7 +3860,6 @@ class SaveInsightData:
 
         Returns:
         """
-
         #  1.起止时间 查询起始时间写2月前的月初第1天
         time_start_date = DateUtility.first_day_of_month(-2)
         time_end_date = DateUtility.today()
@@ -4363,144 +3932,12 @@ class SaveInsightData:
                                                          df=future_inside_df,
                                                          table_name="ods_future_inside_insight_now",
                                                          merge_on=['ymd', 'htsc_code'])
-
         else:
             ## insight 返回为空值
             logging.info('    get_future_inside 的返回值为空值')
 
 
-
     @timing_decorator
-    # def get_chouma_datas(self):
-    #     """
-    #     1.获取每日的筹码分布数据
-    #     2.找到那些当日能够拿到筹码数据的codes
-    #     :return:
-    #     """
-    #     #  1.起止时间 查询起始时间写本月月初
-    #     time_start_date = DateUtility.first_day_of_month()
-    #     #  结束时间必须大于等于当日，这里取明天的日期
-    #     time_end_date = DateUtility.next_day(1)
-    #
-    #     time_start_date = datetime.strptime(time_start_date, '%Y%m%d')
-    #     time_end_date = datetime.strptime(time_end_date, '%Y%m%d')
-    #
-    #     #  2.每个批次取 100 个元素
-    #     batch_size = 1
-    #
-    #     #  3.这是一个切分批次的内部函数
-    #     def get_batches(lst, batch_size):
-    #         for start in range(0, len(lst), batch_size):
-    #             yield lst[start:start + batch_size]
-    #
-    #     #  4.获取最新的stock_code_list
-    #     stock_code_list = mysql_utils.get_stock_codes_latest(self.stock_code_df)
-    #
-    #     #  5.计算总批次数
-    #     total_batches = (len(stock_code_list) + batch_size - 1) // batch_size
-    #
-    #     #  6.chouma 的总和dataframe
-    #     chouma_total_df = pd.DataFrame()
-    #
-    #     #  7.调用insight数据  get_chip_distribution
-    #     # valid_num = 0
-    #
-    #     for i, code_list in enumerate(get_batches(stock_code_list, batch_size), start=1):
-    #         #  一种非常巧妙的循环打印日志的方式
-    #         valid_num = chouma_total_df.shape[0]
-    #         sys.stdout.write(f"\r当前执行 get_chouma_datas  第 {i} 次循环，总共 {total_batches} 个批次, {valid_num}个有效筹码数据")
-    #         sys.stdout.flush()
-    #         time.sleep(0.01)
-    #
-    #         try:
-    #             res = get_chip_distribution(htsc_code=code_list, trading_day=[time_start_date, time_end_date])
-    #             chouma_total_df = pd.concat([chouma_total_df, res], ignore_index=True)
-    #             # valid_num += 1
-    #         except Exception as e:
-    #             continue
-    #         time.sleep(0.1)
-    #
-    #     sys.stdout.write("\n")
-    #
-    #     ##  insight 返回值的非空判断
-    #     if not chouma_total_df.empty:
-    #         #  8.日期格式转换
-    #         chouma_total_df['time'] = pd.to_datetime(chouma_total_df['time']).dt.strftime('%Y%m%d')
-    #         chouma_total_df.rename(columns={'time': 'ymd'}, inplace=True)
-    #
-    #         #  9.数据格式调整
-    #         cols_to_clean = ['last', 'prev_close', 'avg_cost', 'max_cost', 'min_cost', 'winner_rate', 'diversity',
-    #                            'pre_winner_rate', 'restricted_avg_cost', 'restricted_max_cost', 'restricted_min_cost',
-    #                            'large_shareholders_avg_cost', 'large_shareholders_total_share_pct']
-    #
-    #         for col in cols_to_clean:
-    #             # # 将字符串转换为 float，遇到错误时返回 NaN
-    #             # chouma_total_df[col] = pd.to_numeric(chouma_total_df[col].replace({'': np.nan, 'nan': np.nan}), errors='coerce')
-    #             #
-    #             # # 将 NaN 填充为 0
-    #             # chouma_total_df[col] = chouma_total_df[col].fillna(0)
-    #             #
-    #             # # 对价格进行转换
-    #             # chouma_total_df[col] = chouma_total_df[col].apply(lambda x: round(x * 10000, 2) if x < 1 else x)
-    #
-    #             # 确保列的数据是字符串类型
-    #             chouma_total_df[col] = chouma_total_df[col].astype(str)
-    #
-    #             # 将空字符串和 'nan' 替换为 NaN
-    #             chouma_total_df[col].replace({'': np.nan, 'nan': np.nan}, inplace=True)
-    #
-    #             # 将字符串转换为 float，遇到错误时返回 NaN
-    #             chouma_total_df[col] = pd.to_numeric(chouma_total_df[col], errors='coerce')
-    #
-    #             # 将 NaN 填充为 0
-    #             chouma_total_df[col].fillna(0, inplace=True)
-    #
-    #             # 对价格进行转换
-    #             chouma_total_df[col] = chouma_total_df[col].apply(lambda x: round(x * 10000, 2) if x < 1 else x)
-    #
-    #
-    #         chouma_total_df[cols_to_clean] = chouma_total_df[cols_to_clean].applymap(lambda x: f"{x:.2f}")
-    #
-    #         ############################   文件输出模块     ############################
-    #         #  9.更新dataframe
-    #         self.stock_chouma_available = chouma_total_df
-    #
-    #         if platform.system() == "Windows":
-    #             #  10.本地csv文件的落盘保存
-    #             chouma_filename = base_utils.save_out_filename(filehead=f"stock_chouma", file_type='csv')
-    #             chouma_data_filedir = os.path.join(self.dir_chouma_base, 'chouma_data', chouma_filename)
-    #             chouma_total_df.to_csv(chouma_data_filedir, index=False)
-    #
-    #             #  11.结果数据保存到 本地 mysql中
-    #             mysql_utils.data_from_dataframe_to_mysql(user=local_user,
-    #                                                      password=local_password,
-    #                                                      host=local_host,
-    #                                                      database=local_database,
-    #                                                      df=chouma_total_df,
-    #                                                      table_name="ods_stock_chouma_insight",
-    #                                                      merge_on=['ymd', 'htsc_code'])
-    #
-    #             #  12.结果数据保存到 远端 mysql中
-    #             mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
-    #                                                      password=origin_password,
-    #                                                      host=origin_host,
-    #                                                      database=origin_database,
-    #                                                      df=chouma_total_df,
-    #                                                      table_name="ods_stock_chouma_insight",
-    #                                                      merge_on=['ymd', 'htsc_code'])
-    #         else:
-    #             #  12.结果数据保存到 远端 mysql中
-    #             mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
-    #                                                      password=origin_password,
-    #                                                      host=origin_host,
-    #                                                      database=origin_database,
-    #                                                      df=chouma_total_df,
-    #                                                      table_name="ods_stock_chouma_insight",
-    #                                                      merge_on=['ymd', 'htsc_code'])
-    #     else:
-    #         ## insight 返回为空值
-    #         logging.info('    get_chouma_datas 的返回值为空值')
-
     def get_chouma_datas(self):
         """
         1.获取每日的筹码分布数据
@@ -4642,9 +4079,7 @@ class SaveInsightData:
         time_today = DateUtility.today()
         # time_today = '20240930'
 
-
         time_today = datetime.strptime(time_today, '%Y%m%d')
-
 
         #  2.行业信息的总和dataframe
         industry_df = pd.DataFrame()
@@ -4725,7 +4160,6 @@ class SaveInsightData:
         #  1.当月数据的起止时间
         time_today = DateUtility.today()
         # time_today = '20240930'
-
 
         time_today = datetime.strptime(time_today, '%Y%m%d')
 
@@ -4809,7 +4243,6 @@ class SaveInsightData:
 
 
 
-
     @timing_decorator
     def get_shareholder_north_bound_num(self):
         """
@@ -4851,11 +4284,6 @@ class SaveInsightData:
                 shareholder_num_df = pd.concat([shareholder_num_df, res_shareholder], ignore_index=True)
                 sys.stdout.write(f"\r当前执行 get_shareholder_num  第 {i} 次循环，总共 {total_xunhuan} 个批次, {valid_shareholder}个有效股东数据")
                 sys.stdout.flush()
-
-            # if res_north_bound is not None:
-            #     north_bound_df = pd.concat([north_bound_df, res_north_bound], ignore_index=True)
-            #     sys.stdout.write(f"\r当前执行 get_north_bound  第 {i} 次循环，总共 {total_xunhuan} 个批次, {valid_north_bound}个有效北向持仓数据")
-            #     sys.stdout.flush()
 
             time.sleep(0.03)
 
@@ -5418,7 +4846,6 @@ class SaveInsightHistoryData:
                                                      table_name="ods_stock_limit_summary_insight",
                                                      merge_on=['ymd', 'name'])
 
-
     @timing_decorator
     def get_future_inside(self):
         """
@@ -5676,7 +5103,6 @@ class SaveInsightHistoryData:
         self.get_shareholder_north_bound_num()
 
 
-
 if __name__ == '__main__':
     save_insight_data = SaveInsightHistoryData()
     save_insight_data.setup()
@@ -5704,7 +5130,6 @@ import CommonProperties.Base_utils as base_utils
 import CommonProperties.Mysql_Utils as mysql_utils
 from CommonProperties.Base_utils import timing_decorator
 from CommonProperties.set_config import setup_logging_config
-
 
 
 # 配置日志处理器
@@ -5741,14 +5166,9 @@ origin_host = base_properties.origin_mysql_host
 
 
 class SaveVantageData:
-
     def __init__(self):
-
         self.init_dirs()
-
         self.init_variant()
-
-
 
     def init_dirs(self):
         """
@@ -5765,7 +5185,6 @@ class SaveVantageData:
 
         #  文件路径_____USD 的 美元指数
         self.dir_USD_FX_base = os.path.join(self.dir_vantage_base, 'USD_FX')
-
 
 
     def init_variant(self):
@@ -6036,25 +5455,9 @@ class SaveVantageData:
         self.get_USD_FX_from_vantage()
 
 
-
-
-
 if __name__ == '__main__':
     save_vantage_data = SaveVantageData()
     save_vantage_data.setup()
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -7016,8 +6419,6 @@ class CalDWD:
                                                      merge_on=['ymd', 'stock_code'])
 
 
-
-
     def setup(self):
 
         # 聚合股票的板块，把各个板块数据聚合在一起
@@ -7033,135 +6434,9 @@ class CalDWD:
         self.cal_ZT_DT()
 
 
-
-
 if __name__ == '__main__':
     save_insight_data = CalDWD()
     save_insight_data.setup()
-```
-
---------------------------------------------------------------------------------
-## datas_prepare\C03_data_DWD\sqls.txt
-
-```
-
-
-
-
-------------------  ods_stock_plate_redbook   
-CREATE TABLE quant.ods_stock_plate_redbook (
-     ymd          DATE        NOT NULL      --日期
-    ,plate_name   VARCHAR(50) NOT NULL      --板块名称
-    ,stock_code   VARCHAR(50)               --标的代码
-    ,stock_name   VARCHAR(50)               --标的名称
-    ,remark       VARCHAR(50)               --备注
-) ;
-
-
-
-
-------------------  dwd_stock_a_total_plate
-CREATE TABLE quant.dwd_stock_a_total_plate (
-     ymd          DATE        NOT NULL      --日期
-    ,plate_name   VARCHAR(50) NOT NULL      --板块名称
-    ,stock_code   VARCHAR(50)               --标的代码
-    ,stock_name   VARCHAR(50)               --标的名称
-    ,source_table VARCHAR(50)               --来源表
-    ,remark       VARCHAR(50)               --备注
-) ;
-
-
-
-
-
-
-delete from quant.dwd_stock_a_total_plate  where ymd='20241001' ;
-
-insert into  table quant.dwd_stock_a_total_plate
-  select 
-       ymd                                 
-      ,concept_name                    as plate_name
-      ,stock_code                          
-      ,stock_name                          
-      ,'ods_tdx_stock_concept_plate'   as source_table
-      ,''                              as remark
-  from  quant.ods_tdx_stock_concept_plate 
-  where ymd='20241001'
-  union all  
-  select   
-       ymd                                          
-      ,style_name                      as plate_name
-      ,stock_code                                   
-      ,stock_name                                   
-      ,'ods_tdx_stock_style_plate'     as source_table
-      ,''                              as remark
-  from  quant.ods_tdx_stock_style_plate
-  where ymd='20241001'
-  union all  
-  select
-       ymd                                          
-      ,industry_name                   as plate_name
-      ,stock_code                                   
-      ,stock_name                                   
-      ,'ods_tdx_stock_industry_plate'  as source_table
-      ,''                              as remark
-  from  quant.ods_tdx_stock_industry_plate
-  where ymd='20241001'
-  union all  
-  select
-       ymd                                 
-      ,region_name                     as plate_name
-      ,stock_code                          
-      ,stock_name                         
-      ,'ods_tdx_stock_region_plate'    as source_table
-      ,''                              as remark
-  from  quant.ods_tdx_stock_region_plate
-  where ymd='20241001'
-  union all  
-  select
-       ymd                                          
-      ,index_name                      as plate_name
-      ,stock_code                                   
-      ,stock_name                                   
-      ,'ods_tdx_stock_index_plate'     as source_table
-      ,''                              as remark
-  from  quant.ods_tdx_stock_index_plate
-  where ymd='20241001'
-  union all
-  select
-       ymd                           
-      ,plate_name                    
-      ,stock_code                    
-      ,stock_name                    
-      ,'ods_stock_plate_redbook'       as source_table
-      ,remark                         
-  from quant.ods_stock_plate_redbook 
-  where ymd='20241001'
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ```
 
 --------------------------------------------------------------------------------
@@ -7446,8 +6721,6 @@ if __name__ == '__main__':
 
 
 
-
-
 ```
 
 --------------------------------------------------------------------------------
@@ -7686,9 +6959,6 @@ class ResShow:
 if __name__ == '__main__':
     res_show_data = ResShow()
     res_show_data.setup()
-
-
-
 
 
 
@@ -8091,16 +7361,10 @@ if __name__ == "__main__":
 import pandas as pd
 from yahoo_fin.stock_info import *
 
-
-
 from CommonProperties.DateUtility import DateUtility
 import CommonProperties.Base_Properties as base_properties
 import CommonProperties.Mysql_Utils as mysql_utils
 from CommonProperties.Base_utils import timing_decorator
-
-
-
-
 
 
 def put_csv_to_mysql():
@@ -8112,46 +7376,14 @@ def put_csv_to_mysql():
     file_dir = r'F:\QDatas\vantage\USD_FX_detail\USD_FX_detail_2024081114.csv'
     table_name = r'exchange_rate_vantage_detail'
 
-
     df = pd.read_csv(file_dir)
     df.columns = ['name', 'ymd', 'open', 'high', 'low', 'close']
 
     mysql_utils.data_from_dataframe_to_mysql(df=df, table_name=table_name, database='quant')
 
 
-
-
-
-
-
-
-
-
-
 if __name__ == "__main__":
     put_csv_to_mysql()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 ```
@@ -8598,6 +7830,7 @@ class AlertSystem:
         # 日志预警 + 邮件预警
         logger.warning(f"\n{title}\n{content}")
         return self.send_email_alert(title, content)
+
 ```
 
 --------------------------------------------------------------------------------
@@ -8779,6 +8012,8 @@ class RealtimeMonitor:
             except Exception as e:
                 logger.error(f"监控异常：{str(e)}")
                 time.sleep(interval)
+
+
 ```
 
 --------------------------------------------------------------------------------
@@ -9090,6 +8325,8 @@ class DailyReview:
             logger.info(f"复盘报告已保存至：{report_path}")
         except Exception as e:
             logger.error(f"保存复盘报告失败：{str(e)}")
+
+
 ```
 
 --------------------------------------------------------------------------------
@@ -9309,6 +8546,8 @@ class FactorLibrary:
         except Exception as e:
             logger.error(f"获取K线数据失败 {stock_code}: {str(e)}")
             return pd.DataFrame()
+
+
 ```
 
 --------------------------------------------------------------------------------
@@ -9440,15 +8679,6 @@ if __name__ == '__main__':
         end_date='20250131',
         weight_threshold=0.5
     )
-
-
-
-
-
-
-
-
-
 
 
 ```

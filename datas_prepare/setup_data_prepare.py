@@ -84,34 +84,7 @@ class RunDataPrepare:
         self.send_logfile_email()
 
 
-
 if __name__ == '__main__':
     run_data_prepare = RunDataPrepare()
     run_data_prepare.setup()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

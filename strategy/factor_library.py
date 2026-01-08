@@ -20,7 +20,7 @@ class FactorLibrary:
     @timing_decorator
     def pb_factor(self, start_date, end_date, pb_percentile=0.3):
         """
-        计算PB因子：低于30分位数的股票标记为True
+        计算PB因子：低于 某个分位数（例如 30）的股票标记为 True 否则为 False
         使用 dwd_ashare_stock_base_info 表
         """
         try:
@@ -66,10 +66,11 @@ class FactorLibrary:
             logger.error(f"计算PB因子失败：{str(e)}")
             return pd.DataFrame(columns=['stock_code', 'ymd', 'pb', 'pb_signal'])
 
+
     @timing_decorator
     def zt_factor(self, start_date, end_date, lookback_days=5):
         """
-        计算涨停因子：近N日有涨停的股票标记为True
+        计算涨停因子：在[start_date, end_date] 内 近 lookback_days 日有涨停的股票标记为 True
         使用 dwd_stock_zt_list 表
         """
         try:
@@ -104,7 +105,7 @@ class FactorLibrary:
             # 计算每个股票最新涨停日距离查询结束日的天数
             latest_zt['days_since_zt'] = (end_date_dt - latest_zt['latest_zt_date']).dt.days
 
-            # 近lookback_days天有涨停的标记为True
+            # 近 lookback_days 天有涨停的标记为True
             latest_zt['zt_signal'] = latest_zt['days_since_zt'] <= lookback_days
 
             logger.info(f"涨停因子计算完成：共{len(latest_zt)}只股票，"
@@ -115,10 +116,11 @@ class FactorLibrary:
             logger.error(f"计算涨停因子失败：{str(e)}")
             return pd.DataFrame(columns=['stock_code', 'ymd', 'zt_signal'])
 
+
     @timing_decorator
     def shareholder_factor(self, start_date, end_date):
         """
-        计算筹码因子：股东数环比下降的股票标记为True
+        计算筹码因子：股东数环比下降的股票标记为 True
         使用 ods_shareholder_num 表
         """
         try:
@@ -202,3 +204,4 @@ class FactorLibrary:
         except Exception as e:
             logger.error(f"获取K线数据失败 {stock_code}: {str(e)}")
             return pd.DataFrame()
+
