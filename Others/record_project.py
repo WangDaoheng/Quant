@@ -264,22 +264,29 @@ class CodeOrganizer:
 
 
 def main():
-    """主函数（Windows专用）"""
-    # ====================== 核心配置 ======================
-    # 1. 项目根目录：绝对路径（替换为你的实际路径）
-    project_root = r"F:\Quant\Backtrader_PJ1"
+    """主函数（动态推导路径，支持迁移）"""
+    # ====================== 动态路径配置（核心优化） ======================
+    # 1. 获取当前脚本（record_project.py）的绝对路径和所在目录
+    # __file__ 表示当前脚本的完整路径，Path(__file__) 转换为Path对象方便操作
+    current_script_path = Path(__file__).resolve()
+    current_script_dir = current_script_path.parent  # 对应 Quant/Others 目录
 
-    # 2. 输出路径：Others/output 下（但统计/目录树中不显示 Others）
-    output_path = r"F:\Quant\Backtrader_PJ1\Others\output\quant_project_summary.md"
+    # 2. 动态推导项目根目录（Quant 目录，即 Others 目录的上一级）
+    project_root = current_script_dir.parent  # 从 Quant/Others 向上一级得到 Quant
+
+    # 3. 动态推导输出文件路径（Quant/Others/output/quant_project_summary.md）
+    # 先构造 output 目录路径（在 Others 目录下），再构造完整输出文件路径
+    output_dir = current_script_dir / "output"
+    output_path = output_dir / "quant_project_summary.md"
     # =====================================================
 
     # 检查项目目录是否存在
-    if not os.path.exists(project_root):
+    if not project_root.exists():
         print(f"❌ 错误：项目目录 {project_root} 不存在！")
-        print(f"   当前脚本路径：{Path(__file__).resolve()}")
+        print(f"   当前脚本路径：{current_script_path}")
         sys.exit(1)
 
-    # 创建实例并运行
+    # 创建实例并运行（直接传入推导后的Path对象，无需手动转字符串）
     organizer = CodeOrganizer(
         root_dir=project_root,
         output_path=output_path
@@ -289,4 +296,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

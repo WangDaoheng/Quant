@@ -9,9 +9,13 @@ class StrategyEngine:
     def __init__(self, factor_lib):
         self.factor_lib = factor_lib      # 注入因子库实例（依赖注入，解耦）
         self.strategies = {}              # 存储已注册的策略（字典：策略名 → 策略函数+参数）
+        # 结构示例：{
+        #     '低PB策略': {'func': self.pb_strategy, 'params': {'quantile': 0.3}},
+        #     '涨停策略': {'func': self.zt_strategy, 'params': {'window': 5}}
+        # }
 
     def register_strategy(self, name, func, params=None):
-        """注册策略（核心：解耦策略定义与执行）"""
+        """注册策略到策略字典 self.strategies 中 """
         self.strategies[name] = {
             'func': func,                  # 策略函数（如低PB+筹码+涨停）
             'params': params or {}         # 策略参数（如PB分位数、涨停窗口）
@@ -20,22 +24,32 @@ class StrategyEngine:
 
     @timing_decorator
     def value_chip_zt_strategy(self, start_date=None, end_date=None, pb_quantile=0.3, zt_window=5):
-        """低PB+筹码集中+涨停 组合因子策略（核心单策略）"""
+        """低PB+筹码集中+涨停 组合因子策略"""
         # 1. 加载各因子数据（复用因子库）
-        pb_df = self.factor_lib.pb_factor(quantile=pb_quantile, start_date=start_date, end_date=end_date)
-        zt_df = self.factor_lib.zt_factor(window=zt_window, start_date=start_date, end_date=end_date)
+        pb_df = self.factor_lib.pb_factor(pb_percentile=pb_quantile, start_date=start_date, end_date=end_date)
+        zt_df = self.factor_lib.zt_factor(lookback_days=zt_window, start_date=start_date, end_date=end_date)
         shareholder_df = self.factor_lib.shareholder_factor(start_date=start_date, end_date=end_date)
 
         # 2. 合并因子数据（按日期+股票代码对齐）
-        merge_df = pb_df.merge(
-            zt_df[['ymd', 'stock_code', 'zt_signal']],
+        # 获取所有日期-股票组合
+        base_df = pb_df[['ymd', 'stock_code']].drop_duplicates()
+
+        # 左连接zt_signal（注意：这里所有日期使用相同的信号！）
+        merge_df = base_df.merge(
+            zt_df[['stock_code', 'zt_signal']],
+            on='stock_code',
+            how='left'
+        ).merge(
+            pb_df[['ymd', 'stock_code', 'pb_signal']],
             on=['ymd', 'stock_code'],
-            how='inner'            # 内连接：只保留三个因子都有数据的股票
+            how='left'
         ).merge(
             shareholder_df[['ymd', 'stock_code', 'shareholder_signal']],
             on=['ymd', 'stock_code'],
-            how='inner'
+            how='left'
         )
+        merge_df['zt_signal'] = merge_df['zt_signal'].fillna(False)
+        merge_df['shareholder_signal'] = merge_df['shareholder_signal'].fillna(False)
 
         # 3. 生成最终选股信号（三个因子都满足：且逻辑）
         merge_df['final_signal'] = merge_df['pb_signal'] & merge_df['zt_signal'] & merge_df['shareholder_signal']

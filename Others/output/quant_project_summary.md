@@ -1,18 +1,19 @@
 # 量化工程V1.0 代码梳理文档
-*生成时间: 2026-01-08 10:30:01*
+*生成时间: 2026-01-11 13:09:21*
 
 ## 项目统计信息
-- 项目根目录: F:\Quant\Backtrader_PJ1
-- 总文件数: 46
-- Python文件数: 41
+- 项目根目录: F:\Quant\Backtrader_PJ1\Quant
+- 总文件数: 45
+- Python文件数: 40
 - SQL文件数: 4
 - Shell文件数: 1
-- 有效目录数: 15
+- 有效目录数: 14
 
-# Backtrader_PJ1 项目目录结构
-*生成时间: 2026-01-08 10:30:01*
+# Quant 项目目录结构
+*生成时间: 2026-01-11 13:09:21*
 
-📁 Backtrader_PJ1/
+📁 Quant/
+    📄 main-doubao.py
     📄 main.py
     📁 backtest/
         📄 __init__.py
@@ -54,9 +55,6 @@
         📁 C04_data_MART/
             📄 __init__.py
             📄 calculate_MART_datas.py
-        📁 C05_result_show/
-            📄 __init__.py
-            📄 res_show.py
         📁 C06_data_transfer/
             📄 __init__.py
             📄 get_example_tables.py
@@ -77,7 +75,7 @@
 # 项目代码内容
 
 --------------------------------------------------------------------------------
-## main.py
+## main-doubao.py
 
 ```python
 import logging
@@ -167,6 +165,314 @@ if __name__ == "__main__":
     main()
 
 
+```
+
+--------------------------------------------------------------------------------
+## main.py
+
+```python
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+量化策略主程序入口 - 优化版
+修复了回测周期显示bug，增强了错误处理
+
+主要功能：
+1. 运行因子驱动策略回测
+2. 实时监控策略信号
+3. 生成每日复盘报告
+4. 创建可视化仪表盘
+"""
+
+import logging
+import traceback
+from datetime import datetime, timedelta
+from typing import Optional, Dict, Any
+
+# 导入自定义模块
+from backtest import StockBacktestEngine, PerformanceAnalyzer
+from monitor.realtime_monitor import RealtimeMonitor
+from monitor.alert_system import AlertSystem
+from review.daily_review import DailyReview
+from dashboard.strategy_dashboard import StrategyDashboard
+from CommonProperties.DateUtility import DateUtility
+
+
+# ============================================================================
+# 日志配置
+# ============================================================================
+def setup_logging():
+    """配置日志系统"""
+    log_format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    log_date_format = '%Y-%m-%d %H:%M:%S'
+
+    # 创建格式化器
+    formatter = logging.Formatter(log_format, datefmt=log_date_format)
+
+    # 文件处理器（按日期滚动）
+    try:
+        file_handler = logging.FileHandler(
+            f'quant_strategy_{datetime.now().strftime("%Y%m%d")}.log',
+            encoding='utf-8'
+        )
+        file_handler.setFormatter(formatter)
+        file_handler.setLevel(logging.INFO)
+    except Exception as e:
+        print(f"创建日志文件失败: {e}")
+        file_handler = None
+
+    # 控制台处理器
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(formatter)
+    console_handler.setLevel(logging.INFO)
+
+    # 配置根日志记录器
+    root_logger = logging.getLogger()
+    root_logger.setLevel(logging.INFO)
+
+    # 移除可能存在的旧处理器
+    for handler in root_logger.handlers[:]:
+        root_logger.removeHandler(handler)
+
+    # 添加新处理器
+    root_logger.addHandler(console_handler)
+    if file_handler:
+        root_logger.addHandler(file_handler)
+
+    return root_logger
+
+
+# ============================================================================
+# 主函数
+# ============================================================================
+def main():
+    """主程序入口"""
+    # 1. 初始化日志
+    logger = setup_logging()
+    logger.info("=" * 60)
+    logger.info("🚀 量化策略分析系统启动")
+    logger.info(f"启动时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    logger.info("=" * 60)
+
+    # 用于存储回测结果的变量
+    factor_perf: Optional[Dict[str, Any]] = None
+    engine: Optional[StockBacktestEngine] = None
+    cerebro = None
+
+    try:
+        # 2. 初始化核心组件
+        logger.info("📦 初始化核心组件...")
+        engine = StockBacktestEngine()
+        alert_system = AlertSystem()
+
+        # 3. 回测参数配置
+        logger.info("⚙️ 配置回测参数...")
+        start_date = DateUtility.first_day_of_month_before_n_months(6)  # 6个月前
+        end_date = DateUtility.today()  # 今天
+
+        # 验证日期格式
+        if not (start_date.isdigit() and len(start_date) == 8):
+            raise ValueError(f"开始日期格式错误: {start_date}")
+        if not (end_date.isdigit() and len(end_date) == 8):
+            raise ValueError(f"结束日期格式错误: {end_date}")
+
+        initial_cash = 100000  # 初始资金10万元
+        initial_stock_codes = ['600000', '000001', '601318', '002594', '300059']  # 测试股票池
+
+        logger.info(f"回测周期: {start_date} ~ {end_date}")
+        logger.info(f"初始资金: {initial_cash:,}元")
+        logger.info(f"股票池: {initial_stock_codes}")
+
+        # 4. 运行回测（因子驱动策略）
+        logger.info("=" * 60)
+        logger.info("📈 开始因子驱动策略回测")
+        logger.info("=" * 60)
+
+        factor_perf = engine.run_backtest(
+            stock_codes=initial_stock_codes,
+            start_date=start_date,
+            end_date=end_date,
+            initial_cash=initial_cash,
+            strategy_type='factor_driven'
+        )
+
+        if not factor_perf:
+            logger.error("❌ 回测失败，终止程序")
+            return
+
+        # 5. 生成回测报告
+        logger.info("📊 生成回测报告...")
+        analyzer = PerformanceAnalyzer()
+        factor_report = analyzer.generate_report(
+            backtest_result=factor_perf,
+            strategy_name="因子驱动策略",
+            start_date=start_date,
+            end_date=end_date
+        )
+
+        logger.info("\n" + "=" * 60)
+        logger.info("📋 因子驱动策略回测报告")
+        logger.info("=" * 60)
+
+        # 逐行输出报告，避免日志截断
+        for line in factor_report.split('\n'):
+            logger.info(line)
+
+        # 6. 获取Cerebro实例用于监控/复盘
+        if hasattr(engine, 'get_cerebro'):
+            cerebro = engine.get_cerebro()
+        elif hasattr(engine, 'cerebro'):
+            cerebro = engine.cerebro
+        else:
+            logger.warning("⚠️ 无法获取Cerebro实例，跳过监控和复盘")
+            cerebro = None
+
+        # 7. 实时监控（如果Cerebro可用）
+        if cerebro:
+            logger.info("\n" + "=" * 60)
+            logger.info("👁️ 开始实时监控")
+            logger.info("=" * 60)
+
+            monitor = RealtimeMonitor(engine, initial_stock_codes)
+
+            # 单次监控（非循环）
+            logger.info("🔍 监控因子信号...")
+            factor_alerts = monitor.monitor_factor_signals()
+
+            logger.info("🔍 监控持仓绩效...")
+            position_alerts = monitor.monitor_position_performance(cerebro)
+
+            logger.info("🔍 监控价格波动...")
+            price_alerts = monitor.monitor_price_volatility()
+
+            # 触发预警
+            if factor_alerts or position_alerts or price_alerts:
+                logger.warning("🚨 检测到预警信号，触发预警系统")
+                alert_system.trigger_alert('all', {
+                    'factor': factor_alerts,
+                    'position': position_alerts,
+                    'price': price_alerts
+                })
+            else:
+                logger.info("✅ 无预警信号，监控正常")
+        else:
+            logger.info("⏭️ 跳过实时监控（Cerebro不可用）")
+
+        # 8. 每日复盘（如果Cerebro可用）
+        if cerebro:
+            logger.info("\n" + "=" * 60)
+            logger.info("📝 生成每日复盘报告")
+            logger.info("=" * 60)
+
+            review = DailyReview(engine, cerebro, 'factor_driven')
+            review_report = review.generate_daily_review_report()
+
+            logger.info("📄 复盘报告摘要:")
+            # 只输出报告的前几行作为摘要
+            lines = review_report.split('\n')[:15]
+            for line in lines:
+                logger.info(line)
+
+            if len(review_report.split('\n')) > 15:
+                logger.info("... (完整报告已保存至文件)")
+        else:
+            logger.info("⏭️ 跳过每日复盘（Cerebro不可用）")
+
+        # 9. 生成可视化仪表盘（如果回测结果可用）
+        if factor_perf and cerebro:
+            logger.info("\n" + "=" * 60)
+            logger.info("📊 生成可视化仪表盘")
+            logger.info("=" * 60)
+
+            dashboard = StrategyDashboard(engine, factor_perf, 'factor_driven')
+            dashboard_path = dashboard.generate_dashboard(cerebro)
+
+            if dashboard_path:
+                logger.info(f"✅ 仪表盘已生成: {dashboard_path}")
+                logger.info(f"💡 请用浏览器打开查看: file://{dashboard_path}")
+            else:
+                logger.error("❌ 仪表盘生成失败")
+        else:
+            logger.info("⏭️ 跳过仪表盘生成（数据不足）")
+
+        # 10. 显示关键绩效指标
+        logger.info("\n" + "=" * 60)
+        logger.info("🎯 关键绩效指标汇总")
+        logger.info("=" * 60)
+
+        if factor_perf:
+            metrics = [
+                ("总收益率", f"{factor_perf.get('总收益率', 0):.2f}%"),
+                ("年化收益率", f"{factor_perf.get('年化收益率', 0):.2f}%"),
+                ("夏普比率", f"{factor_perf.get('夏普比率', 0):.2f}"),
+                ("最大回撤", f"{factor_perf.get('最大回撤', 0):.2f}%"),
+                ("胜率", f"{factor_perf.get('胜率', 0):.2f}%"),
+                ("盈亏比", f"{factor_perf.get('盈亏比', 0):.2f}"),
+                ("最终资金", f"{factor_perf.get('最终资金', 0):,.2f}元"),
+            ]
+
+            for name, value in metrics:
+                logger.info(f"  {name:<10} : {value}")
+
+            # 简单评估
+            total_return = factor_perf.get('总收益率', 0)
+            max_drawdown = factor_perf.get('最大回撤', 100)
+
+            if total_return > 20 and max_drawdown < 15:
+                logger.info("🌟 策略表现优秀！")
+            elif total_return > 10 and max_drawdown < 20:
+                logger.info("👍 策略表现良好")
+            elif total_return > 0:
+                logger.info("🤔 策略表现一般，有待优化")
+            else:
+                logger.info("⚠️ 策略亏损，需要重新评估")
+
+        logger.info("\n" + "=" * 60)
+        logger.info("✅ 量化策略分析流程完成")
+        logger.info("=" * 60)
+
+    except KeyboardInterrupt:
+        logger.warning("\n⚠️ 用户中断程序执行")
+    except Exception as e:
+        logger.error(f"\n❌ 程序执行出错: {str(e)}")
+        logger.error("详细错误信息:")
+        logger.error(traceback.format_exc())
+
+        # 尝试保存部分结果
+        try:
+            if factor_perf:
+                logger.info("\n💾 尝试保存已生成的回测结果...")
+                # 这里可以添加保存到文件的逻辑
+                pass
+        except:
+            pass
+
+        logger.error("❌ 程序异常终止")
+    finally:
+        # 清理资源
+        logger.info("🧹 清理资源...")
+        # 可以添加资源清理逻辑，如关闭数据库连接等
+
+
+# ============================================================================
+# 程序入口
+# ============================================================================
+if __name__ == "__main__":
+    # 记录启动信息
+    print("=" * 60)
+    print("🎯 量化策略分析系统 v1.0")
+    print(f"📅 启动时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print("=" * 60)
+    print("")
+
+    # 运行主程序
+    main()
+
+    # 程序结束
+    print("")
+    print("=" * 60)
+    print("🏁 程序执行完毕")
+    print("=" * 60)
 ```
 
 --------------------------------------------------------------------------------
@@ -391,11 +697,11 @@ class StockBacktestEngine:
         strat = results[0]
 
         # 6. 提取绩效指标
-        perf = self._extract_performance_metrics(strat, initial_cash, self.cerebro)
+        perf = self._extract_performance_metrics(strat, initial_cash, self.cerebro, start_date, end_date)
         logger.info(f"回测完成，最终资金：{perf['最终资金']}元")
         return perf
 
-    def _extract_performance_metrics(self, strat, initial_cash, cerebro):
+    def _extract_performance_metrics(self, strat, initial_cash, cerebro, start_date, end_date):
         """提取标准化绩效指标（含胜率）"""
         # 基础收益指标
         final_cash = round(cerebro.broker.getvalue(), 2)
@@ -6724,247 +7030,6 @@ if __name__ == '__main__':
 ```
 
 --------------------------------------------------------------------------------
-## datas_prepare\C05_result_show\__init__.py
-
-```python
-
-```
-
---------------------------------------------------------------------------------
-## datas_prepare\C05_result_show\res_show.py
-
-```python
-# -*- coding: utf-8 -*-
-
-import os
-from datetime import datetime
-
-import pandas as pd
-from sqlalchemy import create_engine, text
-import time
-import platform
-import logging
-import plotly.express as px
-from wordcloud import WordCloud
-import matplotlib.pyplot as plt
-from pyecharts import options as opts
-from pyecharts.charts import WordCloud, Timeline, Page, Grid
-from pyecharts.globals import SymbolType
-
-import dash
-from dash import dcc, html
-from dash.dependencies import Input, Output
-
-# import dataprepare_properties
-# import dataprepare_utils
-from CommonProperties import Base_Properties
-import CommonProperties.Base_utils as base_utils
-from CommonProperties.DateUtility import DateUtility
-from CommonProperties.Base_utils import timing_decorator
-
-import CommonProperties.Mysql_Utils as mysql_utils
-
-from CommonProperties import set_config
-
-# ************************************************************************
-# 本代码的作用是下午收盘后针对 insight 行情源数据的本地保存部分开展merge
-# 需要下载的数据:
-# 1.上市股票代码
-# 2.筹码分布数据   get_chouma_datas()
-
-
-# ************************************************************************
-#  调用日志配置
-set_config.setup_logging_config()
-
-######################  mysql 配置信息  本地和远端服务器  ####################
-local_user = Base_Properties.local_mysql_user
-local_password = Base_Properties.local_mysql_password
-local_database = Base_Properties.local_mysql_database
-local_host = Base_Properties.local_mysql_host
-
-origin_user = Base_Properties.origin_mysql_user
-origin_password = Base_Properties.origin_mysql_password
-origin_database = Base_Properties.origin_mysql_database
-origin_host = Base_Properties.origin_mysql_host
-
-
-class ResShow:
-
-    def __init__(self):
-
-        pass
-
-
-    # @timing_decorator
-    def show_zt_details(self):
-        """
-        涨停股票曲线展示
-        Returns:
-        """
-
-        #  1.获取日期
-        # ymd = DateUtility.today()
-        time_start_date = DateUtility.next_day(-45)  # yyyymmdd 格式日期
-        time_end_date = DateUtility.next_day(0)      # yyyymmdd 格式日期
-
-        zt_details_df = mysql_utils.data_from_mysql_to_dataframe(
-            user=origin_user,
-            password=origin_password,
-            host=origin_host,
-            database='quant',
-            table_name='dmart_stock_zt_details',
-            start_date=time_start_date,  # 根据需要调整日期范围
-            end_date=time_end_date,
-            cols=['ymd', 'stock_code', 'stock_name', 'concept_plate', 'index_plate', 'industry_plate', 'style_plate', 'out_plate'])
-
-        # 将空值替换为 'Unknown'
-        zt_details_df.fillna('Unknown', inplace=True)
-
-        #####################   对板块字段中的逗号分隔的板块名展开处理    ##################
-        # 定义需要处理的板块字段
-        plate_columns = ['concept_plate', 'index_plate', 'industry_plate', 'style_plate', 'out_plate']
-
-        # 将逗号分隔的板块名拆分为列表
-        for col in plate_columns:
-            zt_details_df[col] = zt_details_df[col].str.split(',')
-
-        # 将列表展开为多行
-        zt_details_df = zt_details_df.explode(plate_columns[0])  # 先展开第一个板块字段
-        for col in plate_columns[1:]:
-            zt_details_df = zt_details_df.explode(col)
-
-        # 去除多余的空格
-        for col in plate_columns:
-            zt_details_df[col] = zt_details_df[col].str.strip()
-
-        #####################   关键指标计算    ##################
-        # 统计每日涨停股票数量
-        daily_zt_count = zt_details_df.drop_duplicates(subset=['ymd', 'stock_code']).groupby('ymd').size().reset_index(name='zt_count')
-        # 统计每日涨停股票的板块分布
-        daily_plate_count = (
-            zt_details_df.drop_duplicates(subset=['ymd', 'stock_code'])  # 对 stock_code 去重
-            .groupby(['ymd'] + plate_columns)  # 按日期和板块字段分组
-            .size()  # 统计每组的数量
-            .reset_index(name='count')  # 重置索引并命名统计列为 count
-        )
-
-        #####################   指标展示    ##################
-
-        ############### 1.绘制曲线图——每日股票涨停数量
-        fig_line = px.line(daily_zt_count, x='ymd', y='zt_count', title='每日涨停股票数量')
-        fig_line.show()
-
-        ############### 2.绘制热力图——每日股票涨停板块
-        # 选择一个板块类型（例如概念板块）
-        plate_type = 'concept_plate'
-        daily_plate_count_agg = daily_plate_count.groupby(['ymd', plate_type], as_index=False)['count'].sum()
-
-        duplicates = daily_plate_count_agg.duplicated(subset=['ymd', plate_type], keep=False)
-        if duplicates.any():
-            print("存在重复的 (ymd, plate_type) 组合：")
-            print(daily_plate_count_agg[duplicates])
-        else:
-            print("数据已去重，可以继续 pivot 操作。")
-
-        plate_data = daily_plate_count_agg.pivot(index='ymd', columns=plate_type, values='count').fillna(0)
-        # 绘制热力图
-        fig_heatmap = px.imshow(plate_data, labels=dict(x=plate_type, y='日期', color='涨停数量'),
-                                title=f'{plate_type} 板块涨停股票热力图')
-        fig_heatmap.show()
-
-        ############### 3.绘制词云——每日涨停股票板块分布
-
-        # 遍历每个板块类型
-        for plate_type in plate_columns:
-            # 创建一个时间轴
-            timeline = Timeline()
-
-            # 遍历所有日期
-            for target_date in zt_details_df['ymd'].unique():
-                # 获取当前板块和日期的数据
-                plate_data = zt_details_df[(zt_details_df['ymd'] == target_date) &
-                                           (zt_details_df[plate_type].notnull())][plate_type].value_counts()
-                # 将数据转换为 pyecharts 需要的格式
-                data = [(word, freq) for word, freq in plate_data.items()][:50]  # 限制词汇数量
-
-                # 创建词云图
-                wordcloud = (
-                    WordCloud()
-                    .add("", data, word_size_range=[20, 100], shape=SymbolType.DIAMOND)
-                    .set_global_opts(
-                        title_opts=opts.TitleOpts(title=f"{target_date} - {plate_type} 板块词云"),
-                        tooltip_opts=opts.TooltipOpts(is_show=True)
-                    )
-                )
-
-                # 将词云图添加到时间轴
-                timeline.add(wordcloud, time_point=target_date)
-
-            # 为每个板块生成一个独立的 HTML 文件
-            file_name = f"wordcloud_timeline_{plate_type}.html"
-            timeline.render(file_name)
-
-        print("每个板块的词云时间轴已生成并保存为独立的 HTML 文件。")
-
-        ############### 4.绘制Dash——每日涨停股票板块分布
-        # 创建 Dash 应用
-        app = dash.Dash(__name__)
-
-        # 布局
-        app.layout = html.Div([
-            dcc.DatePickerRange(
-                id='date-picker',
-                start_date=daily_zt_count['ymd'].min(),
-                end_date=daily_zt_count['ymd'].max(),
-                display_format='YYYY-MM-DD'
-            ),
-            dcc.Graph(id='line-chart'),
-            dcc.Graph(id='heatmap-chart')
-        ])
-
-        # 回调函数
-        @app.callback(
-            [Output('line-chart', 'figure'), Output('heatmap-chart', 'figure')],
-            [Input('date-picker', 'start_date'), Input('date-picker', 'end_date')]
-        )
-        def update_charts(start_date, end_date):
-            # 过滤数据
-            filtered_zt_count = daily_zt_count[
-                (daily_zt_count['ymd'] >= start_date) & (daily_zt_count['ymd'] <= end_date)]
-            filtered_plate_count = daily_plate_count[
-                (daily_plate_count['ymd'] >= start_date) & (daily_plate_count['ymd'] <= end_date)]
-
-            # 绘制曲线图
-            fig_line = px.line(filtered_zt_count, x='ymd', y='zt_count', title='每日涨停股票数量')
-
-            # 绘制热力图
-            plate_type = 'concept_plate'
-            plate_data = filtered_plate_count.pivot(index='ymd', columns=plate_type, values='count').fillna(0)
-            fig_heatmap = px.imshow(plate_data, labels=dict(x=plate_type, y='日期', color='涨停数量'),
-                                    title=f'{plate_type} 板块涨停股票热力图')
-
-            return fig_line, fig_heatmap
-
-        ## 调用执行dash
-        app.run_server(debug=True)
-
-
-    def setup(self):
-
-        # 涨停股票的明细
-        self.show_zt_details()
-
-
-if __name__ == '__main__':
-    res_show_data = ResShow()
-    res_show_data.setup()
-
-
-
-```
-
---------------------------------------------------------------------------------
 ## datas_prepare\C06_data_transfer\__init__.py
 
 ```python
@@ -6975,12 +7040,12 @@ if __name__ == '__main__':
 ## datas_prepare\C06_data_transfer\get_example_tables.py
 
 ```python
-# export_table_samples_full.py
 import os
 import pandas as pd
 import logging
 from datetime import datetime
 from sqlalchemy import create_engine, text
+from pathlib import Path  # 新增：导入Path用于路径处理
 import CommonProperties.Base_Properties as Base_Properties
 from CommonProperties.set_config import setup_logging_config
 
@@ -6999,14 +7064,49 @@ class TableDataExporterFull:
         self.host = Base_Properties.origin_mysql_host
         self.database = Base_Properties.origin_mysql_database
 
-        # 输出文件
+        # ====================== 核心优化：精准推导 Quant/Others/output 路径 ======================
+        # 1. 获取当前脚本（export_table_samples_full.py）的绝对路径
+        current_script_path = Path(__file__).resolve()
+
+        # 2. 向上追溯找到项目根目录 Quant/（关键：基于 CommonProperties 目录反向定位，更稳定）
+        # 方案1：通过 CommonProperties 目录（项目中固定存在）定位 Quant/（推荐，兼容性更强）
+        current_dir = current_script_path.parent
+        project_root = None
+        # 向上遍历目录，直到找到包含 CommonProperties 的目录（即 Quant/）
+        while current_dir != current_dir.parent:
+            if (current_dir / "CommonProperties").exists():
+                project_root = current_dir
+                break
+            current_dir = current_dir.parent
+
+        # 方案2：如果脚本目录结构固定，可直接向上追溯（备用，简洁但依赖目录结构）
+        # project_root = current_script_path.parent.parent  # 若脚本在 Quant/xxx/ 下，直接向上两级到 Quant/
+
+        # 校验项目根目录是否找到
+        if not project_root or not (project_root / "CommonProperties").exists():
+            raise FileNotFoundError("❌ 未找到项目根目录 Quant/（缺少 CommonProperties 目录）")
+
+        # 3. 构造 Quant/Others 目录路径
+        others_dir = project_root / "Others"
+
+        # 4. 构造 Quant/Others/output 目录路径
+        self.output_dir = others_dir / "output"
+
+        # 5. 自动创建 Others 和 output 目录（若不存在）
+        self.output_dir.mkdir(parents=True, exist_ok=True)
+        print(f"📁 自动创建/确认输出目录: {self.output_dir}")
+
+        # 6. 构造完整的输出文件路径（放入 Quant/Others/output 目录）
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        self.output_file = f"quant_tables_full_{timestamp}.txt"
+        output_filename = f"quant_tables_full_{timestamp}.txt"
+        self.output_file = self.output_dir / output_filename  # Path对象，支持后续直接操作
+        # ======================================================================================
 
         print(f"数据库配置:")
         print(f"  主机: {self.host}")
         print(f"  数据库: {self.database}")
         print(f"  用户: {self.user}")
+        print(f"  输出文件将保存到: {self.output_file}")  # 新增：提示输出文件路径
         print("-" * 50)
 
     def test_connection(self):
@@ -7228,6 +7328,7 @@ class TableDataExporterFull:
 
         print(f"\n开始导出 {len(tables_to_export)} 张表...")
 
+        # 注意：self.output_file 是Path对象，open时会自动转换为字符串路径，兼容Python内置open函数
         with open(self.output_file, 'w', encoding='utf-8') as f:
             # 写入文件头
             f.write("QUANT数据库表结构及数据样例报告（完整版）\n")
@@ -7278,9 +7379,9 @@ class TableDataExporterFull:
                         f.write(f"处理表 {table} 时出错: {str(e)[:100]}...\n\n")
                     print(f"  完成")
 
-        # 完成提示
-        if os.path.exists(self.output_file):
-            file_size = os.path.getsize(self.output_file) / 1024  # KB
+        # 完成提示（优化：显示完整的输出文件路径）
+        if self.output_file.exists():  # Path对象直接调用exists()，比os.path.exists更优雅
+            file_size = self.output_file.stat().st_size / 1024  # KB，Path对象直接获取文件信息
             print("\n" + "=" * 60)
             print("导出完成！")
             print("=" * 60)
@@ -7343,10 +7444,12 @@ def main():
     print("=" * 60)
 
     # 创建导出器
-    exporter = TableDataExporterFull()
-
-    # 导出表
-    exporter.export_important_tables()
+    try:
+        exporter = TableDataExporterFull()
+        # 导出表
+        exporter.export_important_tables()
+    except Exception as e:
+        print(f"\n❌ 程序运行失败: {str(e)}")
 
 
 if __name__ == "__main__":
@@ -8364,7 +8467,7 @@ class FactorLibrary:
     @timing_decorator
     def pb_factor(self, start_date, end_date, pb_percentile=0.3):
         """
-        计算PB因子：低于30分位数的股票标记为True
+        计算PB因子：低于 某个分位数（例如 30）的股票标记为 True 否则为 False
         使用 dwd_ashare_stock_base_info 表
         """
         try:
@@ -8410,10 +8513,11 @@ class FactorLibrary:
             logger.error(f"计算PB因子失败：{str(e)}")
             return pd.DataFrame(columns=['stock_code', 'ymd', 'pb', 'pb_signal'])
 
+
     @timing_decorator
     def zt_factor(self, start_date, end_date, lookback_days=5):
         """
-        计算涨停因子：近N日有涨停的股票标记为True
+        计算涨停因子：在[start_date, end_date] 内 近 lookback_days 日有涨停的股票标记为 True
         使用 dwd_stock_zt_list 表
         """
         try:
@@ -8448,7 +8552,7 @@ class FactorLibrary:
             # 计算每个股票最新涨停日距离查询结束日的天数
             latest_zt['days_since_zt'] = (end_date_dt - latest_zt['latest_zt_date']).dt.days
 
-            # 近lookback_days天有涨停的标记为True
+            # 近 lookback_days 天有涨停的标记为True
             latest_zt['zt_signal'] = latest_zt['days_since_zt'] <= lookback_days
 
             logger.info(f"涨停因子计算完成：共{len(latest_zt)}只股票，"
@@ -8459,10 +8563,11 @@ class FactorLibrary:
             logger.error(f"计算涨停因子失败：{str(e)}")
             return pd.DataFrame(columns=['stock_code', 'ymd', 'zt_signal'])
 
+
     @timing_decorator
     def shareholder_factor(self, start_date, end_date):
         """
-        计算筹码因子：股东数环比下降的股票标记为True
+        计算筹码因子：股东数环比下降的股票标记为 True
         使用 ods_shareholder_num 表
         """
         try:
@@ -8495,7 +8600,7 @@ class FactorLibrary:
             shareholder_df['pct_of_total_sh'] = pd.to_numeric(shareholder_df['pct_of_total_sh'], errors='coerce')
             shareholder_df = shareholder_df.dropna(subset=['total_sh', 'pct_of_total_sh'])
 
-            # 按股票分组，找到最新数据
+            # 按股票分组，找到最新数据  ascending True:升序  False:降序
             shareholder_df = shareholder_df.sort_values(['stock_code', 'ymd'], ascending=[True, False])
             latest_data = shareholder_df.drop_duplicates('stock_code', keep='first')
 
@@ -8565,9 +8670,13 @@ class StrategyEngine:
     def __init__(self, factor_lib):
         self.factor_lib = factor_lib      # 注入因子库实例（依赖注入，解耦）
         self.strategies = {}              # 存储已注册的策略（字典：策略名 → 策略函数+参数）
+        # 结构示例：{
+        #     '低PB策略': {'func': self.pb_strategy, 'params': {'quantile': 0.3}},
+        #     '涨停策略': {'func': self.zt_strategy, 'params': {'window': 5}}
+        # }
 
     def register_strategy(self, name, func, params=None):
-        """注册策略（核心：解耦策略定义与执行）"""
+        """注册策略到策略字典 self.strategies 中 """
         self.strategies[name] = {
             'func': func,                  # 策略函数（如低PB+筹码+涨停）
             'params': params or {}         # 策略参数（如PB分位数、涨停窗口）
@@ -8576,22 +8685,32 @@ class StrategyEngine:
 
     @timing_decorator
     def value_chip_zt_strategy(self, start_date=None, end_date=None, pb_quantile=0.3, zt_window=5):
-        """低PB+筹码集中+涨停 组合因子策略（核心单策略）"""
+        """低PB+筹码集中+涨停 组合因子策略"""
         # 1. 加载各因子数据（复用因子库）
-        pb_df = self.factor_lib.pb_factor(quantile=pb_quantile, start_date=start_date, end_date=end_date)
-        zt_df = self.factor_lib.zt_factor(window=zt_window, start_date=start_date, end_date=end_date)
+        pb_df = self.factor_lib.pb_factor(pb_percentile=pb_quantile, start_date=start_date, end_date=end_date)
+        zt_df = self.factor_lib.zt_factor(lookback_days=zt_window, start_date=start_date, end_date=end_date)
         shareholder_df = self.factor_lib.shareholder_factor(start_date=start_date, end_date=end_date)
 
         # 2. 合并因子数据（按日期+股票代码对齐）
-        merge_df = pb_df.merge(
-            zt_df[['ymd', 'stock_code', 'zt_signal']],
+        # 获取所有日期-股票组合
+        base_df = pb_df[['ymd', 'stock_code']].drop_duplicates()
+
+        # 左连接zt_signal（注意：这里所有日期使用相同的信号！）
+        merge_df = base_df.merge(
+            zt_df[['stock_code', 'zt_signal']],
+            on='stock_code',
+            how='left'
+        ).merge(
+            pb_df[['ymd', 'stock_code', 'pb_signal']],
             on=['ymd', 'stock_code'],
-            how='inner'            # 内连接：只保留三个因子都有数据的股票
+            how='left'
         ).merge(
             shareholder_df[['ymd', 'stock_code', 'shareholder_signal']],
             on=['ymd', 'stock_code'],
-            how='inner'
+            how='left'
         )
+        merge_df['zt_signal'] = merge_df['zt_signal'].fillna(False)
+        merge_df['shareholder_signal'] = merge_df['shareholder_signal'].fillna(False)
 
         # 3. 生成最终选股信号（三个因子都满足：且逻辑）
         merge_df['final_signal'] = merge_df['pb_signal'] & merge_df['zt_signal'] & merge_df['shareholder_signal']

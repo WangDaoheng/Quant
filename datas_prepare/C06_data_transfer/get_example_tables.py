@@ -1,9 +1,9 @@
-# export_table_samples_full.py
 import os
 import pandas as pd
 import logging
 from datetime import datetime
 from sqlalchemy import create_engine, text
+from pathlib import Path  # 新增：导入Path用于路径处理
 import CommonProperties.Base_Properties as Base_Properties
 from CommonProperties.set_config import setup_logging_config
 
@@ -22,14 +22,49 @@ class TableDataExporterFull:
         self.host = Base_Properties.origin_mysql_host
         self.database = Base_Properties.origin_mysql_database
 
-        # 输出文件
+        # ====================== 核心优化：精准推导 Quant/Others/output 路径 ======================
+        # 1. 获取当前脚本（export_table_samples_full.py）的绝对路径
+        current_script_path = Path(__file__).resolve()
+
+        # 2. 向上追溯找到项目根目录 Quant/（关键：基于 CommonProperties 目录反向定位，更稳定）
+        # 方案1：通过 CommonProperties 目录（项目中固定存在）定位 Quant/（推荐，兼容性更强）
+        current_dir = current_script_path.parent
+        project_root = None
+        # 向上遍历目录，直到找到包含 CommonProperties 的目录（即 Quant/）
+        while current_dir != current_dir.parent:
+            if (current_dir / "CommonProperties").exists():
+                project_root = current_dir
+                break
+            current_dir = current_dir.parent
+
+        # 方案2：如果脚本目录结构固定，可直接向上追溯（备用，简洁但依赖目录结构）
+        # project_root = current_script_path.parent.parent  # 若脚本在 Quant/xxx/ 下，直接向上两级到 Quant/
+
+        # 校验项目根目录是否找到
+        if not project_root or not (project_root / "CommonProperties").exists():
+            raise FileNotFoundError("❌ 未找到项目根目录 Quant/（缺少 CommonProperties 目录）")
+
+        # 3. 构造 Quant/Others 目录路径
+        others_dir = project_root / "Others"
+
+        # 4. 构造 Quant/Others/output 目录路径
+        self.output_dir = others_dir / "output"
+
+        # 5. 自动创建 Others 和 output 目录（若不存在）
+        self.output_dir.mkdir(parents=True, exist_ok=True)
+        print(f"📁 自动创建/确认输出目录: {self.output_dir}")
+
+        # 6. 构造完整的输出文件路径（放入 Quant/Others/output 目录）
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        self.output_file = f"quant_tables_full_{timestamp}.txt"
+        output_filename = f"quant_tables_full_{timestamp}.txt"
+        self.output_file = self.output_dir / output_filename  # Path对象，支持后续直接操作
+        # ======================================================================================
 
         print(f"数据库配置:")
         print(f"  主机: {self.host}")
         print(f"  数据库: {self.database}")
         print(f"  用户: {self.user}")
+        print(f"  输出文件将保存到: {self.output_file}")  # 新增：提示输出文件路径
         print("-" * 50)
 
     def test_connection(self):
@@ -251,6 +286,7 @@ class TableDataExporterFull:
 
         print(f"\n开始导出 {len(tables_to_export)} 张表...")
 
+        # 注意：self.output_file 是Path对象，open时会自动转换为字符串路径，兼容Python内置open函数
         with open(self.output_file, 'w', encoding='utf-8') as f:
             # 写入文件头
             f.write("QUANT数据库表结构及数据样例报告（完整版）\n")
@@ -301,9 +337,9 @@ class TableDataExporterFull:
                         f.write(f"处理表 {table} 时出错: {str(e)[:100]}...\n\n")
                     print(f"  完成")
 
-        # 完成提示
-        if os.path.exists(self.output_file):
-            file_size = os.path.getsize(self.output_file) / 1024  # KB
+        # 完成提示（优化：显示完整的输出文件路径）
+        if self.output_file.exists():  # Path对象直接调用exists()，比os.path.exists更优雅
+            file_size = self.output_file.stat().st_size / 1024  # KB，Path对象直接获取文件信息
             print("\n" + "=" * 60)
             print("导出完成！")
             print("=" * 60)
@@ -366,10 +402,12 @@ def main():
     print("=" * 60)
 
     # 创建导出器
-    exporter = TableDataExporterFull()
-
-    # 导出表
-    exporter.export_important_tables()
+    try:
+        exporter = TableDataExporterFull()
+        # 导出表
+        exporter.export_important_tables()
+    except Exception as e:
+        print(f"\n❌ 程序运行失败: {str(e)}")
 
 
 if __name__ == "__main__":
