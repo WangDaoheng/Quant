@@ -1,4 +1,13 @@
 
+--1.0
+------------------  ods_trading_days_insight   交易所的交易日历
+CREATE TABLE quant.ods_trading_days_insight (
+     exchange     VARCHAR(50)              --交易所名称
+    ,ymd          DATE NOT NULL            --交易日期
+    ,UNIQUE KEY unique_ymd_stock_code (exchange, ymd)
+);
+
+
 --1.1
 ------------------  ods_stock_code_daily_insight   当日已上市股票码表
 CREATE TABLE quant.ods_stock_code_daily_insight (

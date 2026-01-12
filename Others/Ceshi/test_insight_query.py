@@ -20,6 +20,39 @@ def login():
     common.login(market_service, user, password)
 
 
+def get_trading_days_demo():
+    trading_day_start_date = "2022-10-14"
+    trading_day_end_date = "2027-10-20"
+    trading_day_start_date = datetime.strptime(trading_day_start_date, '%Y-%m-%d')
+    trading_day_end_date = datetime.strptime(trading_day_end_date, '%Y-%m-%d')
+
+    # 调用获取交易日历结果
+    result = get_trading_days(trading_day=[trading_day_start_date,
+                                           trading_day_end_date], exchange='XSHG')
+
+    # 步骤1：解析真实 result 结构（关键修正）
+    exchange_name = result[0]  # 提取第一个元素：交易所名称（XSHG）
+    trading_series = result[1]  # 提取第二个元素：pandas Series（包含所有交易日）
+    # 将 Series 转换为列表（获取所有交易日数据，解决只取到1个元素的问题）
+    trading_dates_list = trading_series.tolist()  # 核心方法：Series.tolist()
+
+    # 步骤2：构造 DataFrame 所需的数据源
+    df_data = {
+        'exchange': [exchange_name] * len(trading_dates_list),  # 生成匹配长度的交易所列表
+        'trading_days': trading_dates_list
+    }
+    trading_df = pd.DataFrame(df_data)
+
+    # 步骤3：按 exchange 和 trading_days 升序排序
+    trading_df.sort_values(by=['exchange', 'trading_days'], ascending=True, inplace=True)
+
+    # 可选：重置排序后的索引（避免索引混乱）
+    trading_df.reset_index(drop=True, inplace=True)
+
+    return trading_df
+
+
+
 def get_stock_code_demo():
     #  1.获取日期
     formatted_date = DateUtility.today()
@@ -290,7 +323,6 @@ def get_hk_industry_stocks_demo():
     result = get_hk_industry_stocks(industry_code='430102')
     print(result)
 
-
 # 港股交易日行情
 def get_hk_daily_basic_demo():
     """
@@ -351,7 +383,8 @@ def get_hk_stock_basic_info_demo():
 
 if __name__ == "__main__":
     login()
-    get_stock_code_demo()
+    get_trading_days_demo()
+    # get_stock_code_demo()
     # get_kline_daily_demo()
     # get_foreign_exchange_demo()
     # insight_billboard()

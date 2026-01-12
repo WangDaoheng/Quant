@@ -48,8 +48,8 @@ def main():
     logger.info("\n======= 因子驱动策略回测报告 =======\n" + factor_report)
 
     # 5. 初始化Cerebro实例（用于监控/复盘）
-    cerebro = engine.run_backtest.__self__.cerebro  # 实际需从回测引擎中获取真实Cerebro实例
-
+    # cerebro = engine.run_backtest.__self__.cerebro  # 实际需从回测引擎中获取真实Cerebro实例
+    cerebro = engine.cerebro  # 回测引擎中已保存了cerebro实例
     # 6. 实时监控
     monitor = RealtimeMonitor(engine, initial_stock_codes)
     # 单次监控（非循环）

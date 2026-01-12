@@ -232,6 +232,6 @@ def convert_ymd_format(df, column='ymd'):
 
 
 # 调用日志配置
-setup_logging_config()
+# setup_logging_config()
 
 

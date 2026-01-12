@@ -2,8 +2,8 @@ import backtrader as bt
 import pandas as pd
 import logging
 from CommonProperties import Mysql_Utils
-from CommonProperties.Base_utils import timing_decorator, convert_ymd_format
-from strategy.factor_library import FactorLibrary
+from CommonProperties.Base_utils import timing_decorator
+from Others.strategy.factor_library import FactorLibrary
 from backtest.simple_strategy import SimpleStrategy
 from backtest.factor_driven_strategy import FactorDrivenStrategy
 
@@ -22,6 +22,8 @@ class StockBacktestEngine:
         self.database = Mysql_Utils.origin_database
         # 初始化因子库
         self.factor_lib = FactorLibrary()
+        # 提前初始化cerebro（但要注意线程安全）
+        self.cerebro = None
 
     @timing_decorator
     def _prepare_feed(self, stock_code, start_date, end_date):

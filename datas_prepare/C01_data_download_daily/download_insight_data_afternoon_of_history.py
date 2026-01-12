@@ -42,68 +42,14 @@ origin_database = base_properties.origin_mysql_database
 origin_host = base_properties.origin_mysql_host
 
 
-
 class SaveInsightHistoryData:
 
     def __init__(self):
-
-        self.init_dirs()
-
-        self.init_variant()
-
-    def init_dirs(self):
-        """
-        关键路径初始化
-        """
-        #  文件路径_____insight文件基础路径
-        self.dir_history_insight_base = base_properties.dir_history_insight_base
-
-        #  文件路径_____上市交易股票codes
-        self.dir_history_stock_codes_base = os.path.join(self.dir_history_insight_base, 'stock_codes')
-
-        #  文件路径_____上市交易股票的日k线数据
-        self.dir_history_stock_kline_base = os.path.join(self.dir_history_insight_base, 'stock_kline')
-
-        #  文件路径_____关键大盘指数
-        self.dir_history_index_a_share_base = os.path.join(self.dir_history_insight_base, 'index_a_share')
-
-        #  文件路径_____涨跌停数量
-        self.dir_history_limit_summary_base = os.path.join(self.dir_history_insight_base, 'limit_summary')
-
-        #  文件路径_____内盘期货
-        self.dir_history_future_inside_base = os.path.join(self.dir_history_insight_base, 'future_inside')
-
-        #  文件路径_____筹码数据
-        self.dir_history_chouma_base = os.path.join(self.dir_history_insight_base, 'chouma')
-
-        #  文件路径_____个股的股东数_明细
-        self.dir_history_shareholder_num_base = os.path.join(self.dir_history_insight_base, 'shareholder_num')
-
-        #  文件路径_____北向持仓数据_明细
-        self.dir_history_north_bound_base = os.path.join(self.dir_history_insight_base, 'north_bound')
-
-
-    def init_variant(self):
         """
         结果变量初始化
         """
         #  除去 ST|退|B 的五要素   [ymd	htsc_code	name	exchange]
         self.stock_code_df = pd.DataFrame()
-
-        #  获取上述股票的历史数据   日K级别
-        self.kline_total_history = pd.DataFrame()
-
-        #  获得A股市场的股指 [htsc_code 	time	frequency	open	close	high	low	volume	value]
-        self.index_a_share = pd.DataFrame()
-
-        #  大盘涨跌停数量          [time	name	今日涨停	今日跌停	昨日涨停	昨日跌停	昨日涨停表现]
-        self.limit_summary_df = pd.DataFrame()
-
-        #  期货市场数据    原油  贵金属  有色
-        self.future_index = pd.DataFrame()
-
-        #  可以获取筹码的股票数据
-        self.stock_chouma_available = ""
 
 
     @timing_decorator
@@ -113,6 +59,67 @@ class SaveInsightHistoryData:
         user = base_properties.user
         password = base_properties.password
         common.login(market_service, user, password)
+
+
+    def get_trading_days(self):
+        """
+        获取交易日历
+        Returns: (exchange, ymd)
+        """
+        trading_day_start_date = "2018-01-01"
+        trading_day_end_date = "2027-12-31"
+        trading_day_start_date = datetime.strptime(trading_day_start_date, '%Y-%m-%d')
+        trading_day_end_date = datetime.strptime(trading_day_end_date, '%Y-%m-%d')
+
+        # 调用获取交易日历结果
+        result = get_trading_days(trading_day=[trading_day_start_date,
+                                               trading_day_end_date], exchange='XSHG')
+
+        # 步骤1：解析真实 result 结构（关键修正）
+        exchange_name = result[0]  # 提取第一个元素：交易所名称（XSHG）
+        trading_series = result[1]  # 提取第二个元素：pandas Series（包含所有交易日）
+        # 将 Series 转换为列表（获取所有交易日数据，解决只取到1个元素的问题）
+        trading_dates_list = trading_series.tolist()  # 核心方法：Series.tolist()
+
+        # 步骤2：构造 DataFrame 所需的数据源
+        df_data = {
+            'exchange': [exchange_name] * len(trading_dates_list),  # 生成匹配长度的交易所列表
+            'ymd': trading_dates_list
+        }
+        trading_df = pd.DataFrame(df_data)
+
+        # 步骤3：按 exchange 和 trading_days 升序排序
+        trading_df.sort_values(by=['exchange', 'ymd'], ascending=True, inplace=True)
+
+        # 可选：重置排序后的索引（避免索引混乱）
+        trading_df.reset_index(drop=True, inplace=True)
+        if platform.system() == "Windows":
+            #  结果数据保存到 本地 mysql中
+            mysql_utils.data_from_dataframe_to_mysql(user=local_user,
+                                                     password=local_password,
+                                                     host=local_host,
+                                                     database=local_database,
+                                                     df=trading_df,
+                                                     table_name="ods_trading_days_insight",
+                                                     merge_on=['exchange', 'ymd'])
+
+            #  结果数据保存到 远端 mysql中
+            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
+                                                     password=origin_password,
+                                                     host=origin_host,
+                                                     database=origin_database,
+                                                     df=trading_df,
+                                                     table_name="ods_trading_days_insight",
+                                                     merge_on=['exchange', 'ymd'])
+        else:
+            #  结果数据保存到 远端 mysql中
+            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
+                                                     password=origin_password,
+                                                     host=origin_host,
+                                                     database=origin_database,
+                                                     df=trading_df,
+                                                     table_name="ods_trading_days_insight",
+                                                     merge_on=['exchange', 'ymd'])
 
 
     @timing_decorator
@@ -198,18 +205,11 @@ class SaveInsightHistoryData:
         #  11.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
         # kline_total_df = kline_total_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
 
-        #  12.文件输出模块
-        self.kline_total_history = kline_total_df
 
         ############################   文件输出模块     ############################
 
         if platform.system() == "Windows":
-            #  13.本地csv文件的落盘保存
-            kline_total_filename = base_utils.save_out_filename(filehead='stock_kline_history', file_type='csv')
-            kline_total_filedir = os.path.join(self.dir_history_stock_kline_base, kline_total_filename)
-            kline_total_df.to_csv(kline_total_filedir, index=False)
-
-            #  14.结果数据保存到 本地 mysql中
+            #  13.结果数据保存到 本地 mysql中
             mysql_utils.data_from_dataframe_to_mysql(user=local_user,
                                                      password=local_password,
                                                      host=local_host,
@@ -218,7 +218,7 @@ class SaveInsightHistoryData:
                                                      table_name="ods_stock_kline_daily_insight",
                                                      merge_on=['ymd', 'htsc_code'])
 
-            #  15.结果数据保存到 远端 mysql中
+            #  14.结果数据保存到 远端 mysql中
             mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
                                                      password=origin_password,
                                                      host=origin_host,
@@ -227,7 +227,7 @@ class SaveInsightHistoryData:
                                                      table_name="ods_stock_kline_daily_insight",
                                                      merge_on=['ymd', 'htsc_code'])
         else:
-            #  15.结果数据保存到 远端 mysql中
+            #  14.结果数据保存到 远端 mysql中
             mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
                                                      password=origin_password,
                                                      host=origin_host,
@@ -235,7 +235,6 @@ class SaveInsightHistoryData:
                                                      df=kline_total_df,
                                                      table_name="ods_stock_kline_daily_insight",
                                                      merge_on=['ymd', 'htsc_code'])
-
 
 
     @timing_decorator
@@ -297,16 +296,8 @@ class SaveInsightHistoryData:
         index_df = index_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
 
         ############################   文件输出模块     ############################
-        #  9.更新dataframe
-        self.index_a_share = index_df
-
         if platform.system() == "Windows":
-            #  10.本地csv文件的落盘保存
-            index_filename = base_utils.save_out_filename(filehead='index_a_share_history', file_type='csv')
-            index_filedir = os.path.join(self.dir_history_index_a_share_base, index_filename)
-            index_df.to_csv(index_filedir, index=False)
-
-            #  11.结果数据保存到 本地 mysql中
+            #  10.结果数据保存到 本地 mysql中
             mysql_utils.data_from_dataframe_to_mysql(user=local_user,
                                                      password=local_password,
                                                      host=local_host,
@@ -315,7 +306,7 @@ class SaveInsightHistoryData:
                                                      table_name="ods_index_a_share_insight",
                                                      merge_on=['ymd', 'htsc_code'])
 
-            #  12.结果数据保存到 远端 mysql中
+            #  11.结果数据保存到 远端 mysql中
             mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
                                                      password=origin_password,
                                                      host=origin_host,
@@ -324,7 +315,7 @@ class SaveInsightHistoryData:
                                                      table_name="ods_index_a_share_insight",
                                                      merge_on=['ymd', 'htsc_code'])
         else:
-            #  12.结果数据保存到 远端 mysql中
+            #  11.结果数据保存到 远端 mysql中
             mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
                                                      password=origin_password,
                                                      host=origin_host,
@@ -391,16 +382,8 @@ class SaveInsightHistoryData:
         filter_limit_df = filter_limit_df.drop_duplicates(subset=['ymd', 'name'], keep='first')
 
         ############################   文件输出模块     ############################
-        #  7.更新dataframe
-        self.limit_summary_df = filter_limit_df
-
         if platform.system() == "Windows":
-            #  8.本地csv文件的落盘保存
-            summary_filename = base_utils.save_out_filename(filehead='stock_limit_summary', file_type='csv')
-            summary_dir = os.path.join(self.dir_history_limit_summary_base, summary_filename)
-            filter_limit_df.to_csv(summary_dir, index=False)
-
-            #  9.结果数据保存到 本地 mysql中
+            #  8.结果数据保存到 本地 mysql中
             mysql_utils.data_from_dataframe_to_mysql(user=local_user,
                                                      password=local_password,
                                                      host=local_host,
@@ -409,7 +392,7 @@ class SaveInsightHistoryData:
                                                      table_name="ods_stock_limit_summary_insight",
                                                      merge_on=['ymd', 'name'])
 
-            #  10.结果数据保存到 远端 mysql中
+            #  9.结果数据保存到 远端 mysql中
             mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
                                                      password=origin_password,
                                                      host=origin_host,
@@ -418,7 +401,7 @@ class SaveInsightHistoryData:
                                                      table_name="ods_stock_limit_summary_insight",
                                                      merge_on=['ymd', 'name'])
         else:
-            #  10.结果数据保存到 远端 mysql中
+            #  9.结果数据保存到 远端 mysql中
             mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
                                                      password=origin_password,
                                                      host=origin_host,
@@ -488,16 +471,8 @@ class SaveInsightHistoryData:
         future_inside_df = future_inside_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
 
         ############################   文件输出模块     ############################
-        #  8.更新dataframe
-        self.future_index = future_inside_df
-
         if platform.system() == "Windows":
-            #  9.本地csv文件的落盘保存
-            future_inside_filename = base_utils.save_out_filename(filehead='future_inside', file_type='csv')
-            future_inside_filedir = os.path.join(self.dir_history_future_inside_base, future_inside_filename)
-            future_inside_df.to_csv(future_inside_filedir, index=False)
-
-            #  10.结果数据保存到 本地 mysql中
+            #  9.结果数据保存到 本地 mysql中
             mysql_utils.data_from_dataframe_to_mysql(user=local_user,
                                                      password=local_password,
                                                      host=local_host,
@@ -506,7 +481,7 @@ class SaveInsightHistoryData:
                                                      table_name="ods_future_inside_insight",
                                                      merge_on=['ymd', 'htsc_code'])
 
-            #  11.结果数据保存到 远端 mysql中
+            #  10.结果数据保存到 远端 mysql中
             mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
                                                      password=origin_password,
                                                      host=origin_host,
@@ -515,7 +490,7 @@ class SaveInsightHistoryData:
                                                      table_name="ods_future_inside_insight",
                                                      merge_on=['ymd', 'htsc_code'])
         else:
-            #  11.结果数据保存到 远端 mysql中
+            #  10.结果数据保存到 远端 mysql中
             mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
                                                      password=origin_password,
                                                      host=origin_host,
@@ -531,7 +506,6 @@ class SaveInsightHistoryData:
         获取 股东数 & 北向资金情况
         Returns:
         """
-
         #  1.起止时间 查询起始时间写 36月前的月初
         time_start_date = DateUtility.first_day_of_month(-36)
         #  结束时间必须大于等于当日，这里取明天的日期
@@ -598,16 +572,7 @@ class SaveInsightHistoryData:
         self.north_bound_df = north_bound_df
 
         if platform.system() == "Windows":
-            #  9.本地csv文件的落盘保存
-            shareholder_num_filename = base_utils.save_out_filename(filehead='shareholder_num', file_type='csv')
-            shareholder_num_filedir = os.path.join(self.dir_history_north_bound_base, shareholder_num_filename)
-            shareholder_num_df.to_csv(shareholder_num_filedir, index=False)
-
-            north_bound_filename = base_utils.save_out_filename(filehead='north_bound', file_type='csv')
-            north_bound_filedir = os.path.join(self.dir_history_north_bound_base, north_bound_filename)
-            north_bound_df.to_csv(north_bound_filedir, index=False)
-
-            #  10.结果数据保存到 本地 mysql中
+            #  9.结果数据保存到 本地 mysql中
             mysql_utils.data_from_dataframe_to_mysql(user=local_user,
                                                      password=local_password,
                                                      host=local_host,
@@ -624,7 +589,7 @@ class SaveInsightHistoryData:
                                                      table_name="ods_north_bound_daily",
                                                      merge_on=['ymd', 'htsc_code'])
 
-            #  11.结果数据保存到 远端 mysql中
+            #  10.结果数据保存到 远端 mysql中
             mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
                                                      password=origin_password,
                                                      host=origin_host,
@@ -641,7 +606,7 @@ class SaveInsightHistoryData:
                                                      table_name="ods_north_bound_daily",
                                                      merge_on=['ymd', 'htsc_code'])
         else:
-            #  11.结果数据保存到 远端 mysql中
+            #  10.结果数据保存到 远端 mysql中
             mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
                                                      password=origin_password,
                                                      host=origin_host,
@@ -664,6 +629,9 @@ class SaveInsightHistoryData:
     def setup(self):
         #  登陆insight数据源
         self.login()
+
+        #  获取交易日历
+        self.get_trading_days()
 
         #  除去 ST |  退  | B 的股票集合
         self.get_stock_codes()

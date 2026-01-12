@@ -1,3 +1,3 @@
-from .factor_library import FactorLibrary
+from Others.strategy.factor_library import FactorLibrary
 
 __all__ = ['FactorLibrary']

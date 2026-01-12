@@ -1,10 +1,9 @@
 import time
 import logging
-import pandas as pd
 from datetime import datetime, timedelta
 from CommonProperties import Mysql_Utils
 from CommonProperties.Base_utils import timing_decorator
-from strategy.factor_library import FactorLibrary
+from Others.strategy.factor_library import FactorLibrary
 
 logger = logging.getLogger(__name__)
 
