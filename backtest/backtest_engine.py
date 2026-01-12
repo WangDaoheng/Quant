@@ -42,6 +42,9 @@ class StockBacktestEngine:
                 logger.warning(f"股票[{stock_code}]在{start_date}-{end_date}无数据")
                 return None
 
+            # 确保数据按日期排序
+            kline_df = kline_df.sort_values('ymd')
+
             # 数据格式转换
             kline_df['ymd'] = pd.to_datetime(kline_df['ymd'])
             kline_df = kline_df.set_index('ymd')
@@ -62,7 +65,6 @@ class StockBacktestEngine:
         except Exception as e:
             logger.error(f"准备{stock_code}数据失败：{str(e)}")
             return None
-
 
     @timing_decorator
     def get_factor_value(self, stock_code, date, factor_type='pb'):
@@ -256,3 +258,150 @@ class StockBacktestEngine:
             '盈亏比': profit_loss_ratio,
             '策略质量得分(SQN)': round(sqn_ana.get('sqn', 0), 2)
         }
+
+    def get_cerebro(self):
+        """
+        获取Cerebro实例（供外部调用）
+        """
+        return self.cerebro
+
+    @timing_decorator
+    def validate_trading_days(self, start_date, end_date):
+        """
+        验证回测期间的交易日数量
+        """
+        try:
+            trading_days = self.factor_lib.get_trading_days(start_date, end_date)
+            if not trading_days:
+                logger.error(f"回测期间 {start_date}~{end_date} 无交易日数据")
+                return False
+
+            logger.info(f"回测期间交易日数量: {len(trading_days)} 天")
+            logger.info(f"交易日范围: {trading_days[0]} 到 {trading_days[-1]}")
+            return True
+        except Exception as e:
+            logger.error(f"验证交易日失败: {str(e)}")
+            return False
+
+    @timing_decorator
+    def get_stock_historical_data(self, stock_code, start_date, end_date):
+        """
+        获取股票历史数据（包括K线和因子数据）
+        """
+        try:
+            # 获取K线数据
+            kline_df = self.factor_lib.get_stock_kline_data(stock_code, start_date, end_date)
+
+            if kline_df.empty:
+                return None
+
+            # 获取因子数据
+            factor_data = {}
+
+            # PB因子
+            pb_df = self.factor_lib.pb_factor(start_date, end_date)
+            if not pb_df.empty:
+                stock_pb_df = pb_df[pb_df['stock_code'] == stock_code.split('.')[0]]
+                if not stock_pb_df.empty:
+                    factor_data['pb'] = stock_pb_df
+
+            # 涨停因子
+            zt_df = self.factor_lib.zt_factor(start_date, end_date)
+            if not zt_df.empty:
+                stock_zt_df = zt_df[zt_df['stock_code'] == stock_code.split('.')[0]]
+                if not stock_zt_df.empty:
+                    factor_data['zt'] = stock_zt_df
+
+            # 筹码因子
+            shareholder_df = self.factor_lib.shareholder_factor(start_date, end_date)
+            if not shareholder_df.empty:
+                stock_shareholder_df = shareholder_df[shareholder_df['stock_code'] == stock_code.split('.')[0]]
+                if not stock_shareholder_df.empty:
+                    factor_data['shareholder'] = stock_shareholder_df
+
+            return {
+                'kline': kline_df,
+                'factors': factor_data
+            }
+
+        except Exception as e:
+            logger.error(f"获取股票历史数据失败 {stock_code}: {str(e)}")
+            return None
+
+    def clear_data_cache(self):
+        """
+        清理数据缓存
+        """
+        try:
+            # 如果有缓存机制，可以在这里清理
+            pass
+        except Exception as e:
+            logger.warning(f"清理数据缓存失败: {str(e)}")
+
+    @timing_decorator
+    def run_comprehensive_backtest(self,
+                                   stock_codes,
+                                   start_date,
+                                   end_date,
+                                   initial_cash=100000,
+                                   strategy_type='factor_driven'):
+        """
+        运行综合回测（包含数据验证）
+        """
+        logger.info("======= 开始综合回测 =======")
+
+        # 1. 验证交易日
+        if not self.validate_trading_days(start_date, end_date):
+            logger.error("交易日验证失败，终止回测")
+            return None
+
+        # 2. 验证股票数据
+        valid_stocks = []
+        for code in stock_codes:
+            data = self.get_stock_historical_data(code, start_date, end_date)
+            if data and not data['kline'].empty:
+                valid_stocks.append(code)
+                logger.info(f"股票 {code} 数据有效，共 {len(data['kline'])} 个交易日")
+            else:
+                logger.warning(f"股票 {code} 数据无效或无数据")
+
+        if not valid_stocks:
+            logger.error("无有效股票数据，终止回测")
+            return None
+
+        logger.info(f"有效股票列表: {valid_stocks}")
+
+        # 3. 运行回测
+        return self.run_backtest(
+            stock_codes=valid_stocks,
+            start_date=start_date,
+            end_date=end_date,
+            initial_cash=initial_cash,
+            strategy_type=strategy_type
+        )
+
+
+# 测试函数
+if __name__ == "__main__":
+    # 配置日志
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
+
+    # 创建回测引擎
+    engine = StockBacktestEngine()
+
+    # 测试交易日验证
+    print("测试交易日验证...")
+    engine.validate_trading_days('20250101', '20250131')
+
+    # 测试股票数据获取
+    print("\n测试股票数据获取...")
+    stock_data = engine.get_stock_historical_data('600000', '20250101', '20250131')
+    if stock_data:
+        print(f"获取到 {len(stock_data['kline'])} 条K线数据")
+        if 'pb' in stock_data['factors']:
+            print(f"获取到 {len(stock_data['factors']['pb'])} 条PB因子数据")
+
+

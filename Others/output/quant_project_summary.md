@@ -1,18 +1,18 @@
 # 量化工程V1.0 代码梳理文档
-*生成时间: 2026-01-12 15:30:10*
+*生成时间: 2026-01-12 22:04:23*
 
 ## 项目统计信息
-- 项目根目录: F:\Quant\Backtrader_PJ1
+- 项目根目录: F:\Quant\Backtrader_PJ1\Quant
 - 总文件数: 45
 - Python文件数: 40
 - SQL文件数: 4
 - Shell文件数: 1
 - 有效目录数: 14
 
-# Backtrader_PJ1 项目目录结构
-*生成时间: 2026-01-12 15:30:10*
+# Quant 项目目录结构
+*生成时间: 2026-01-12 22:04:23*
 
-📁 Backtrader_PJ1/
+📁 Quant/
     📄 main-doubao.py
     📄 main.py
     📁 backtest/
@@ -540,6 +540,9 @@ class StockBacktestEngine:
                 logger.warning(f"股票[{stock_code}]在{start_date}-{end_date}无数据")
                 return None
 
+            # 确保数据按日期排序
+            kline_df = kline_df.sort_values('ymd')
+
             # 数据格式转换
             kline_df['ymd'] = pd.to_datetime(kline_df['ymd'])
             kline_df = kline_df.set_index('ymd')
@@ -560,7 +563,6 @@ class StockBacktestEngine:
         except Exception as e:
             logger.error(f"准备{stock_code}数据失败：{str(e)}")
             return None
-
 
     @timing_decorator
     def get_factor_value(self, stock_code, date, factor_type='pb'):
@@ -754,6 +756,154 @@ class StockBacktestEngine:
             '盈亏比': profit_loss_ratio,
             '策略质量得分(SQN)': round(sqn_ana.get('sqn', 0), 2)
         }
+
+    def get_cerebro(self):
+        """
+        获取Cerebro实例（供外部调用）
+        """
+        return self.cerebro
+
+    @timing_decorator
+    def validate_trading_days(self, start_date, end_date):
+        """
+        验证回测期间的交易日数量
+        """
+        try:
+            trading_days = self.factor_lib.get_trading_days(start_date, end_date)
+            if not trading_days:
+                logger.error(f"回测期间 {start_date}~{end_date} 无交易日数据")
+                return False
+
+            logger.info(f"回测期间交易日数量: {len(trading_days)} 天")
+            logger.info(f"交易日范围: {trading_days[0]} 到 {trading_days[-1]}")
+            return True
+        except Exception as e:
+            logger.error(f"验证交易日失败: {str(e)}")
+            return False
+
+    @timing_decorator
+    def get_stock_historical_data(self, stock_code, start_date, end_date):
+        """
+        获取股票历史数据（包括K线和因子数据）
+        """
+        try:
+            # 获取K线数据
+            kline_df = self.factor_lib.get_stock_kline_data(stock_code, start_date, end_date)
+
+            if kline_df.empty:
+                return None
+
+            # 获取因子数据
+            factor_data = {}
+
+            # PB因子
+            pb_df = self.factor_lib.pb_factor(start_date, end_date)
+            if not pb_df.empty:
+                stock_pb_df = pb_df[pb_df['stock_code'] == stock_code.split('.')[0]]
+                if not stock_pb_df.empty:
+                    factor_data['pb'] = stock_pb_df
+
+            # 涨停因子
+            zt_df = self.factor_lib.zt_factor(start_date, end_date)
+            if not zt_df.empty:
+                stock_zt_df = zt_df[zt_df['stock_code'] == stock_code.split('.')[0]]
+                if not stock_zt_df.empty:
+                    factor_data['zt'] = stock_zt_df
+
+            # 筹码因子
+            shareholder_df = self.factor_lib.shareholder_factor(start_date, end_date)
+            if not shareholder_df.empty:
+                stock_shareholder_df = shareholder_df[shareholder_df['stock_code'] == stock_code.split('.')[0]]
+                if not stock_shareholder_df.empty:
+                    factor_data['shareholder'] = stock_shareholder_df
+
+            return {
+                'kline': kline_df,
+                'factors': factor_data
+            }
+
+        except Exception as e:
+            logger.error(f"获取股票历史数据失败 {stock_code}: {str(e)}")
+            return None
+
+    def clear_data_cache(self):
+        """
+        清理数据缓存
+        """
+        try:
+            # 如果有缓存机制，可以在这里清理
+            pass
+        except Exception as e:
+            logger.warning(f"清理数据缓存失败: {str(e)}")
+
+    @timing_decorator
+    def run_comprehensive_backtest(self,
+                                   stock_codes,
+                                   start_date,
+                                   end_date,
+                                   initial_cash=100000,
+                                   strategy_type='factor_driven'):
+        """
+        运行综合回测（包含数据验证）
+        """
+        logger.info("======= 开始综合回测 =======")
+
+        # 1. 验证交易日
+        if not self.validate_trading_days(start_date, end_date):
+            logger.error("交易日验证失败，终止回测")
+            return None
+
+        # 2. 验证股票数据
+        valid_stocks = []
+        for code in stock_codes:
+            data = self.get_stock_historical_data(code, start_date, end_date)
+            if data and not data['kline'].empty:
+                valid_stocks.append(code)
+                logger.info(f"股票 {code} 数据有效，共 {len(data['kline'])} 个交易日")
+            else:
+                logger.warning(f"股票 {code} 数据无效或无数据")
+
+        if not valid_stocks:
+            logger.error("无有效股票数据，终止回测")
+            return None
+
+        logger.info(f"有效股票列表: {valid_stocks}")
+
+        # 3. 运行回测
+        return self.run_backtest(
+            stock_codes=valid_stocks,
+            start_date=start_date,
+            end_date=end_date,
+            initial_cash=initial_cash,
+            strategy_type=strategy_type
+        )
+
+
+# 测试函数
+if __name__ == "__main__":
+    # 配置日志
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
+
+    # 创建回测引擎
+    engine = StockBacktestEngine()
+
+    # 测试交易日验证
+    print("测试交易日验证...")
+    engine.validate_trading_days('20250101', '20250131')
+
+    # 测试股票数据获取
+    print("\n测试股票数据获取...")
+    stock_data = engine.get_stock_historical_data('600000', '20250101', '20250131')
+    if stock_data:
+        print(f"获取到 {len(stock_data['kline'])} 条K线数据")
+        if 'pb' in stock_data['factors']:
+            print(f"获取到 {len(stock_data['factors']['pb'])} 条PB因子数据")
+
+
+
 ```
 
 --------------------------------------------------------------------------------
@@ -3226,6 +3376,15 @@ CREATE TABLE quant.ods_exchange_dxy_vantage (
 
 ```sql
 
+--1.0
+------------------  ods_trading_days_insight   交易所的交易日历
+CREATE TABLE quant.ods_trading_days_insight (
+     exchange     VARCHAR(50)              --交易所名称
+    ,ymd          DATE NOT NULL            --交易日期
+    ,UNIQUE KEY unique_ymd_stock_code (exchange, ymd)
+);
+
+
 --1.1
 ------------------  ods_stock_code_daily_insight   当日已上市股票码表
 CREATE TABLE quant.ods_stock_code_daily_insight (
@@ -3675,85 +3834,14 @@ origin_host = base_properties.origin_mysql_host
 class SaveInsightData:
 
     def __init__(self):
-
-        self.init_dirs()
-
-        self.init_variant()
-
-    def init_dirs(self):
-        """
-        关键路径初始化
-        """
-        #  文件路径_____insight文件基础路径
-        self.dir_insight_base = base_properties.dir_insight_base
-
-        #  文件路径_____上市交易股票codes
-        self.dir_stock_codes_base = os.path.join(self.dir_insight_base, 'stock_codes')
-
-        #  文件路径_____上市交易股票的日k线数据
-        self.dir_stock_kline_base = os.path.join(self.dir_insight_base, 'stock_kline')
-
-        #  文件路径_____关键大盘指数
-        self.dir_index_a_share_base = os.path.join(self.dir_insight_base, 'index_a_share')
-
-        #  文件路径_____涨跌停数量
-        self.dir_limit_summary_base = os.path.join(self.dir_insight_base, 'limit_summary')
-
-        #  文件路径_____内盘期货
-        self.dir_future_inside_base = os.path.join(self.dir_insight_base, 'future_inside')
-
-        #  文件路径_____筹码数据
-        self.dir_chouma_base = os.path.join(self.dir_insight_base, 'chouma')
-
-        #  文件路径_____行业分类数据_概览
-        self.dir_industry_overview_base = os.path.join(self.dir_insight_base, 'industry_overview')
-
-        #  文件路径_____行业分类数据_明细
-        self.dir_industry_detail_base = os.path.join(self.dir_insight_base, 'industry_detail')
-
-        #  文件路径_____个股的股东数_明细
-        self.dir_shareholder_num_base = os.path.join(self.dir_insight_base, 'shareholder_num')
-
-        #  文件路径_____北向持仓数据_明细
-        self.dir_north_bound_base = os.path.join(self.dir_insight_base, 'north_bound')
-
-
-    def init_variant(self):
         """
         结果变量初始化
         """
         #  除去 ST|退|B 的五要素   [ymd	htsc_code	name	exchange]
         self.stock_code_df = pd.DataFrame()
 
-        #  上述stock_code 对应的日K
-        self.stock_kline_df = pd.DataFrame()
 
-        #  获得A股市场的股指 [htsc_code 	time	frequency	open	close	high	low	volume	value]
-        self.index_a_share = pd.DataFrame()
-
-        #  大盘涨跌停数量          [time	name	今日涨停	今日跌停	昨日涨停	昨日跌停	昨日涨停表现]
-        self.limit_summary_df = pd.DataFrame()
-
-        #  期货市场数据    原油  贵金属  有色
-        self.future_index = pd.DataFrame()
-
-        #  可以获取筹码的股票数据
-        self.stock_chouma_available = pd.DataFrame()
-
-        #  可以获取insight中的 行业分类 数据概览
-        self.industry_overview = pd.DataFrame()
-
-        #  可以获取insight中的 行业分类 数据明细
-        self.industry_detail = pd.DataFrame()
-
-        #  获取insight 中个股的 股东数
-        self.shareholder_num_df = pd.DataFrame()
-
-        #  获取insight 中北向的 持仓数据
-        self.north_bound_df = pd.DataFrame()
-
-
-    # @timing_decorator
+    @timing_decorator
     def login(self):
         # 登陆前 初始化，没有密码可以访问进行自动化注册
         # https://findata-insight.htsc.com:9151/terminalWeb/#/signup
@@ -3762,7 +3850,7 @@ class SaveInsightData:
         common.login(market_service, user, password)
 
 
-    # @timing_decorator
+    @timing_decorator
     def get_stock_codes(self):
         """
         获取当日的stock代码合集
@@ -3792,12 +3880,6 @@ class SaveInsightData:
 
         ############################   文件输出模块     ############################
         if platform.system() == "Windows":
-            #  7.本地csv文件的落盘保存
-            filehead = 'stocks_codes_all'
-            stock_codes_listed_filename = base_utils.save_out_filename(filehead=filehead, file_type='csv')
-            stock_codes_listed_dir = os.path.join(self.dir_stock_codes_base, stock_codes_listed_filename)
-            filtered_df.to_csv(stock_codes_listed_dir, index=False)
-
             #  8.结果数据保存到 本地 mysql中
             mysql_utils.data_from_dataframe_to_mysql(user=local_user,
                                                      password=local_password,
@@ -3895,16 +3977,8 @@ class SaveInsightData:
             #  10.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
             kline_total_df = kline_total_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
 
-            #  11.更新dataframe
-            self.stock_kline_df = kline_total_df
-
             ############################   文件输出模块     ############################
             if platform.system() == "Windows":
-                #  12.本地csv文件的落盘保存
-                stock_kline_filename = base_utils.save_out_filename(filehead='stock_kline', file_type='csv')
-                stcok_kline_filedir = os.path.join(self.dir_stock_kline_base, stock_kline_filename)
-                kline_total_df.to_csv(stcok_kline_filedir, index=False)
-
                 #  13.结果数据保存到 本地 mysql中
                 mysql_utils.data_from_dataframe_to_mysql(user=local_user,
                                                          password=local_password,
@@ -4000,15 +4074,7 @@ class SaveInsightData:
             index_df = index_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
 
             ############################   文件输出模块     ############################
-            #  9.更新dataframe
-            self.index_a_share = index_df
-
             if platform.system() == "Windows":
-                #  10.本地csv文件的落盘保存
-                index_filename = base_utils.save_out_filename(filehead='index_a_share', file_type='csv')
-                index_filedir = os.path.join(self.dir_index_a_share_base, index_filename)
-                index_df.to_csv(index_filedir, index=False)
-
                 #  11.结果数据保存到 本地 mysql中
                 mysql_utils.data_from_dataframe_to_mysql(user=local_user,
                                                          password=local_password,
@@ -4102,15 +4168,7 @@ class SaveInsightData:
             limit_summary_df = limit_summary_df.drop_duplicates(subset=['ymd', 'name'], keep='first')
 
             ############################   文件输出模块     ############################
-            #  7.更新dataframe
-            self.limit_summary_df = limit_summary_df
-
             if platform.system() == "Windows":
-                #  8.本地csv文件的落盘保存
-                test_summary_filename = base_utils.save_out_filename(filehead='stock_limit_summary', file_type='csv')
-                test_summary_dir = os.path.join(self.dir_limit_summary_base, test_summary_filename)
-                limit_summary_df.to_csv(test_summary_dir, index=False)
-
                 #  9.结果数据保存到 本地 mysql中
                 mysql_utils.data_from_dataframe_to_mysql(user=local_user,
                                                          password=local_password,
@@ -4204,16 +4262,7 @@ class SaveInsightData:
             future_inside_df = future_inside_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
 
             ############################   文件输出模块     ############################
-            #  8.更新dataframe
-            self.future_index = future_inside_df
-
             if platform.system() == "Windows":
-                #  9.本地csv文件的落盘保存
-                # future_inside_df = future_inside_df.fillna(value=None)
-                future_inside_df_filename = base_utils.save_out_filename(filehead='future_inside', file_type='csv')
-                future_inside_df_filedir = os.path.join(self.dir_future_inside_base, future_inside_df_filename)
-                future_inside_df.to_csv(future_inside_df_filedir, index=False)
-
                 #  10.结果数据保存到 本地 mysql中
                 mysql_utils.data_from_dataframe_to_mysql(user=local_user,
                                                          password=local_password,
@@ -4334,15 +4383,7 @@ class SaveInsightData:
             # chouma_total_df[cols_to_clean] = chouma_total_df[cols_to_clean].round(2)
 
             ############################   文件输出模块     ############################
-            #  9.更新dataframe
-            self.stock_chouma_available = chouma_total_df
-
             if platform.system() == "Windows":
-                #  10.本地csv文件的落盘保存
-                chouma_filename = base_utils.save_out_filename(filehead=f"stock_chouma", file_type='csv')
-                chouma_data_filedir = os.path.join(self.dir_chouma_base, 'chouma_data', chouma_filename)
-                chouma_total_df.to_csv(chouma_data_filedir, index=False)
-
                 #  11.结果数据保存到 本地 mysql中
                 mysql_utils.data_from_dataframe_to_mysql(user=local_user,
                                                          password=local_password,
@@ -4370,7 +4411,7 @@ class SaveInsightData:
                                                          table_name="ods_stock_chouma_insight",
                                                          merge_on=['ymd', 'htsc_code'])
         else:
-            ## insight 返回为空值
+            # insight 返回为空值
             logging.info('    get_chouma_datas 的返回值为空值')
 
 
@@ -4411,15 +4452,7 @@ class SaveInsightData:
             industry_df = industry_df.drop_duplicates(subset=['ymd', 'industry_code'], keep='first')
 
             ############################   文件输出模块     ############################
-            #  7.更新dataframe
-            self.industry_overview = industry_df
-
             if platform.system() == "Windows":
-                #  8.本地csv文件的落盘保存
-                sw_industry_filename = base_utils.save_out_filename(filehead='sw_industry', file_type='csv')
-                sw_industry_filedir = os.path.join(self.dir_industry_overview_base, sw_industry_filename)
-                industry_df.to_csv(sw_industry_filedir, index=False)
-
                 #  9.结果数据保存到 本地 mysql中
                 mysql_utils.data_from_dataframe_to_mysql(user=local_user,
                                                          password=local_password,
@@ -4463,7 +4496,6 @@ class SaveInsightData:
         if not DateUtility.is_friday():
             logging.info("今天不是周五，跳过行业信息获取逻辑。")
             return
-
 
         #  1.当月数据的起止时间
         time_today = DateUtility.today()
@@ -4510,15 +4542,7 @@ class SaveInsightData:
             stock_in_industry_df = stock_in_industry_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
 
             ############################   文件输出模块     ############################
-            #  8.更新dataframe
-            self.industry_detail = stock_in_industry_df
-
             if platform.system() == "Windows":
-                #  9.本地csv文件的落盘保存
-                sw_industry_filename = base_utils.save_out_filename(filehead='sw_industry', file_type='csv')
-                sw_industry_filedir = os.path.join(self.dir_industry_detail_base, sw_industry_filename)
-                stock_in_industry_df.to_csv(sw_industry_filedir, index=False)
-
                 #  10.结果数据保存到 本地 mysql中
                 mysql_utils.data_from_dataframe_to_mysql(user=local_user,
                                                          password=local_password,
@@ -4557,7 +4581,6 @@ class SaveInsightData:
         获取 股东数 & 北向资金情况
         Returns:
         """
-
         #  1.起止时间 查询起始时间写 2月前的月初
         time_start_date = DateUtility.first_day_of_month(-2)
         #  结束时间必须大于等于当日，这里取明天的日期
@@ -4619,20 +4642,7 @@ class SaveInsightData:
             # north_bound_df = north_bound_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
 
             ############################   文件输出模块     ############################
-            #  8.更新dataframe
-            self.shareholder_num_df = shareholder_num_df
-            # self.north_bound_df = north_bound_df
-
             if platform.system() == "Windows":
-                #  9.本地csv文件的落盘保存
-                shareholder_num_filename = base_utils.save_out_filename(filehead='shareholder_num', file_type='csv')
-                shareholder_num_filedir = os.path.join(self.dir_shareholder_num_base, shareholder_num_filename)
-                shareholder_num_df.to_csv(shareholder_num_filedir, index=False)
-
-                # north_bound_filename = base_utils.save_out_filename(filehead='north_bound', file_type='csv')
-                # north_bound_filedir = os.path.join(self.dir_north_bound_base, north_bound_filename)
-                # north_bound_df.to_csv(north_bound_filedir, index=False)
-
                 #  10.结果数据保存到 本地 mysql中
                 mysql_utils.data_from_dataframe_to_mysql(user=local_user,
                                                          password=local_password,
@@ -4769,68 +4779,14 @@ origin_database = base_properties.origin_mysql_database
 origin_host = base_properties.origin_mysql_host
 
 
-
 class SaveInsightHistoryData:
 
     def __init__(self):
-
-        self.init_dirs()
-
-        self.init_variant()
-
-    def init_dirs(self):
-        """
-        关键路径初始化
-        """
-        #  文件路径_____insight文件基础路径
-        self.dir_history_insight_base = base_properties.dir_history_insight_base
-
-        #  文件路径_____上市交易股票codes
-        self.dir_history_stock_codes_base = os.path.join(self.dir_history_insight_base, 'stock_codes')
-
-        #  文件路径_____上市交易股票的日k线数据
-        self.dir_history_stock_kline_base = os.path.join(self.dir_history_insight_base, 'stock_kline')
-
-        #  文件路径_____关键大盘指数
-        self.dir_history_index_a_share_base = os.path.join(self.dir_history_insight_base, 'index_a_share')
-
-        #  文件路径_____涨跌停数量
-        self.dir_history_limit_summary_base = os.path.join(self.dir_history_insight_base, 'limit_summary')
-
-        #  文件路径_____内盘期货
-        self.dir_history_future_inside_base = os.path.join(self.dir_history_insight_base, 'future_inside')
-
-        #  文件路径_____筹码数据
-        self.dir_history_chouma_base = os.path.join(self.dir_history_insight_base, 'chouma')
-
-        #  文件路径_____个股的股东数_明细
-        self.dir_history_shareholder_num_base = os.path.join(self.dir_history_insight_base, 'shareholder_num')
-
-        #  文件路径_____北向持仓数据_明细
-        self.dir_history_north_bound_base = os.path.join(self.dir_history_insight_base, 'north_bound')
-
-
-    def init_variant(self):
         """
         结果变量初始化
         """
         #  除去 ST|退|B 的五要素   [ymd	htsc_code	name	exchange]
         self.stock_code_df = pd.DataFrame()
-
-        #  获取上述股票的历史数据   日K级别
-        self.kline_total_history = pd.DataFrame()
-
-        #  获得A股市场的股指 [htsc_code 	time	frequency	open	close	high	low	volume	value]
-        self.index_a_share = pd.DataFrame()
-
-        #  大盘涨跌停数量          [time	name	今日涨停	今日跌停	昨日涨停	昨日跌停	昨日涨停表现]
-        self.limit_summary_df = pd.DataFrame()
-
-        #  期货市场数据    原油  贵金属  有色
-        self.future_index = pd.DataFrame()
-
-        #  可以获取筹码的股票数据
-        self.stock_chouma_available = ""
 
 
     @timing_decorator
@@ -4840,6 +4796,67 @@ class SaveInsightHistoryData:
         user = base_properties.user
         password = base_properties.password
         common.login(market_service, user, password)
+
+
+    def get_trading_days(self):
+        """
+        获取交易日历
+        Returns: (exchange, ymd)
+        """
+        trading_day_start_date = "2018-01-01"
+        trading_day_end_date = "2027-12-31"
+        trading_day_start_date = datetime.strptime(trading_day_start_date, '%Y-%m-%d')
+        trading_day_end_date = datetime.strptime(trading_day_end_date, '%Y-%m-%d')
+
+        # 调用获取交易日历结果
+        result = get_trading_days(trading_day=[trading_day_start_date,
+                                               trading_day_end_date], exchange='XSHG')
+
+        # 步骤1：解析真实 result 结构（关键修正）
+        exchange_name = result[0]  # 提取第一个元素：交易所名称（XSHG）
+        trading_series = result[1]  # 提取第二个元素：pandas Series（包含所有交易日）
+        # 将 Series 转换为列表（获取所有交易日数据，解决只取到1个元素的问题）
+        trading_dates_list = trading_series.tolist()  # 核心方法：Series.tolist()
+
+        # 步骤2：构造 DataFrame 所需的数据源
+        df_data = {
+            'exchange': [exchange_name] * len(trading_dates_list),  # 生成匹配长度的交易所列表
+            'ymd': trading_dates_list
+        }
+        trading_df = pd.DataFrame(df_data)
+
+        # 步骤3：按 exchange 和 trading_days 升序排序
+        trading_df.sort_values(by=['exchange', 'ymd'], ascending=True, inplace=True)
+
+        # 可选：重置排序后的索引（避免索引混乱）
+        trading_df.reset_index(drop=True, inplace=True)
+        if platform.system() == "Windows":
+            #  结果数据保存到 本地 mysql中
+            mysql_utils.data_from_dataframe_to_mysql(user=local_user,
+                                                     password=local_password,
+                                                     host=local_host,
+                                                     database=local_database,
+                                                     df=trading_df,
+                                                     table_name="ods_trading_days_insight",
+                                                     merge_on=['exchange', 'ymd'])
+
+            #  结果数据保存到 远端 mysql中
+            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
+                                                     password=origin_password,
+                                                     host=origin_host,
+                                                     database=origin_database,
+                                                     df=trading_df,
+                                                     table_name="ods_trading_days_insight",
+                                                     merge_on=['exchange', 'ymd'])
+        else:
+            #  结果数据保存到 远端 mysql中
+            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
+                                                     password=origin_password,
+                                                     host=origin_host,
+                                                     database=origin_database,
+                                                     df=trading_df,
+                                                     table_name="ods_trading_days_insight",
+                                                     merge_on=['exchange', 'ymd'])
 
 
     @timing_decorator
@@ -4925,18 +4942,11 @@ class SaveInsightHistoryData:
         #  11.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
         # kline_total_df = kline_total_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
 
-        #  12.文件输出模块
-        self.kline_total_history = kline_total_df
 
         ############################   文件输出模块     ############################
 
         if platform.system() == "Windows":
-            #  13.本地csv文件的落盘保存
-            kline_total_filename = base_utils.save_out_filename(filehead='stock_kline_history', file_type='csv')
-            kline_total_filedir = os.path.join(self.dir_history_stock_kline_base, kline_total_filename)
-            kline_total_df.to_csv(kline_total_filedir, index=False)
-
-            #  14.结果数据保存到 本地 mysql中
+            #  13.结果数据保存到 本地 mysql中
             mysql_utils.data_from_dataframe_to_mysql(user=local_user,
                                                      password=local_password,
                                                      host=local_host,
@@ -4945,7 +4955,7 @@ class SaveInsightHistoryData:
                                                      table_name="ods_stock_kline_daily_insight",
                                                      merge_on=['ymd', 'htsc_code'])
 
-            #  15.结果数据保存到 远端 mysql中
+            #  14.结果数据保存到 远端 mysql中
             mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
                                                      password=origin_password,
                                                      host=origin_host,
@@ -4954,7 +4964,7 @@ class SaveInsightHistoryData:
                                                      table_name="ods_stock_kline_daily_insight",
                                                      merge_on=['ymd', 'htsc_code'])
         else:
-            #  15.结果数据保存到 远端 mysql中
+            #  14.结果数据保存到 远端 mysql中
             mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
                                                      password=origin_password,
                                                      host=origin_host,
@@ -4962,7 +4972,6 @@ class SaveInsightHistoryData:
                                                      df=kline_total_df,
                                                      table_name="ods_stock_kline_daily_insight",
                                                      merge_on=['ymd', 'htsc_code'])
-
 
 
     @timing_decorator
@@ -5024,16 +5033,8 @@ class SaveInsightHistoryData:
         index_df = index_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
 
         ############################   文件输出模块     ############################
-        #  9.更新dataframe
-        self.index_a_share = index_df
-
         if platform.system() == "Windows":
-            #  10.本地csv文件的落盘保存
-            index_filename = base_utils.save_out_filename(filehead='index_a_share_history', file_type='csv')
-            index_filedir = os.path.join(self.dir_history_index_a_share_base, index_filename)
-            index_df.to_csv(index_filedir, index=False)
-
-            #  11.结果数据保存到 本地 mysql中
+            #  10.结果数据保存到 本地 mysql中
             mysql_utils.data_from_dataframe_to_mysql(user=local_user,
                                                      password=local_password,
                                                      host=local_host,
@@ -5042,7 +5043,7 @@ class SaveInsightHistoryData:
                                                      table_name="ods_index_a_share_insight",
                                                      merge_on=['ymd', 'htsc_code'])
 
-            #  12.结果数据保存到 远端 mysql中
+            #  11.结果数据保存到 远端 mysql中
             mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
                                                      password=origin_password,
                                                      host=origin_host,
@@ -5051,7 +5052,7 @@ class SaveInsightHistoryData:
                                                      table_name="ods_index_a_share_insight",
                                                      merge_on=['ymd', 'htsc_code'])
         else:
-            #  12.结果数据保存到 远端 mysql中
+            #  11.结果数据保存到 远端 mysql中
             mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
                                                      password=origin_password,
                                                      host=origin_host,
@@ -5118,16 +5119,8 @@ class SaveInsightHistoryData:
         filter_limit_df = filter_limit_df.drop_duplicates(subset=['ymd', 'name'], keep='first')
 
         ############################   文件输出模块     ############################
-        #  7.更新dataframe
-        self.limit_summary_df = filter_limit_df
-
         if platform.system() == "Windows":
-            #  8.本地csv文件的落盘保存
-            summary_filename = base_utils.save_out_filename(filehead='stock_limit_summary', file_type='csv')
-            summary_dir = os.path.join(self.dir_history_limit_summary_base, summary_filename)
-            filter_limit_df.to_csv(summary_dir, index=False)
-
-            #  9.结果数据保存到 本地 mysql中
+            #  8.结果数据保存到 本地 mysql中
             mysql_utils.data_from_dataframe_to_mysql(user=local_user,
                                                      password=local_password,
                                                      host=local_host,
@@ -5136,7 +5129,7 @@ class SaveInsightHistoryData:
                                                      table_name="ods_stock_limit_summary_insight",
                                                      merge_on=['ymd', 'name'])
 
-            #  10.结果数据保存到 远端 mysql中
+            #  9.结果数据保存到 远端 mysql中
             mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
                                                      password=origin_password,
                                                      host=origin_host,
@@ -5145,7 +5138,7 @@ class SaveInsightHistoryData:
                                                      table_name="ods_stock_limit_summary_insight",
                                                      merge_on=['ymd', 'name'])
         else:
-            #  10.结果数据保存到 远端 mysql中
+            #  9.结果数据保存到 远端 mysql中
             mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
                                                      password=origin_password,
                                                      host=origin_host,
@@ -5215,16 +5208,8 @@ class SaveInsightHistoryData:
         future_inside_df = future_inside_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
 
         ############################   文件输出模块     ############################
-        #  8.更新dataframe
-        self.future_index = future_inside_df
-
         if platform.system() == "Windows":
-            #  9.本地csv文件的落盘保存
-            future_inside_filename = base_utils.save_out_filename(filehead='future_inside', file_type='csv')
-            future_inside_filedir = os.path.join(self.dir_history_future_inside_base, future_inside_filename)
-            future_inside_df.to_csv(future_inside_filedir, index=False)
-
-            #  10.结果数据保存到 本地 mysql中
+            #  9.结果数据保存到 本地 mysql中
             mysql_utils.data_from_dataframe_to_mysql(user=local_user,
                                                      password=local_password,
                                                      host=local_host,
@@ -5233,7 +5218,7 @@ class SaveInsightHistoryData:
                                                      table_name="ods_future_inside_insight",
                                                      merge_on=['ymd', 'htsc_code'])
 
-            #  11.结果数据保存到 远端 mysql中
+            #  10.结果数据保存到 远端 mysql中
             mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
                                                      password=origin_password,
                                                      host=origin_host,
@@ -5242,7 +5227,7 @@ class SaveInsightHistoryData:
                                                      table_name="ods_future_inside_insight",
                                                      merge_on=['ymd', 'htsc_code'])
         else:
-            #  11.结果数据保存到 远端 mysql中
+            #  10.结果数据保存到 远端 mysql中
             mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
                                                      password=origin_password,
                                                      host=origin_host,
@@ -5258,7 +5243,6 @@ class SaveInsightHistoryData:
         获取 股东数 & 北向资金情况
         Returns:
         """
-
         #  1.起止时间 查询起始时间写 36月前的月初
         time_start_date = DateUtility.first_day_of_month(-36)
         #  结束时间必须大于等于当日，这里取明天的日期
@@ -5325,16 +5309,7 @@ class SaveInsightHistoryData:
         self.north_bound_df = north_bound_df
 
         if platform.system() == "Windows":
-            #  9.本地csv文件的落盘保存
-            shareholder_num_filename = base_utils.save_out_filename(filehead='shareholder_num', file_type='csv')
-            shareholder_num_filedir = os.path.join(self.dir_history_north_bound_base, shareholder_num_filename)
-            shareholder_num_df.to_csv(shareholder_num_filedir, index=False)
-
-            north_bound_filename = base_utils.save_out_filename(filehead='north_bound', file_type='csv')
-            north_bound_filedir = os.path.join(self.dir_history_north_bound_base, north_bound_filename)
-            north_bound_df.to_csv(north_bound_filedir, index=False)
-
-            #  10.结果数据保存到 本地 mysql中
+            #  9.结果数据保存到 本地 mysql中
             mysql_utils.data_from_dataframe_to_mysql(user=local_user,
                                                      password=local_password,
                                                      host=local_host,
@@ -5351,7 +5326,7 @@ class SaveInsightHistoryData:
                                                      table_name="ods_north_bound_daily",
                                                      merge_on=['ymd', 'htsc_code'])
 
-            #  11.结果数据保存到 远端 mysql中
+            #  10.结果数据保存到 远端 mysql中
             mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
                                                      password=origin_password,
                                                      host=origin_host,
@@ -5368,7 +5343,7 @@ class SaveInsightHistoryData:
                                                      table_name="ods_north_bound_daily",
                                                      merge_on=['ymd', 'htsc_code'])
         else:
-            #  11.结果数据保存到 远端 mysql中
+            #  10.结果数据保存到 远端 mysql中
             mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
                                                      password=origin_password,
                                                      host=origin_host,
@@ -5391,6 +5366,9 @@ class SaveInsightHistoryData:
     def setup(self):
         #  登陆insight数据源
         self.login()
+
+        #  获取交易日历
+        self.get_trading_days()
 
         #  除去 ST |  退  | B 的股票集合
         self.get_stock_codes()
@@ -8503,7 +8481,6 @@ class FactorLibrary:
             pb_df = pb_df.dropna(subset=['pb'])
 
             # 按日计算分位数，标记低PB股票
-            # 每个元素是一个dataframe
             result_dfs = []
 
             # 按日期分组处理
@@ -8532,96 +8509,192 @@ class FactorLibrary:
             logger.error(f"计算PB因子失败：{str(e)}")
             return pd.DataFrame(columns=['ymd', 'stock_code', 'pb', 'pb_signal'])
 
-    # @timing_decorator
+
+    @timing_decorator
     def zt_factor(self, start_date, end_date, lookback_days=5):
         """
-        计算涨停因子：为日期范围内的每一天计算涨停信号
+        计算涨停因子：为全量股票计算过去lookback_days个交易日内是否有涨停
         返回:
-            DataFrame: ymd, stock_code, zt_signal, latest_zt_date
+            DataFrame: ymd, stock_code, zt_signal
         """
         try:
-            # 1. 读取日期范围内的所有涨停记录
+            # 1. 获取实际交易日列表
+            trading_days = self.get_trading_days(start_date, end_date)
+            if not trading_days:
+                logger.warning(f"交易日列表为空: {start_date}~{end_date}")
+                return pd.DataFrame(columns=['ymd', 'stock_code', 'zt_signal'])
+
+            logger.info(f"获取到 {len(trading_days)} 个交易日: {trading_days[0]} ~ {trading_days[-1]}")
+
+            # 2. 获取涨停记录（扩展到更早的日期以覆盖lookback_days窗口）
+            # 计算需要查询的起始日期：开始日期的前lookback_days天
+            start_dt = pd.to_datetime(start_date, format='%Y%m%d')
+            query_start_dt = start_dt - pd.Timedelta(days=lookback_days + 10)  # 加10天作为缓冲
+            query_start_date = query_start_dt.strftime('%Y%m%d')
+
+            logger.info(f"查询涨停记录：{query_start_date} ~ {end_date}（包含缓冲期）")
+
             zt_df = Mysql_Utils.data_from_mysql_to_dataframe(
                 user=self.user,
                 password=self.password,
                 host=self.host,
                 database=self.database,
                 table_name='dwd_stock_zt_list',
-                start_date=start_date,
+                start_date=query_start_date,
                 end_date=end_date,
                 cols=['ymd', 'stock_code']
             )
 
             if zt_df.empty:
-                logger.warning(f"涨停因子数据为空: {start_date}~{end_date}")
-                # 返回空DataFrame，但包含正确的列结构
-                return pd.DataFrame(columns=['ymd', 'stock_code', 'zt_signal'])
+                logger.warning(f"涨停因子数据为空: {query_start_date}~{end_date}")
+                # 返回全量股票的False信号
+                return self._get_all_false_signals(trading_days, start_date, end_date)
 
-            # 2. 数据预处理
+            # 3. 数据预处理
             zt_df = convert_ymd_format(zt_df, 'ymd')
             zt_df['ymd_dt'] = pd.to_datetime(zt_df['ymd'])
 
-            # 3. 获取需要计算的所有日期
-            start_dt = pd.to_datetime(start_date, format='%Y%m%d')
-            end_dt = pd.to_datetime(end_date, format='%Y%m%d')
-
-            # 从PB数据或K线数据获取实际交易日
-            # 简化版：先生成所有日期，后续可以优化
-            all_dates = pd.date_range(start=start_dt, end=end_dt, freq='D')
-
-            # 4. 获取所有有涨停记录的股票
-            all_zt_stocks = zt_df['stock_code'].unique()
-
-            # 5. 为每只股票构建涨停日期列表
+            # 4. 为每只股票构建涨停日期列表
             stock_zt_dates = {}
-            for stock in all_zt_stocks:
+            for stock in zt_df['stock_code'].unique():
                 stock_dates = zt_df[zt_df['stock_code'] == stock]['ymd_dt'].tolist()
                 stock_zt_dates[stock] = sorted(stock_dates)
 
-            # 6. 计算每日涨停信号
-            result_data = []
-
-            for current_date in all_dates:
-                date_str = current_date.strftime('%Y%m%d')
-
-                for stock in all_zt_stocks:
-                    if stock in stock_zt_dates and stock_zt_dates[stock]:
-                        # 找到小于等于当前日期的涨停记录
-                        zt_dates = [d for d in stock_zt_dates[stock] if d <= current_date]
-
-                        if zt_dates:
-                            latest_zt_date = max(zt_dates)
-                            days_since_zt = (current_date - latest_zt_date).days
-
-                            # 判断是否在lookback_days窗口内
-                            zt_signal = 0 <= days_since_zt <= lookback_days
-
-                            result_data.append({
-                                'ymd': date_str,
-                                'stock_code': stock,
-                                'zt_signal': zt_signal,
-                                'latest_zt_date': latest_zt_date.strftime('%Y%m%d')
-                            })
-
-            # 7. 转换为DataFrame
-            result_df = pd.DataFrame(result_data) if result_data else pd.DataFrame(
-                columns=['ymd', 'stock_code', 'zt_signal', 'latest_zt_date']
+            # 5. 获取全量股票基本信息（参考pb_factor的实现）
+            # 使用最新的交易日获取股票池
+            latest_trading_day = trading_days[-1]
+            stock_base_df = Mysql_Utils.data_from_mysql_to_dataframe(
+                user=self.user,
+                password=self.password,
+                host=self.host,
+                database=self.database,
+                table_name='dwd_ashare_stock_base_info',
+                start_date=latest_trading_day,
+                end_date=latest_trading_day,
+                cols=['ymd', 'stock_code', 'stock_name']
             )
 
-            # 8. 按日期和股票代码排序
-            result_df = result_df.sort_values(['ymd', 'stock_code']).reset_index(drop=True)
+            if stock_base_df.empty:
+                logger.warning(f"股票基本信息数据为空: {latest_trading_day}")
+                return pd.DataFrame(columns=['ymd', 'stock_code', 'zt_signal'])
+
+            # 获取全量股票列表
+            all_stocks = stock_base_df['stock_code'].unique()
+            logger.info(f"获取到 {len(all_stocks)} 只全量股票")
+
+            # 6. 将交易日转换为datetime对象
+            trading_days_dt = [pd.to_datetime(d, format='%Y%m%d') for d in trading_days]
+
+            # 7. 为每只股票的每个交易日计算涨停信号
+            result_data = []
+
+            # 创建交易日索引映射，用于快速查找前N个交易日
+            date_to_index = {date: i for i, date in enumerate(trading_days_dt)}
+
+            for i, current_date in enumerate(trading_days_dt):
+                date_str = trading_days[i]  # 使用原始字符串格式
+
+                for stock in all_stocks:
+                    zt_signal = False
+
+                    if stock in stock_zt_dates:
+                        # 获取这只股票的所有涨停日期
+                        stock_all_zt_dates = stock_zt_dates[stock]
+
+                        # 找到小于等于当前日期的所有涨停
+                        zt_dates_before = [d for d in stock_all_zt_dates if d <= current_date]
+
+                        if zt_dates_before:
+                            # 我们需要检查过去lookback_days个交易日内是否有涨停
+                            # 首先找到当前日期在交易日列表中的位置
+                            current_idx = date_to_index[current_date]
+
+                            # 计算窗口起始索引（不能小于0）
+                            window_start_idx = max(0, current_idx - lookback_days + 1)
+
+                            # 获取窗口内的交易日
+                            window_dates = trading_days_dt[window_start_idx:current_idx + 1]
+
+                            # 检查窗口内是否有涨停
+                            for zt_date in zt_dates_before:
+                                if zt_date in window_dates:
+                                    zt_signal = True
+                                    break
+
+                    result_data.append({
+                        'ymd': date_str,
+                        'stock_code': stock,
+                        'zt_signal': zt_signal
+                    })
+
+                # 进度日志
+                if (i + 1) % 5 == 0 or i == len(trading_days_dt) - 1:
+                    logger.info(f"进度：已处理 {i + 1}/{len(trading_days_dt)} 个交易日")
+
+            # 8. 转换为DataFrame
+            result_df = pd.DataFrame(result_data)
+
+            # 9. 统计信息
+            total_records = len(result_df)
+            signal_true_count = result_df['zt_signal'].sum()
+            signal_true_pct = (signal_true_count / total_records * 100) if total_records > 0 else 0
 
             logger.info(
                 f"涨停因子计算完成：日期范围 {start_date}~{end_date}，"
-                f"共{len(all_dates)}天，{len(all_zt_stocks)}只股票有涨停记录，"
-                f"总记录数：{len(result_df)}，"
-                f"涨停信号True占比：{result_df['zt_signal'].mean() * 100:.2f}%"
+                f"共{len(trading_days)}个交易日，{len(all_stocks)}只股票，"
+                f"总记录数：{total_records}，"
+                f"涨停信号True数量：{signal_true_count}，"
+                f"占比：{signal_true_pct:.2f}%"
             )
 
             return result_df[['ymd', 'stock_code', 'zt_signal']]
 
         except Exception as e:
             logger.error(f"计算涨停因子失败：{str(e)}")
+            import traceback
+            logger.error(traceback.format_exc())
+            return pd.DataFrame(columns=['ymd', 'stock_code', 'zt_signal'])
+
+    def _get_all_false_signals(self, trading_days, start_date, end_date):
+        """
+        当没有涨停记录时，为所有股票生成False信号
+        """
+        try:
+            # 获取全量股票列表
+            latest_trading_day = trading_days[-1] if trading_days else end_date
+            stock_base_df = Mysql_Utils.data_from_mysql_to_dataframe(
+                user=self.user,
+                password=self.password,
+                host=self.host,
+                database=self.database,
+                table_name='dwd_ashare_stock_base_info',
+                start_date=latest_trading_day,
+                end_date=latest_trading_day,
+                cols=['stock_code']
+            )
+
+            if stock_base_df.empty:
+                return pd.DataFrame(columns=['ymd', 'stock_code', 'zt_signal'])
+
+            all_stocks = stock_base_df['stock_code'].unique()
+
+            # 生成所有False信号
+            result_data = []
+            for date_str in trading_days:
+                for stock in all_stocks:
+                    result_data.append({
+                        'ymd': date_str,
+                        'stock_code': stock,
+                        'zt_signal': False
+                    })
+
+            result_df = pd.DataFrame(result_data)
+            logger.info(f"无涨停记录，为{len(all_stocks)}只股票生成False信号，共{len(result_df)}条记录")
+
+            return result_df
+
+        except Exception as e:
+            logger.error(f"生成False信号失败：{str(e)}")
             return pd.DataFrame(columns=['ymd', 'stock_code', 'zt_signal'])
 
     @timing_decorator
@@ -8720,45 +8793,56 @@ class FactorLibrary:
     @timing_decorator
     def get_trading_days(self, start_date, end_date):
         """
-        获取交易日列表（优化版）
+        获取交易日列表 - 从 ods_trading_days_insight 表获取
         """
         try:
-            # 从K线数据中获取实际的交易日
-            kline_dates = Mysql_Utils.data_from_mysql_to_dataframe(
+            # 从交易日历表获取交易日
+            trading_days_df = Mysql_Utils.data_from_mysql_to_dataframe(
                 user=self.user,
                 password=self.password,
                 host=self.host,
                 database=self.database,
-                table_name='ods_stock_kline_daily_insight',
-                cols=['ymd']
-            )['ymd'].unique()
+                table_name='ods_trading_days_insight',
+                start_date=start_date,
+                end_date=end_date,
+                cols=['exchange', 'ymd']
+            )
 
-            # 转换为日期格式
-            kline_dates = pd.to_datetime(kline_dates, format='%Y%m%d')
+            if trading_days_df.empty:
+                logger.warning(f"交易日历表为空: {start_date}~{end_date}")
+                return []
 
-            # 筛选日期范围
+            # 筛选 XSHG（上海交易所）的交易日
+            sh_trading_days = trading_days_df[trading_days_df['exchange'] == 'XSHG']['ymd'].tolist()
+
+            # 转换为字符串格式并排序
+            trading_days_str = sorted([str(date) for date in sh_trading_days])
+
+            # 过滤日期范围
             start_dt = pd.to_datetime(start_date, format='%Y%m%d')
             end_dt = pd.to_datetime(end_date, format='%Y%m%d')
 
-            trading_days = sorted([d for d in kline_dates if start_dt <= d <= end_dt])
+            filtered_days = []
+            for day_str in trading_days_str:
+                day_dt = pd.to_datetime(day_str, format='%Y-%m-%d')
+                if start_dt <= day_dt <= end_dt:
+                    # 转换为 YYYYMMDD 格式
+                    filtered_days.append(day_dt.strftime('%Y%m%d'))
 
-            # 转换为字符串格式
-            trading_days_str = [d.strftime('%Y%m%d') for d in trading_days]
-
-            logger.info(f"获取交易日：{len(trading_days_str)}天，从{trading_days_str[0]}到{trading_days_str[-1]}")
-            return trading_days_str
+            logger.info(
+                f"获取交易日：{len(filtered_days)}天，从{filtered_days[0] if filtered_days else '无'}到{filtered_days[-1] if filtered_days else '无'}")
+            return filtered_days
 
         except Exception as e:
             logger.error(f"获取交易日失败：{str(e)}")
-            # 返回所有日期作为后备
-            start_dt = pd.to_datetime(start_date, format='%Y%m%d')
-            end_dt = pd.to_datetime(end_date, format='%Y%m%d')
-            all_dates = pd.date_range(start=start_dt, end=end_dt, freq='D')
-            return [d.strftime('%Y%m%d') for d in all_dates]
+            return []
 
-if __name__=='__main__':
+
+if __name__ == '__main__':
     factorlib = FactorLibrary()
-    res = factorlib.zt_factor(start_date='20260101', end_date='20260109')
+    # 测试修复后的交易日获取
+    res = factorlib.get_trading_days(start_date='20260101', end_date='20260109')
+    print(f"交易日: {res}")
 
 
 

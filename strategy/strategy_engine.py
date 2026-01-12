@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 
 
 class StrategyEngine:
-    """策略引擎：支持多日回测的策略执行器"""
+    """策略执行引擎:支持多日回测，负责执行多因子策略"""
 
     def __init__(self, factor_lib):
         self.factor_lib = factor_lib  # 注入因子库实例
@@ -25,7 +25,7 @@ class StrategyEngine:
     def value_chip_zt_strategy(self, start_date=None, end_date=None, pb_quantile=0.3, zt_window=5,
                                min_factor_count=2):
         """
-        低PB+筹码集中+涨停 组合因子策略（支持多日回测）
+        三因子策略：低PB+筹码集中+涨停 组合因子策略（支持多日回测）
 
         参数:
             start_date: 开始日期
