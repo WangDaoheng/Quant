@@ -17,7 +17,7 @@ class FactorLibrary:
         self.host = Mysql_Utils.origin_host
         self.database = Mysql_Utils.origin_database
 
-    @timing_decorator
+    # @timing_decorator
     def pb_factor(self, start_date, end_date, pb_percentile=0.3):
         """
         计算PB因子：为日期范围内的每一天计算PB信号
@@ -44,6 +44,7 @@ class FactorLibrary:
 
             # 数据预处理
             pb_df = convert_ymd_format(pb_df, 'ymd')
+            pb_df.to_csv('./pb.csv')
             pb_df = pb_df.dropna(subset=['pb'])
 
             # 转换pb列为数值类型
@@ -84,7 +85,7 @@ class FactorLibrary:
             return pd.DataFrame(columns=['ymd', 'stock_code', 'pb', 'pb_signal'])
 
 
-    @timing_decorator
+    # @timing_decorator
     def zt_factor(self, start_date, end_date, lookback_days=5):
         """
         计算涨停因子：为全量股票计算过去lookback_days个交易日内是否有涨停
@@ -271,7 +272,7 @@ class FactorLibrary:
             logger.error(f"生成False信号失败：{str(e)}")
             return pd.DataFrame(columns=['ymd', 'stock_code', 'zt_signal'])
 
-    @timing_decorator
+    # @timing_decorator
     def shareholder_factor(self, start_date, end_date):
         """
         计算筹码因子：为日期范围内的每一天计算股东数信号
@@ -326,7 +327,7 @@ class FactorLibrary:
             logger.error(f"计算筹码因子失败：{str(e)}")
             return pd.DataFrame(columns=['ymd', 'stock_code', 'shareholder_signal'])
 
-    @timing_decorator
+    # @timing_decorator
     def get_stock_kline_data(self, stock_code, start_date, end_date):
         """
         获取股票K线数据（用于回测）
@@ -364,10 +365,12 @@ class FactorLibrary:
             logger.error(f"获取K线数据失败 {stock_code}: {str(e)}")
             return pd.DataFrame()
 
+
     # @timing_decorator
     def get_trading_days(self, start_date, end_date):
         """
         获取交易日列表 - 从 ods_trading_days_insight 表获取
+        简化版：假设ymd是MySQL date类型
         """
         try:
             # 从交易日历表获取交易日
@@ -377,8 +380,8 @@ class FactorLibrary:
                 host=self.host,
                 database=self.database,
                 table_name='ods_trading_days_insight',
-                start_date=start_date,
-                end_date=end_date,
+                start_date=start_date,  # MySQL WHERE已筛选
+                end_date=end_date,  # MySQL WHERE已筛选
                 cols=['exchange', 'ymd']
             )
 
@@ -387,29 +390,28 @@ class FactorLibrary:
                 return []
 
             # 筛选 XSHG（上海交易所）的交易日
-            sh_trading_days = trading_days_df[trading_days_df['exchange'] == 'XSHG']['ymd'].tolist()
+            sh_days = trading_days_df[trading_days_df['exchange'] == 'XSHG']
 
-            # 转换为字符串格式并排序
-            trading_days_str = sorted([str(date) for date in sh_trading_days])
+            if sh_days.empty:
+                logger.warning(f"XSHG交易日为空: {start_date}~{end_date}")
+                return []
 
-            # 过滤日期范围
-            start_dt = pd.to_datetime(start_date, format='%Y%m%d')
-            end_dt = pd.to_datetime(end_date, format='%Y%m%d')
-
-            filtered_days = []
-            for day_str in trading_days_str:
-                day_dt = pd.to_datetime(day_str, format='%Y-%m-%d')
-                if start_dt <= day_dt <= end_dt:
-                    # 转换为 YYYYMMDD 格式
-                    filtered_days.append(day_dt.strftime('%Y%m%d'))
+            # 直接转换为YYYYMMDD格式并排序
+            trading_days = sorted([
+                date_obj.strftime('%Y%m%d')
+                for date_obj in sh_days['ymd'].tolist()
+            ])
 
             logger.info(
-                f"获取交易日：{len(filtered_days)}天，从{filtered_days[0] if filtered_days else '无'}到{filtered_days[-1] if filtered_days else '无'}")
-            return filtered_days
+                f"获取交易日：{len(trading_days)}天，"
+                f"从{trading_days[0] if trading_days else '无'}到{trading_days[-1] if trading_days else '无'}"
+            )
+            return trading_days
 
         except Exception as e:
             logger.error(f"获取交易日失败：{str(e)}")
             return []
+
 
 
 if __name__ == '__main__':

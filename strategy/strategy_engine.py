@@ -12,7 +12,7 @@ class StrategyEngine:
 
     def __init__(self, factor_lib):
         self.factor_lib = factor_lib  # 注入因子库实例
-        self.strategies = {}  # 存储已注册的策略
+        self.strategies = {}          # 存储已注册的策略
 
     def register_strategy(self, name, func, params=None):
         """注册策略"""
@@ -146,11 +146,11 @@ class StrategyEngine:
                 f"  - 平均每日选中：{avg_selected_per_day:.1f}只\n"
                 f"  - 筛选条件：至少满足{min_factor_count}个因子"
             )
-
             return final_result
         else:
             logger.warning("策略未选中任何股票")
             return pd.DataFrame(columns=['ymd', 'stock_code', 'stock_name', 'factor_count'])
+
 
     @timing_decorator
     def run_strategy_combination(self, strategy_names, start_date=None, end_date=None,
@@ -240,6 +240,7 @@ class StrategyEngine:
         else:
             logger.warning("组合策略未选中任何股票")
             return pd.DataFrame(columns=['ymd', 'stock_code', 'stock_name', 'weight'])
+
 
     @timing_decorator
     def run_backtest_for_strategy(self, strategy_name, start_date, end_date,
