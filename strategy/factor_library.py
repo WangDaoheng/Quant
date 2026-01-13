@@ -364,7 +364,7 @@ class FactorLibrary:
             logger.error(f"获取K线数据失败 {stock_code}: {str(e)}")
             return pd.DataFrame()
 
-    @timing_decorator
+    # @timing_decorator
     def get_trading_days(self, start_date, end_date):
         """
         获取交易日列表 - 从 ods_trading_days_insight 表获取

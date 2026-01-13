@@ -61,7 +61,7 @@ class SaveInsightHistoryData:
         common.login(market_service, user, password)
 
 
-    def get_trading_days(self):
+    def get_trading_days_from_insight(self):
         """
         获取交易日历
         Returns: (exchange, ymd)
@@ -631,7 +631,7 @@ class SaveInsightHistoryData:
         self.login()
 
         #  获取交易日历
-        self.get_trading_days()
+        self.get_trading_days_from_insight()
 
         #  除去 ST |  退  | B 的股票集合
         self.get_stock_codes()

@@ -2,6 +2,7 @@
 import pandas as pd
 import logging
 from CommonProperties.Base_utils import timing_decorator
+from factor_library import FactorLibrary
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +22,7 @@ class StrategyEngine:
         }
         logger.info(f"策略[{name}]注册成功")
 
-    @timing_decorator
+    # @timing_decorator
     def value_chip_zt_strategy(self, start_date=None, end_date=None, pb_quantile=0.3, zt_window=5,
                                min_factor_count=2):
         """
@@ -279,3 +280,11 @@ class StrategyEngine:
 
         logger.info(f"回测统计：{stats}")
         return stats
+
+
+if __name__ == '__main__':
+    f1 = FactorLibrary()
+    sn = StrategyEngine(f1)
+    res = sn.value_chip_zt_strategy(start_date='20260101', end_date='20260110')
+
+
