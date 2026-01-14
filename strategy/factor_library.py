@@ -44,7 +44,6 @@ class FactorLibrary:
 
             # 数据预处理
             pb_df = convert_ymd_format(pb_df, 'ymd')
-            pb_df.to_csv('./pb.csv')
             pb_df = pb_df.dropna(subset=['pb'])
 
             # 转换pb列为数值类型
