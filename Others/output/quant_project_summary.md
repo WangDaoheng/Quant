@@ -1,18 +1,18 @@
 # 量化工程V1.0 代码梳理文档
-*生成时间: 2026-01-12 22:04:23*
+*生成时间: 2026-01-14 16:59:10*
 
 ## 项目统计信息
-- 项目根目录: F:\Quant\Backtrader_PJ1\Quant
+- 项目根目录: F:\Quant\Backtrader_PJ1
 - 总文件数: 45
 - Python文件数: 40
 - SQL文件数: 4
 - Shell文件数: 1
 - 有效目录数: 14
 
-# Quant 项目目录结构
-*生成时间: 2026-01-12 22:04:23*
+# Backtrader_PJ1 项目目录结构
+*生成时间: 2026-01-14 16:59:10*
 
-📁 Quant/
+📁 Backtrader_PJ1/
     📄 main-doubao.py
     📄 main.py
     📁 backtest/
@@ -4798,7 +4798,7 @@ class SaveInsightHistoryData:
         common.login(market_service, user, password)
 
 
-    def get_trading_days(self):
+    def get_trading_days_from_insight(self):
         """
         获取交易日历
         Returns: (exchange, ymd)
@@ -5368,7 +5368,7 @@ class SaveInsightHistoryData:
         self.login()
 
         #  获取交易日历
-        self.get_trading_days()
+        self.get_trading_days_from_insight()
 
         #  除去 ST |  退  | B 的股票集合
         self.get_stock_codes()
@@ -8443,7 +8443,7 @@ class FactorLibrary:
         self.host = Mysql_Utils.origin_host
         self.database = Mysql_Utils.origin_database
 
-    @timing_decorator
+    # @timing_decorator
     def pb_factor(self, start_date, end_date, pb_percentile=0.3):
         """
         计算PB因子：为日期范围内的每一天计算PB信号
@@ -8470,6 +8470,7 @@ class FactorLibrary:
 
             # 数据预处理
             pb_df = convert_ymd_format(pb_df, 'ymd')
+            pb_df.to_csv('./pb.csv')
             pb_df = pb_df.dropna(subset=['pb'])
 
             # 转换pb列为数值类型
@@ -8510,7 +8511,7 @@ class FactorLibrary:
             return pd.DataFrame(columns=['ymd', 'stock_code', 'pb', 'pb_signal'])
 
 
-    @timing_decorator
+    # @timing_decorator
     def zt_factor(self, start_date, end_date, lookback_days=5):
         """
         计算涨停因子：为全量股票计算过去lookback_days个交易日内是否有涨停
@@ -8697,7 +8698,7 @@ class FactorLibrary:
             logger.error(f"生成False信号失败：{str(e)}")
             return pd.DataFrame(columns=['ymd', 'stock_code', 'zt_signal'])
 
-    @timing_decorator
+    # @timing_decorator
     def shareholder_factor(self, start_date, end_date):
         """
         计算筹码因子：为日期范围内的每一天计算股东数信号
@@ -8752,7 +8753,7 @@ class FactorLibrary:
             logger.error(f"计算筹码因子失败：{str(e)}")
             return pd.DataFrame(columns=['ymd', 'stock_code', 'shareholder_signal'])
 
-    @timing_decorator
+    # @timing_decorator
     def get_stock_kline_data(self, stock_code, start_date, end_date):
         """
         获取股票K线数据（用于回测）
@@ -8790,10 +8791,12 @@ class FactorLibrary:
             logger.error(f"获取K线数据失败 {stock_code}: {str(e)}")
             return pd.DataFrame()
 
-    @timing_decorator
+
+    # @timing_decorator
     def get_trading_days(self, start_date, end_date):
         """
         获取交易日列表 - 从 ods_trading_days_insight 表获取
+        简化版：假设ymd是MySQL date类型
         """
         try:
             # 从交易日历表获取交易日
@@ -8803,8 +8806,8 @@ class FactorLibrary:
                 host=self.host,
                 database=self.database,
                 table_name='ods_trading_days_insight',
-                start_date=start_date,
-                end_date=end_date,
+                start_date=start_date,  # MySQL WHERE已筛选
+                end_date=end_date,  # MySQL WHERE已筛选
                 cols=['exchange', 'ymd']
             )
 
@@ -8813,29 +8816,28 @@ class FactorLibrary:
                 return []
 
             # 筛选 XSHG（上海交易所）的交易日
-            sh_trading_days = trading_days_df[trading_days_df['exchange'] == 'XSHG']['ymd'].tolist()
+            sh_days = trading_days_df[trading_days_df['exchange'] == 'XSHG']
 
-            # 转换为字符串格式并排序
-            trading_days_str = sorted([str(date) for date in sh_trading_days])
+            if sh_days.empty:
+                logger.warning(f"XSHG交易日为空: {start_date}~{end_date}")
+                return []
 
-            # 过滤日期范围
-            start_dt = pd.to_datetime(start_date, format='%Y%m%d')
-            end_dt = pd.to_datetime(end_date, format='%Y%m%d')
-
-            filtered_days = []
-            for day_str in trading_days_str:
-                day_dt = pd.to_datetime(day_str, format='%Y-%m-%d')
-                if start_dt <= day_dt <= end_dt:
-                    # 转换为 YYYYMMDD 格式
-                    filtered_days.append(day_dt.strftime('%Y%m%d'))
+            # 直接转换为YYYYMMDD格式并排序
+            trading_days = sorted([
+                date_obj.strftime('%Y%m%d')
+                for date_obj in sh_days['ymd'].tolist()
+            ])
 
             logger.info(
-                f"获取交易日：{len(filtered_days)}天，从{filtered_days[0] if filtered_days else '无'}到{filtered_days[-1] if filtered_days else '无'}")
-            return filtered_days
+                f"获取交易日：{len(trading_days)}天，"
+                f"从{trading_days[0] if trading_days else '无'}到{trading_days[-1] if trading_days else '无'}"
+            )
+            return trading_days
 
         except Exception as e:
             logger.error(f"获取交易日失败：{str(e)}")
             return []
+
 
 
 if __name__ == '__main__':
@@ -8856,16 +8858,17 @@ if __name__ == '__main__':
 import pandas as pd
 import logging
 from CommonProperties.Base_utils import timing_decorator
+from factor_library import FactorLibrary
 
 logger = logging.getLogger(__name__)
 
 
 class StrategyEngine:
-    """策略引擎：支持多日回测的策略执行器"""
+    """策略执行引擎:支持多日回测，负责执行多因子策略"""
 
     def __init__(self, factor_lib):
         self.factor_lib = factor_lib  # 注入因子库实例
-        self.strategies = {}  # 存储已注册的策略
+        self.strategies = {}          # 存储已注册的策略
 
     def register_strategy(self, name, func, params=None):
         """注册策略"""
@@ -8875,11 +8878,11 @@ class StrategyEngine:
         }
         logger.info(f"策略[{name}]注册成功")
 
-    @timing_decorator
+    # @timing_decorator
     def value_chip_zt_strategy(self, start_date=None, end_date=None, pb_quantile=0.3, zt_window=5,
                                min_factor_count=2):
         """
-        低PB+筹码集中+涨停 组合因子策略（支持多日回测）
+        三因子策略：低PB+筹码集中+涨停 组合因子策略（支持多日回测）
 
         参数:
             start_date: 开始日期
@@ -8999,11 +9002,11 @@ class StrategyEngine:
                 f"  - 平均每日选中：{avg_selected_per_day:.1f}只\n"
                 f"  - 筛选条件：至少满足{min_factor_count}个因子"
             )
-
             return final_result
         else:
             logger.warning("策略未选中任何股票")
             return pd.DataFrame(columns=['ymd', 'stock_code', 'stock_name', 'factor_count'])
+
 
     @timing_decorator
     def run_strategy_combination(self, strategy_names, start_date=None, end_date=None,
@@ -9094,6 +9097,7 @@ class StrategyEngine:
             logger.warning("组合策略未选中任何股票")
             return pd.DataFrame(columns=['ymd', 'stock_code', 'stock_name', 'weight'])
 
+
     @timing_decorator
     def run_backtest_for_strategy(self, strategy_name, start_date, end_date,
                                   initial_cash=100000, commission=0.0003):
@@ -9133,4 +9137,13 @@ class StrategyEngine:
 
         logger.info(f"回测统计：{stats}")
         return stats
+
+
+if __name__ == '__main__':
+    f1 = FactorLibrary()
+    sn = StrategyEngine(f1)
+    res = sn.value_chip_zt_strategy(start_date='20260101', end_date='20260110')
+
+
+
 ```
