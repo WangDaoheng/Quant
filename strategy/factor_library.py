@@ -345,18 +345,17 @@ class FactorLibrary:
                 table_name='ods_stock_kline_daily_insight',
                 start_date=start_date,
                 end_date=end_date,
-                cols=['htsc_code', 'ymd', 'open', 'high', 'low', 'close', 'volume']
+                cols=['stock_code', 'ymd', 'open', 'high', 'low', 'close', 'volume']
             )
 
             if kline_df.empty:
                 return pd.DataFrame()
 
             # 过滤指定股票代码
-            kline_df = kline_df[kline_df['htsc_code'].str.contains(stock_code_clean)]
+            kline_df = kline_df[kline_df['stock_code'].str.contains(stock_code_clean)]
 
             # 数据预处理
             kline_df = convert_ymd_format(kline_df, 'ymd')
-            kline_df.rename(columns={'htsc_code': 'stock_code'}, inplace=True)
 
             return kline_df
 

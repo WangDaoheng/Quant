@@ -48,7 +48,7 @@ class SaveInsightHistoryData:
         """
         结果变量初始化
         """
-        #  除去 ST|退|B 的五要素   [ymd	htsc_code	name	exchange]
+        #  除去 ST|退|B 的五要素   [ymd	stock_code	stock_name	exchange]
         self.stock_code_df = pd.DataFrame()
 
 
@@ -127,7 +127,7 @@ class SaveInsightHistoryData:
         """
         获取当日的stock代码合集   剔除掉ST  退  B
         :return:
-         stock_code_df  [ymd	htsc_code	name	exchange]
+         stock_code_df  [ymd	stock_code	stock_name	exchange]
         """
 
         #  1.获取日期
@@ -140,11 +140,13 @@ class SaveInsightHistoryData:
         stock_all_df.insert(0, 'ymd', formatted_date)
 
         #  4.声明所有的列名，去除多余列
-        stock_all_df = stock_all_df[['ymd', 'htsc_code', 'name', 'exchange']]
-        filtered_df = stock_all_df[~stock_all_df['name'].str.contains('ST|退|B')]
+        stock_all_df.rename(columns={'htsc_code': 'stock_code', 'name': 'stock_name'}, inplace=True)
+
+        stock_all_df = stock_all_df[['ymd', 'stock_code', 'stock_name', 'exchange']]
+        filtered_df = stock_all_df[~stock_all_df['stock_name'].str.contains('ST|退|B')]
 
         #  5.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
-        filtered_df = filtered_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
+        filtered_df = filtered_df.drop_duplicates(subset=['ymd', 'stock_code'], keep='first')
 
         #  6.已上市状态stock_codes
         self.stock_code_df = filtered_df
@@ -197,10 +199,10 @@ class SaveInsightHistoryData:
 
         #  9.日期格式转换
         kline_total_df['time'] = pd.to_datetime(kline_total_df['time']).dt.strftime('%Y%m%d')
-        kline_total_df.rename(columns={'time': 'ymd'}, inplace=True)
+        kline_total_df.rename(columns={'time': 'ymd', 'htsc_code': 'stock_code'}, inplace=True)
 
         #  10.声明所有的列名，去除value列
-        kline_total_df = kline_total_df[['htsc_code', 'ymd', 'open', 'close', 'high', 'low', 'num_trades', 'volume']]
+        kline_total_df = kline_total_df[['stock_code', 'ymd', 'open', 'close', 'high', 'low', 'num_trades', 'volume']]
 
         #  11.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
         # kline_total_df = kline_total_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
@@ -216,7 +218,7 @@ class SaveInsightHistoryData:
                                                      database=local_database,
                                                      df=kline_total_df,
                                                      table_name="ods_stock_kline_daily_insight",
-                                                     merge_on=['ymd', 'htsc_code'])
+                                                     merge_on=['ymd', 'stock_code'])
 
             #  14.结果数据保存到 远端 mysql中
             mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
@@ -225,7 +227,7 @@ class SaveInsightHistoryData:
                                                      database=origin_database,
                                                      df=kline_total_df,
                                                      table_name="ods_stock_kline_daily_insight",
-                                                     merge_on=['ymd', 'htsc_code'])
+                                                     merge_on=['ymd', 'stock_code'])
         else:
             #  14.结果数据保存到 远端 mysql中
             mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
@@ -234,7 +236,7 @@ class SaveInsightHistoryData:
                                                      database=origin_database,
                                                      df=kline_total_df,
                                                      table_name="ods_stock_kline_daily_insight",
-                                                     merge_on=['ymd', 'htsc_code'])
+                                                     merge_on=['ymd', 'stock_code'])
 
 
     @timing_decorator
@@ -284,16 +286,16 @@ class SaveInsightHistoryData:
 
         #  5.日期格式转换
         index_df['time'] = pd.to_datetime(index_df['time']).dt.strftime('%Y%m%d')
-        index_df.rename(columns={'time': 'ymd'}, inplace=True)
+        index_df.rename(columns={'time': 'ymd', 'htsc_code': 'stock_code'}, inplace=True)
 
         #  6.根据映射关系，添加stock_name
-        index_df['name'] = index_df['htsc_code'].map(index_dict)
+        index_df['name'] = index_df['stock_code'].map(index_dict)
 
         #  7.声明所有的列名，去除多余列
-        index_df = index_df[['htsc_code', 'name', 'ymd', 'open', 'close', 'high', 'low', 'volume']]
+        index_df = index_df[['stock_code', 'name', 'ymd', 'open', 'close', 'high', 'low', 'volume']]
 
         #  8.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
-        index_df = index_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
+        index_df = index_df.drop_duplicates(subset=['ymd', 'stock_code'], keep='first')
 
         ############################   文件输出模块     ############################
         if platform.system() == "Windows":
@@ -304,7 +306,7 @@ class SaveInsightHistoryData:
                                                      database=local_database,
                                                      df=index_df,
                                                      table_name="ods_index_a_share_insight",
-                                                     merge_on=['ymd', 'htsc_code'])
+                                                     merge_on=['ymd', 'stock_code'])
 
             #  11.结果数据保存到 远端 mysql中
             mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
@@ -313,7 +315,7 @@ class SaveInsightHistoryData:
                                                      database=origin_database,
                                                      df=index_df,
                                                      table_name="ods_index_a_share_insight",
-                                                     merge_on=['ymd', 'htsc_code'])
+                                                     merge_on=['ymd', 'stock_code'])
         else:
             #  11.结果数据保存到 远端 mysql中
             mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
@@ -322,7 +324,7 @@ class SaveInsightHistoryData:
                                                      database=origin_database,
                                                      df=index_df,
                                                      table_name="ods_index_a_share_insight",
-                                                     merge_on=['ymd', 'htsc_code'])
+                                                     merge_on=['ymd', 'stock_code'])
 
 
     @timing_decorator

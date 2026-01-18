@@ -113,7 +113,7 @@ class SaveVantageData:
 
         #  8.日期格式转换
         res_df['timestamp'] = pd.to_datetime(res_df['timestamp']).dt.strftime('%Y%m%d')
-        res_df.rename(columns={'timestamp': 'ymd'}, inplace=True)
+        res_df.rename(columns={'timestamp': 'ymd', 'name':'stock_name'}, inplace=True)
 
         ############################   文件输出模块     ############################
         if platform.system() == "Windows":
@@ -128,7 +128,7 @@ class SaveVantageData:
                                                      database=local_database,
                                                      df=res_df,
                                                      table_name="ods_us_stock_daily_vantage",
-                                                     merge_on=['ymd', 'name'])
+                                                     merge_on=['ymd', 'stock_name'])
 
             #  结果数据保存到 远端 mysql中
             mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
@@ -137,7 +137,7 @@ class SaveVantageData:
                                                      database=origin_database,
                                                      df=res_df,
                                                      table_name="ods_us_stock_daily_vantage",
-                                                     merge_on=['ymd', 'name'])
+                                                     merge_on=['ymd', 'stock_name'])
         else:
             #  结果数据保存到 远端 mysql中
             mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
@@ -146,7 +146,7 @@ class SaveVantageData:
                                                      database=origin_database,
                                                      df=res_df,
                                                      table_name="ods_us_stock_daily_vantage",
-                                                     merge_on=['ymd', 'name'])
+                                                     merge_on=['ymd', 'stock_name'])
 
 
 

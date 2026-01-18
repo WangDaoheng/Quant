@@ -119,7 +119,7 @@ class RealtimeMonitor:
                 table_name='ods_stock_kline_daily_insight',
                 start_date=(datetime.now() - timedelta(days=1)).strftime('%Y%m%d'),
                 end_date=current_date,
-                cols=['htsc_code', 'ymd', 'close']
+                cols=['stock_code', 'ymd', 'close']
             )
 
             if len(kline_df) < 2:

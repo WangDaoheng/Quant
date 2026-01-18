@@ -54,11 +54,11 @@ class MergeInsightData:
         """
         将 stock_kline 的历史数据和当月数据做merge
         :return:
-         stock_kline_df  [ymd	htsc_code	name	exchange]
+         stock_kline_df  [ymd	stock_code	stock_name	exchange]
         """
         source_table = 'ods_stock_kline_daily_insight_now'
         target_table = 'ods_stock_kline_daily_insight'
-        columns = ['htsc_code', 'ymd', 'open', 'close', 'high', 'low', 'num_trades', 'volume']
+        columns = ['stock_code', 'ymd', 'open', 'close', 'high', 'low', 'num_trades', 'volume']
         ############################   文件输出模块     ############################
         if platform.system() == "Windows":
             # 对本地 Mysql 做数据聚合
@@ -102,11 +102,11 @@ class MergeInsightData:
         000688.SH    科创50
 
         Returns:
-             index_a_share   [htsc_code 	time	frequency	open	close	high	low	volume	value]
+             index_a_share   [stock_code 	time	frequency	open	close	high	low	volume	value]
         """
         source_table = 'ods_index_a_share_insight_now'
         target_table = 'ods_index_a_share_insight'
-        columns = ['htsc_code', 'name', 'ymd', 'open', 'close', 'high', 'low', 'volume']
+        columns = ['stock_code', 'stock_name', 'ymd', 'open', 'close', 'high', 'low', 'volume']
         ############################   文件输出模块     ############################
         if platform.system() == "Windows":
             # 对本地 Mysql 做数据聚合
@@ -260,7 +260,7 @@ class MergeInsightData:
         """
         source_table = 'ods_shareholder_num_now'
         target_table = 'ods_shareholder_num'
-        columns = ['htsc_code', 'name', 'ymd', 'total_sh', 'avg_share', 'pct_of_total_sh', 'pct_of_avg_sh']
+        columns = ['stock_code', 'stock_name', 'ymd', 'total_sh', 'avg_share', 'pct_of_total_sh', 'pct_of_avg_sh']
         ############################   文件输出模块     ############################
         if platform.system() == "Windows":
             # 对本地 Mysql 做数据聚合

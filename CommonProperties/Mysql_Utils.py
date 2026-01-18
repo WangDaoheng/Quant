@@ -508,10 +508,10 @@ def get_stock_codes_latest(df):
                                                             database=database,
                                                             table_name='ods_stock_code_daily_insight')
 
-        mysql_stock_code_list = stock_code_df['htsc_code'].tolist()
+        mysql_stock_code_list = stock_code_df['stock_code'].tolist()
         logging.info("    从 本地Mysql库 里读取最新的股票代码")
     else:
-        mysql_stock_code_list = df['htsc_code'].tolist()
+        mysql_stock_code_list = df['stock_code'].tolist()
         logging.info("    从 self.stock_code 里读取最新的股票代码")
 
     return mysql_stock_code_list

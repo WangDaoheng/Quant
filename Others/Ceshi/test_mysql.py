@@ -14,7 +14,7 @@ def merge_stock_kline():
     """
     将 stock_kline 的历史数据和当月数据做merge
     :return:
-     stock_kline_df  [ymd	htsc_code	name	exchange]
+     stock_kline_df  [ymd	stock_code	name	exchange]
     """
 
     #  读取历史数据和当下数据

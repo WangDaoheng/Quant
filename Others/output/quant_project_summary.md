@@ -1,16 +1,16 @@
 # 量化工程V1.0 代码梳理文档
-*生成时间: 2026-01-14 21:57:58*
+*生成时间: 2026-01-18 22:14:03*
 
 ## 项目统计信息
 - 项目根目录: F:\Quant\Backtrader_PJ1\Quant
-- 总文件数: 45
-- Python文件数: 40
-- SQL文件数: 4
+- 总文件数: 46
+- Python文件数: 42
+- SQL文件数: 3
 - Shell文件数: 1
-- 有效目录数: 14
+- 有效目录数: 15
 
 # Quant 项目目录结构
-*生成时间: 2026-01-14 21:57:58*
+*生成时间: 2026-01-18 22:14:03*
 
 📁 Quant/
     📄 main-doubao.py
@@ -36,15 +36,13 @@
         📄 run_data_prepare.sh
         📄 setup_data_prepare.py
         📁 C00_SQL/
-            📄 DW_mysql_tables_nopart.sql
-            📄 MART_mysql_tables_nopart.sql
+            📄 DWD_mysql_tables.sql
+            📄 MART_mysql_tables.sql
+            📄 ODS_mysql_tables.sql
             📄 __init__.py
-            📄 create_mysql_tables.sql
-            📄 create_mysql_tables_nopart.sql
         📁 C01_data_download_daily/
             📄 __init__.py
             📄 download_insight_data_afternoon.py
-            📄 download_insight_data_afternoon_of_history.py
             📄 download_vantage_data_afternoon.py
         📁 C02_data_merge/
             📄 __init__.py
@@ -55,6 +53,10 @@
         📁 C04_data_MART/
             📄 __init__.py
             📄 calculate_MART_datas.py
+        📁 C05_data_history/
+            📄 __init__.py
+            📄 download_akshare_history_data_weekend.py
+            📄 download_insight_history_data.py
         📁 C06_data_transfer/
             📄 __init__.py
             📄 get_example_tables.py
@@ -2113,10 +2115,10 @@ def get_stock_codes_latest(df):
                                                             database=database,
                                                             table_name='ods_stock_code_daily_insight')
 
-        mysql_stock_code_list = stock_code_df['htsc_code'].tolist()
+        mysql_stock_code_list = stock_code_df['stock_code'].tolist()
         logging.info("    从 本地Mysql库 里读取最新的股票代码")
     else:
-        mysql_stock_code_list = df['htsc_code'].tolist()
+        mysql_stock_code_list = df['stock_code'].tolist()
         logging.info("    从 self.stock_code 里读取最新的股票代码")
 
     return mysql_stock_code_list
@@ -2800,7 +2802,7 @@ if project_root not in sys.path:
 
 
 from datas_prepare.C01_data_download_daily.download_insight_data_afternoon import SaveInsightData
-from datas_prepare.C01_data_download_daily.download_insight_data_afternoon_of_history import SaveInsightHistoryData
+from datas_prepare.C05_data_history.download_insight_history_data import SaveInsightHistoryData
 from datas_prepare.C01_data_download_daily.download_vantage_data_afternoon import SaveVantageData
 
 from datas_prepare.C02_data_merge.merge_insight_data_afternoon import MergeInsightData
@@ -2879,132 +2881,737 @@ if __name__ == '__main__':
 ```
 
 --------------------------------------------------------------------------------
-## datas_prepare\C00_SQL\DW_mysql_tables_nopart.sql
+## datas_prepare\C00_SQL\DWD_mysql_tables.sql
 
 ```sql
-
 --1.1
 ------------------  dwd_ashare_stock_base_info   股票基本信息大宽表
-create table quant.dwd_ashare_stock_base_info (
-     ymd              DATE               --日期
-    ,stock_code       varchar(50)        --代码
-    ,stock_name       varchar(50)        --名称
-    ,close            double             --最新收盘价
-    ,market_value     double             --流通市值(亿)
-    ,total_value      double             --总市值(亿)
-    ,total_asset      double             --总资产(亿)
-    ,net_asset        double             --净资产(亿)
-    ,total_capital    double             --总股本(亿)
-    ,float_capital    double             --流通股(亿)
-    ,shareholder_num  bigint             --股东人数
-    ,pb               varchar(50)        --市净率
-    ,pe               varchar(50)        --市盈(动)
-    ,market           VARCHAR(50)        --市场特征主板创业板等
-    ,plate_names      VARCHAR(500)       --板块名称
-    ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
-) ;
+CREATE TABLE quant.dwd_ashare_stock_base_info (
+       ymd                DATE                     COMMENT '日期'
+      ,stock_code         varchar(50)              COMMENT '代码'
+      ,stock_name         varchar(50)              COMMENT '名称'
+      ,close              double                   COMMENT '最新收盘价'
+      ,market_value       double                   COMMENT '流通市值(亿)'
+      ,total_value        double                   COMMENT '总市值(亿)'
+      ,total_asset        double                   COMMENT '总资产(亿)'
+      ,net_asset          double                   COMMENT '净资产(亿)'
+      ,total_capital      double                   COMMENT '总股本(亿)'
+      ,float_capital      double                   COMMENT '流通股(亿)'
+      ,shareholder_num    bigint                   COMMENT '股东人数'
+      ,pb                 varchar(50)              COMMENT '市净率'
+      ,pe                 varchar(50)              COMMENT '市盈(动)'
+      ,market             VARCHAR(50)              COMMENT '市场特征主板创业板等'
+      ,plate_names        VARCHAR(500)             COMMENT '板块名称'
+      ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
+) COMMENT='股票基本信息大宽表';
 
 
 --1.2
 ------------------  dwd_stock_zt_list   涨停股票清单
 CREATE TABLE quant.dwd_stock_zt_list (
-     ymd                DATE          NOT NULL   --交易日期
-    ,stock_code         VARCHAR(50)   NOT NULL   --股票代码
-    ,stock_name         VARCHAR(50)   NOT NULL   --股票名称
-    ,last_close         FLOAT                    --昨日收盘价
-    ,close              FLOAT                    --收盘价
-    ,rate               FLOAT                    --涨幅
-    ,market_value       double                   --流通市值(亿)
-    ,total_value        double                   --总市值(亿)
-    ,total_asset        double                   --总资产(亿)
-    ,net_asset          double                   --净资产(亿)
-    ,total_capital      double                   --总股本(亿)
-    ,float_capital      double                   --流通股(亿)
-    ,shareholder_num    bigint                   --股东人数
-    ,pb                 varchar(50)              --市净率
-    ,pe                 varchar(50)              --市盈(动)
-	,market             VARCHAR(50)              --市场特征主板创业板等
-    ,plate_names        VARCHAR(500)             --板块名称
-    ,concept_plate      VARCHAR(500)             --概念板块
-    ,index_plate        VARCHAR(500)             --指数板块
-    ,industry_plate     VARCHAR(500)             --行业板块
-    ,style_plate        VARCHAR(500)             --风格板块
-    ,out_plate          VARCHAR(500)             --外部数据板块
-    ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
-);
-
+       ymd                DATE          NOT NULL   COMMENT '交易日期'
+      ,stock_code         VARCHAR(50)   NOT NULL   COMMENT '股票代码'
+      ,stock_name         VARCHAR(50)              COMMENT '股票名称'
+      ,last_close         FLOAT                    COMMENT '昨日收盘价'
+      ,close              FLOAT                    COMMENT '收盘价'
+      ,rate               FLOAT                    COMMENT '涨幅'
+      ,market_value       double                   COMMENT '流通市值(亿)'
+      ,total_value        double                   COMMENT '总市值(亿)'
+      ,total_asset        double                   COMMENT '总资产(亿)'
+      ,net_asset          double                   COMMENT '净资产(亿)'
+      ,total_capital      double                   COMMENT '总股本(亿)'
+      ,float_capital      double                   COMMENT '流通股(亿)'
+      ,shareholder_num    bigint                   COMMENT '股东人数'
+      ,pb                 varchar(50)              COMMENT '市净率'
+      ,pe                 varchar(50)              COMMENT '市盈(动)'
+      ,market             VARCHAR(50)              COMMENT '市场特征主板创业板等'
+      ,plate_names        VARCHAR(500)             COMMENT '板块名称'
+      ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
+) COMMENT='涨停股票清单';
 
 
 --1.3
 ------------------  dwd_stock_dt_list   跌停股票清单
 CREATE TABLE quant.dwd_stock_dt_list (
-     ymd                DATE          NOT NULL   --交易日期
-    ,stock_code         VARCHAR(50)   NOT NULL   --股票代码
-    ,stock_name         VARCHAR(50)   NOT NULL   --股票名称
-    ,last_close         FLOAT                    --昨日收盘价
-    ,close              FLOAT                    --收盘价
-    ,rate               FLOAT                    --涨幅
-    ,market_value       double                   --流通市值(亿)
-    ,total_value        double                   --总市值(亿)
-    ,total_asset        double                   --总资产(亿)
-    ,net_asset          double                   --净资产(亿)
-    ,total_capital      double                   --总股本(亿)
-    ,float_capital      double                   --流通股(亿)
-    ,shareholder_num    bigint                   --股东人数
-    ,pb                 varchar(50)              --市净率
-    ,pe                 varchar(50)              --市盈(动)
-	,market             VARCHAR(50)              --市场特征主板创业板等
-    ,plate_names        VARCHAR(500)             --板块名称
-    ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
-);
+       ymd                DATE          NOT NULL   COMMENT '交易日期'
+      ,stock_code         VARCHAR(50)   NOT NULL   COMMENT '股票代码'
+      ,stock_name         VARCHAR(50)              COMMENT '股票名称'
+      ,last_close         FLOAT                    COMMENT '昨日收盘价'
+      ,close              FLOAT                    COMMENT '收盘价'
+      ,rate               FLOAT                    COMMENT '涨幅'
+      ,market_value       double                   COMMENT '流通市值(亿)'
+      ,total_value        double                   COMMENT '总市值(亿)'
+      ,total_asset        double                   COMMENT '总资产(亿)'
+      ,net_asset          double                   COMMENT '净资产(亿)'
+      ,total_capital      double                   COMMENT '总股本(亿)'
+      ,float_capital      double                   COMMENT '流通股(亿)'
+      ,shareholder_num    bigint                   COMMENT '股东人数'
+      ,pb                 varchar(50)              COMMENT '市净率'
+      ,pe                 varchar(50)              COMMENT '市盈(动)'
+      ,market             VARCHAR(50)              COMMENT '市场特征主板创业板等'
+      ,plate_names        VARCHAR(500)             COMMENT '板块名称'
+      ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
+) COMMENT='跌停股票清单';
 
 
 --4.2        多渠道板块数据 -- 多渠道汇总
 ------------------  dwd_stock_a_total_plate
 CREATE TABLE quant.dwd_stock_a_total_plate (
-     ymd          DATE        NOT NULL      --日期
-    ,plate_name   VARCHAR(50) NOT NULL      --板块名称
-    ,stock_code   VARCHAR(50)               --标的代码
-    ,stock_name   VARCHAR(50)               --标的名称
-    ,source_table VARCHAR(50)               --来源表
-    ,remark       VARCHAR(50)               --备注
-    ,UNIQUE KEY unique_ymd_plate_code (ymd, plate_name, stock_code)
-) ;
+       ymd                DATE          NOT NULL   COMMENT '日期'
+      ,plate_name         VARCHAR(50)   NOT NULL   COMMENT '板块名称'
+      ,stock_code         VARCHAR(50)              COMMENT '标的代码'
+      ,stock_name         VARCHAR(50)              COMMENT '标的名称'
+      ,source_table       VARCHAR(50)              COMMENT '来源表'
+      ,remark             VARCHAR(50)              COMMENT '备注'
+      ,UNIQUE KEY unique_ymd_plate_code (ymd, plate_name, stock_code)
+) COMMENT='多渠道板块数据 -- 多渠道汇总';
+
 
 
 ```
 
 --------------------------------------------------------------------------------
-## datas_prepare\C00_SQL\MART_mysql_tables_nopart.sql
+## datas_prepare\C00_SQL\MART_mysql_tables.sql
+
+```sql
+--1.1
+------------------  dmart_stock_zt_details   股票涨停明细
+CREATE TABLE quant.dmart_stock_zt_details (
+       ymd            DATE                     COMMENT '日期'
+      ,stock_code     varchar(50)              COMMENT '代码'
+      ,stock_name     varchar(50)              COMMENT '名称'
+      ,concept_plate  VARCHAR(500)             COMMENT '概念板块'
+      ,index_plate    VARCHAR(500)             COMMENT '指数板块'
+      ,industry_plate VARCHAR(500)             COMMENT '行业板块'
+      ,style_plate    VARCHAR(500)             COMMENT '风格板块'
+      ,out_plate      VARCHAR(500)             COMMENT '外部数据板块'
+      ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
+) COMMENT='股票涨停明细';
+
+
+------------------  dmart_stock_zt_details_expanded   股票涨停明细拆分
+CREATE TABLE quant.dmart_stock_zt_details_expanded (
+       ymd            DATE                     COMMENT '日期'
+      ,stock_code     VARCHAR(20)              COMMENT '股票代码'
+      ,stock_name     VARCHAR(50)              COMMENT '股票名称'
+      ,concept_plate  VARCHAR(500)             COMMENT '概念板块'
+      ,index_plate    VARCHAR(500)             COMMENT '指数板块'
+      ,industry_plate VARCHAR(500)             COMMENT '行业板块'
+      ,style_plate    VARCHAR(500)             COMMENT '风格板块'
+      ,out_plate      VARCHAR(500)             COMMENT '外部数据板块'
+) COMMENT='股票涨停明细拆分';
+
+
+```
+
+--------------------------------------------------------------------------------
+## datas_prepare\C00_SQL\ODS_mysql_tables.sql
 
 ```sql
 
+--1.0
+------------------  ods_trading_days_insight   交易所的交易日历
+CREATE TABLE quant.ods_trading_days_insight (
+     exchange                 VARCHAR(50)             COMMENT '交易所名称'
+    ,ymd                      DATE        NOT NULL    COMMENT '交易日期'
+    ,UNIQUE KEY unique_ymd_exchange (exchange, ymd)
+) COMMENT='交易所的交易日历';
+
+
 --1.1
-------------------  dmart_stock_zt_details   股票涨停明细
-create table quant.dmart_stock_zt_details (
-     ymd                DATE                     --日期
-    ,stock_code         varchar(50)              --代码
-    ,stock_name         varchar(50)              --名称
-    ,concept_plate      VARCHAR(500)             --概念板块
-    ,index_plate        VARCHAR(500)             --指数板块
-    ,industry_plate     VARCHAR(500)             --行业板块
-    ,style_plate        VARCHAR(500)             --风格板块
-    ,out_plate          VARCHAR(500)             --外部数据板块
+------------------  ods_stock_code_daily_insight   当日已上市股票码表
+CREATE TABLE quant.ods_stock_code_daily_insight (
+     ymd                      DATE        NOT NULL    COMMENT '交易日期'
+    ,stock_code               VARCHAR(50) NOT NULL    COMMENT '股票代码'
+    ,stock_name               VARCHAR(50)             COMMENT '股票名'
+    ,exchange                 VARCHAR(50)             COMMENT '交易所名称'
     ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
-) ;
+) COMMENT='当日已上市股票码表';
 
 
-------------------  dmart_stock_zt_details   股票涨停明细拆分
-CREATE TABLE quant.dmart_stock_zt_details_expanded (
-    ymd DATE,
-    stock_code VARCHAR(20),
-    stock_name VARCHAR(50),
-    concept_plate VARCHAR(500),
-    index_plate VARCHAR(500),
-    industry_plate VARCHAR(500),
-    style_plate VARCHAR(500),
-    out_plate VARCHAR(500)
-);
+--1.2
+------------------  ods_stock_kline_daily_insight   当日已上市股票的历史日K
+CREATE TABLE quant.ods_stock_kline_daily_insight_now (
+     stock_code               VARCHAR(50) NOT NULL    COMMENT '股票代码'
+    ,ymd                      DATE        NOT NULL    COMMENT '交易日期'
+    ,open                     FLOAT                   COMMENT '开盘价'
+    ,close                    FLOAT                   COMMENT '收盘价'
+    ,high                     FLOAT                   COMMENT '最高价'
+    ,low                      FLOAT                   COMMENT '最低价'
+    ,num_trades               BIGINT                  COMMENT '交易笔数'
+    ,volume                   BIGINT                  COMMENT '成交量'
+    ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
+) COMMENT='当日已上市股票的历史日K(日增量表)';
+
+
+CREATE TABLE quant.ods_stock_kline_daily_insight (
+     stock_code               VARCHAR(50) NOT NULL    COMMENT '股票代码'
+    ,ymd                      DATE        NOT NULL    COMMENT '交易日期'
+    ,open                     FLOAT                   COMMENT '开盘价'
+    ,close                    FLOAT                   COMMENT '收盘价'
+    ,high                     FLOAT                   COMMENT '最高价'
+    ,low                      FLOAT                   COMMENT '最低价'
+    ,num_trades               BIGINT                  COMMENT '交易笔数'
+    ,volume                   BIGINT                  COMMENT '成交量'
+    ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
+) COMMENT='当日已上市股票的历史日K(全量表)';
+
+
+--1.3
+------------------  ods_index_a_share_insight   大A的主要指数日K
+CREATE TABLE quant.ods_index_a_share_insight_now (
+     stock_code               VARCHAR(50) NOT NULL    COMMENT '指数代码'
+    ,stock_name               VARCHAR(50) NOT NULL    COMMENT '指数名称'
+    ,ymd                      DATE        NOT NULL    COMMENT '交易日期'
+    ,open                     FLOAT                   COMMENT '开盘价'
+    ,close                    FLOAT                   COMMENT '收盘价'
+    ,high                     FLOAT                   COMMENT '最高价'
+    ,low                      FLOAT                   COMMENT '最低价'
+    ,volume                   BIGINT                  COMMENT '成交量'
+    ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
+) COMMENT='大A的主要指数日K(日增量表)';
+
+
+CREATE TABLE quant.ods_index_a_share_insight (
+     stock_code               VARCHAR(50) NOT NULL    COMMENT '指数代码'
+    ,stock_name               VARCHAR(50) NOT NULL    COMMENT '指数名称'
+    ,ymd                      DATE        NOT NULL    COMMENT '交易日期'
+    ,open                     FLOAT                   COMMENT '开盘价'
+    ,close                    FLOAT                   COMMENT '收盘价'
+    ,high                     FLOAT                   COMMENT '最高价'
+    ,low                      FLOAT                   COMMENT '最低价'
+    ,volume                   BIGINT                  COMMENT '成交量'
+    ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
+) COMMENT='大A的主要指数日K(全量表)';
+
+
+--1.4
+------------------  ods_stock_limit_summary_insight   当日大A行情温度
+CREATE TABLE quant.ods_stock_limit_summary_insight_now (
+     ymd                      DATE        NOT NULL    COMMENT '日期'
+    ,name                     VARCHAR(50) NOT NULL    COMMENT '市场名称'
+    ,today_ZT                 INT                     COMMENT '今日涨停股票数'
+    ,today_DT                 INT                     COMMENT '今日跌停股票数'
+    ,yesterday_ZT             INT                     COMMENT '昨日涨停股票数'
+    ,yesterday_DT             INT                     COMMENT '昨日跌停股票数'
+    ,yesterday_ZT_rate        FLOAT                   COMMENT '昨日涨停股票的今日平均涨幅'
+    ,UNIQUE KEY unique_ymd_name (ymd, name)
+) COMMENT='当日大A行情温度(日增量表)';
+
+
+CREATE TABLE quant.ods_stock_limit_summary_insight (
+     ymd                      DATE        NOT NULL    COMMENT '日期'
+    ,name                     VARCHAR(50) NOT NULL    COMMENT '市场名称'
+    ,today_ZT                 INT                     COMMENT '今日涨停股票数'
+    ,today_DT                 INT                     COMMENT '今日跌停股票数'
+    ,yesterday_ZT             INT                     COMMENT '昨日涨停股票数'
+    ,yesterday_DT             INT                     COMMENT '昨日跌停股票数'
+    ,yesterday_ZT_rate        FLOAT                   COMMENT '昨日涨停股票的今日平均涨幅'
+    ,UNIQUE KEY unique_ymd_name (ymd, name)
+) COMMENT='当日大A行情温度(全量表)';
+
+
+--1.5
+------------------  ods_future_inside_insight   内盘主要期货数据日K
+CREATE TABLE quant.ods_future_inside_insight_now (
+     stock_code               VARCHAR(50) NOT NULL    COMMENT '期货标的代码'
+    ,ymd                      DATE        NOT NULL    COMMENT '交易日期'
+    ,open                     FLOAT                   COMMENT '开盘价'
+    ,close                    FLOAT                   COMMENT '收盘价'
+    ,high                     FLOAT                   COMMENT '最高价'
+    ,low                      FLOAT                   COMMENT '最低价'
+    ,volume                   BIGINT                  COMMENT '成交量'
+    ,open_interest            BIGINT                  COMMENT '持仓量'
+    ,settle                   BIGINT                  COMMENT '结算价'
+    ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
+) COMMENT='内盘主要期货数据日K(日增量表)';
+
+
+CREATE TABLE quant.ods_future_inside_insight (
+     stock_code               VARCHAR(50) NOT NULL    COMMENT '期货标的代码'
+    ,ymd                      DATE        NOT NULL    COMMENT '交易日期'
+    ,open                     FLOAT                   COMMENT '开盘价'
+    ,close                    FLOAT                   COMMENT '收盘价'
+    ,high                     FLOAT                   COMMENT '最高价'
+    ,low                      FLOAT                   COMMENT '最低价'
+    ,volume                   BIGINT                  COMMENT '成交量'
+    ,open_interest            BIGINT                  COMMENT '持仓量'
+    ,settle                   BIGINT                  COMMENT '结算价'
+    ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
+) COMMENT='内盘主要期货数据日K(全量表)';
+
+
+--1.6
+------------------  ods_stock_chouma_insight   A股的筹码分布数据
+CREATE TABLE quant.ods_stock_chouma_insight (
+    stock_code                               VARCHAR(50) NOT NULL     COMMENT '证券代码'
+   ,ymd                                      DATE NOT NULL            COMMENT '交易日'
+   ,exchange                                 VARCHAR(50)              COMMENT '交易所'
+   ,close                                    FLOAT                    COMMENT '最新价格'
+   ,prev_close                               FLOAT                    COMMENT '昨收价格'
+   ,total_shares                             BIGINT                   COMMENT '总股本（股）'
+   ,a_total_share                            BIGINT                   COMMENT 'A股总数(股)'
+   ,a_listed_share                           BIGINT                   COMMENT '流通a股（万股）'
+   ,listed_share                             BIGINT                   COMMENT '流通股总数'
+   ,restricted_share                         BIGINT                   COMMENT '限售股总数'
+   ,cost_5pct                                FLOAT                    COMMENT '5分位持仓成本（持仓成本最低的 5%的持仓成本）'
+   ,cost_15pct                               FLOAT                    COMMENT '15分位持仓成本'
+   ,cost_50pct                               FLOAT                    COMMENT '50分位持仓成本'
+   ,cost_85pct                               FLOAT                    COMMENT '85分位持仓成本'
+   ,cost_95pct                               FLOAT                    COMMENT '95分位持仓成本'
+   ,avg_cost                                 FLOAT                    COMMENT '流通股加权平均持仓成本'
+   ,max_cost                                 FLOAT                    COMMENT '流通股最大持仓成本'
+   ,min_cost                                 FLOAT                    COMMENT '流通股最小持仓成本'
+   ,winner_rate                              FLOAT                    COMMENT '流通股获利胜率'
+   ,diversity                                FLOAT                    COMMENT '流通股筹码分散程度百分比'
+   ,pre_winner_rate                          FLOAT                    COMMENT '流通股昨日获利胜率'
+   ,restricted_avg_cost                      FLOAT                    COMMENT '限售股平均持仓成本'
+   ,restricted_max_cost                      FLOAT                    COMMENT '限售股最大持仓成本'
+   ,restricted_min_cost                      FLOAT                    COMMENT '限售股最小持仓成本'
+   ,large_shareholders_avg_cost              FLOAT                    COMMENT '大流通股股东持股平均持仓成本'
+   ,large_shareholders_total_share           FLOAT                    COMMENT '大流通股股东持股总数'
+   ,large_shareholders_total_share_pct       FLOAT                    COMMENT '大流通股股东持股占总股本的比例'
+   ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
+) COMMENT='A股的筹码分布数据';
+
+
+--1.7
+------------------  ods_astock_industry_overview   行业分类，申万三级分类
+CREATE TABLE quant.ods_astock_industry_overview (
+    ymd                       DATE                    COMMENT '交易日期'
+   ,classified                varchar(100)            COMMENT '行业分类'
+   ,industry_name             varchar(100)            COMMENT '行业名称'
+   ,industry_code             varchar(100)            COMMENT '行业代码'
+   ,l1_code                   varchar(100)            COMMENT '一级行业代码'
+   ,l1_name                   varchar(100)            COMMENT '一级行业名称'
+   ,l2_code                   varchar(100)            COMMENT '二级行业代码'
+   ,l2_name                   varchar(100)            COMMENT '二级行业名称'
+   ,l3_code                   varchar(100)            COMMENT '三级行业代码'
+   ,l3_name                   varchar(100)            COMMENT '三级行业名称'
+   ,UNIQUE KEY unique_industry_code (ymd, industry_code)
+) COMMENT='行业分类，申万三级分类';
+
+
+--1.8
+------------------  ods_astock_industry_detail   股票&行业的关联
+CREATE TABLE quant.ods_astock_industry_detail (
+    ymd                       DATE                    COMMENT '交易日期'
+   ,stock_code                varchar(100)            COMMENT '股票代码'
+   ,stock_name                varchar(50)             COMMENT '股票名称'
+   ,industry_name             varchar(100)            COMMENT '行业名称'
+   ,industry_code             varchar(100)            COMMENT '行业代码'
+   ,l1_code                   varchar(100)            COMMENT '一级行业代码'
+   ,l1_name                   varchar(100)            COMMENT '一级行业名称'
+   ,l2_code                   varchar(100)            COMMENT '二级行业代码'
+   ,l2_name                   varchar(100)            COMMENT '二级行业名称'
+   ,l3_code                   varchar(100)            COMMENT '三级行业代码'
+   ,l3_name                   varchar(100)            COMMENT '三级行业名称'
+   ,UNIQUE KEY unique_stock_code (ymd, stock_code)
+) COMMENT='股票&行业的关联';
+
+
+--1.9
+------------------  ods_shareholder_num   个股的股东数
+CREATE TABLE quant.ods_shareholder_num_now (
+       stock_code             varchar(100)            COMMENT '股票代码'
+      ,stock_name             varchar(50)             COMMENT '股票名称'
+      ,ymd                    DATE                    COMMENT '交易日期'
+      ,total_sh               DOUBLE                  COMMENT '总股东数'
+      ,avg_share              DOUBLE(10, 4)           COMMENT '每个股东平均持股数'
+      ,pct_of_total_sh        DOUBLE(10, 4)           COMMENT '股东数较上期环比波动百分比'
+      ,pct_of_avg_sh          DOUBLE(10, 4)           COMMENT '每个股东平均持股数较上期环比波动百分比'
+      ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
+) COMMENT='个股的股东数(日增量表)';
+
+CREATE TABLE quant.ods_shareholder_num (
+       stock_code             varchar(100)            COMMENT '股票代码'
+      ,stock_name             varchar(50)             COMMENT '股票名称'
+      ,ymd                    DATE                    COMMENT '交易日期'
+      ,total_sh               DOUBLE                  COMMENT '总股东数'
+      ,avg_share              DOUBLE(10, 4)           COMMENT '每个股东平均持股数'
+      ,pct_of_total_sh        DOUBLE(10, 4)           COMMENT '股东数较上期环比波动百分比'
+      ,pct_of_avg_sh          DOUBLE(10, 4)           COMMENT '每个股东平均持股数较上期环比波动百分比'
+      ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
+) COMMENT='个股的股东数(全量表)';
+
+
+--1.10
+------------------  ods_north_bound_daily   北向持仓数据
+CREATE TABLE quant.ods_north_bound_daily_now (
+      stock_code              varchar(100)            COMMENT '股票代码'
+     ,ymd                     DATE                    COMMENT '交易日期'
+     ,sh_hkshare_hold         BIGINT                  COMMENT '持股数量'
+     ,pct_total_share         FLOAT                   COMMENT '持股占总股本比例'
+     ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
+) COMMENT='北向持仓数据(日增量表)';
+
+
+CREATE TABLE quant.ods_north_bound_daily (
+      stock_code              varchar(100)            COMMENT '股票代码'
+     ,ymd                     DATE                    COMMENT '交易日期'
+     ,sh_hkshare_hold         BIGINT                  COMMENT '持股数量'
+     ,pct_total_share         FLOAT                   COMMENT '持股占总股本比例'
+     ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
+) COMMENT='北向持仓数据(全量表)';
+
+
+--2.1
+------------------  ods_us_stock_daily_vantage   美股 日K
+CREATE TABLE quant.ods_us_stock_daily_vantage (
+     stock_name               VARCHAR(50) NOT NULL    COMMENT '股票名称'
+    ,ymd                      DATE        NOT NULL    COMMENT '交易日期'
+    ,open                     FLOAT                   COMMENT '开盘价'
+    ,high                     FLOAT                   COMMENT '最高价'
+    ,low                      FLOAT                   COMMENT '最低价'
+    ,close                    FLOAT                   COMMENT '收盘价'
+    ,volume                   BIGINT                  COMMENT '成交量'
+    ,UNIQUE KEY unique_ymd_name (ymd, stock_name)
+) COMMENT='美股 日K';
+
+
+--2.2
+------------------  ods_exchange_rate_vantage_detail   汇率&美元指数 日K
+CREATE TABLE quant.ods_exchange_rate_vantage_detail (
+     stock_name               VARCHAR(50) NOT NULL    COMMENT '货币对'
+    ,ymd                      DATE        NOT NULL    COMMENT '交易日期'
+    ,open                     FLOAT                   COMMENT '开盘价'
+    ,high                     FLOAT                   COMMENT '最高价'
+    ,low                      FLOAT                   COMMENT '最低价'
+    ,close                    FLOAT                   COMMENT '收盘价'
+    ,UNIQUE KEY unique_ymd_name (ymd, stock_name)
+) COMMENT='汇率&美元指数 日K';
+
+
+--2.3
+------------------  ods_exchange_dxy_vantage   美元指数 日K
+CREATE TABLE quant.ods_exchange_dxy_vantage (
+    ymd                       DATE        NOT NULL    COMMENT '交易日期'
+   ,stock_name                VARCHAR(50) NOT NULL    COMMENT '货币对'
+   ,UNIQUE KEY unique_ymd_name (ymd, stock_name)
+) COMMENT='美元指数 日K';
+
+
+-------------------------------------------   通达信数据  ---------------------------------
+--3.1        
+------------------  ods_tdx_stock_concept_plate   通达信概念板块数据
+CREATE TABLE quant.ods_tdx_stock_concept_plate (
+     ymd                      DATE        NOT NULL    COMMENT '日期'
+    ,concept_code             VARCHAR(50) NOT NULL    COMMENT '概念板块代码'
+    ,concept_name             VARCHAR(50)             COMMENT '概念板块名称'
+    ,stock_code               VARCHAR(50)             COMMENT '股票代码'
+    ,stock_name               VARCHAR(50)             COMMENT '股票名称'
+) COMMENT='通达信概念板块数据';
+
+
+--3.2        
+------------------  ods_tdx_stock_style_plate   通达信风格板块数据
+CREATE TABLE quant.ods_tdx_stock_style_plate (
+     ymd                      DATE        NOT NULL    COMMENT '日期'
+    ,style_code               VARCHAR(50) NOT NULL    COMMENT '风格板块代码'
+    ,style_name               VARCHAR(50)             COMMENT '风格板块名称'
+    ,stock_code               VARCHAR(50)             COMMENT '股票代码'
+    ,stock_name               VARCHAR(50)             COMMENT '股票名称'
+) COMMENT='通达信风格板块数据';
+
+
+--3.3        
+------------------  ods_tdx_stock_industry_plate   通达信行业板块数据
+CREATE TABLE quant.ods_tdx_stock_industry_plate (
+     ymd                      DATE        NOT NULL    COMMENT '日期'
+    ,industry_code            VARCHAR(50) NOT NULL    COMMENT '行业板块代码'
+    ,industry_name            VARCHAR(50)             COMMENT '行业板块名称'
+    ,stock_code               VARCHAR(50)             COMMENT '股票代码'
+    ,stock_name               VARCHAR(50)             COMMENT '股票名称'
+) COMMENT='通达信行业板块数据';
+
+
+--3.4        
+------------------  ods_tdx_stock_region_plate   通达信地区板块数据
+CREATE TABLE quant.ods_tdx_stock_region_plate (
+     ymd                      DATE        NOT NULL    COMMENT '日期'
+    ,region_code              VARCHAR(50) NOT NULL    COMMENT '地区板块代码'
+    ,region_name              VARCHAR(50)             COMMENT '地区板块名称'
+    ,stock_code               VARCHAR(50)             COMMENT '股票代码'
+    ,stock_name               VARCHAR(50)             COMMENT '股票名称'
+) COMMENT='通达信地区板块数据';
+
+
+--3.5        
+------------------  ods_tdx_stock_index_plate   通达信指数板块数据
+CREATE TABLE quant.ods_tdx_stock_index_plate (
+     ymd                      DATE        NOT NULL    COMMENT '日期'
+    ,index_code               VARCHAR(50) NOT NULL    COMMENT '指数板块代码'
+    ,index_name               VARCHAR(50)             COMMENT '指数板块名称'
+    ,stock_code               VARCHAR(50)             COMMENT '股票代码'
+    ,stock_name               VARCHAR(50)             COMMENT '股票名称'
+) COMMENT='通达信指数板块数据';
+
+
+--3.6        
+------------------  ods_tdx_stock_pepb_info   股票基本面数据_资产数据
+CREATE TABLE quant.ods_tdx_stock_pepb_info (
+     ymd                      DATE                    COMMENT '日期'
+    ,stock_code               varchar(50)             COMMENT '代码'
+    ,stock_name               varchar(50)             COMMENT '名称'
+    ,market_value             double                  COMMENT '流通市值(亿)'
+    ,total_asset              double                  COMMENT '总资产(亿)'
+    ,net_asset                double                  COMMENT '净资产(亿)'
+    ,total_capital            double                  COMMENT '总股本(亿)'
+    ,float_capital            double                  COMMENT '流通股(亿)'
+    ,shareholder_num          bigint                  COMMENT '股东人数'
+    ,pb                       double                  COMMENT '市净率'
+    ,pe                       double                  COMMENT '市盈(动)'
+    ,industry                 varchar(50)             COMMENT '细分行业'
+    ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
+) COMMENT='股票基本面数据_资产数据';
+
+
+
+-------------------------------------------   akshare 数据  ---------------------------------
+--4.1        
+------------------  ods_akshare_stock_value_em   股票基本面数据_估值数据              个股的全量历史数据   不可选定日期
+CREATE TABLE quant.ods_akshare_stock_value_em (
+     ymd                      DATE                    COMMENT '数据日期'
+    ,stock_code               varchar(50)             COMMENT '股票代码'
+    ,stock_name               varchar(50)             COMMENT '股票名称'
+    ,close                    float                   COMMENT '当日收盘价(元)'
+    ,change_pct               float                   COMMENT '当日涨跌幅(%)'
+    ,total_market             double                  COMMENT '总市值(元)'
+    ,circulation_market       double                  COMMENT '流通市值(元)'
+    ,total_shares             double                  COMMENT '总股本(股)'
+    ,circulation_shares       double                  COMMENT '流通股本(股)'
+    ,pe_ttm                   float                   COMMENT 'PE(TTM)'
+    ,pe_static                float                   COMMENT 'PE(静)'
+    ,pb                       float                   COMMENT '市净率'
+    ,peg                      float                   COMMENT 'PEG值'
+    ,pcf                      float                   COMMENT '市现率'
+    ,ps                       float                   COMMENT '市销率'
+    ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
+) COMMENT='股票基本面数据_估值数据';
+
+
+--4.2
+------------------  ods_akshare_stock_zh_a_gdhs_detail_em   股票基本面数据_股东数据    个股的全量历史数据   不可选定日期
+CREATE TABLE quant.ods_akshare_stock_zh_a_gdhs_detail_em (
+     ymd                      DATE                    COMMENT '股东户数统计截止日（对应核心日期维度）'
+    ,stock_code               varchar(50)             COMMENT '股票代码'
+    ,stock_name               varchar(50)             COMMENT '股票名称'
+    ,range_change_pct         float                   COMMENT '区间涨跌幅(%)'
+    ,holder_num_current       bigint                  COMMENT '股东户数-本次'
+    ,holder_num_last          bigint                  COMMENT '股东户数-上次'
+    ,holder_num_change        bigint                  COMMENT '股东户数-增减'
+    ,holder_num_change_pct    float                   COMMENT '股东户数-增减比例(%)'
+    ,avg_holder_market        double                  COMMENT '户均持股市值'
+    ,avg_holder_share_num     float                   COMMENT '户均持股数量'
+    ,total_market             double                  COMMENT '总市值'
+    ,total_shares             bigint                  COMMENT '总股本'
+    ,share_change             bigint                  COMMENT '股本变动'
+    ,share_change_reason      varchar(255)            COMMENT '股本变动原因'
+    ,holder_num_announce_date DATE                    COMMENT '股东户数公告日期'
+    ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
+) COMMENT='股票基本面数据_股东数据';
+
+
+--4.3
+------------------  ods_akshare_stock_cyq_em   股票基本面数据_筹码数据                 个股的全量历史数据   不可选定日期
+CREATE TABLE quant.ods_akshare_stock_cyq_em (
+     ymd                      DATE                    COMMENT '日期'
+    ,stock_code               varchar(50)             COMMENT '股票代码'
+    ,stock_name               varchar(50)             COMMENT '股票名称'
+    ,profit_ratio             float                   COMMENT '获利比例'
+    ,avg_cost                 float                   COMMENT '平均成本'
+    ,cost_low_90              float                   COMMENT '90成本-低'
+    ,cost_high_90             float                   COMMENT '90成本-高'
+    ,concentration_90         float                   COMMENT '90集中度'
+    ,cost_low_70              float                   COMMENT '70成本-低'
+    ,cost_high_70             float                   COMMENT '70成本-高'
+    ,concentration_70         float                   COMMENT '70集中度'
+    ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
+) COMMENT='股票基本面数据_筹码数据';
+
+
+--4.4
+------------------  ods_akshare_stock_yjkb_em   股票基本面数据_业绩快报数据    全量的每日切片数据 可选定日期
+CREATE TABLE quant.ods_akshare_stock_yjkb_em (
+     ymd                      DATE                    COMMENT '公告日期（核心日期维度）'
+    ,serial_num               varchar(50)             COMMENT '序号'
+    ,stock_code               varchar(50)             COMMENT '股票代码'
+    ,stock_name               varchar(50)             COMMENT '股票简称'
+    ,eps                      double                  COMMENT '每股收益'
+    ,income                   double                  COMMENT '营业收入-营业收入'
+    ,income_last_year         double                  COMMENT '营业收入-去年同期'
+    ,income_yoy               varchar(50)             COMMENT '营业收入-同比增长'
+    ,income_qoq               double                  COMMENT '营业收入-季度环比增长'
+    ,profit                   double                  COMMENT '净利润-净利润'
+    ,profit_last_year         double                  COMMENT '净利润-去年同期'
+    ,profit_yoy               varchar(50)             COMMENT '净利润-同比增长'
+    ,profit_qoq               double                  COMMENT '净利润-季度环比增长'
+    ,asset_per_share          float                   COMMENT '每股净资产'
+    ,roe                      double                  COMMENT '净资产收益率'
+    ,industry                 varchar(100)            COMMENT '所处行业'
+    ,market_board             varchar(50)             COMMENT '市场板块'
+    ,securities_type          varchar(50)             COMMENT '证券类型'
+    ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
+) COMMENT='股票基本面数据_业绩快报数据';
+
+
+--4.5
+------------------  ods_akshare_stock_yjyg_em   股票基本面数据_业绩预告数据    全量的每日切片数据  可选定日期
+CREATE TABLE quant.ods_akshare_stock_yjyg_em (
+     ymd                      DATE                    COMMENT '公告日期'
+    ,serial_num               varchar(50)             COMMENT '序号'
+    ,stock_code               varchar(50)             COMMENT '股票代码'
+    ,stock_name               varchar(50)             COMMENT '股票简称'
+    ,forecast_index           double                  COMMENT '预测指标'
+    ,performance_change       double                  COMMENT '业绩变动'
+    ,forecast_value           double                  COMMENT '预测数值(元)'
+    ,change_pct               double                  COMMENT '业绩变动幅度(%)'
+    ,change_reason            varchar(255)            COMMENT '业绩变动原因'
+    ,forecast_type            varchar(50)             COMMENT '预告类型'
+    ,last_year_value          double                  COMMENT '上年同期值(元)'
+    ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
+) COMMENT='股票基本面数据_业绩预告数据';
+
+
+--4.6
+------------------  ods_akshare_stock_a_high_low_statistics   大盘情绪数据_大盘区间内的新低新高股票数  全量的每日切片数据 不可指定日期
+CREATE TABLE quant.ods_akshare_stock_a_high_low_statistics (
+     ymd                      DATE                    COMMENT '交易日'
+    ,stock_code               varchar(50)             COMMENT '股票代码'
+    ,stock_name               varchar(50)             COMMENT '股票名称'
+    ,close                    float                   COMMENT '相关指数收盘价'
+    ,high20                   int                     COMMENT '20日新高'
+    ,low20                    int                     COMMENT '20日新低'
+    ,high60                   int                     COMMENT '60日新高'
+    ,low60                    int                     COMMENT '60日新低'
+    ,high120                  int                     COMMENT '120日新高'
+    ,low120                   int                     COMMENT '120日新低'
+    ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
+) COMMENT='大盘情绪数据_大盘区间内的新低新高股票数';
+
+
+--4.7
+------------------  ods_akshare_stock_zh_a_spot_em            行情数据_个股行情数据  全量的每日切片数据 不可指定日期
+CREATE TABLE quant.ods_akshare_stock_zh_a_spot_em (
+     ymd                      DATE                    COMMENT '数据日期（行情交易日，统一日期维度）'
+    ,serial_num               bigint                  COMMENT '序号'
+    ,stock_code               varchar(50)             COMMENT '代码'
+    ,stock_name               varchar(50)             COMMENT '名称'
+    ,close                    float                   COMMENT '最新价格'
+    ,change_pct               float                   COMMENT '涨跌幅(%)'
+    ,change_amt               float                   COMMENT '涨跌额'
+    ,trading_volume           float                   COMMENT '成交量(手)'
+    ,trading_amount           double                  COMMENT '成交额(元)'
+    ,amplitude                float                   COMMENT '振幅(%)'
+    ,high                     float                   COMMENT '最高'
+    ,low                      float                   COMMENT '最低'
+    ,open                     float                   COMMENT '今开'
+    ,prev_close               float                   COMMENT '昨收'
+    ,volume_ratio             float                   COMMENT '量比'
+    ,turnover_rate            float                   COMMENT '换手率(%)'
+    ,pe_dynamic               float                   COMMENT '市盈率-动态'
+    ,pb                       float                   COMMENT '市净率'
+    ,total_market             double                  COMMENT '总市值(元)'
+    ,circulation_market       double                  COMMENT '流通市值(元)'
+    ,price_rise_speed         float                   COMMENT '涨速'
+    ,five_min_price_change    float                   COMMENT '5分钟涨跌(%)'
+    ,sixty_day_price_change   float                   COMMENT '60日涨跌幅(%)'
+    ,ytd_price_change         float                   COMMENT '年初至今涨跌幅(%)'
+    ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
+) COMMENT='行情数据_个股行情数据';
+
+
+--4.8
+------------------  ods_akshare_stock_board_concept_name_em   行情数据_板块行情数据           全量的每日切片数据 不可指定日期   板块三剑客1 
+CREATE TABLE quant.ods_akshare_stock_board_concept_name_em (
+     ymd                      DATE                    COMMENT '数据日期（核心日期维度，适配量化数据统一归档）'
+    ,ranking                  int                     COMMENT '排名'
+    ,board_name               varchar(100)            COMMENT '板块名称'
+    ,board_code               varchar(50)             COMMENT '板块代码'
+    ,close                    float                   COMMENT '最新价'
+    ,change_amt               float                   COMMENT '涨跌额'
+    ,change_pct               float                   COMMENT '涨跌幅(%)'
+    ,total_market             double                  COMMENT '总市值'
+    ,turnover_rate            float                   COMMENT '换手率(%)'
+    ,rising_stocks_num        int                     COMMENT '上涨家数'
+    ,falling_stocks_num       int                     COMMENT '下跌家数'
+    ,leading_stock            varchar(100)            COMMENT '领涨股票'
+    ,leading_stock_pct        float                   COMMENT '领涨股票-涨跌幅(%)'
+    ,UNIQUE KEY unique_ymd_board_code (ymd, board_code)
+) COMMENT='行情数据_板块行情数据';
+
+
+--4.9
+------------------  ods_akshare_stock_board_concept_cons_em   行情数据_板块内个股的行情数据    全量的每日切片数据 不可指定日期   板块三剑客2
+CREATE TABLE quant.ods_akshare_stock_board_concept_cons_em (
+     ymd                      DATE                    COMMENT '数据日期（核心日期维度，用于归档和跨表关联）'
+    ,board_name               varchar(100)            COMMENT '板块名称'
+    ,board_code               varchar(50)             COMMENT '板块代码'
+    ,serial_num               int                     COMMENT '序号'
+    ,stock_code               varchar(50)             COMMENT '代码'
+    ,stock_name               varchar(50)             COMMENT '名称'
+    ,close                    float                   COMMENT '最新价'
+    ,change_pct               float                   COMMENT '涨跌幅(%)'
+    ,change_amt               float                   COMMENT '涨跌额'
+    ,trading_volume           float                   COMMENT '成交量(手)'
+    ,trading_amount           float                   COMMENT '成交额'
+    ,amplitude                float                   COMMENT '振幅(%)'
+    ,high                     float                   COMMENT '最高'
+    ,low                      float                   COMMENT '最低'
+    ,open                     float                   COMMENT '今开'
+    ,prev_close               float                   COMMENT '昨收'
+    ,turnover_rate            float                   COMMENT '换手率(%)'
+    ,pe_dynamic               float                   COMMENT '市盈率-动态'
+    ,pb                       float                   COMMENT '市净率'
+    ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
+) COMMENT='行情数据_板块内个股的行情数据';
+
+
+--4.10
+------------------  ods_akshare_stock_board_concept_hist_em   行情数据_板块历史行情数据    可指定日期范围   板块三剑客3
+CREATE TABLE quant.ods_akshare_stock_board_concept_hist_em (
+     ymd                      DATE                    COMMENT '日期（行情交易日）'
+    ,board_code               varchar(50)             COMMENT '板块代码（补充字段，关联板块基础信息，适配量化关联分析）'
+    ,open                     float                   COMMENT '开盘'
+    ,close                    float                   COMMENT '收盘'
+    ,high                     float                   COMMENT '最高'
+    ,low                      float                   COMMENT '最低'
+    ,change_pct               float                   COMMENT '涨跌幅(%)'
+    ,change_amt               float                   COMMENT '涨跌额'
+    ,trading_volume           bigint                  COMMENT '成交量'
+    ,trading_amount           double                  COMMENT '成交额'
+    ,amplitude                float                   COMMENT '振幅(%)'
+    ,turnover_rate            float                   COMMENT '换手率(%)'
+    ,UNIQUE KEY unique_ymd_board_code (ymd, board_code)
+) COMMENT='行情数据_板块历史行情数据';
+
+
+--5.1        多渠道板块数据 -- 小红书
+------------------  ods_stock_plate_redbook
+CREATE TABLE quant.ods_stock_plate_redbook (
+     ymd                      DATE        NOT NULL    COMMENT '日期'
+    ,plate_name               VARCHAR(50) NOT NULL    COMMENT '板块名称'
+    ,stock_code               VARCHAR(50)             COMMENT '标的代码'
+    ,stock_name               VARCHAR(50)             COMMENT '标的名称'
+    ,remark                   VARCHAR(50)             COMMENT '备注'
+) COMMENT='多渠道板块数据 -- 小红书';
+
+
+--5.1        股票基本面数据_所属交易所，主板/创业板/科创板/北证
+------------------  ods_stock_exchange_market
+CREATE TABLE quant.ods_stock_exchange_market (
+     ymd                      DATE        NOT NULL    COMMENT '日期'
+    ,stock_code               VARCHAR(50)             COMMENT '标的代码'
+    ,stock_name               VARCHAR(50)             COMMENT '标的名称'
+    ,market                   VARCHAR(50)             COMMENT '市场特征主板创业板等'
+    ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
+) COMMENT='股票基本面数据_所属交易所，主板/创业板/科创板/北证';
+
+
+
+
+
+
 
 
 ```
@@ -3013,760 +3620,6 @@ CREATE TABLE quant.dmart_stock_zt_details_expanded (
 ## datas_prepare\C00_SQL\__init__.py
 
 ```python
-
-```
-
---------------------------------------------------------------------------------
-## datas_prepare\C00_SQL\create_mysql_tables.sql
-
-```sql
-
---1.1
-------------------  ods_stock_code_daily_insight   当日已上市股票码表
-CREATE TABLE quant.ods_stock_code_daily_insight (
-    ymd DATE NOT NULL,
-    htsc_code VARCHAR(50) NOT NULL,
-    name VARCHAR(50),
-    exchange VARCHAR(50),
-    UNIQUE KEY unique_ymd_stock_code (ymd, htsc_code)
-);
-
-
---1.2
-------------------  stock_kline_daily_insight   当日已上市股票的历史日K
-CREATE TABLE quant.ods_stock_kline_daily_insight_now (
-    htsc_code VARCHAR(50) NOT NULL,
-    ymd DATE NOT NULL,
-    open FLOAT,
-    close FLOAT,
-    high FLOAT,
-    low FLOAT,
-    num_trades BIGINT,
-    volume BIGINT,
-    UNIQUE KEY unique_ymd_stock_code (ymd, htsc_code)
-) ;
-
-
-CREATE TABLE quant.ods_stock_kline_daily_insight (
-    htsc_code VARCHAR(50) NOT NULL,
-    ymd DATE NOT NULL,
-    open FLOAT,
-    close FLOAT,
-    high FLOAT,
-    low FLOAT,
-    num_trades BIGINT,
-    volume BIGINT,
-    UNIQUE KEY unique_ymd_stock_code (ymd, htsc_code)
-) PARTITION BY RANGE (YEAR(ymd) * 100 + MONTH(ymd)) (
-    PARTITION p202112 VALUES LESS THAN (202201),
-    PARTITION p202212 VALUES LESS THAN (202301),
-    PARTITION p202312 VALUES LESS THAN (202401),
-    PARTITION p202401 VALUES LESS THAN (202402),
-    PARTITION p202402 VALUES LESS THAN (202403),
-    PARTITION p202403 VALUES LESS THAN (202404),
-    PARTITION p202404 VALUES LESS THAN (202405),
-    PARTITION p202405 VALUES LESS THAN (202406),
-    PARTITION p202406 VALUES LESS THAN (202407),
-    PARTITION p202407 VALUES LESS THAN (202408),
-    PARTITION p202408 VALUES LESS THAN (202409),
-    -- 添加其他月份的分区
-    PARTITION pmax VALUES LESS THAN MAXVALUE
-);
-
-
---1.3
-------------------  index_a_share_insight   大A的主要指数日K
-CREATE TABLE quant.ods_index_a_share_insight_now (
-    htsc_code VARCHAR(50) NOT NULL,
-    name VARCHAR(50) NOT NULL,
-    ymd DATE NOT NULL,
-    open FLOAT,
-    close FLOAT,
-    high FLOAT,
-    low FLOAT,
-    volume BIGINT,
-    UNIQUE KEY unique_ymd_stock_code (ymd, htsc_code)
-) ;
-
-
-CREATE TABLE quant.ods_index_a_share_insight (
-    htsc_code VARCHAR(50) NOT NULL,
-    name VARCHAR(50) NOT NULL,
-    ymd DATE NOT NULL,
-    open FLOAT,
-    close FLOAT,
-    high FLOAT,
-    low FLOAT,
-    volume BIGINT,
-    UNIQUE KEY unique_ymd_stock_code (ymd, htsc_code)
-) PARTITION BY RANGE (YEAR(ymd) * 100 + MONTH(ymd)) (
-    PARTITION p202112 VALUES LESS THAN (202201),
-    PARTITION p202212 VALUES LESS THAN (202301),
-    PARTITION p202312 VALUES LESS THAN (202401),
-    PARTITION p202401 VALUES LESS THAN (202402),
-    PARTITION p202402 VALUES LESS THAN (202403),
-    PARTITION p202403 VALUES LESS THAN (202404),
-    PARTITION p202404 VALUES LESS THAN (202405),
-    PARTITION p202405 VALUES LESS THAN (202406),
-    PARTITION p202406 VALUES LESS THAN (202407),
-    PARTITION p202407 VALUES LESS THAN (202408),
-    PARTITION p202408 VALUES LESS THAN (202409),
-    -- 添加其他月份的分区
-    PARTITION pmax VALUES LESS THAN MAXVALUE
-);
-
-
---1.4
-------------------  stock_limit_summary_insight   当日大A行情温度
-CREATE TABLE quant.ods_stock_limit_summary_insight_now (
-    ymd DATE NOT NULL,
-    name VARCHAR(50) NOT NULL,
-    today_ZT INT,
-    today_DT INT,
-    yesterday_ZT INT,
-    yesterday_DT INT,
-    yesterday_ZT_rate FLOAT,
-    UNIQUE KEY unique_ymd_name (ymd, name)
-) ;
-
-
-CREATE TABLE quant.ods_stock_limit_summary_insight (
-    ymd DATE NOT NULL,
-    name VARCHAR(50) NOT NULL,
-    today_ZT INT,
-    today_DT INT,
-    yesterday_ZT INT,
-    yesterday_DT INT,
-    yesterday_ZT_rate FLOAT,
-    UNIQUE KEY unique_ymd_name (ymd, name)
-) PARTITION BY RANGE (YEAR(ymd) * 100 + MONTH(ymd)) (
-    PARTITION p202112 VALUES LESS THAN (202201),
-    PARTITION p202212 VALUES LESS THAN (202301),
-    PARTITION p202312 VALUES LESS THAN (202401),
-    PARTITION p202401 VALUES LESS THAN (202402),
-    PARTITION p202402 VALUES LESS THAN (202403),
-    PARTITION p202403 VALUES LESS THAN (202404),
-    PARTITION p202404 VALUES LESS THAN (202405),
-    PARTITION p202405 VALUES LESS THAN (202406),
-    PARTITION p202406 VALUES LESS THAN (202407),
-    PARTITION p202407 VALUES LESS THAN (202408),
-    PARTITION p202408 VALUES LESS THAN (202409),
-    -- 添加其他月份的分区
-    PARTITION pmax VALUES LESS THAN MAXVALUE
-);
-
-
-
---1.5
-------------------  future_inside_insight   内盘主要期货数据日K
-CREATE TABLE quant.ods_future_inside_insight_now (
-    htsc_code VARCHAR(50) NOT NULL,
-    ymd DATE NOT NULL,
-    open FLOAT,
-    close FLOAT,
-    high FLOAT,
-    low FLOAT,
-    volume BIGINT,
-    open_interest BIGINT,
-    settle BIGINT,
-    UNIQUE KEY unique_ymd_stock_code (ymd, htsc_code)
-) ;
-
-
-CREATE TABLE quant.ods_future_inside_insight (
-    htsc_code VARCHAR(50) NOT NULL,
-    ymd DATE NOT NULL,
-    open FLOAT,
-    close FLOAT,
-    high FLOAT,
-    low FLOAT,
-    volume BIGINT,
-    open_interest BIGINT,
-    settle BIGINT,
-    UNIQUE KEY unique_ymd_stock_code (ymd, htsc_code)
-) PARTITION BY RANGE (YEAR(ymd) * 100 + MONTH(ymd)) (
-    PARTITION p202112 VALUES LESS THAN (202201),
-    PARTITION p202212 VALUES LESS THAN (202301),
-    PARTITION p202312 VALUES LESS THAN (202401),
-    PARTITION p202401 VALUES LESS THAN (202402),
-    PARTITION p202402 VALUES LESS THAN (202403),
-    PARTITION p202403 VALUES LESS THAN (202404),
-    PARTITION p202404 VALUES LESS THAN (202405),
-    PARTITION p202405 VALUES LESS THAN (202406),
-    PARTITION p202406 VALUES LESS THAN (202407),
-    PARTITION p202407 VALUES LESS THAN (202408),
-    PARTITION p202408 VALUES LESS THAN (202409),
-    -- 添加其他月份的分区
-    PARTITION pmax VALUES LESS THAN MAXVALUE
-);
-
-
-
---1.6
-------------------  stock_chouma_insight   A股的筹码分布数据
-
-CREATE TABLE quant.ods_stock_chouma_insight (
-    htsc_code                                VARCHAR(50) NOT NULL
-   ,ymd                                      DATE NOT NULL
-   ,exchange                                 VARCHAR(50)
-   ,last                                     FLOAT
-   ,prev_close                               FLOAT
-   ,total_share                              BIGINT
-   ,a_total_share                            BIGINT
-   ,a_listed_share                           BIGINT
-   ,listed_share                             BIGINT
-   ,restricted_share                         BIGINT
-   ,cost_5pct                                FLOAT
-   ,cost_15pct                               FLOAT
-   ,cost_50pct                               FLOAT
-   ,cost_85pct                               FLOAT
-   ,cost_95pct                               FLOAT
-   ,avg_cost                                 FLOAT
-   ,max_cost                                 FLOAT
-   ,min_cost                                 FLOAT
-   ,winner_rate                              FLOAT
-   ,diversity                                FLOAT
-   ,pre_winner_rate                          FLOAT
-   ,restricted_avg_cost                      FLOAT
-   ,restricted_max_cost                      FLOAT
-   ,restricted_min_cost                      FLOAT
-   ,large_shareholders_avg_cost              FLOAT
-   ,large_shareholders_total_share           FLOAT
-   ,large_shareholders_total_share_pct       FLOAT
-   ,UNIQUE KEY unique_ymd_stock_code (ymd, htsc_code)
- ) PARTITION BY RANGE (YEAR(ymd) * 100 + MONTH(ymd)) (
-    PARTITION p202112 VALUES LESS THAN (202201),
-    PARTITION p202212 VALUES LESS THAN (202301),
-    PARTITION p202312 VALUES LESS THAN (202401),
-    PARTITION p202401 VALUES LESS THAN (202402),
-    PARTITION p202402 VALUES LESS THAN (202403),
-    PARTITION p202403 VALUES LESS THAN (202404),
-    PARTITION p202404 VALUES LESS THAN (202405),
-    PARTITION p202405 VALUES LESS THAN (202406),
-    PARTITION p202406 VALUES LESS THAN (202407),
-    PARTITION p202407 VALUES LESS THAN (202408),
-    PARTITION p202408 VALUES LESS THAN (202409),
-    -- 添加其他月份的分区
-    PARTITION pmax VALUES LESS THAN MAXVALUE
-);
-
-
-
---1.7
-------------------  astock_industry_overview   行业分类，申万三级分类
-CREATE TABLE quant.ods_astock_industry_overview (
-    ymd                  DATE
-   ,classified           varchar(100)
-   ,industry_name        varchar(100)
-   ,industry_code        varchar(100)
-   ,l1_code              varchar(100)
-   ,l1_name              varchar(100)
-   ,l2_code              varchar(100)
-   ,l2_name              varchar(100)
-   ,l3_code              varchar(100)
-   ,l3_name              varchar(100)
-   ,UNIQUE KEY unique_industry_code (ymd, industry_code)
- );
-
-
---1.8
-------------------  astock_industry_detail   股票&行业的关联
-CREATE TABLE quant.ods_astock_industry_detail (
-    ymd              DATE
-   ,htsc_code        varchar(100)
-   ,name             varchar(100)
-   ,industry_name    varchar(100)
-   ,industry_code    varchar(100)
-   ,l1_code          varchar(100)
-   ,l1_name          varchar(100)
-   ,l2_code          varchar(100)
-   ,l2_name          varchar(100)
-   ,l3_code          varchar(100)
-   ,l3_name          varchar(100)
-   ,UNIQUE KEY unique_industry_code (ymd, htsc_code)
-);
-
-
---1.9
-------------------  shareholder_num   个股的股东数
-CREATE TABLE quant.ods_shareholder_num_now (
-      htsc_code              varchar(100)
-     ,name                   varchar(100)
-     ,ymd                    DATE
-     ,total_sh               DOUBLE
-     ,avg_share              DOUBLE
-     ,pct_of_total_sh        DOUBLE
-     ,pct_of_avg_sh          DOUBLE
-   ,UNIQUE KEY unique_industry_code (ymd, htsc_code)
- );
-
-
-CREATE TABLE quant.ods_shareholder_num (
-      htsc_code              varchar(100)
-     ,name                   varchar(100)
-     ,ymd                    DATE
-     ,total_sh               DOUBLE
-     ,avg_share              DOUBLE
-     ,pct_of_total_sh        DOUBLE
-     ,pct_of_avg_sh          DOUBLE
-   ,UNIQUE KEY unique_industry_code (ymd, htsc_code)
- );
-
-
---1.10
-------------------  north_bound   北向持仓数据
-CREATE TABLE quant.ods_north_bound_daily_now (
-      htsc_code            varchar(100)
-     ,ymd                  DATE
-     ,sh_hkshare_hold      BIGINT
-     ,pct_total_share      FLOAT
-   ,UNIQUE KEY unique_industry_code (ymd, htsc_code)
- );
-
-
-CREATE TABLE quant.ods_north_bound_daily (
-      htsc_code            varchar(100)
-     ,ymd                  DATE
-     ,sh_hkshare_hold      BIGINT
-     ,pct_total_share      FLOAT
-   ,UNIQUE KEY unique_industry_code (ymd, htsc_code)
- );
-
-
---2.1
-------------------  us_stock_daily_vantage   美股 日K
-CREATE TABLE quant.ods_us_stock_daily_vantage (
-    name VARCHAR(50) NOT NULL,
-    ymd DATE NOT NULL,
-    open FLOAT,
-    high FLOAT,
-    low FLOAT,
-    close FLOAT,
-    volume BIGINT,
-    UNIQUE KEY unique_ymd_stock_code (ymd, name)
-) ;
-
-
-
---2.2
-------------------  exchange_rate_vantage_detail   汇率&美元指数 日K
-CREATE TABLE quant.ods_exchange_rate_vantage_detail (
-    name VARCHAR(50) NOT NULL,
-    ymd DATE NOT NULL,
-    open FLOAT,
-    high FLOAT,
-    low FLOAT,
-    close FLOAT,
-    UNIQUE KEY unique_ymd_stock_code (ymd, name)
-) ;
-
-
-CREATE TABLE quant.ods_exchange_dxy_vantage (
-    ymd DATE NOT NULL,
-    name VARCHAR(50) NOT NULL,
-    UNIQUE KEY unique_ymd_stock_code (ymd, name)
-) ;
-
-
-
-```
-
---------------------------------------------------------------------------------
-## datas_prepare\C00_SQL\create_mysql_tables_nopart.sql
-
-```sql
-
---1.0
-------------------  ods_trading_days_insight   交易所的交易日历
-CREATE TABLE quant.ods_trading_days_insight (
-     exchange     VARCHAR(50)              --交易所名称
-    ,ymd          DATE NOT NULL            --交易日期
-    ,UNIQUE KEY unique_ymd_stock_code (exchange, ymd)
-);
-
-
---1.1
-------------------  ods_stock_code_daily_insight   当日已上市股票码表
-CREATE TABLE quant.ods_stock_code_daily_insight (
-     ymd          DATE NOT NULL            --交易日期
-    ,htsc_code    VARCHAR(50) NOT NULL     --股票代码
-    ,name         VARCHAR(50)              --股票名
-    ,exchange     VARCHAR(50)              --交易所名称
-    ,UNIQUE KEY unique_ymd_stock_code (ymd, htsc_code)
-);
-
-
---1.2
-------------------  ods_stock_kline_daily_insight   当日已上市股票的历史日K
-CREATE TABLE quant.ods_stock_kline_daily_insight_now (
-     htsc_code    VARCHAR(50) NOT NULL    --股票代码
-    ,ymd          DATE NOT NULL           --交易日期
-    ,open         FLOAT                   --开盘价
-    ,close        FLOAT                   --收盘价
-    ,high         FLOAT                   --最高价
-    ,low          FLOAT                   --最低价
-    ,num_trades   BIGINT                  --交易笔数
-    ,volume       BIGINT                  --成交量
-    ,UNIQUE KEY unique_ymd_stock_code (ymd, htsc_code)
-) ;
-
-
-CREATE TABLE quant.ods_stock_kline_daily_insight (
-     htsc_code    VARCHAR(50) NOT NULL    --股票代码
-    ,ymd          DATE NOT NULL           --交易日期
-    ,open         FLOAT                   --开盘价
-    ,close        FLOAT                   --收盘价
-    ,high         FLOAT                   --最高价
-    ,low          FLOAT                   --最低价
-    ,num_trades   BIGINT                  --交易笔数
-    ,volume       BIGINT                  --成交量
-    ,UNIQUE KEY unique_ymd_stock_code (ymd, htsc_code)
-);
-
-
---1.3
-------------------  ods_index_a_share_insight   大A的主要指数日K
-CREATE TABLE quant.ods_index_a_share_insight_now (
-     htsc_code    VARCHAR(50) NOT NULL    --指数代码
-    ,name         VARCHAR(50) NOT NULL    --指数名称
-    ,ymd          DATE NOT NULL           --交易日期
-    ,open         FLOAT                   --开盘价
-    ,close        FLOAT                   --收盘价
-    ,high         FLOAT                   --最高价
-    ,low          FLOAT                   --最低价
-    ,volume       BIGINT                  --成交量
-    ,UNIQUE KEY unique_ymd_stock_code (ymd, htsc_code)
-) ;
-
-
-CREATE TABLE quant.ods_index_a_share_insight (
-     htsc_code    VARCHAR(50) NOT NULL    --指数代码
-    ,name         VARCHAR(50) NOT NULL    --指数名称
-    ,ymd          DATE NOT NULL           --交易日期
-    ,open         FLOAT                   --开盘价
-    ,close        FLOAT                   --收盘价
-    ,high         FLOAT                   --最高价
-    ,low          FLOAT                   --最低价
-    ,volume       BIGINT                  --成交量
-    ,UNIQUE KEY unique_ymd_stock_code (ymd, htsc_code)
-);
-
-
---1.4
-------------------  ods_stock_limit_summary_insight   当日大A行情温度
-CREATE TABLE quant.ods_stock_limit_summary_insight_now (
-     ymd          DATE NOT NULL           --日期
-    ,name         VARCHAR(50) NOT NULL    --市场名称
-    ,today_ZT     INT                     --今日涨停股票数
-    ,today_DT     INT                     --今日跌停股票数
-    ,yesterday_ZT INT                     --昨日涨停股票数
-    ,yesterday_DT INT                     --昨日跌停股票数
-    ,yesterday_ZT_rate FLOAT              --昨日涨停股票的今日平均涨幅
-    ,UNIQUE KEY unique_ymd_name (ymd, name)
-) ;
-
-
-CREATE TABLE quant.ods_stock_limit_summary_insight (
-     ymd          DATE NOT NULL           --日期
-    ,name         VARCHAR(50) NOT NULL    --市场名称
-    ,today_ZT     INT                     --今日涨停股票数
-    ,today_DT     INT                     --今日跌停股票数
-    ,yesterday_ZT INT                     --昨日涨停股票数
-    ,yesterday_DT INT                     --昨日跌停股票数
-    ,yesterday_ZT_rate FLOAT              --昨日涨停股票的今日平均涨幅
-    ,UNIQUE KEY unique_ymd_name (ymd, name)
-) ;
-
-
---1.5
-------------------  ods_future_inside_insight   内盘主要期货数据日K
-CREATE TABLE quant.ods_future_inside_insight_now (
-     htsc_code      VARCHAR(50) NOT NULL  --期货标的代码
-    ,ymd            DATE NOT NULL         --交易日期
-    ,open           FLOAT                 --开盘价
-    ,close          FLOAT                 --收盘价
-    ,high           FLOAT                 --最高价
-    ,low            FLOAT                 --最低价
-    ,volume         BIGINT                --成交量
-    ,open_interest  BIGINT
-    ,settle         BIGINT
-    ,UNIQUE KEY unique_ymd_stock_code (ymd, htsc_code)
-) ;
-
-
-CREATE TABLE quant.ods_future_inside_insight (
-     htsc_code      VARCHAR(50) NOT NULL  --期货标的代码
-    ,ymd            DATE NOT NULL         --交易日期
-    ,open           FLOAT                 --开盘价
-    ,close          FLOAT                 --收盘价
-    ,high           FLOAT                 --最高价
-    ,low            FLOAT                 --最低价
-    ,volume         BIGINT                --成交量
-    ,open_interest  BIGINT
-    ,settle         BIGINT
-    ,UNIQUE KEY unique_ymd_stock_code (ymd, htsc_code)
-) ;
-
-
---1.6
-------------------  ods_stock_chouma_insight   A股的筹码分布数据
-CREATE TABLE quant.ods_stock_chouma_insight (
-    htsc_code                                VARCHAR(50) NOT NULL     --证券代码
-   ,ymd                                      DATE NOT NULL            --交易日
-   ,exchange                                 VARCHAR(50)              --交易所
-   ,last                                     FLOAT                    --最新价格
-   ,prev_close                               FLOAT                    --昨收价格
-   ,total_share                              BIGINT                   --总股本（股）
-   ,a_total_share                            BIGINT                   --A股总数(股)
-   ,a_listed_share                           BIGINT                   --流通a股（万股）
-   ,listed_share                             BIGINT                   --流通股总数
-   ,restricted_share                         BIGINT                   --限售股总数
-   ,cost_5pct                                FLOAT                    --5分位持仓成本（持仓成本最低的 5%的持仓成本）
-   ,cost_15pct                               FLOAT                    --15分位持仓成本
-   ,cost_50pct                               FLOAT                    --50分位持仓成本
-   ,cost_85pct                               FLOAT                    --85分位持仓成本
-   ,cost_95pct                               FLOAT                    --95分位持仓成本
-   ,avg_cost                                 FLOAT                    --流通股加权平均持仓成本
-   ,max_cost                                 FLOAT                    --流通股最大持仓成本
-   ,min_cost                                 FLOAT                    --流通股最小持仓成本
-   ,winner_rate                              FLOAT                    --流通股获利胜率
-   ,diversity                                FLOAT                    --流通股筹码分散程度百分比
-   ,pre_winner_rate                          FLOAT                    --流通股昨日获利胜率
-   ,restricted_avg_cost                      FLOAT                    --限售股平均持仓成本
-   ,restricted_max_cost                      FLOAT                    --限售股最大持仓成本
-   ,restricted_min_cost                      FLOAT                    --限售股最小持仓成本
-   ,large_shareholders_avg_cost              FLOAT                    --大流通股股东持股平均持仓成本
-   ,large_shareholders_total_share           FLOAT                    --大流通股股东持股总数
-   ,large_shareholders_total_share_pct       FLOAT                    --大流通股股东持股占总股本的比例
-   ,UNIQUE KEY unique_ymd_stock_code (ymd, htsc_code)
- );
-
-
-
---1.7
-------------------  ods_astock_industry_overview   行业分类，申万三级分类
-CREATE TABLE quant.ods_astock_industry_overview (
-    ymd                  DATE                  --交易日期
-   ,classified           varchar(100)          --行业分类
-   ,industry_name        varchar(100)          --行业名称
-   ,industry_code        varchar(100)          --行业代码
-   ,l1_code              varchar(100)          --一级行业代码
-   ,l1_name              varchar(100)          --一级行业名称
-   ,l2_code              varchar(100)          --二级行业代码
-   ,l2_name              varchar(100)          --二级行业名称
-   ,l3_code              varchar(100)          --三级行业代码
-   ,l3_name              varchar(100)          --三级行业名称
-   ,UNIQUE KEY unique_industry_code (ymd, industry_code)
- );
-
-
---1.8
-------------------  ods_astock_industry_detail   股票&行业的关联
-CREATE TABLE quant.ods_astock_industry_detail (
-    ymd              DATE                      --交易日期
-   ,htsc_code        varchar(100)              --股票代码
-   ,name             varchar(100)              --股票名称
-   ,industry_name    varchar(100)              --行业名称
-   ,industry_code    varchar(100)              --行业代码
-   ,l1_code          varchar(100)              --一级行业代码
-   ,l1_name          varchar(100)              --一级行业名称
-   ,l2_code          varchar(100)              --二级行业代码
-   ,l2_name          varchar(100)              --二级行业名称
-   ,l3_code          varchar(100)              --三级行业代码
-   ,l3_name          varchar(100)              --三级行业名称
-   ,UNIQUE KEY unique_industry_code (ymd, htsc_code)
-);
-
-
---1.9
-------------------  ods_shareholder_num   个股的股东数
-CREATE TABLE quant.ods_shareholder_num_now (
-       htsc_code              varchar(100)            --股票代码
-      ,name                   varchar(100)            --股票名称
-      ,ymd                    DATE                    --交易日期
-      ,total_sh               DOUBLE                  --总股东数
-      ,avg_share              DOUBLE(10, 4)           --每个股东平均持股数
-      ,pct_of_total_sh        DOUBLE(10, 4)           --股东数较上期环比波动百分比
-      ,pct_of_avg_sh          DOUBLE(10, 4)           --每个股东平均持股数较上期环比波动百分比
-      ,UNIQUE KEY unique_ymd_stock_code (ymd, htsc_code)
-);
-
-CREATE TABLE quant.ods_shareholder_num (
-       htsc_code              varchar(100)            --股票代码
-      ,name                   varchar(100)            --股票名称
-      ,ymd                    DATE                    --交易日期
-      ,total_sh               DOUBLE                  --总股东数
-      ,avg_share              DOUBLE(10, 4)           --每个股东平均持股数
-      ,pct_of_total_sh        DOUBLE(10, 4)           --股东数较上期环比波动百分比
-      ,pct_of_avg_sh          DOUBLE(10, 4)           --每个股东平均持股数较上期环比波动百分比
-      ,UNIQUE KEY unique_ymd_stock_code (ymd, htsc_code)
-);
-
-
---1.10
-------------------  ods_north_bound_daily   北向持仓数据
-CREATE TABLE quant.ods_north_bound_daily_now (
-      htsc_code            varchar(100)
-     ,ymd                  DATE
-     ,sh_hkshare_hold      BIGINT
-     ,pct_total_share      FLOAT
-     ,UNIQUE KEY unique_ymd_stock_code (ymd, htsc_code)
- );
-
-
-CREATE TABLE quant.ods_north_bound_daily (
-      htsc_code            varchar(100)
-     ,ymd                  DATE
-     ,sh_hkshare_hold      BIGINT
-     ,pct_total_share      FLOAT
-     ,UNIQUE KEY unique_ymd_stock_code (ymd, htsc_code)
- );
-
-
---2.1
-------------------  ods_us_stock_daily_vantage   美股 日K
-CREATE TABLE quant.ods_us_stock_daily_vantage (
-     name     VARCHAR(50) NOT NULL          --股票名称
-    ,ymd      DATE        NOT NULL          --交易日期
-    ,open     FLOAT                         --开盘价
-    ,high     FLOAT                         --最高价
-    ,low      FLOAT                         --最低价
-    ,close    FLOAT                         --收盘价
-    ,volume   BIGINT                        --成交量
-    ,UNIQUE KEY unique_ymd_name (ymd, name)
-) ;
-
-
---2.2
-------------------  ods_exchange_rate_vantage_detail   汇率&美元指数 日K
-CREATE TABLE quant.ods_exchange_rate_vantage_detail (
-     name      VARCHAR(50) NOT NULL         --货币对
-    ,ymd       DATE        NOT NULL         --交易日期
-    ,open      FLOAT                        --开盘价
-    ,high      FLOAT                        --最高价
-    ,low       FLOAT                        --最低价
-    ,close     FLOAT                        --收盘价
-    ,UNIQUE KEY unique_ymd_name (ymd, name)
-) ;
-
-
---2.3
-------------------  ods_exchange_dxy_vantage   美元指数 日K
-CREATE TABLE quant.ods_exchange_dxy_vantage (
-    ymd DATE NOT NULL,
-    name VARCHAR(50) NOT NULL,
-    UNIQUE KEY unique_ymd_name (ymd, name)
-) ;
-
-
---3.1        通达信数据
-------------------  ods_tdx_stock_concept_plate   通达信概念板块数据
-CREATE TABLE quant.ods_tdx_stock_concept_plate (
-     ymd DATE NOT NULL                    --日期
-    ,concept_code VARCHAR(50) NOT NULL    --概念板块代码
-    ,concept_name VARCHAR(50)             --概念板块名称
-    ,stock_code VARCHAR(50)               --股票代码
-    ,stock_name VARCHAR(50)               --股票名称
-) ;
-
-
---3.2        通达信数据
-------------------  ods_tdx_stock_style_plate   通达信风格板块数据
-CREATE TABLE quant.ods_tdx_stock_style_plate (
-     ymd DATE NOT NULL                    --日期
-    ,style_code VARCHAR(50) NOT NULL    --概念板块代码
-    ,style_name VARCHAR(50)             --概念板块名称
-    ,stock_code VARCHAR(50)               --股票代码
-    ,stock_name VARCHAR(50)               --股票名称
-) ;
-
-
---3.3        通达信数据
-------------------  ods_tdx_stock_industry_plate   通达信行业板块数据
-CREATE TABLE quant.ods_tdx_stock_industry_plate (
-     ymd DATE NOT NULL                    --日期
-    ,industry_code VARCHAR(50) NOT NULL   --行业板块代码
-    ,industry_name VARCHAR(50)            --行业板块名称
-    ,stock_code VARCHAR(50)               --股票代码
-    ,stock_name VARCHAR(50)               --股票名称
-) ;
-
-
---3.4        通达信数据
-------------------  ods_tdx_stock_region_plate   通达信地区板块数据
-CREATE TABLE quant.ods_tdx_stock_region_plate (
-     ymd         DATE NOT NULL            --日期
-    ,region_code VARCHAR(50) NOT NULL     --地区板块代码
-    ,region_name VARCHAR(50)              --地区板块名称
-    ,stock_code  VARCHAR(50)              --股票代码
-    ,stock_name  VARCHAR(50)              --股票名称
-) ;
-
-
---3.5        通达信数据
-------------------  ods_tdx_stock_index_plate   通达信指数板块数据
-CREATE TABLE quant.ods_tdx_stock_index_plate (
-     ymd         DATE NOT NULL            --日期
-    ,index_code  VARCHAR(50) NOT NULL     --指数板块代码
-    ,index_name  VARCHAR(50)              --指数板块名称
-    ,stock_code  VARCHAR(50)              --股票代码
-    ,stock_name  VARCHAR(50)              --股票名称
-) ;
-
-
---3.6        通达信数据
-------------------  ods_tdx_stock_pepb_info   股票基本面数据_资产数据
-CREATE TABLE quant.ods_tdx_stock_pepb_info (
-     ymd              DATE               --日期
-    ,stock_code       varchar(50)        --代码
-    ,stock_name       varchar(50)        --名称
-    ,market_value     double             --流通市值(亿)
-    ,total_asset      double             --总资产(亿)
-    ,net_asset        double             --净资产(亿)
-    ,total_capital    double             --总股本(亿)
-    ,float_capital    double             --流通股(亿)
-    ,shareholder_num  bigint             --股东人数
-    ,pb               double             --市净率
-    ,pe               double             --市盈(动)
-    ,industry         varchar(50)        --细分行业
-    ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
-) ;
-
-
---4.1        多渠道板块数据 -- 小红书
-------------------  ods_stock_plate_redbook
-CREATE TABLE quant.ods_stock_plate_redbook (
-     ymd          DATE        NOT NULL      --日期
-    ,plate_name   VARCHAR(50) NOT NULL      --板块名称
-    ,stock_code   VARCHAR(50)               --标的代码
-    ,stock_name   VARCHAR(50)               --标的名称
-    ,remark       VARCHAR(50)               --备注
-) ;
-
-
---4.2        多渠道板块数据 -- 多渠道汇总
-------------------  dwd_stock_a_total_plate
-CREATE TABLE quant.dwd_stock_a_total_plate (
-     ymd          DATE        NOT NULL      --日期
-    ,plate_name   VARCHAR(50) NOT NULL      --板块名称
-    ,stock_code   VARCHAR(50)               --标的代码
-    ,stock_name   VARCHAR(50)               --标的名称
-    ,source_table VARCHAR(50)               --来源表
-    ,remark       VARCHAR(50)               --备注
-) ;
-
-
---5.1        股票基本面数据_所属交易所，主板/创业板/科创板/北证
-------------------  ods_stock_exchange_market
-CREATE TABLE quant.ods_stock_exchange_market (
-     ymd          DATE        NOT NULL      --日期
-    ,stock_code   VARCHAR(50)               --标的代码
-    ,stock_name   VARCHAR(50)               --标的名称
-    ,market       VARCHAR(50)               --市场特征主板创业板等
-    ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
-) ;
-
-
 
 ```
 
@@ -3837,7 +3690,7 @@ class SaveInsightData:
         """
         结果变量初始化
         """
-        #  除去 ST|退|B 的五要素   [ymd	htsc_code	name	exchange]
+        #  除去 ST|退|B 的五要素   [ymd	stock_code	stock_name	exchange]
         self.stock_code_df = pd.DataFrame()
 
 
@@ -3855,7 +3708,7 @@ class SaveInsightData:
         """
         获取当日的stock代码合集
         :return:
-         stock_code_df  [ymd	htsc_code	name	exchange]
+         stock_code_df  [ymd	stock_code	stock_name	exchange]
         """
 
         #  1.获取日期
@@ -3875,6 +3728,8 @@ class SaveInsightData:
         #  5.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
         filtered_df = filtered_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
 
+        filtered_df = filtered_df.rename(columns={'htsc_code': 'stock_code', 'name': 'stock_name'})
+
         #  6.更新dataframe ymd  htsc_code  name  exchange
         self.stock_code_df = filtered_df
 
@@ -3887,7 +3742,7 @@ class SaveInsightData:
                                                      database=local_database,
                                                      df=filtered_df,
                                                      table_name="ods_stock_code_daily_insight",
-                                                     merge_on=['ymd', 'htsc_code'])
+                                                     merge_on=['ymd', 'stock_code'])
 
             #  9.结果数据保存到 远端 mysql中
             mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
@@ -3896,7 +3751,7 @@ class SaveInsightData:
                                                      database=origin_database,
                                                      df=filtered_df,
                                                      table_name="ods_stock_code_daily_insight",
-                                                     merge_on=['ymd', 'htsc_code'])
+                                                     merge_on=['ymd', 'stock_code'])
         else:
             #  9.结果数据保存到 远端 mysql中
             mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
@@ -3905,7 +3760,7 @@ class SaveInsightData:
                                                      database=origin_database,
                                                      df=filtered_df,
                                                      table_name="ods_stock_code_daily_insight",
-                                                     merge_on=['ymd', 'htsc_code'])
+                                                     merge_on=['ymd', 'stock_code'])
 
 
     @timing_decorator
@@ -3968,14 +3823,14 @@ class SaveInsightData:
 
             #  8.日期格式转换
             kline_total_df['time'] = pd.to_datetime(kline_total_df['time']).dt.strftime('%Y%m%d')
-            kline_total_df.rename(columns={'time': 'ymd'}, inplace=True)
+            kline_total_df.rename(columns={'time': 'ymd', 'htsc_code': 'stock_code'}, inplace=True)
 
             #  9.声明所有的列名，去除多余列
             kline_total_df = kline_total_df[
-                ['htsc_code', 'ymd', 'open', 'close', 'high', 'low', 'num_trades', 'volume']]
+                ['stock_code', 'ymd', 'open', 'close', 'high', 'low', 'num_trades', 'volume']]
 
             #  10.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
-            kline_total_df = kline_total_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
+            kline_total_df = kline_total_df.drop_duplicates(subset=['ymd', 'stock_code'], keep='first')
 
             ############################   文件输出模块     ############################
             if platform.system() == "Windows":
@@ -3986,7 +3841,7 @@ class SaveInsightData:
                                                          database=local_database,
                                                          df=kline_total_df,
                                                          table_name="ods_stock_kline_daily_insight_now",
-                                                         merge_on=['ymd', 'htsc_code'])
+                                                         merge_on=['ymd', 'stock_code'])
 
                 #  14.结果数据保存到 远端 mysql中
                 mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
@@ -3995,7 +3850,7 @@ class SaveInsightData:
                                                          database=origin_database,
                                                          df=kline_total_df,
                                                          table_name="ods_stock_kline_daily_insight_now",
-                                                         merge_on=['ymd', 'htsc_code'])
+                                                         merge_on=['ymd', 'stock_code'])
             else:
                 #  14.结果数据保存到 远端 mysql中
                 mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
@@ -4004,7 +3859,7 @@ class SaveInsightData:
                                                          database=origin_database,
                                                          df=kline_total_df,
                                                          table_name="ods_stock_kline_daily_insight_now",
-                                                         merge_on=['ymd', 'htsc_code'])
+                                                         merge_on=['ymd', 'stock_code'])
         else:
             ## insight 返回为空值
             logging.info('    get_stock_kline 的返回值为空值')
@@ -4062,16 +3917,16 @@ class SaveInsightData:
 
             #  5.日期格式转换
             index_df['time'] = pd.to_datetime(index_df['time']).dt.strftime('%Y%m%d')
-            index_df.rename(columns={'time': 'ymd'}, inplace=True)
+            index_df.rename(columns={'time': 'ymd', 'htsc_code': 'stock_code'}, inplace=True)
 
             #  6.根据映射关系，添加stock_name
-            index_df['name'] = index_df['htsc_code'].map(index_dict)
+            index_df['name'] = index_df['stock_code'].map(index_dict)
 
             #  7.声明所有的列名，去除多余列
-            index_df = index_df[['htsc_code', 'name', 'ymd', 'open', 'close', 'high', 'low', 'volume']]
+            index_df = index_df[['stock_code', 'name', 'ymd', 'open', 'close', 'high', 'low', 'volume']]
 
             #  8.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
-            index_df = index_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
+            index_df = index_df.drop_duplicates(subset=['ymd', 'stock_code'], keep='first')
 
             ############################   文件输出模块     ############################
             if platform.system() == "Windows":
@@ -4082,7 +3937,7 @@ class SaveInsightData:
                                                          database=local_database,
                                                          df=index_df,
                                                          table_name="ods_index_a_share_insight_now",
-                                                         merge_on=['ymd', 'htsc_code'])
+                                                         merge_on=['ymd', 'stock_code'])
 
                 #  12.结果数据保存到 远端 mysql中
                 mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
@@ -4091,7 +3946,7 @@ class SaveInsightData:
                                                          database=origin_database,
                                                          df=index_df,
                                                          table_name="ods_index_a_share_insight_now",
-                                                         merge_on=['ymd', 'htsc_code'])
+                                                         merge_on=['ymd', 'stock_code'])
             else:
                 #  12.结果数据保存到 远端 mysql中
                 mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
@@ -4100,7 +3955,7 @@ class SaveInsightData:
                                                          database=origin_database,
                                                          df=index_df,
                                                          table_name="ods_index_a_share_insight_now",
-                                                         merge_on=['ymd', 'htsc_code'])
+                                                         merge_on=['ymd', 'stock_code'])
         else:
             ## insight 返回为空值
             logging.info('    get_index_a_share 的返回值为空值')
@@ -4252,14 +4107,14 @@ class SaveInsightData:
 
             #  5.日期格式转换
             future_inside_df['time'] = pd.to_datetime(future_inside_df['time']).dt.strftime('%Y%m%d')
-            future_inside_df.rename(columns={'time': 'ymd'}, inplace=True)
+            future_inside_df.rename(columns={'time': 'ymd', 'htsc_code': 'stock_code'}, inplace=True)
 
             #  6.声明所有的列名，去除多余列
             future_inside_df = future_inside_df[
-                ['htsc_code', 'ymd', 'open', 'close', 'high', 'low', 'volume', 'open_interest', 'settle']]
+                ['stock_code', 'ymd', 'open', 'close', 'high', 'low', 'volume', 'open_interest', 'settle']]
 
             #  7.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
-            future_inside_df = future_inside_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
+            future_inside_df = future_inside_df.drop_duplicates(subset=['ymd', 'stock_code'], keep='first')
 
             ############################   文件输出模块     ############################
             if platform.system() == "Windows":
@@ -4270,7 +4125,7 @@ class SaveInsightData:
                                                          database=local_database,
                                                          df=future_inside_df,
                                                          table_name="ods_future_inside_insight_now",
-                                                         merge_on=['ymd', 'htsc_code'])
+                                                         merge_on=['ymd', 'stock_code'])
 
                 #  11.结果数据保存到 远端 mysql中
                 mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
@@ -4279,7 +4134,7 @@ class SaveInsightData:
                                                          database=origin_database,
                                                          df=future_inside_df,
                                                          table_name="ods_future_inside_insight_now",
-                                                         merge_on=['ymd', 'htsc_code'])
+                                                         merge_on=['ymd', 'stock_code'])
             else:
                 #  11.结果数据保存到 远端 mysql中
                 mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
@@ -4288,7 +4143,7 @@ class SaveInsightData:
                                                          database=origin_database,
                                                          df=future_inside_df,
                                                          table_name="ods_future_inside_insight_now",
-                                                         merge_on=['ymd', 'htsc_code'])
+                                                         merge_on=['ymd', 'stock_code'])
         else:
             ## insight 返回为空值
             logging.info('    get_future_inside 的返回值为空值')
@@ -4348,7 +4203,10 @@ class SaveInsightData:
         if not chouma_total_df.empty:
             #  8.日期格式转换
             chouma_total_df['time'] = pd.to_datetime(chouma_total_df['time']).dt.strftime('%Y%m%d')
-            chouma_total_df.rename(columns={'time': 'ymd'}, inplace=True)
+            chouma_total_df.rename(columns={'time': 'ymd',
+                                            'total_share': 'total_shares',
+                                            'last': 'close',
+                                            'htsc_code': 'stock_code'}, inplace=True)
 
             #  9.数据格式调整
             cols_to_clean = ['last', 'prev_close', 'avg_cost', 'max_cost', 'min_cost', 'winner_rate', 'diversity',
@@ -4391,7 +4249,7 @@ class SaveInsightData:
                                                          database=local_database,
                                                          df=chouma_total_df,
                                                          table_name="ods_stock_chouma_insight",
-                                                         merge_on=['ymd', 'htsc_code'])
+                                                         merge_on=['ymd', 'stock_code'])
 
                 #  12.结果数据保存到 远端 mysql中
                 mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
@@ -4400,7 +4258,7 @@ class SaveInsightData:
                                                          database=origin_database,
                                                          df=chouma_total_df,
                                                          table_name="ods_stock_chouma_insight",
-                                                         merge_on=['ymd', 'htsc_code'])
+                                                         merge_on=['ymd', 'stock_code'])
             else:
                 #  12.结果数据保存到 远端 mysql中
                 mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
@@ -4409,7 +4267,7 @@ class SaveInsightData:
                                                          database=origin_database,
                                                          df=chouma_total_df,
                                                          table_name="ods_stock_chouma_insight",
-                                                         merge_on=['ymd', 'htsc_code'])
+                                                         merge_on=['ymd', 'stock_code'])
         else:
             # insight 返回为空值
             logging.info('    get_chouma_datas 的返回值为空值')
@@ -4533,13 +4391,15 @@ class SaveInsightData:
             stock_in_industry_df.insert(0, 'ymd', time_today)
             stock_in_industry_df['ymd'] = pd.to_datetime(stock_in_industry_df['ymd']).dt.strftime('%Y%m%d')
 
+            stock_in_industry_df.rename(columns={'htsc_code': 'stock_code', 'name': 'stock_name'}, inplace=True)
+
             #  6.声明所有的列名，去除多余列
             stock_in_industry_df = stock_in_industry_df[
-                ['ymd', 'htsc_code', 'name', 'industry_name', 'industry_code', 'l1_code', 'l1_name', 'l2_code',
+                ['ymd', 'stock_code', 'stock_name', 'industry_name', 'industry_code', 'l1_code', 'l1_name', 'l2_code',
                  'l2_name', 'l3_code', 'l3_name']]
 
             #  7.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
-            stock_in_industry_df = stock_in_industry_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
+            stock_in_industry_df = stock_in_industry_df.drop_duplicates(subset=['ymd', 'stock_code'], keep='first')
 
             ############################   文件输出模块     ############################
             if platform.system() == "Windows":
@@ -4550,7 +4410,7 @@ class SaveInsightData:
                                                          database=local_database,
                                                          df=stock_in_industry_df,
                                                          table_name="ods_astock_industry_detail",
-                                                         merge_on=['ymd', 'htsc_code'])
+                                                         merge_on=['ymd', 'stock_code'])
 
                 #  11.结果数据保存到 远端 mysql中
                 mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
@@ -4559,7 +4419,7 @@ class SaveInsightData:
                                                          database=origin_database,
                                                          df=stock_in_industry_df,
                                                          table_name="ods_astock_industry_detail",
-                                                         merge_on=['ymd', 'htsc_code'])
+                                                         merge_on=['ymd', 'stock_code'])
             else:
                 #  11.结果数据保存到 远端 mysql中
                 mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
@@ -4568,7 +4428,7 @@ class SaveInsightData:
                                                          database=origin_database,
                                                          df=stock_in_industry_df,
                                                          table_name="ods_astock_industry_detail",
-                                                         merge_on=['ymd', 'htsc_code'])
+                                                         merge_on=['ymd', 'stock_code'])
         else:
             ## insight 返回为空值
             logging.info('    get_Ashare_industry_detail 的返回值为空值')
@@ -4626,7 +4486,7 @@ class SaveInsightData:
         if not shareholder_num_df.empty:
 
             #  5.日期格式转换
-            shareholder_num_df.rename(columns={'end_date': 'ymd'}, inplace=True)
+            shareholder_num_df.rename(columns={'end_date': 'ymd', 'htsc_code': 'stock_code', 'name': 'stock_name'}, inplace=True)
             shareholder_num_df['ymd'] = pd.to_datetime(shareholder_num_df['ymd']).dt.strftime('%Y%m%d')
 
             # north_bound_df.rename(columns={'trading_day': 'ymd'}, inplace=True)
@@ -4634,11 +4494,11 @@ class SaveInsightData:
 
             #  6.声明所有的列名，去除多余列
             shareholder_num_df = shareholder_num_df[
-                ['htsc_code', 'name', 'ymd', 'total_sh', 'avg_share', 'pct_of_total_sh', 'pct_of_avg_sh']]
+                ['stock_code', 'stock_name', 'ymd', 'total_sh', 'avg_share', 'pct_of_total_sh', 'pct_of_avg_sh']]
             # north_bound_df = north_bound_df[['htsc_code', 'ymd', 'sh_hkshare_hold', 'pct_total_share']]
 
             #  7.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
-            shareholder_num_df = shareholder_num_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
+            shareholder_num_df = shareholder_num_df.drop_duplicates(subset=['ymd', 'stock_code'], keep='first')
             # north_bound_df = north_bound_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
 
             ############################   文件输出模块     ############################
@@ -4650,7 +4510,7 @@ class SaveInsightData:
                                                          database=local_database,
                                                          df=shareholder_num_df,
                                                          table_name="ods_shareholder_num_now",
-                                                         merge_on=['ymd', 'htsc_code'])
+                                                         merge_on=['ymd', 'stock_code'])
 
                 # mysql_utils.data_from_dataframe_to_mysql(user=local_user,
                 #                                          password=local_password,
@@ -4658,7 +4518,7 @@ class SaveInsightData:
                 #                                          database=local_database,
                 #                                          df=north_bound_df,
                 #                                          table_name="north_bound_daily_now",
-                #                                          merge_on=['ymd', 'htsc_code'])
+                #                                          merge_on=['ymd', 'stock_code'])
 
                 #  11.结果数据保存到 远端 mysql中
                 mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
@@ -4667,7 +4527,7 @@ class SaveInsightData:
                                                          database=origin_database,
                                                          df=shareholder_num_df,
                                                          table_name="ods_shareholder_num_now",
-                                                         merge_on=['ymd', 'htsc_code'])
+                                                         merge_on=['ymd', 'stock_code'])
 
                 # mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
                 #                                          password=origin_password,
@@ -4675,7 +4535,7 @@ class SaveInsightData:
                 #                                          database=origin_database,
                 #                                          df=north_bound_df,
                 #                                          table_name="north_bound_daily_now",
-                #                                          merge_on=['ymd', 'htsc_code'])
+                #                                          merge_on=['ymd', 'stock_code'])
             else:
                 #  11.结果数据保存到 远端 mysql中
                 mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
@@ -4684,7 +4544,7 @@ class SaveInsightData:
                                                          database=origin_database,
                                                          df=shareholder_num_df,
                                                          table_name="ods_shareholder_num_now",
-                                                         merge_on=['ymd', 'htsc_code'])
+                                                         merge_on=['ymd', 'stock_code'])
         else:
             ## insight 返回为空值
             logging.info('    get_shareholder_north_bound_num 的返回值为空值')
@@ -4727,670 +4587,6 @@ class SaveInsightData:
 
 if __name__ == '__main__':
     save_insight_data = SaveInsightData()
-    save_insight_data.setup()
-
-```
-
---------------------------------------------------------------------------------
-## datas_prepare\C01_data_download_daily\download_insight_data_afternoon_of_history.py
-
-```python
-# -*- coding: utf-8 -*-
-
-import os
-import sys
-import contextlib
-import io
-from insight_python.com.insight import common
-from insight_python.com.insight.query import *
-from insight_python.com.insight.market_service import market_service
-from datetime import datetime
-import time
-import platform
-
-
-import CommonProperties.Base_Properties as base_properties
-import CommonProperties.Base_utils as base_utils
-import CommonProperties.Mysql_Utils as mysql_utils
-from CommonProperties.DateUtility import DateUtility
-from CommonProperties.Base_utils import timing_decorator
-from CommonProperties.set_config import setup_logging_config
-
-# ************************************************************************
-# 本代码的作用是下午收盘后下载 insight 行情源数据, 本地保存,用于后续分析
-# 需要下载的数据:
-# 1.上市股票代码   get_all_stocks()
-# 2.筹码分布数据   get_chouma_datas()
-
-# 调用日志配置
-setup_logging_config()
-
-# ************************************************************************
-
-######################  mysql 配置信息  本地和远端服务器  ####################
-local_user = base_properties.local_mysql_user
-local_password = base_properties.local_mysql_password
-local_database = base_properties.local_mysql_database
-local_host = base_properties.local_mysql_host
-
-origin_user = base_properties.origin_mysql_user
-origin_password = base_properties.origin_mysql_password
-origin_database = base_properties.origin_mysql_database
-origin_host = base_properties.origin_mysql_host
-
-
-class SaveInsightHistoryData:
-
-    def __init__(self):
-        """
-        结果变量初始化
-        """
-        #  除去 ST|退|B 的五要素   [ymd	htsc_code	name	exchange]
-        self.stock_code_df = pd.DataFrame()
-
-
-    @timing_decorator
-    def login(self):
-        # 登陆前 初始化，没有密码可以访问进行自动化注册
-        # https://findata-insight.htsc.com:9151/terminalWeb/#/signup
-        user = base_properties.user
-        password = base_properties.password
-        common.login(market_service, user, password)
-
-
-    def get_trading_days_from_insight(self):
-        """
-        获取交易日历
-        Returns: (exchange, ymd)
-        """
-        trading_day_start_date = "2018-01-01"
-        trading_day_end_date = "2027-12-31"
-        trading_day_start_date = datetime.strptime(trading_day_start_date, '%Y-%m-%d')
-        trading_day_end_date = datetime.strptime(trading_day_end_date, '%Y-%m-%d')
-
-        # 调用获取交易日历结果
-        result = get_trading_days(trading_day=[trading_day_start_date,
-                                               trading_day_end_date], exchange='XSHG')
-
-        # 步骤1：解析真实 result 结构（关键修正）
-        exchange_name = result[0]  # 提取第一个元素：交易所名称（XSHG）
-        trading_series = result[1]  # 提取第二个元素：pandas Series（包含所有交易日）
-        # 将 Series 转换为列表（获取所有交易日数据，解决只取到1个元素的问题）
-        trading_dates_list = trading_series.tolist()  # 核心方法：Series.tolist()
-
-        # 步骤2：构造 DataFrame 所需的数据源
-        df_data = {
-            'exchange': [exchange_name] * len(trading_dates_list),  # 生成匹配长度的交易所列表
-            'ymd': trading_dates_list
-        }
-        trading_df = pd.DataFrame(df_data)
-
-        # 步骤3：按 exchange 和 trading_days 升序排序
-        trading_df.sort_values(by=['exchange', 'ymd'], ascending=True, inplace=True)
-
-        # 可选：重置排序后的索引（避免索引混乱）
-        trading_df.reset_index(drop=True, inplace=True)
-        if platform.system() == "Windows":
-            #  结果数据保存到 本地 mysql中
-            mysql_utils.data_from_dataframe_to_mysql(user=local_user,
-                                                     password=local_password,
-                                                     host=local_host,
-                                                     database=local_database,
-                                                     df=trading_df,
-                                                     table_name="ods_trading_days_insight",
-                                                     merge_on=['exchange', 'ymd'])
-
-            #  结果数据保存到 远端 mysql中
-            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
-                                                     password=origin_password,
-                                                     host=origin_host,
-                                                     database=origin_database,
-                                                     df=trading_df,
-                                                     table_name="ods_trading_days_insight",
-                                                     merge_on=['exchange', 'ymd'])
-        else:
-            #  结果数据保存到 远端 mysql中
-            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
-                                                     password=origin_password,
-                                                     host=origin_host,
-                                                     database=origin_database,
-                                                     df=trading_df,
-                                                     table_name="ods_trading_days_insight",
-                                                     merge_on=['exchange', 'ymd'])
-
-
-    @timing_decorator
-    def get_stock_codes(self):
-        """
-        获取当日的stock代码合集   剔除掉ST  退  B
-        :return:
-         stock_code_df  [ymd	htsc_code	name	exchange]
-        """
-
-        #  1.获取日期
-        formatted_date = DateUtility.today()
-
-        #  2.请求insight数据   get_all_stocks_info
-        stock_all_df = get_all_stocks_info(listing_state="上市交易")
-
-        #  3.日期格式转换
-        stock_all_df.insert(0, 'ymd', formatted_date)
-
-        #  4.声明所有的列名，去除多余列
-        stock_all_df = stock_all_df[['ymd', 'htsc_code', 'name', 'exchange']]
-        filtered_df = stock_all_df[~stock_all_df['name'].str.contains('ST|退|B')]
-
-        #  5.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
-        filtered_df = filtered_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
-
-        #  6.已上市状态stock_codes
-        self.stock_code_df = filtered_df
-
-
-    @timing_decorator
-    def get_stock_kline(self):
-        """
-        根据当日上市的stock_codes，来获得全部(去除ST|退|B)股票的历史数据
-        :return:
-         stock_kline_df  [ymd	htsc_code	name	exchange]
-        """
-
-        #  1.历史数据的起止时间
-        time_start_date = DateUtility.first_day_of_year(-3)
-        time_end_date = DateUtility.today()
-
-        time_start_date = datetime.strptime(time_start_date, '%Y%m%d')
-        time_end_date = datetime.strptime(time_end_date, '%Y%m%d')
-
-        #  2.每个批次取 40 个元素
-        batch_size = 40
-
-        #  3.这是一个切分批次的内部函数
-        def get_batches(lst, batch_size):
-            for start in range(0, len(lst), batch_size):
-                yield lst[start:start + batch_size]
-
-        #  4.获取最新 stock_code 的list
-        stock_code_list = mysql_utils.get_stock_codes_latest(self.stock_code_df)
-
-        #  5.计算总批次数
-        total_batches = (len(stock_code_list) + batch_size - 1) // batch_size
-
-        #  6.kline的总和dataframe
-        kline_total_df = pd.DataFrame()
-
-        #  7.请求insight数据
-        for i, batch_list in enumerate(get_batches(stock_code_list, batch_size), start=1):
-            #  一种非常巧妙的循环打印日志的方式
-            sys.stdout.write(f"\r当前执行get_stock_kline的 第 {i} 次循环，总共 {total_batches} 个批次")
-            sys.stdout.flush()
-            time.sleep(0.01)
-
-            res = get_kline(htsc_code=batch_list, time=[time_start_date, time_end_date], frequency="daily", fq="pre")
-            kline_total_df = pd.concat([kline_total_df, res], ignore_index=True)
-
-        #  8.循环结束后打印换行符，以确保后续输出在新行开始
-        sys.stdout.write("\n")
-
-        #  9.日期格式转换
-        kline_total_df['time'] = pd.to_datetime(kline_total_df['time']).dt.strftime('%Y%m%d')
-        kline_total_df.rename(columns={'time': 'ymd'}, inplace=True)
-
-        #  10.声明所有的列名，去除value列
-        kline_total_df = kline_total_df[['htsc_code', 'ymd', 'open', 'close', 'high', 'low', 'num_trades', 'volume']]
-
-        #  11.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
-        # kline_total_df = kline_total_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
-
-
-        ############################   文件输出模块     ############################
-
-        if platform.system() == "Windows":
-            #  13.结果数据保存到 本地 mysql中
-            mysql_utils.data_from_dataframe_to_mysql(user=local_user,
-                                                     password=local_password,
-                                                     host=local_host,
-                                                     database=local_database,
-                                                     df=kline_total_df,
-                                                     table_name="ods_stock_kline_daily_insight",
-                                                     merge_on=['ymd', 'htsc_code'])
-
-            #  14.结果数据保存到 远端 mysql中
-            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
-                                                     password=origin_password,
-                                                     host=origin_host,
-                                                     database=origin_database,
-                                                     df=kline_total_df,
-                                                     table_name="ods_stock_kline_daily_insight",
-                                                     merge_on=['ymd', 'htsc_code'])
-        else:
-            #  14.结果数据保存到 远端 mysql中
-            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
-                                                     password=origin_password,
-                                                     host=origin_host,
-                                                     database=origin_database,
-                                                     df=kline_total_df,
-                                                     table_name="ods_stock_kline_daily_insight",
-                                                     merge_on=['ymd', 'htsc_code'])
-
-
-    @timing_decorator
-    def get_index_a_share(self):
-        """
-        000001.SH    上证指数
-        399006.SZ	 创业板指
-        000016.SH    上证50
-        000300.SH    沪深300
-        000849.SH    沪深300非银行金融指数
-        000905.SH	 中证500
-        399852.SZ    中证1000
-        000688.SH    科创50
-        899050.BJ    北证50
-
-        Returns:
-             index_a_share   [htsc_code 	time	frequency	open	close	high	low	volume	value]
-        """
-
-        #  1.当月数据的起止时间
-        time_start_date = DateUtility.first_day_of_year(-3)
-        time_end_date = DateUtility.today()
-
-        time_start_date = datetime.strptime(time_start_date, '%Y%m%d')
-        time_end_date = datetime.strptime(time_end_date, '%Y%m%d')
-
-        #  2.查询标的
-        index_dict = {"000001.SH": "上证指数"
-            , "399002.SZ": "深成指"
-            , "399006.SZ": "创业板指"
-            , "000016.SH": "上证50"
-            , "000300.SH": "沪深300"
-            , "000849.SH": "300非银"
-            , "000905.SH": "中证500"
-            , "399852.SZ": "中证1000"
-            , "000688.SH": "科创50"
-            , "899050.BJ": "北证50"}
-        index_list = list(index_dict.keys())
-
-        #  3.index_a_share 的总和dataframe
-        index_df = pd.DataFrame()
-
-        #  4.请求insight数据   get_kline
-        res = get_kline(htsc_code=index_list, time=[time_start_date, time_end_date],
-                        frequency="daily", fq="pre")
-        index_df = pd.concat([index_df, res], ignore_index=True)
-
-        #  5.日期格式转换
-        index_df['time'] = pd.to_datetime(index_df['time']).dt.strftime('%Y%m%d')
-        index_df.rename(columns={'time': 'ymd'}, inplace=True)
-
-        #  6.根据映射关系，添加stock_name
-        index_df['name'] = index_df['htsc_code'].map(index_dict)
-
-        #  7.声明所有的列名，去除多余列
-        index_df = index_df[['htsc_code', 'name', 'ymd', 'open', 'close', 'high', 'low', 'volume']]
-
-        #  8.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
-        index_df = index_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
-
-        ############################   文件输出模块     ############################
-        if platform.system() == "Windows":
-            #  10.结果数据保存到 本地 mysql中
-            mysql_utils.data_from_dataframe_to_mysql(user=local_user,
-                                                     password=local_password,
-                                                     host=local_host,
-                                                     database=local_database,
-                                                     df=index_df,
-                                                     table_name="ods_index_a_share_insight",
-                                                     merge_on=['ymd', 'htsc_code'])
-
-            #  11.结果数据保存到 远端 mysql中
-            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
-                                                     password=origin_password,
-                                                     host=origin_host,
-                                                     database=origin_database,
-                                                     df=index_df,
-                                                     table_name="ods_index_a_share_insight",
-                                                     merge_on=['ymd', 'htsc_code'])
-        else:
-            #  11.结果数据保存到 远端 mysql中
-            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
-                                                     password=origin_password,
-                                                     host=origin_host,
-                                                     database=origin_database,
-                                                     df=index_df,
-                                                     table_name="ods_index_a_share_insight",
-                                                     merge_on=['ymd', 'htsc_code'])
-
-
-    @timing_decorator
-    def get_limit_summary(self):
-        """
-        大盘涨跌停分析数据
-        Args:
-            market:
-                1	sh_a_share	上海A股
-                2	sz_a_share	深圳A股
-                3	a_share	A股
-                4	a_share	B股
-                5	gem	创业
-                6	sme	中小板
-                7	star	科创板
-            trading_day: List<datetime>	交易日期范围，[start_date, end_date]
-
-        Returns: ups_downs_limit_count_up_limits
-                 ups_downs_limit_count_down_limits
-                 ups_downs_limit_count_pre_up_limits
-                 ups_downs_limit_count_pre_down_limits
-                 ups_downs_limit_count_pre_up_limits_average_change_percent
-
-                 [time	name	今日涨停	今日跌停	昨日涨停	昨日跌停	昨日涨停表现]
-
-        """
-
-        #  1.当月数据的起止时间
-        start_date = DateUtility.first_day_of_year(-3)
-        end_date = DateUtility.today()
-
-        start_date = datetime.strptime(start_date, '%Y%m%d')
-        end_date = datetime.strptime(end_date, '%Y%m%d')
-
-        #  2.请求insight数据   get_kline
-        res = get_change_summary(market=["a_share"], trading_day=[start_date, end_date])
-
-        #  3.limit_summary 的总和dataframe
-        filter_limit_df = pd.DataFrame()
-        filter_limit_df = pd.concat([filter_limit_df, res], ignore_index=True)
-
-        #  4.声明所有的列名，去除多余列
-        filter_limit_df = filter_limit_df[['time',
-                                     'name',
-                                     'ups_downs_limit_count_up_limits',
-                                     'ups_downs_limit_count_down_limits',
-                                     'ups_downs_limit_count_pre_up_limits',
-                                     'ups_downs_limit_count_pre_down_limits',
-                                     'ups_downs_limit_count_pre_up_limits_average_change_percent']]
-        filter_limit_df.columns = ['ymd', 'name', 'today_ZT', 'today_DT', 'yesterday_ZT', 'yesterday_DT',
-                                   'yesterday_ZT_rate']
-
-        #  5.日期格式转换
-        filter_limit_df['ymd'] = pd.to_datetime(filter_limit_df['ymd']).dt.strftime('%Y%m%d')
-
-        #  6.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
-        filter_limit_df = filter_limit_df.drop_duplicates(subset=['ymd', 'name'], keep='first')
-
-        ############################   文件输出模块     ############################
-        if platform.system() == "Windows":
-            #  8.结果数据保存到 本地 mysql中
-            mysql_utils.data_from_dataframe_to_mysql(user=local_user,
-                                                     password=local_password,
-                                                     host=local_host,
-                                                     database=local_database,
-                                                     df=filter_limit_df,
-                                                     table_name="ods_stock_limit_summary_insight",
-                                                     merge_on=['ymd', 'name'])
-
-            #  9.结果数据保存到 远端 mysql中
-            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
-                                                     password=origin_password,
-                                                     host=origin_host,
-                                                     database=origin_database,
-                                                     df=filter_limit_df,
-                                                     table_name="ods_stock_limit_summary_insight",
-                                                     merge_on=['ymd', 'name'])
-        else:
-            #  9.结果数据保存到 远端 mysql中
-            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
-                                                     password=origin_password,
-                                                     host=origin_host,
-                                                     database=origin_database,
-                                                     df=filter_limit_df,
-                                                     table_name="ods_stock_limit_summary_insight",
-                                                     merge_on=['ymd', 'name'])
-
-    @timing_decorator
-    def get_future_inside(self):
-        """
-        期货市场数据
-        贵金属,  有色数据
-        国际市场  国内市场
-        AU9999.SHF    沪金主连
-        AU2409.SHF	  沪金
-        AG9999.SHF    沪银主连
-        AG2409.SHF    沪银
-        CU9999.SHF    沪铜主连
-        CU2409.SHF    沪铜
-
-        EC9999.INE    欧线集运主连
-        EC2410.INE    欧线集运
-        SC9999.INE    原油主连
-        SC2410.INE    原油
-
-        V9999.DCE     PVC主连
-        V2409.DCE     PVC
-        MA9999.ZCE    甲醇主连      (找不到)
-        MA2409.ZCE    甲醇         (找不到)
-        目前主连找不到数据，只有月份的，暂时用 t+2 月去代替主连吧
-
-        Returns:
-        """
-
-        #  1.起止时间 查询起始时间写2月前的月初第1天
-        #  查询起始时间写36月前的月初第1天
-        time_start_date = DateUtility.first_day_of_month(-36)
-        time_end_date = DateUtility.today()
-
-        time_start_date = datetime.strptime(time_start_date, '%Y%m%d')
-        time_end_date = datetime.strptime(time_end_date, '%Y%m%d')
-
-        #  2.查询标的
-        index_list = ["AU{}.SHF", "AG{}.SHF", "CU{}.SHF", "EC{}.INE", "SC{}.INE", "V{}.DCE"]
-        replacement = DateUtility.first_day_of_month(2)[2:6]
-
-        future_index_list = [index.format(replacement) for index in index_list]
-
-        #  3.future_inside 的总和dataframe
-        future_inside_df = pd.DataFrame()
-
-        #  4.请求insight数据   get_kline
-        res = get_kline(htsc_code=future_index_list, time=[time_start_date, time_end_date],
-                        frequency="daily", fq="pre")
-        future_inside_df = pd.concat([future_inside_df, res], ignore_index=True)
-
-        #  5.日期格式转换
-        future_inside_df['time'] = pd.to_datetime(future_inside_df['time']).dt.strftime('%Y%m%d')
-        future_inside_df.rename(columns={'time': 'ymd'}, inplace=True)
-
-        #  6.声明所有的列名，去除多余列
-        future_inside_df = future_inside_df[
-            ['htsc_code', 'ymd', 'open', 'close', 'high', 'low', 'volume', 'open_interest', 'settle']]
-
-        #  7.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
-        future_inside_df = future_inside_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
-
-        ############################   文件输出模块     ############################
-        if platform.system() == "Windows":
-            #  9.结果数据保存到 本地 mysql中
-            mysql_utils.data_from_dataframe_to_mysql(user=local_user,
-                                                     password=local_password,
-                                                     host=local_host,
-                                                     database=local_database,
-                                                     df=future_inside_df,
-                                                     table_name="ods_future_inside_insight",
-                                                     merge_on=['ymd', 'htsc_code'])
-
-            #  10.结果数据保存到 远端 mysql中
-            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
-                                                     password=origin_password,
-                                                     host=origin_host,
-                                                     database=origin_database,
-                                                     df=future_inside_df,
-                                                     table_name="ods_future_inside_insight",
-                                                     merge_on=['ymd', 'htsc_code'])
-        else:
-            #  10.结果数据保存到 远端 mysql中
-            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
-                                                     password=origin_password,
-                                                     host=origin_host,
-                                                     database=origin_database,
-                                                     df=future_inside_df,
-                                                     table_name="ods_future_inside_insight",
-                                                     merge_on=['ymd', 'htsc_code'])
-
-
-    @timing_decorator
-    def get_shareholder_north_bound_num(self):
-        """
-        获取 股东数 & 北向资金情况
-        Returns:
-        """
-        #  1.起止时间 查询起始时间写 36月前的月初
-        time_start_date = DateUtility.first_day_of_month(-36)
-        #  结束时间必须大于等于当日，这里取明天的日期
-        time_end_date = DateUtility.next_day(1)
-
-        time_start_date = datetime.strptime(time_start_date, '%Y%m%d')
-        time_end_date = datetime.strptime(time_end_date, '%Y%m%d')
-
-        #  2.行业信息的总和dataframe
-        shareholder_num_df = pd.DataFrame()
-        #  北向资金的总和dataframe
-        north_bound_df = pd.DataFrame()
-
-        #  3.获取最新的stock_codes 数据
-        code_list = mysql_utils.get_stock_codes_latest(self.stock_code_df)
-
-        #  4.请求insight  个股股东数   数据
-        #    请求insight  北向资金持仓  数据
-        total_xunhuan = len(code_list)
-        i = 1                       # 总循环标记
-        valid_shareholder = 1       # 个股股东数有效标记
-        valid_north_bound = 1       # 北向资金持仓有效标记
-
-        for stock_code in code_list:
-            # 屏蔽 stdout 和 stderr
-            with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
-                res_shareholder = get_shareholder_num(htsc_code=stock_code, end_date=[time_start_date, time_end_date])
-                res_north_bound =get_north_bound(htsc_code=stock_code, trading_day=[time_start_date, time_end_date])
-
-            if res_shareholder is not None:
-                shareholder_num_df = pd.concat([shareholder_num_df, res_shareholder], ignore_index=True)
-                sys.stdout.write(f"\r当前执行 get_shareholder_num  第 {i} 次循环，总共 {total_xunhuan} 个批次, {valid_shareholder}个有效股东数据")
-                sys.stdout.flush()
-                valid_shareholder += 1
-
-            if res_north_bound is not None:
-                north_bound_df = pd.concat([north_bound_df, res_north_bound], ignore_index=True)
-                sys.stdout.write(f"\r当前执行 get_north_bound  第 {i} 次循环，总共 {total_xunhuan} 个批次, {valid_north_bound}个有效北向持仓数据")
-                sys.stdout.flush()
-                valid_north_bound += 1
-
-            i += 1
-
-        sys.stdout.write("\n")
-
-        #  5.日期格式转换
-        shareholder_num_df.rename(columns={'end_date': 'ymd'}, inplace=True)
-        shareholder_num_df['ymd'] = pd.to_datetime(shareholder_num_df['ymd']).dt.strftime('%Y%m%d')
-
-        north_bound_df.rename(columns={'trading_day': 'ymd'}, inplace=True)
-        north_bound_df['ymd'] = pd.to_datetime(shareholder_num_df['ymd']).dt.strftime('%Y%m%d')
-
-        #  6.声明所有的列名，去除多余列
-        shareholder_num_df = shareholder_num_df[['htsc_code', 'name', 'ymd', 'total_sh', 'avg_share', 'pct_of_total_sh', 'pct_of_avg_sh']]
-        north_bound_df = north_bound_df[['htsc_code', 'ymd', 'sh_hkshare_hold', 'pct_total_share']]
-
-        #  7.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
-        shareholder_num_df = shareholder_num_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
-        north_bound_df = north_bound_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
-
-        ############################   文件输出模块     ############################
-        #  8.更新dataframe
-        self.shareholder_num_df = shareholder_num_df
-        self.north_bound_df = north_bound_df
-
-        if platform.system() == "Windows":
-            #  9.结果数据保存到 本地 mysql中
-            mysql_utils.data_from_dataframe_to_mysql(user=local_user,
-                                                     password=local_password,
-                                                     host=local_host,
-                                                     database=local_database,
-                                                     df=shareholder_num_df,
-                                                     table_name="ods_shareholder_num",
-                                                     merge_on=['ymd', 'htsc_code'])
-
-            mysql_utils.data_from_dataframe_to_mysql(user=local_user,
-                                                     password=local_password,
-                                                     host=local_host,
-                                                     database=local_database,
-                                                     df=north_bound_df,
-                                                     table_name="ods_north_bound_daily",
-                                                     merge_on=['ymd', 'htsc_code'])
-
-            #  10.结果数据保存到 远端 mysql中
-            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
-                                                     password=origin_password,
-                                                     host=origin_host,
-                                                     database=origin_database,
-                                                     df=shareholder_num_df,
-                                                     table_name="ods_shareholder_num",
-                                                     merge_on=['ymd', 'htsc_code'])
-
-            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
-                                                     password=origin_password,
-                                                     host=origin_host,
-                                                     database=origin_database,
-                                                     df=north_bound_df,
-                                                     table_name="ods_north_bound_daily",
-                                                     merge_on=['ymd', 'htsc_code'])
-        else:
-            #  10.结果数据保存到 远端 mysql中
-            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
-                                                     password=origin_password,
-                                                     host=origin_host,
-                                                     database=origin_database,
-                                                     df=shareholder_num_df,
-                                                     table_name="ods_shareholder_num",
-                                                     merge_on=['ymd', 'htsc_code'])
-
-            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
-                                                     password=origin_password,
-                                                     host=origin_host,
-                                                     database=origin_database,
-                                                     df=north_bound_df,
-                                                     table_name="ods_north_bound_daily",
-                                                     merge_on=['ymd', 'htsc_code'])
-
-
-
-    @timing_decorator
-    def setup(self):
-        #  登陆insight数据源
-        self.login()
-
-        #  获取交易日历
-        self.get_trading_days_from_insight()
-
-        #  除去 ST |  退  | B 的股票集合
-        self.get_stock_codes()
-
-        #  获取当前已上市股票过去3年到今天的历史kline
-        self.get_stock_kline()
-
-        #  获取主要股指
-        self.get_index_a_share()
-
-        #  大盘涨跌概览
-        self.get_limit_summary()
-
-        #  期货__内盘
-        self.get_future_inside()
-
-        #  个股股东数
-        self.get_shareholder_north_bound_num()
-
-
-if __name__ == '__main__':
-    save_insight_data = SaveInsightHistoryData()
     save_insight_data.setup()
 
 ```
@@ -5514,7 +4710,7 @@ class SaveVantageData:
 
         #  8.日期格式转换
         res_df['timestamp'] = pd.to_datetime(res_df['timestamp']).dt.strftime('%Y%m%d')
-        res_df.rename(columns={'timestamp': 'ymd'}, inplace=True)
+        res_df.rename(columns={'timestamp': 'ymd', 'name':'stock_name'}, inplace=True)
 
         ############################   文件输出模块     ############################
         if platform.system() == "Windows":
@@ -5529,7 +4725,7 @@ class SaveVantageData:
                                                      database=local_database,
                                                      df=res_df,
                                                      table_name="ods_us_stock_daily_vantage",
-                                                     merge_on=['ymd', 'name'])
+                                                     merge_on=['ymd', 'stock_name'])
 
             #  结果数据保存到 远端 mysql中
             mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
@@ -5538,7 +4734,7 @@ class SaveVantageData:
                                                      database=origin_database,
                                                      df=res_df,
                                                      table_name="ods_us_stock_daily_vantage",
-                                                     merge_on=['ymd', 'name'])
+                                                     merge_on=['ymd', 'stock_name'])
         else:
             #  结果数据保存到 远端 mysql中
             mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
@@ -5547,7 +4743,7 @@ class SaveVantageData:
                                                      database=origin_database,
                                                      df=res_df,
                                                      table_name="ods_us_stock_daily_vantage",
-                                                     merge_on=['ymd', 'name'])
+                                                     merge_on=['ymd', 'stock_name'])
 
 
 
@@ -5816,11 +5012,11 @@ class MergeInsightData:
         """
         将 stock_kline 的历史数据和当月数据做merge
         :return:
-         stock_kline_df  [ymd	htsc_code	name	exchange]
+         stock_kline_df  [ymd	stock_code	stock_name	exchange]
         """
         source_table = 'ods_stock_kline_daily_insight_now'
         target_table = 'ods_stock_kline_daily_insight'
-        columns = ['htsc_code', 'ymd', 'open', 'close', 'high', 'low', 'num_trades', 'volume']
+        columns = ['stock_code', 'ymd', 'open', 'close', 'high', 'low', 'num_trades', 'volume']
         ############################   文件输出模块     ############################
         if platform.system() == "Windows":
             # 对本地 Mysql 做数据聚合
@@ -5864,11 +5060,11 @@ class MergeInsightData:
         000688.SH    科创50
 
         Returns:
-             index_a_share   [htsc_code 	time	frequency	open	close	high	low	volume	value]
+             index_a_share   [stock_code 	time	frequency	open	close	high	low	volume	value]
         """
         source_table = 'ods_index_a_share_insight_now'
         target_table = 'ods_index_a_share_insight'
-        columns = ['htsc_code', 'name', 'ymd', 'open', 'close', 'high', 'low', 'volume']
+        columns = ['stock_code', 'stock_name', 'ymd', 'open', 'close', 'high', 'low', 'volume']
         ############################   文件输出模块     ############################
         if platform.system() == "Windows":
             # 对本地 Mysql 做数据聚合
@@ -6022,7 +5218,7 @@ class MergeInsightData:
         """
         source_table = 'ods_shareholder_num_now'
         target_table = 'ods_shareholder_num'
-        columns = ['htsc_code', 'name', 'ymd', 'total_sh', 'avg_share', 'pct_of_total_sh', 'pct_of_avg_sh']
+        columns = ['stock_code', 'stock_name', 'ymd', 'total_sh', 'avg_share', 'pct_of_total_sh', 'pct_of_avg_sh']
         ############################   文件输出模块     ############################
         if platform.system() == "Windows":
             # 对本地 Mysql 做数据聚合
@@ -6313,14 +5509,14 @@ class CalDWD:
             INSERT INTO quant.ods_stock_exchange_market (ymd, stock_code, stock_name, market)
             SELECT 
                 t1.ymd
-               ,t1.htsc_code AS stock_code
-               ,t1.name      AS stock_name
+               ,t1.stock_code
+               ,t1.stock_name
                ,CASE
-               WHEN t1.htsc_code LIKE '300%' OR t1.htsc_code LIKE '301%' THEN '创业板' 
-               WHEN t1.htsc_code LIKE '8%'   OR t1.htsc_code LIKE '4%'   THEN '北交所'  
-               WHEN t1.htsc_code LIKE '000%' OR t1.htsc_code LIKE '001%' OR t1.htsc_code LIKE '002%' OR t1.htsc_code LIKE '003%' THEN '深圳主板' 
-               WHEN t1.htsc_code LIKE '688%' OR t1.htsc_code LIKE '689%' THEN '科创板'  
-               WHEN t1.htsc_code LIKE '600%' OR t1.htsc_code LIKE '601%' OR t1.htsc_code LIKE '603%' OR t1.htsc_code LIKE '605%' THEN '上海主板' 
+               WHEN t1.stock_code LIKE '300%' OR t1.stock_code LIKE '301%' THEN '创业板' 
+               WHEN t1.stock_code LIKE '8%'   OR t1.stock_code LIKE '4%'   THEN '北交所'  
+               WHEN t1.stock_code LIKE '000%' OR t1.stock_code LIKE '001%' OR t1.stock_code LIKE '002%' OR t1.stock_code LIKE '003%' THEN '深圳主板' 
+               WHEN t1.stock_code LIKE '688%' OR t1.stock_code LIKE '689%' THEN '科创板'  
+               WHEN t1.stock_code LIKE '600%' OR t1.stock_code LIKE '601%' OR t1.stock_code LIKE '603%' OR t1.stock_code LIKE '605%' THEN '上海主板' 
                ELSE '未知类型' 
                END AS market
             FROM quant.ods_stock_code_daily_insight     t1
@@ -6397,7 +5593,7 @@ class CalDWD:
                  ,tout.plate_names                 as out_plate
             from  
              ( select
-                  htsc_code                                         
+                  stock_code                                         
                  ,ymd                                               
                  ,open                                              
                  ,close                                             
@@ -6425,7 +5621,7 @@ class CalDWD:
               from  quant.ods_tdx_stock_pepb_info 
               WHERE ymd = (SELECT MAX(ymd) FROM quant.ods_tdx_stock_pepb_info)
             ) tpbe
-            ON SUBSTRING_INDEX(tkline.htsc_code, '.', 1) = tpbe.stock_code
+            ON SUBSTRING_INDEX(tkline.stock_code, '.', 1) = tpbe.stock_code
             left join 
             ( select 
                   ymd                                               
@@ -7010,6 +6206,1341 @@ if __name__ == '__main__':
 ```
 
 --------------------------------------------------------------------------------
+## datas_prepare\C05_data_history\__init__.py
+
+```python
+
+```
+
+--------------------------------------------------------------------------------
+## datas_prepare\C05_data_history\download_akshare_history_data_weekend.py
+
+```python
+# -*- coding: utf-8 -*-
+
+import os
+import sys
+import contextlib
+import io
+from insight_python.com.insight import common
+from insight_python.com.insight.query import *
+from insight_python.com.insight.market_service import market_service
+from datetime import datetime
+import time
+import platform
+
+
+import CommonProperties.Base_Properties as base_properties
+import CommonProperties.Base_utils as base_utils
+import CommonProperties.Mysql_Utils as mysql_utils
+from CommonProperties.DateUtility import DateUtility
+from CommonProperties.Base_utils import timing_decorator
+from CommonProperties.set_config import setup_logging_config
+
+# ************************************************************************
+# 本代码的作用是下午收盘后下载 insight 行情源数据, 本地保存,用于后续分析
+# 需要下载的数据:
+# 1.上市股票代码   get_all_stocks()
+# 2.筹码分布数据   get_chouma_datas()
+
+# 调用日志配置
+setup_logging_config()
+
+# ************************************************************************
+
+######################  mysql 配置信息  本地和远端服务器  ####################
+local_user = base_properties.local_mysql_user
+local_password = base_properties.local_mysql_password
+local_database = base_properties.local_mysql_database
+local_host = base_properties.local_mysql_host
+
+origin_user = base_properties.origin_mysql_user
+origin_password = base_properties.origin_mysql_password
+origin_database = base_properties.origin_mysql_database
+origin_host = base_properties.origin_mysql_host
+
+
+class SaveInsightHistoryData:
+
+    def __init__(self):
+        """
+        结果变量初始化
+        """
+        #  除去 ST|退|B 的五要素   [ymd	stock_code	stock_name	exchange]
+        self.stock_code_df = pd.DataFrame()
+
+
+    @timing_decorator
+    def login(self):
+        # 登陆前 初始化，没有密码可以访问进行自动化注册
+        # https://findata-insight.htsc.com:9151/terminalWeb/#/signup
+        user = base_properties.user
+        password = base_properties.password
+        common.login(market_service, user, password)
+
+
+    def get_trading_days_from_insight(self):
+        """
+        获取交易日历
+        Returns: (exchange, ymd)
+        """
+        trading_day_start_date = "2018-01-01"
+        trading_day_end_date = "2027-12-31"
+        trading_day_start_date = datetime.strptime(trading_day_start_date, '%Y-%m-%d')
+        trading_day_end_date = datetime.strptime(trading_day_end_date, '%Y-%m-%d')
+
+        # 调用获取交易日历结果
+        result = get_trading_days(trading_day=[trading_day_start_date,
+                                               trading_day_end_date], exchange='XSHG')
+
+        # 步骤1：解析真实 result 结构（关键修正）
+        exchange_name = result[0]  # 提取第一个元素：交易所名称（XSHG）
+        trading_series = result[1]  # 提取第二个元素：pandas Series（包含所有交易日）
+        # 将 Series 转换为列表（获取所有交易日数据，解决只取到1个元素的问题）
+        trading_dates_list = trading_series.tolist()  # 核心方法：Series.tolist()
+
+        # 步骤2：构造 DataFrame 所需的数据源
+        df_data = {
+            'exchange': [exchange_name] * len(trading_dates_list),  # 生成匹配长度的交易所列表
+            'ymd': trading_dates_list
+        }
+        trading_df = pd.DataFrame(df_data)
+
+        # 步骤3：按 exchange 和 trading_days 升序排序
+        trading_df.sort_values(by=['exchange', 'ymd'], ascending=True, inplace=True)
+
+        # 可选：重置排序后的索引（避免索引混乱）
+        trading_df.reset_index(drop=True, inplace=True)
+        if platform.system() == "Windows":
+            #  结果数据保存到 本地 mysql中
+            mysql_utils.data_from_dataframe_to_mysql(user=local_user,
+                                                     password=local_password,
+                                                     host=local_host,
+                                                     database=local_database,
+                                                     df=trading_df,
+                                                     table_name="ods_trading_days_insight",
+                                                     merge_on=['exchange', 'ymd'])
+
+            #  结果数据保存到 远端 mysql中
+            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
+                                                     password=origin_password,
+                                                     host=origin_host,
+                                                     database=origin_database,
+                                                     df=trading_df,
+                                                     table_name="ods_trading_days_insight",
+                                                     merge_on=['exchange', 'ymd'])
+        else:
+            #  结果数据保存到 远端 mysql中
+            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
+                                                     password=origin_password,
+                                                     host=origin_host,
+                                                     database=origin_database,
+                                                     df=trading_df,
+                                                     table_name="ods_trading_days_insight",
+                                                     merge_on=['exchange', 'ymd'])
+
+
+    @timing_decorator
+    def get_stock_codes(self):
+        """
+        获取当日的stock代码合集   剔除掉ST  退  B
+        :return:
+         stock_code_df  [ymd	stock_code	stock_name	exchange]
+        """
+
+        #  1.获取日期
+        formatted_date = DateUtility.today()
+
+        #  2.请求insight数据   get_all_stocks_info
+        stock_all_df = get_all_stocks_info(listing_state="上市交易")
+
+        #  3.日期格式转换
+        stock_all_df.insert(0, 'ymd', formatted_date)
+
+        #  4.声明所有的列名，去除多余列
+        stock_all_df = stock_all_df[['ymd', 'htsc_code', 'name', 'exchange']]
+        filtered_df = stock_all_df[~stock_all_df['name'].str.contains('ST|退|B')]
+
+        #  5.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
+        filtered_df = filtered_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
+
+        #  6.已上市状态stock_codes
+        self.stock_code_df = filtered_df
+
+
+    @timing_decorator
+    def get_stock_kline(self):
+        """
+        根据当日上市的stock_codes，来获得全部(去除ST|退|B)股票的历史数据
+        :return:
+         stock_kline_df  [ymd	htsc_code	name	exchange]
+        """
+
+        #  1.历史数据的起止时间
+        time_start_date = DateUtility.first_day_of_year(-3)
+        time_end_date = DateUtility.today()
+
+        time_start_date = datetime.strptime(time_start_date, '%Y%m%d')
+        time_end_date = datetime.strptime(time_end_date, '%Y%m%d')
+
+        #  2.每个批次取 40 个元素
+        batch_size = 40
+
+        #  3.这是一个切分批次的内部函数
+        def get_batches(lst, batch_size):
+            for start in range(0, len(lst), batch_size):
+                yield lst[start:start + batch_size]
+
+        #  4.获取最新 stock_code 的list
+        stock_code_list = mysql_utils.get_stock_codes_latest(self.stock_code_df)
+
+        #  5.计算总批次数
+        total_batches = (len(stock_code_list) + batch_size - 1) // batch_size
+
+        #  6.kline的总和dataframe
+        kline_total_df = pd.DataFrame()
+
+        #  7.请求insight数据
+        for i, batch_list in enumerate(get_batches(stock_code_list, batch_size), start=1):
+            #  一种非常巧妙的循环打印日志的方式
+            sys.stdout.write(f"\r当前执行get_stock_kline的 第 {i} 次循环，总共 {total_batches} 个批次")
+            sys.stdout.flush()
+            time.sleep(0.01)
+
+            res = get_kline(htsc_code=batch_list, time=[time_start_date, time_end_date], frequency="daily", fq="pre")
+            kline_total_df = pd.concat([kline_total_df, res], ignore_index=True)
+
+        #  8.循环结束后打印换行符，以确保后续输出在新行开始
+        sys.stdout.write("\n")
+
+        #  9.日期格式转换
+        kline_total_df['time'] = pd.to_datetime(kline_total_df['time']).dt.strftime('%Y%m%d')
+        kline_total_df.rename(columns={'time': 'ymd'}, inplace=True)
+
+        #  10.声明所有的列名，去除value列
+        kline_total_df = kline_total_df[['htsc_code', 'ymd', 'open', 'close', 'high', 'low', 'num_trades', 'volume']]
+
+        #  11.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
+        # kline_total_df = kline_total_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
+
+
+        ############################   文件输出模块     ############################
+
+        if platform.system() == "Windows":
+            #  13.结果数据保存到 本地 mysql中
+            mysql_utils.data_from_dataframe_to_mysql(user=local_user,
+                                                     password=local_password,
+                                                     host=local_host,
+                                                     database=local_database,
+                                                     df=kline_total_df,
+                                                     table_name="ods_stock_kline_daily_insight",
+                                                     merge_on=['ymd', 'htsc_code'])
+
+            #  14.结果数据保存到 远端 mysql中
+            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
+                                                     password=origin_password,
+                                                     host=origin_host,
+                                                     database=origin_database,
+                                                     df=kline_total_df,
+                                                     table_name="ods_stock_kline_daily_insight",
+                                                     merge_on=['ymd', 'htsc_code'])
+        else:
+            #  14.结果数据保存到 远端 mysql中
+            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
+                                                     password=origin_password,
+                                                     host=origin_host,
+                                                     database=origin_database,
+                                                     df=kline_total_df,
+                                                     table_name="ods_stock_kline_daily_insight",
+                                                     merge_on=['ymd', 'htsc_code'])
+
+
+    @timing_decorator
+    def get_index_a_share(self):
+        """
+        000001.SH    上证指数
+        399006.SZ	 创业板指
+        000016.SH    上证50
+        000300.SH    沪深300
+        000849.SH    沪深300非银行金融指数
+        000905.SH	 中证500
+        399852.SZ    中证1000
+        000688.SH    科创50
+        899050.BJ    北证50
+
+        Returns:
+             index_a_share   [htsc_code 	time	frequency	open	close	high	low	volume	value]
+        """
+
+        #  1.当月数据的起止时间
+        time_start_date = DateUtility.first_day_of_year(-3)
+        time_end_date = DateUtility.today()
+
+        time_start_date = datetime.strptime(time_start_date, '%Y%m%d')
+        time_end_date = datetime.strptime(time_end_date, '%Y%m%d')
+
+        #  2.查询标的
+        index_dict = {"000001.SH": "上证指数"
+            , "399002.SZ": "深成指"
+            , "399006.SZ": "创业板指"
+            , "000016.SH": "上证50"
+            , "000300.SH": "沪深300"
+            , "000849.SH": "300非银"
+            , "000905.SH": "中证500"
+            , "399852.SZ": "中证1000"
+            , "000688.SH": "科创50"
+            , "899050.BJ": "北证50"}
+        index_list = list(index_dict.keys())
+
+        #  3.index_a_share 的总和dataframe
+        index_df = pd.DataFrame()
+
+        #  4.请求insight数据   get_kline
+        res = get_kline(htsc_code=index_list, time=[time_start_date, time_end_date],
+                        frequency="daily", fq="pre")
+        index_df = pd.concat([index_df, res], ignore_index=True)
+
+        #  5.日期格式转换
+        index_df['time'] = pd.to_datetime(index_df['time']).dt.strftime('%Y%m%d')
+        index_df.rename(columns={'time': 'ymd'}, inplace=True)
+
+        #  6.根据映射关系，添加stock_name
+        index_df['name'] = index_df['htsc_code'].map(index_dict)
+
+        #  7.声明所有的列名，去除多余列
+        index_df = index_df[['htsc_code', 'name', 'ymd', 'open', 'close', 'high', 'low', 'volume']]
+
+        #  8.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
+        index_df = index_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
+
+        ############################   文件输出模块     ############################
+        if platform.system() == "Windows":
+            #  10.结果数据保存到 本地 mysql中
+            mysql_utils.data_from_dataframe_to_mysql(user=local_user,
+                                                     password=local_password,
+                                                     host=local_host,
+                                                     database=local_database,
+                                                     df=index_df,
+                                                     table_name="ods_index_a_share_insight",
+                                                     merge_on=['ymd', 'htsc_code'])
+
+            #  11.结果数据保存到 远端 mysql中
+            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
+                                                     password=origin_password,
+                                                     host=origin_host,
+                                                     database=origin_database,
+                                                     df=index_df,
+                                                     table_name="ods_index_a_share_insight",
+                                                     merge_on=['ymd', 'htsc_code'])
+        else:
+            #  11.结果数据保存到 远端 mysql中
+            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
+                                                     password=origin_password,
+                                                     host=origin_host,
+                                                     database=origin_database,
+                                                     df=index_df,
+                                                     table_name="ods_index_a_share_insight",
+                                                     merge_on=['ymd', 'htsc_code'])
+
+
+    @timing_decorator
+    def get_limit_summary(self):
+        """
+        大盘涨跌停分析数据
+        Args:
+            market:
+                1	sh_a_share	上海A股
+                2	sz_a_share	深圳A股
+                3	a_share	A股
+                4	a_share	B股
+                5	gem	创业
+                6	sme	中小板
+                7	star	科创板
+            trading_day: List<datetime>	交易日期范围，[start_date, end_date]
+
+        Returns: ups_downs_limit_count_up_limits
+                 ups_downs_limit_count_down_limits
+                 ups_downs_limit_count_pre_up_limits
+                 ups_downs_limit_count_pre_down_limits
+                 ups_downs_limit_count_pre_up_limits_average_change_percent
+
+                 [time	name	今日涨停	今日跌停	昨日涨停	昨日跌停	昨日涨停表现]
+
+        """
+
+        #  1.当月数据的起止时间
+        start_date = DateUtility.first_day_of_year(-3)
+        end_date = DateUtility.today()
+
+        start_date = datetime.strptime(start_date, '%Y%m%d')
+        end_date = datetime.strptime(end_date, '%Y%m%d')
+
+        #  2.请求insight数据   get_kline
+        res = get_change_summary(market=["a_share"], trading_day=[start_date, end_date])
+
+        #  3.limit_summary 的总和dataframe
+        filter_limit_df = pd.DataFrame()
+        filter_limit_df = pd.concat([filter_limit_df, res], ignore_index=True)
+
+        #  4.声明所有的列名，去除多余列
+        filter_limit_df = filter_limit_df[['time',
+                                     'name',
+                                     'ups_downs_limit_count_up_limits',
+                                     'ups_downs_limit_count_down_limits',
+                                     'ups_downs_limit_count_pre_up_limits',
+                                     'ups_downs_limit_count_pre_down_limits',
+                                     'ups_downs_limit_count_pre_up_limits_average_change_percent']]
+        filter_limit_df.columns = ['ymd', 'name', 'today_ZT', 'today_DT', 'yesterday_ZT', 'yesterday_DT',
+                                   'yesterday_ZT_rate']
+
+        #  5.日期格式转换
+        filter_limit_df['ymd'] = pd.to_datetime(filter_limit_df['ymd']).dt.strftime('%Y%m%d')
+
+        #  6.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
+        filter_limit_df = filter_limit_df.drop_duplicates(subset=['ymd', 'name'], keep='first')
+
+        ############################   文件输出模块     ############################
+        if platform.system() == "Windows":
+            #  8.结果数据保存到 本地 mysql中
+            mysql_utils.data_from_dataframe_to_mysql(user=local_user,
+                                                     password=local_password,
+                                                     host=local_host,
+                                                     database=local_database,
+                                                     df=filter_limit_df,
+                                                     table_name="ods_stock_limit_summary_insight",
+                                                     merge_on=['ymd', 'name'])
+
+            #  9.结果数据保存到 远端 mysql中
+            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
+                                                     password=origin_password,
+                                                     host=origin_host,
+                                                     database=origin_database,
+                                                     df=filter_limit_df,
+                                                     table_name="ods_stock_limit_summary_insight",
+                                                     merge_on=['ymd', 'name'])
+        else:
+            #  9.结果数据保存到 远端 mysql中
+            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
+                                                     password=origin_password,
+                                                     host=origin_host,
+                                                     database=origin_database,
+                                                     df=filter_limit_df,
+                                                     table_name="ods_stock_limit_summary_insight",
+                                                     merge_on=['ymd', 'name'])
+
+    @timing_decorator
+    def get_future_inside(self):
+        """
+        期货市场数据
+        贵金属,  有色数据
+        国际市场  国内市场
+        AU9999.SHF    沪金主连
+        AU2409.SHF	  沪金
+        AG9999.SHF    沪银主连
+        AG2409.SHF    沪银
+        CU9999.SHF    沪铜主连
+        CU2409.SHF    沪铜
+
+        EC9999.INE    欧线集运主连
+        EC2410.INE    欧线集运
+        SC9999.INE    原油主连
+        SC2410.INE    原油
+
+        V9999.DCE     PVC主连
+        V2409.DCE     PVC
+        MA9999.ZCE    甲醇主连      (找不到)
+        MA2409.ZCE    甲醇         (找不到)
+        目前主连找不到数据，只有月份的，暂时用 t+2 月去代替主连吧
+
+        Returns:
+        """
+
+        #  1.起止时间 查询起始时间写2月前的月初第1天
+        #  查询起始时间写36月前的月初第1天
+        time_start_date = DateUtility.first_day_of_month(-36)
+        time_end_date = DateUtility.today()
+
+        time_start_date = datetime.strptime(time_start_date, '%Y%m%d')
+        time_end_date = datetime.strptime(time_end_date, '%Y%m%d')
+
+        #  2.查询标的
+        index_list = ["AU{}.SHF", "AG{}.SHF", "CU{}.SHF", "EC{}.INE", "SC{}.INE", "V{}.DCE"]
+        replacement = DateUtility.first_day_of_month(2)[2:6]
+
+        future_index_list = [index.format(replacement) for index in index_list]
+
+        #  3.future_inside 的总和dataframe
+        future_inside_df = pd.DataFrame()
+
+        #  4.请求insight数据   get_kline
+        res = get_kline(htsc_code=future_index_list, time=[time_start_date, time_end_date],
+                        frequency="daily", fq="pre")
+        future_inside_df = pd.concat([future_inside_df, res], ignore_index=True)
+
+        #  5.日期格式转换
+        future_inside_df['time'] = pd.to_datetime(future_inside_df['time']).dt.strftime('%Y%m%d')
+        future_inside_df.rename(columns={'time': 'ymd'}, inplace=True)
+
+        #  6.声明所有的列名，去除多余列
+        future_inside_df = future_inside_df[
+            ['htsc_code', 'ymd', 'open', 'close', 'high', 'low', 'volume', 'open_interest', 'settle']]
+
+        #  7.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
+        future_inside_df = future_inside_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
+
+        ############################   文件输出模块     ############################
+        if platform.system() == "Windows":
+            #  9.结果数据保存到 本地 mysql中
+            mysql_utils.data_from_dataframe_to_mysql(user=local_user,
+                                                     password=local_password,
+                                                     host=local_host,
+                                                     database=local_database,
+                                                     df=future_inside_df,
+                                                     table_name="ods_future_inside_insight",
+                                                     merge_on=['ymd', 'htsc_code'])
+
+            #  10.结果数据保存到 远端 mysql中
+            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
+                                                     password=origin_password,
+                                                     host=origin_host,
+                                                     database=origin_database,
+                                                     df=future_inside_df,
+                                                     table_name="ods_future_inside_insight",
+                                                     merge_on=['ymd', 'htsc_code'])
+        else:
+            #  10.结果数据保存到 远端 mysql中
+            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
+                                                     password=origin_password,
+                                                     host=origin_host,
+                                                     database=origin_database,
+                                                     df=future_inside_df,
+                                                     table_name="ods_future_inside_insight",
+                                                     merge_on=['ymd', 'htsc_code'])
+
+
+    @timing_decorator
+    def get_shareholder_north_bound_num(self):
+        """
+        获取 股东数 & 北向资金情况
+        Returns:
+        """
+        #  1.起止时间 查询起始时间写 36月前的月初
+        time_start_date = DateUtility.first_day_of_month(-36)
+        #  结束时间必须大于等于当日，这里取明天的日期
+        time_end_date = DateUtility.next_day(1)
+
+        time_start_date = datetime.strptime(time_start_date, '%Y%m%d')
+        time_end_date = datetime.strptime(time_end_date, '%Y%m%d')
+
+        #  2.行业信息的总和dataframe
+        shareholder_num_df = pd.DataFrame()
+        #  北向资金的总和dataframe
+        north_bound_df = pd.DataFrame()
+
+        #  3.获取最新的stock_codes 数据
+        code_list = mysql_utils.get_stock_codes_latest(self.stock_code_df)
+
+        #  4.请求insight  个股股东数   数据
+        #    请求insight  北向资金持仓  数据
+        total_xunhuan = len(code_list)
+        i = 1                       # 总循环标记
+        valid_shareholder = 1       # 个股股东数有效标记
+        valid_north_bound = 1       # 北向资金持仓有效标记
+
+        for stock_code in code_list:
+            # 屏蔽 stdout 和 stderr
+            with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+                res_shareholder = get_shareholder_num(htsc_code=stock_code, end_date=[time_start_date, time_end_date])
+                res_north_bound =get_north_bound(htsc_code=stock_code, trading_day=[time_start_date, time_end_date])
+
+            if res_shareholder is not None:
+                shareholder_num_df = pd.concat([shareholder_num_df, res_shareholder], ignore_index=True)
+                sys.stdout.write(f"\r当前执行 get_shareholder_num  第 {i} 次循环，总共 {total_xunhuan} 个批次, {valid_shareholder}个有效股东数据")
+                sys.stdout.flush()
+                valid_shareholder += 1
+
+            if res_north_bound is not None:
+                north_bound_df = pd.concat([north_bound_df, res_north_bound], ignore_index=True)
+                sys.stdout.write(f"\r当前执行 get_north_bound  第 {i} 次循环，总共 {total_xunhuan} 个批次, {valid_north_bound}个有效北向持仓数据")
+                sys.stdout.flush()
+                valid_north_bound += 1
+
+            i += 1
+
+        sys.stdout.write("\n")
+
+        #  5.日期格式转换
+        shareholder_num_df.rename(columns={'end_date': 'ymd'}, inplace=True)
+        shareholder_num_df['ymd'] = pd.to_datetime(shareholder_num_df['ymd']).dt.strftime('%Y%m%d')
+
+        north_bound_df.rename(columns={'trading_day': 'ymd'}, inplace=True)
+        north_bound_df['ymd'] = pd.to_datetime(shareholder_num_df['ymd']).dt.strftime('%Y%m%d')
+
+        #  6.声明所有的列名，去除多余列
+        shareholder_num_df = shareholder_num_df[['htsc_code', 'name', 'ymd', 'total_sh', 'avg_share', 'pct_of_total_sh', 'pct_of_avg_sh']]
+        north_bound_df = north_bound_df[['htsc_code', 'ymd', 'sh_hkshare_hold', 'pct_total_share']]
+
+        #  7.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
+        shareholder_num_df = shareholder_num_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
+        north_bound_df = north_bound_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
+
+        ############################   文件输出模块     ############################
+        #  8.更新dataframe
+        self.shareholder_num_df = shareholder_num_df
+        self.north_bound_df = north_bound_df
+
+        if platform.system() == "Windows":
+            #  9.结果数据保存到 本地 mysql中
+            mysql_utils.data_from_dataframe_to_mysql(user=local_user,
+                                                     password=local_password,
+                                                     host=local_host,
+                                                     database=local_database,
+                                                     df=shareholder_num_df,
+                                                     table_name="ods_shareholder_num",
+                                                     merge_on=['ymd', 'htsc_code'])
+
+            mysql_utils.data_from_dataframe_to_mysql(user=local_user,
+                                                     password=local_password,
+                                                     host=local_host,
+                                                     database=local_database,
+                                                     df=north_bound_df,
+                                                     table_name="ods_north_bound_daily",
+                                                     merge_on=['ymd', 'htsc_code'])
+
+            #  10.结果数据保存到 远端 mysql中
+            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
+                                                     password=origin_password,
+                                                     host=origin_host,
+                                                     database=origin_database,
+                                                     df=shareholder_num_df,
+                                                     table_name="ods_shareholder_num",
+                                                     merge_on=['ymd', 'htsc_code'])
+
+            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
+                                                     password=origin_password,
+                                                     host=origin_host,
+                                                     database=origin_database,
+                                                     df=north_bound_df,
+                                                     table_name="ods_north_bound_daily",
+                                                     merge_on=['ymd', 'htsc_code'])
+        else:
+            #  10.结果数据保存到 远端 mysql中
+            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
+                                                     password=origin_password,
+                                                     host=origin_host,
+                                                     database=origin_database,
+                                                     df=shareholder_num_df,
+                                                     table_name="ods_shareholder_num",
+                                                     merge_on=['ymd', 'htsc_code'])
+
+            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
+                                                     password=origin_password,
+                                                     host=origin_host,
+                                                     database=origin_database,
+                                                     df=north_bound_df,
+                                                     table_name="ods_north_bound_daily",
+                                                     merge_on=['ymd', 'htsc_code'])
+
+
+
+    @timing_decorator
+    def setup(self):
+        #  登陆insight数据源
+        self.login()
+
+        #  获取交易日历
+        self.get_trading_days_from_insight()
+
+        #  除去 ST |  退  | B 的股票集合
+        self.get_stock_codes()
+
+        #  获取当前已上市股票过去3年到今天的历史kline
+        self.get_stock_kline()
+
+        #  获取主要股指
+        self.get_index_a_share()
+
+        #  大盘涨跌概览
+        self.get_limit_summary()
+
+        #  期货__内盘
+        self.get_future_inside()
+
+        #  个股股东数
+        self.get_shareholder_north_bound_num()
+
+
+if __name__ == '__main__':
+    save_insight_data = SaveInsightHistoryData()
+    save_insight_data.setup()
+
+```
+
+--------------------------------------------------------------------------------
+## datas_prepare\C05_data_history\download_insight_history_data.py
+
+```python
+# -*- coding: utf-8 -*-
+
+import os
+import sys
+import contextlib
+import io
+from insight_python.com.insight import common
+from insight_python.com.insight.query import *
+from insight_python.com.insight.market_service import market_service
+from datetime import datetime
+import time
+import platform
+
+
+import CommonProperties.Base_Properties as base_properties
+import CommonProperties.Base_utils as base_utils
+import CommonProperties.Mysql_Utils as mysql_utils
+from CommonProperties.DateUtility import DateUtility
+from CommonProperties.Base_utils import timing_decorator
+from CommonProperties.set_config import setup_logging_config
+
+# ************************************************************************
+# 本代码的作用是下午收盘后下载 insight 行情源数据, 本地保存,用于后续分析
+# 需要下载的数据:
+# 1.上市股票代码   get_all_stocks()
+# 2.筹码分布数据   get_chouma_datas()
+
+# 调用日志配置
+setup_logging_config()
+
+# ************************************************************************
+
+######################  mysql 配置信息  本地和远端服务器  ####################
+local_user = base_properties.local_mysql_user
+local_password = base_properties.local_mysql_password
+local_database = base_properties.local_mysql_database
+local_host = base_properties.local_mysql_host
+
+origin_user = base_properties.origin_mysql_user
+origin_password = base_properties.origin_mysql_password
+origin_database = base_properties.origin_mysql_database
+origin_host = base_properties.origin_mysql_host
+
+
+class SaveInsightHistoryData:
+
+    def __init__(self):
+        """
+        结果变量初始化
+        """
+        #  除去 ST|退|B 的五要素   [ymd	stock_code	stock_name	exchange]
+        self.stock_code_df = pd.DataFrame()
+
+
+    @timing_decorator
+    def login(self):
+        # 登陆前 初始化，没有密码可以访问进行自动化注册
+        # https://findata-insight.htsc.com:9151/terminalWeb/#/signup
+        user = base_properties.user
+        password = base_properties.password
+        common.login(market_service, user, password)
+
+
+    def get_trading_days_from_insight(self):
+        """
+        获取交易日历
+        Returns: (exchange, ymd)
+        """
+        trading_day_start_date = "2018-01-01"
+        trading_day_end_date = "2027-12-31"
+        trading_day_start_date = datetime.strptime(trading_day_start_date, '%Y-%m-%d')
+        trading_day_end_date = datetime.strptime(trading_day_end_date, '%Y-%m-%d')
+
+        # 调用获取交易日历结果
+        result = get_trading_days(trading_day=[trading_day_start_date,
+                                               trading_day_end_date], exchange='XSHG')
+
+        # 步骤1：解析真实 result 结构（关键修正）
+        exchange_name = result[0]  # 提取第一个元素：交易所名称（XSHG）
+        trading_series = result[1]  # 提取第二个元素：pandas Series（包含所有交易日）
+        # 将 Series 转换为列表（获取所有交易日数据，解决只取到1个元素的问题）
+        trading_dates_list = trading_series.tolist()  # 核心方法：Series.tolist()
+
+        # 步骤2：构造 DataFrame 所需的数据源
+        df_data = {
+            'exchange': [exchange_name] * len(trading_dates_list),  # 生成匹配长度的交易所列表
+            'ymd': trading_dates_list
+        }
+        trading_df = pd.DataFrame(df_data)
+
+        # 步骤3：按 exchange 和 trading_days 升序排序
+        trading_df.sort_values(by=['exchange', 'ymd'], ascending=True, inplace=True)
+
+        # 可选：重置排序后的索引（避免索引混乱）
+        trading_df.reset_index(drop=True, inplace=True)
+        if platform.system() == "Windows":
+            #  结果数据保存到 本地 mysql中
+            mysql_utils.data_from_dataframe_to_mysql(user=local_user,
+                                                     password=local_password,
+                                                     host=local_host,
+                                                     database=local_database,
+                                                     df=trading_df,
+                                                     table_name="ods_trading_days_insight",
+                                                     merge_on=['exchange', 'ymd'])
+
+            #  结果数据保存到 远端 mysql中
+            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
+                                                     password=origin_password,
+                                                     host=origin_host,
+                                                     database=origin_database,
+                                                     df=trading_df,
+                                                     table_name="ods_trading_days_insight",
+                                                     merge_on=['exchange', 'ymd'])
+        else:
+            #  结果数据保存到 远端 mysql中
+            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
+                                                     password=origin_password,
+                                                     host=origin_host,
+                                                     database=origin_database,
+                                                     df=trading_df,
+                                                     table_name="ods_trading_days_insight",
+                                                     merge_on=['exchange', 'ymd'])
+
+
+    @timing_decorator
+    def get_stock_codes(self):
+        """
+        获取当日的stock代码合集   剔除掉ST  退  B
+        :return:
+         stock_code_df  [ymd	stock_code	stock_name	exchange]
+        """
+
+        #  1.获取日期
+        formatted_date = DateUtility.today()
+
+        #  2.请求insight数据   get_all_stocks_info
+        stock_all_df = get_all_stocks_info(listing_state="上市交易")
+
+        #  3.日期格式转换
+        stock_all_df.insert(0, 'ymd', formatted_date)
+
+        #  4.声明所有的列名，去除多余列
+        stock_all_df = stock_all_df[['ymd', 'htsc_code', 'name', 'exchange']]
+        filtered_df = stock_all_df[~stock_all_df['name'].str.contains('ST|退|B')]
+
+        #  5.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
+        filtered_df = filtered_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
+
+        #  6.已上市状态stock_codes
+        self.stock_code_df = filtered_df
+
+
+    @timing_decorator
+    def get_stock_kline(self):
+        """
+        根据当日上市的stock_codes，来获得全部(去除ST|退|B)股票的历史数据
+        :return:
+         stock_kline_df  [ymd	htsc_code	name	exchange]
+        """
+
+        #  1.历史数据的起止时间
+        time_start_date = DateUtility.first_day_of_year(-3)
+        time_end_date = DateUtility.today()
+
+        time_start_date = datetime.strptime(time_start_date, '%Y%m%d')
+        time_end_date = datetime.strptime(time_end_date, '%Y%m%d')
+
+        #  2.每个批次取 40 个元素
+        batch_size = 40
+
+        #  3.这是一个切分批次的内部函数
+        def get_batches(lst, batch_size):
+            for start in range(0, len(lst), batch_size):
+                yield lst[start:start + batch_size]
+
+        #  4.获取最新 stock_code 的list
+        stock_code_list = mysql_utils.get_stock_codes_latest(self.stock_code_df)
+
+        #  5.计算总批次数
+        total_batches = (len(stock_code_list) + batch_size - 1) // batch_size
+
+        #  6.kline的总和dataframe
+        kline_total_df = pd.DataFrame()
+
+        #  7.请求insight数据
+        for i, batch_list in enumerate(get_batches(stock_code_list, batch_size), start=1):
+            #  一种非常巧妙的循环打印日志的方式
+            sys.stdout.write(f"\r当前执行get_stock_kline的 第 {i} 次循环，总共 {total_batches} 个批次")
+            sys.stdout.flush()
+            time.sleep(0.01)
+
+            res = get_kline(htsc_code=batch_list, time=[time_start_date, time_end_date], frequency="daily", fq="pre")
+            kline_total_df = pd.concat([kline_total_df, res], ignore_index=True)
+
+        #  8.循环结束后打印换行符，以确保后续输出在新行开始
+        sys.stdout.write("\n")
+
+        #  9.日期格式转换
+        kline_total_df['time'] = pd.to_datetime(kline_total_df['time']).dt.strftime('%Y%m%d')
+        kline_total_df.rename(columns={'time': 'ymd'}, inplace=True)
+
+        #  10.声明所有的列名，去除value列
+        kline_total_df = kline_total_df[['htsc_code', 'ymd', 'open', 'close', 'high', 'low', 'num_trades', 'volume']]
+
+        #  11.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
+        # kline_total_df = kline_total_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
+
+
+        ############################   文件输出模块     ############################
+
+        if platform.system() == "Windows":
+            #  13.结果数据保存到 本地 mysql中
+            mysql_utils.data_from_dataframe_to_mysql(user=local_user,
+                                                     password=local_password,
+                                                     host=local_host,
+                                                     database=local_database,
+                                                     df=kline_total_df,
+                                                     table_name="ods_stock_kline_daily_insight",
+                                                     merge_on=['ymd', 'htsc_code'])
+
+            #  14.结果数据保存到 远端 mysql中
+            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
+                                                     password=origin_password,
+                                                     host=origin_host,
+                                                     database=origin_database,
+                                                     df=kline_total_df,
+                                                     table_name="ods_stock_kline_daily_insight",
+                                                     merge_on=['ymd', 'htsc_code'])
+        else:
+            #  14.结果数据保存到 远端 mysql中
+            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
+                                                     password=origin_password,
+                                                     host=origin_host,
+                                                     database=origin_database,
+                                                     df=kline_total_df,
+                                                     table_name="ods_stock_kline_daily_insight",
+                                                     merge_on=['ymd', 'htsc_code'])
+
+
+    @timing_decorator
+    def get_index_a_share(self):
+        """
+        000001.SH    上证指数
+        399006.SZ	 创业板指
+        000016.SH    上证50
+        000300.SH    沪深300
+        000849.SH    沪深300非银行金融指数
+        000905.SH	 中证500
+        399852.SZ    中证1000
+        000688.SH    科创50
+        899050.BJ    北证50
+
+        Returns:
+             index_a_share   [htsc_code 	time	frequency	open	close	high	low	volume	value]
+        """
+
+        #  1.当月数据的起止时间
+        time_start_date = DateUtility.first_day_of_year(-3)
+        time_end_date = DateUtility.today()
+
+        time_start_date = datetime.strptime(time_start_date, '%Y%m%d')
+        time_end_date = datetime.strptime(time_end_date, '%Y%m%d')
+
+        #  2.查询标的
+        index_dict = {"000001.SH": "上证指数"
+            , "399002.SZ": "深成指"
+            , "399006.SZ": "创业板指"
+            , "000016.SH": "上证50"
+            , "000300.SH": "沪深300"
+            , "000849.SH": "300非银"
+            , "000905.SH": "中证500"
+            , "399852.SZ": "中证1000"
+            , "000688.SH": "科创50"
+            , "899050.BJ": "北证50"}
+        index_list = list(index_dict.keys())
+
+        #  3.index_a_share 的总和dataframe
+        index_df = pd.DataFrame()
+
+        #  4.请求insight数据   get_kline
+        res = get_kline(htsc_code=index_list, time=[time_start_date, time_end_date],
+                        frequency="daily", fq="pre")
+        index_df = pd.concat([index_df, res], ignore_index=True)
+
+        #  5.日期格式转换
+        index_df['time'] = pd.to_datetime(index_df['time']).dt.strftime('%Y%m%d')
+        index_df.rename(columns={'time': 'ymd'}, inplace=True)
+
+        #  6.根据映射关系，添加stock_name
+        index_df['name'] = index_df['htsc_code'].map(index_dict)
+
+        #  7.声明所有的列名，去除多余列
+        index_df = index_df[['htsc_code', 'name', 'ymd', 'open', 'close', 'high', 'low', 'volume']]
+
+        #  8.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
+        index_df = index_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
+
+        ############################   文件输出模块     ############################
+        if platform.system() == "Windows":
+            #  10.结果数据保存到 本地 mysql中
+            mysql_utils.data_from_dataframe_to_mysql(user=local_user,
+                                                     password=local_password,
+                                                     host=local_host,
+                                                     database=local_database,
+                                                     df=index_df,
+                                                     table_name="ods_index_a_share_insight",
+                                                     merge_on=['ymd', 'htsc_code'])
+
+            #  11.结果数据保存到 远端 mysql中
+            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
+                                                     password=origin_password,
+                                                     host=origin_host,
+                                                     database=origin_database,
+                                                     df=index_df,
+                                                     table_name="ods_index_a_share_insight",
+                                                     merge_on=['ymd', 'htsc_code'])
+        else:
+            #  11.结果数据保存到 远端 mysql中
+            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
+                                                     password=origin_password,
+                                                     host=origin_host,
+                                                     database=origin_database,
+                                                     df=index_df,
+                                                     table_name="ods_index_a_share_insight",
+                                                     merge_on=['ymd', 'htsc_code'])
+
+
+    @timing_decorator
+    def get_limit_summary(self):
+        """
+        大盘涨跌停分析数据
+        Args:
+            market:
+                1	sh_a_share	上海A股
+                2	sz_a_share	深圳A股
+                3	a_share	A股
+                4	a_share	B股
+                5	gem	创业
+                6	sme	中小板
+                7	star	科创板
+            trading_day: List<datetime>	交易日期范围，[start_date, end_date]
+
+        Returns: ups_downs_limit_count_up_limits
+                 ups_downs_limit_count_down_limits
+                 ups_downs_limit_count_pre_up_limits
+                 ups_downs_limit_count_pre_down_limits
+                 ups_downs_limit_count_pre_up_limits_average_change_percent
+
+                 [time	name	今日涨停	今日跌停	昨日涨停	昨日跌停	昨日涨停表现]
+
+        """
+
+        #  1.当月数据的起止时间
+        start_date = DateUtility.first_day_of_year(-3)
+        end_date = DateUtility.today()
+
+        start_date = datetime.strptime(start_date, '%Y%m%d')
+        end_date = datetime.strptime(end_date, '%Y%m%d')
+
+        #  2.请求insight数据   get_kline
+        res = get_change_summary(market=["a_share"], trading_day=[start_date, end_date])
+
+        #  3.limit_summary 的总和dataframe
+        filter_limit_df = pd.DataFrame()
+        filter_limit_df = pd.concat([filter_limit_df, res], ignore_index=True)
+
+        #  4.声明所有的列名，去除多余列
+        filter_limit_df = filter_limit_df[['time',
+                                     'name',
+                                     'ups_downs_limit_count_up_limits',
+                                     'ups_downs_limit_count_down_limits',
+                                     'ups_downs_limit_count_pre_up_limits',
+                                     'ups_downs_limit_count_pre_down_limits',
+                                     'ups_downs_limit_count_pre_up_limits_average_change_percent']]
+        filter_limit_df.columns = ['ymd', 'name', 'today_ZT', 'today_DT', 'yesterday_ZT', 'yesterday_DT',
+                                   'yesterday_ZT_rate']
+
+        #  5.日期格式转换
+        filter_limit_df['ymd'] = pd.to_datetime(filter_limit_df['ymd']).dt.strftime('%Y%m%d')
+
+        #  6.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
+        filter_limit_df = filter_limit_df.drop_duplicates(subset=['ymd', 'name'], keep='first')
+
+        ############################   文件输出模块     ############################
+        if platform.system() == "Windows":
+            #  8.结果数据保存到 本地 mysql中
+            mysql_utils.data_from_dataframe_to_mysql(user=local_user,
+                                                     password=local_password,
+                                                     host=local_host,
+                                                     database=local_database,
+                                                     df=filter_limit_df,
+                                                     table_name="ods_stock_limit_summary_insight",
+                                                     merge_on=['ymd', 'name'])
+
+            #  9.结果数据保存到 远端 mysql中
+            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
+                                                     password=origin_password,
+                                                     host=origin_host,
+                                                     database=origin_database,
+                                                     df=filter_limit_df,
+                                                     table_name="ods_stock_limit_summary_insight",
+                                                     merge_on=['ymd', 'name'])
+        else:
+            #  9.结果数据保存到 远端 mysql中
+            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
+                                                     password=origin_password,
+                                                     host=origin_host,
+                                                     database=origin_database,
+                                                     df=filter_limit_df,
+                                                     table_name="ods_stock_limit_summary_insight",
+                                                     merge_on=['ymd', 'name'])
+
+    @timing_decorator
+    def get_future_inside(self):
+        """
+        期货市场数据
+        贵金属,  有色数据
+        国际市场  国内市场
+        AU9999.SHF    沪金主连
+        AU2409.SHF	  沪金
+        AG9999.SHF    沪银主连
+        AG2409.SHF    沪银
+        CU9999.SHF    沪铜主连
+        CU2409.SHF    沪铜
+
+        EC9999.INE    欧线集运主连
+        EC2410.INE    欧线集运
+        SC9999.INE    原油主连
+        SC2410.INE    原油
+
+        V9999.DCE     PVC主连
+        V2409.DCE     PVC
+        MA9999.ZCE    甲醇主连      (找不到)
+        MA2409.ZCE    甲醇         (找不到)
+        目前主连找不到数据，只有月份的，暂时用 t+2 月去代替主连吧
+
+        Returns:
+        """
+
+        #  1.起止时间 查询起始时间写2月前的月初第1天
+        #  查询起始时间写36月前的月初第1天
+        time_start_date = DateUtility.first_day_of_month(-36)
+        time_end_date = DateUtility.today()
+
+        time_start_date = datetime.strptime(time_start_date, '%Y%m%d')
+        time_end_date = datetime.strptime(time_end_date, '%Y%m%d')
+
+        #  2.查询标的
+        index_list = ["AU{}.SHF", "AG{}.SHF", "CU{}.SHF", "EC{}.INE", "SC{}.INE", "V{}.DCE"]
+        replacement = DateUtility.first_day_of_month(2)[2:6]
+
+        future_index_list = [index.format(replacement) for index in index_list]
+
+        #  3.future_inside 的总和dataframe
+        future_inside_df = pd.DataFrame()
+
+        #  4.请求insight数据   get_kline
+        res = get_kline(htsc_code=future_index_list, time=[time_start_date, time_end_date],
+                        frequency="daily", fq="pre")
+        future_inside_df = pd.concat([future_inside_df, res], ignore_index=True)
+
+        #  5.日期格式转换
+        future_inside_df['time'] = pd.to_datetime(future_inside_df['time']).dt.strftime('%Y%m%d')
+        future_inside_df.rename(columns={'time': 'ymd'}, inplace=True)
+
+        #  6.声明所有的列名，去除多余列
+        future_inside_df = future_inside_df[
+            ['htsc_code', 'ymd', 'open', 'close', 'high', 'low', 'volume', 'open_interest', 'settle']]
+
+        #  7.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
+        future_inside_df = future_inside_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
+
+        ############################   文件输出模块     ############################
+        if platform.system() == "Windows":
+            #  9.结果数据保存到 本地 mysql中
+            mysql_utils.data_from_dataframe_to_mysql(user=local_user,
+                                                     password=local_password,
+                                                     host=local_host,
+                                                     database=local_database,
+                                                     df=future_inside_df,
+                                                     table_name="ods_future_inside_insight",
+                                                     merge_on=['ymd', 'htsc_code'])
+
+            #  10.结果数据保存到 远端 mysql中
+            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
+                                                     password=origin_password,
+                                                     host=origin_host,
+                                                     database=origin_database,
+                                                     df=future_inside_df,
+                                                     table_name="ods_future_inside_insight",
+                                                     merge_on=['ymd', 'htsc_code'])
+        else:
+            #  10.结果数据保存到 远端 mysql中
+            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
+                                                     password=origin_password,
+                                                     host=origin_host,
+                                                     database=origin_database,
+                                                     df=future_inside_df,
+                                                     table_name="ods_future_inside_insight",
+                                                     merge_on=['ymd', 'htsc_code'])
+
+
+    @timing_decorator
+    def get_shareholder_north_bound_num(self):
+        """
+        获取 股东数 & 北向资金情况
+        Returns:
+        """
+        #  1.起止时间 查询起始时间写 36月前的月初
+        time_start_date = DateUtility.first_day_of_month(-36)
+        #  结束时间必须大于等于当日，这里取明天的日期
+        time_end_date = DateUtility.next_day(1)
+
+        time_start_date = datetime.strptime(time_start_date, '%Y%m%d')
+        time_end_date = datetime.strptime(time_end_date, '%Y%m%d')
+
+        #  2.行业信息的总和dataframe
+        shareholder_num_df = pd.DataFrame()
+        #  北向资金的总和dataframe
+        north_bound_df = pd.DataFrame()
+
+        #  3.获取最新的stock_codes 数据
+        code_list = mysql_utils.get_stock_codes_latest(self.stock_code_df)
+
+        #  4.请求insight  个股股东数   数据
+        #    请求insight  北向资金持仓  数据
+        total_xunhuan = len(code_list)
+        i = 1                       # 总循环标记
+        valid_shareholder = 1       # 个股股东数有效标记
+        valid_north_bound = 1       # 北向资金持仓有效标记
+
+        for stock_code in code_list:
+            # 屏蔽 stdout 和 stderr
+            with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+                res_shareholder = get_shareholder_num(htsc_code=stock_code, end_date=[time_start_date, time_end_date])
+                res_north_bound =get_north_bound(htsc_code=stock_code, trading_day=[time_start_date, time_end_date])
+
+            if res_shareholder is not None:
+                shareholder_num_df = pd.concat([shareholder_num_df, res_shareholder], ignore_index=True)
+                sys.stdout.write(f"\r当前执行 get_shareholder_num  第 {i} 次循环，总共 {total_xunhuan} 个批次, {valid_shareholder}个有效股东数据")
+                sys.stdout.flush()
+                valid_shareholder += 1
+
+            if res_north_bound is not None:
+                north_bound_df = pd.concat([north_bound_df, res_north_bound], ignore_index=True)
+                sys.stdout.write(f"\r当前执行 get_north_bound  第 {i} 次循环，总共 {total_xunhuan} 个批次, {valid_north_bound}个有效北向持仓数据")
+                sys.stdout.flush()
+                valid_north_bound += 1
+
+            i += 1
+
+        sys.stdout.write("\n")
+
+        #  5.日期格式转换
+        shareholder_num_df.rename(columns={'end_date': 'ymd'}, inplace=True)
+        shareholder_num_df['ymd'] = pd.to_datetime(shareholder_num_df['ymd']).dt.strftime('%Y%m%d')
+
+        north_bound_df.rename(columns={'trading_day': 'ymd'}, inplace=True)
+        north_bound_df['ymd'] = pd.to_datetime(shareholder_num_df['ymd']).dt.strftime('%Y%m%d')
+
+        #  6.声明所有的列名，去除多余列
+        shareholder_num_df = shareholder_num_df[['htsc_code', 'name', 'ymd', 'total_sh', 'avg_share', 'pct_of_total_sh', 'pct_of_avg_sh']]
+        north_bound_df = north_bound_df[['htsc_code', 'ymd', 'sh_hkshare_hold', 'pct_total_share']]
+
+        #  7.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
+        shareholder_num_df = shareholder_num_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
+        north_bound_df = north_bound_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
+
+        ############################   文件输出模块     ############################
+        #  8.更新dataframe
+        self.shareholder_num_df = shareholder_num_df
+        self.north_bound_df = north_bound_df
+
+        if platform.system() == "Windows":
+            #  9.结果数据保存到 本地 mysql中
+            mysql_utils.data_from_dataframe_to_mysql(user=local_user,
+                                                     password=local_password,
+                                                     host=local_host,
+                                                     database=local_database,
+                                                     df=shareholder_num_df,
+                                                     table_name="ods_shareholder_num",
+                                                     merge_on=['ymd', 'htsc_code'])
+
+            mysql_utils.data_from_dataframe_to_mysql(user=local_user,
+                                                     password=local_password,
+                                                     host=local_host,
+                                                     database=local_database,
+                                                     df=north_bound_df,
+                                                     table_name="ods_north_bound_daily",
+                                                     merge_on=['ymd', 'htsc_code'])
+
+            #  10.结果数据保存到 远端 mysql中
+            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
+                                                     password=origin_password,
+                                                     host=origin_host,
+                                                     database=origin_database,
+                                                     df=shareholder_num_df,
+                                                     table_name="ods_shareholder_num",
+                                                     merge_on=['ymd', 'htsc_code'])
+
+            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
+                                                     password=origin_password,
+                                                     host=origin_host,
+                                                     database=origin_database,
+                                                     df=north_bound_df,
+                                                     table_name="ods_north_bound_daily",
+                                                     merge_on=['ymd', 'htsc_code'])
+        else:
+            #  10.结果数据保存到 远端 mysql中
+            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
+                                                     password=origin_password,
+                                                     host=origin_host,
+                                                     database=origin_database,
+                                                     df=shareholder_num_df,
+                                                     table_name="ods_shareholder_num",
+                                                     merge_on=['ymd', 'htsc_code'])
+
+            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
+                                                     password=origin_password,
+                                                     host=origin_host,
+                                                     database=origin_database,
+                                                     df=north_bound_df,
+                                                     table_name="ods_north_bound_daily",
+                                                     merge_on=['ymd', 'htsc_code'])
+
+
+
+    @timing_decorator
+    def setup(self):
+        #  登陆insight数据源
+        self.login()
+
+        #  获取交易日历
+        self.get_trading_days_from_insight()
+
+        #  除去 ST |  退  | B 的股票集合
+        self.get_stock_codes()
+
+        #  获取当前已上市股票过去3年到今天的历史kline
+        self.get_stock_kline()
+
+        #  获取主要股指
+        self.get_index_a_share()
+
+        #  大盘涨跌概览
+        self.get_limit_summary()
+
+        #  期货__内盘
+        self.get_future_inside()
+
+        #  个股股东数
+        self.get_shareholder_north_bound_num()
+
+
+if __name__ == '__main__':
+    save_insight_data = SaveInsightHistoryData()
+    save_insight_data.setup()
+
+```
+
+--------------------------------------------------------------------------------
 ## datas_prepare\C06_data_transfer\__init__.py
 
 ```python
@@ -7507,32 +8038,44 @@ def transfer_local_to_origin_mysql():
 
     # 'stock_kline_daily_insight',
 
-    table_all_list = ['ods_stock_code_daily_insight',
-                      'ods_index_a_share_insight',
+    table_all_list = ['dmart_stock_zt_details',
+                      'dmart_stock_zt_details_expanded',
+                      'dwd_ashare_stock_base_info',
+                      'dwd_stock_a_total_plate',
+                      'dwd_stock_dt_list',
+                      'dwd_stock_zt_list',
+                      'ods_akshare_stock_a_high_low_statistics',
+                      'ods_akshare_stock_board_concept_cons_em',
+                      'ods_akshare_stock_board_concept_hist_em',
+                      'ods_akshare_stock_board_concept_name_em',
+                      'ods_akshare_stock_cyq_em',
+                      'ods_akshare_stock_value_em',
+                      'ods_akshare_stock_yjkb_em',
+                      'ods_akshare_stock_yjyg_em',
+                      'ods_akshare_stock_zh_a_gdhs_detail_em',
+                      'ods_akshare_stock_zh_a_spot_em',
                       'ods_astock_industry_detail',
                       'ods_astock_industry_overview',
-                      'ods_stock_limit_summary_insight',
+                      'ods_exchange_dxy_vantage',
+                      'ods_exchange_rate_vantage_detail',
                       'ods_future_inside_insight',
+                      'ods_index_a_share_insight',
                       'ods_north_bound_daily',
                       'ods_shareholder_num',
                       'ods_stock_chouma_insight',
-                      'ods_us_stock_daily_vantage',
-                      'ods_exchange_rate_vantage_detail',
-                      'ods_exchange_dxy_vantage',
+                      'ods_stock_code_daily_insight',
+                      'ods_stock_exchange_market',
+                      'ods_stock_kline_daily_insight',
+                      'ods_stock_limit_summary_insight',
+                      'ods_stock_plate_redbook',
                       'ods_tdx_stock_concept_plate',
                       'ods_tdx_stock_index_plate',
                       'ods_tdx_stock_industry_plate',
+                      'ods_tdx_stock_pepb_info',
                       'ods_tdx_stock_region_plate',
                       'ods_tdx_stock_style_plate',
-                      'ods_tdx_stock_pepb_info',
-                      'ods_stock_kline_daily_insight',
-                      'ods_stock_exchange_market',
-                      'ods_stock_plate_redbook',
-                      'dwd_stock_zt_list',
-                      'dwd_stock_dt_list',
-                      'dwd_stock_a_total_plate',
-                      'dwd_ashare_stock_base_info'
-                      ]
+                      'ods_trading_days_insight',
+                      'ods_us_stock_daily_vantage']
 
     table_temp_list = ['stock_chouma_insight']
 
@@ -7555,35 +8098,44 @@ def transfer_origin_to_local_mysql():
     local_db_url = f'mysql+pymysql://{local_user}:{local_password}@{local_host}:3306/{local_database}'
     origin_db_url = f'mysql+pymysql://{origin_user}:{origin_password}@{origin_host}:3306/{origin_database}'
 
-    table_all_list = [
-        'ods_stock_code_daily_insight',
-        'ods_stock_chouma_insight',
-        'ods_shareholder_num',
-        'ods_north_bound_daily',
-        'ods_stock_exchange_market',
-        'ods_tdx_stock_pepb_info',
-        'ods_stock_kline_daily_insight',
-        'ods_index_a_share_insight',
-        'ods_future_inside_insight',
-        'ods_us_stock_daily_vantage',
-        'ods_exchange_rate_vantage_detail',
-        'ods_exchange_dxy_vantage',
-        'ods_stock_limit_summary_insight',
-        'ods_astock_industry_overview',
-        'ods_astock_industry_detail',
-        'ods_tdx_stock_concept_plate',
-        'ods_tdx_stock_region_plate',
-        'ods_tdx_stock_industry_plate',
-        'ods_tdx_stock_style_plate',
-        'ods_tdx_stock_index_plate',
-        'ods_stock_plate_redbook',
-        'dwd_stock_a_total_plate',
-        'dwd_ashare_stock_base_info',
-        'dwd_stock_zt_list',
-        'dwd_stock_dt_list',
-        'dmart_stock_zt_details',
-        'dmart_stock_zt_details_expanded'
-    ]
+    table_all_list = ['dmart_stock_zt_details',
+                      'dmart_stock_zt_details_expanded',
+                      'dwd_ashare_stock_base_info',
+                      'dwd_stock_a_total_plate',
+                      'dwd_stock_dt_list',
+                      'dwd_stock_zt_list',
+                      'ods_akshare_stock_a_high_low_statistics',
+                      'ods_akshare_stock_board_concept_cons_em',
+                      'ods_akshare_stock_board_concept_hist_em',
+                      'ods_akshare_stock_board_concept_name_em',
+                      'ods_akshare_stock_cyq_em',
+                      'ods_akshare_stock_value_em',
+                      'ods_akshare_stock_yjkb_em',
+                      'ods_akshare_stock_yjyg_em',
+                      'ods_akshare_stock_zh_a_gdhs_detail_em',
+                      'ods_akshare_stock_zh_a_spot_em',
+                      'ods_astock_industry_detail',
+                      'ods_astock_industry_overview',
+                      'ods_exchange_dxy_vantage',
+                      'ods_exchange_rate_vantage_detail',
+                      'ods_future_inside_insight',
+                      'ods_index_a_share_insight',
+                      'ods_north_bound_daily',
+                      'ods_shareholder_num',
+                      'ods_stock_chouma_insight',
+                      'ods_stock_code_daily_insight',
+                      'ods_stock_exchange_market',
+                      'ods_stock_kline_daily_insight',
+                      'ods_stock_limit_summary_insight',
+                      'ods_stock_plate_redbook',
+                      'ods_tdx_stock_concept_plate',
+                      'ods_tdx_stock_index_plate',
+                      'ods_tdx_stock_industry_plate',
+                      'ods_tdx_stock_pepb_info',
+                      'ods_tdx_stock_region_plate',
+                      'ods_tdx_stock_style_plate',
+                      'ods_trading_days_insight',
+                      'ods_us_stock_daily_vantage']
 
     for tableName in table_all_list:
         mysql_utils.full_replace_migrate(source_host=origin_host,
@@ -7599,33 +8151,44 @@ def append_origin_to_local_mysql():
     Returns:
     """
 
-    table_all_list = ['ods_stock_code_daily_insight',
-                      'ods_index_a_share_insight',
+    table_all_list = ['dmart_stock_zt_details',
+                      'dmart_stock_zt_details_expanded',
+                      'dwd_ashare_stock_base_info',
+                      'dwd_stock_a_total_plate',
+                      'dwd_stock_dt_list',
+                      'dwd_stock_zt_list',
+                      'ods_akshare_stock_a_high_low_statistics',
+                      'ods_akshare_stock_board_concept_cons_em',
+                      'ods_akshare_stock_board_concept_hist_em',
+                      'ods_akshare_stock_board_concept_name_em',
+                      'ods_akshare_stock_cyq_em',
+                      'ods_akshare_stock_value_em',
+                      'ods_akshare_stock_yjkb_em',
+                      'ods_akshare_stock_yjyg_em',
+                      'ods_akshare_stock_zh_a_gdhs_detail_em',
+                      'ods_akshare_stock_zh_a_spot_em',
                       'ods_astock_industry_detail',
                       'ods_astock_industry_overview',
-                      'ods_stock_limit_summary_insight',
+                      'ods_exchange_dxy_vantage',
+                      'ods_exchange_rate_vantage_detail',
                       'ods_future_inside_insight',
+                      'ods_index_a_share_insight',
                       'ods_north_bound_daily',
                       'ods_shareholder_num',
                       'ods_stock_chouma_insight',
-                      'ods_us_stock_daily_vantage',
-                      'ods_exchange_rate_vantage_detail',
-                      'ods_exchange_dxy_vantage',
+                      'ods_stock_code_daily_insight',
+                      'ods_stock_exchange_market',
+                      'ods_stock_kline_daily_insight',
+                      'ods_stock_limit_summary_insight',
+                      'ods_stock_plate_redbook',
                       'ods_tdx_stock_concept_plate',
                       'ods_tdx_stock_index_plate',
                       'ods_tdx_stock_industry_plate',
+                      'ods_tdx_stock_pepb_info',
                       'ods_tdx_stock_region_plate',
                       'ods_tdx_stock_style_plate',
-                      'ods_tdx_stock_pepb_info',
-                      'ods_stock_kline_daily_insight',
-                      'ods_stock_exchange_market',
-                      'ods_stock_plate_redbook',
-                      'dwd_stock_zt_list',
-                      'dwd_stock_dt_list',
-                      'dwd_stock_a_total_plate',
-                      'dwd_ashare_stock_base_info',
-                      'dmart_stock_zt_details'
-                      ]
+                      'ods_trading_days_insight',
+                      'ods_us_stock_daily_vantage']
 
     #  设置起止时间，从source_table 中拉取数据
     # start_date = '2024-12-11'
@@ -7670,32 +8233,44 @@ def append_local_to_origin_mysql():
     Returns:
     """
 
-    table_all_list = ['ods_stock_code_daily_insight',
-                      'ods_index_a_share_insight',
+    table_all_list = ['dmart_stock_zt_details',
+                      'dmart_stock_zt_details_expanded',
+                      'dwd_ashare_stock_base_info',
+                      'dwd_stock_a_total_plate',
+                      'dwd_stock_dt_list',
+                      'dwd_stock_zt_list',
+                      'ods_akshare_stock_a_high_low_statistics',
+                      'ods_akshare_stock_board_concept_cons_em',
+                      'ods_akshare_stock_board_concept_hist_em',
+                      'ods_akshare_stock_board_concept_name_em',
+                      'ods_akshare_stock_cyq_em',
+                      'ods_akshare_stock_value_em',
+                      'ods_akshare_stock_yjkb_em',
+                      'ods_akshare_stock_yjyg_em',
+                      'ods_akshare_stock_zh_a_gdhs_detail_em',
+                      'ods_akshare_stock_zh_a_spot_em',
                       'ods_astock_industry_detail',
                       'ods_astock_industry_overview',
-                      'ods_stock_limit_summary_insight',
+                      'ods_exchange_dxy_vantage',
+                      'ods_exchange_rate_vantage_detail',
                       'ods_future_inside_insight',
+                      'ods_index_a_share_insight',
                       'ods_north_bound_daily',
                       'ods_shareholder_num',
                       'ods_stock_chouma_insight',
-                      'ods_us_stock_daily_vantage',
-                      'ods_exchange_rate_vantage_detail',
-                      'ods_exchange_dxy_vantage',
+                      'ods_stock_code_daily_insight',
+                      'ods_stock_exchange_market',
+                      'ods_stock_kline_daily_insight',
+                      'ods_stock_limit_summary_insight',
+                      'ods_stock_plate_redbook',
                       'ods_tdx_stock_concept_plate',
                       'ods_tdx_stock_index_plate',
                       'ods_tdx_stock_industry_plate',
+                      'ods_tdx_stock_pepb_info',
                       'ods_tdx_stock_region_plate',
                       'ods_tdx_stock_style_plate',
-                      'ods_tdx_stock_pepb_info',
-                      'ods_stock_kline_daily_insight',
-                      'ods_stock_exchange_market',
-                      'ods_stock_plate_redbook',
-                      'dwd_stock_zt_list',
-                      'dwd_stock_dt_list',
-                      'dwd_stock_a_total_plate',
-                      'dwd_ashare_stock_base_info'
-                      ]
+                      'ods_trading_days_insight',
+                      'ods_us_stock_daily_vantage']
 
     #  设置起止时间，从source_table 中拉取数据
     start_date = '2024-10-01'
@@ -8041,7 +8616,7 @@ class RealtimeMonitor:
                 table_name='ods_stock_kline_daily_insight',
                 start_date=(datetime.now() - timedelta(days=1)).strftime('%Y%m%d'),
                 end_date=current_date,
-                cols=['htsc_code', 'ymd', 'close']
+                cols=['stock_code', 'ymd', 'close']
             )
 
             if len(kline_df) < 2:

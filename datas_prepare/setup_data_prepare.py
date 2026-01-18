@@ -13,7 +13,7 @@ if project_root not in sys.path:
 
 
 from datas_prepare.C01_data_download_daily.download_insight_data_afternoon import SaveInsightData
-from datas_prepare.C01_data_download_daily.download_insight_data_afternoon_of_history import SaveInsightHistoryData
+from datas_prepare.C05_data_history.download_insight_history_data import SaveInsightHistoryData
 from datas_prepare.C01_data_download_daily.download_vantage_data_afternoon import SaveVantageData
 
 from datas_prepare.C02_data_merge.merge_insight_data_afternoon import MergeInsightData

@@ -70,7 +70,7 @@ def get_stock_code_demo():
                                   listing_date=[listing_start_date, listing_end_date])
 
 
-    # stock_all_df = get_all_stocks_info(exchange='XSHG', listing_state="上市交易")
+    stock_all_df = get_all_stocks_info(exchange='XSHG', listing_state="上市交易")
     # stock_all_df.to_csv(r'F:\QDatas\tttt.csv')
     #
     # df01 = get_all_stocks_info(exchange='XBJE')

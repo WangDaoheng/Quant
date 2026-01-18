@@ -180,14 +180,14 @@ class CalDWD:
             INSERT INTO quant.ods_stock_exchange_market (ymd, stock_code, stock_name, market)
             SELECT 
                 t1.ymd
-               ,t1.htsc_code AS stock_code
-               ,t1.name      AS stock_name
+               ,t1.stock_code
+               ,t1.stock_name
                ,CASE
-               WHEN t1.htsc_code LIKE '300%' OR t1.htsc_code LIKE '301%' THEN '创业板' 
-               WHEN t1.htsc_code LIKE '8%'   OR t1.htsc_code LIKE '4%'   THEN '北交所'  
-               WHEN t1.htsc_code LIKE '000%' OR t1.htsc_code LIKE '001%' OR t1.htsc_code LIKE '002%' OR t1.htsc_code LIKE '003%' THEN '深圳主板' 
-               WHEN t1.htsc_code LIKE '688%' OR t1.htsc_code LIKE '689%' THEN '科创板'  
-               WHEN t1.htsc_code LIKE '600%' OR t1.htsc_code LIKE '601%' OR t1.htsc_code LIKE '603%' OR t1.htsc_code LIKE '605%' THEN '上海主板' 
+               WHEN t1.stock_code LIKE '300%' OR t1.stock_code LIKE '301%' THEN '创业板' 
+               WHEN t1.stock_code LIKE '8%'   OR t1.stock_code LIKE '4%'   THEN '北交所'  
+               WHEN t1.stock_code LIKE '000%' OR t1.stock_code LIKE '001%' OR t1.stock_code LIKE '002%' OR t1.stock_code LIKE '003%' THEN '深圳主板' 
+               WHEN t1.stock_code LIKE '688%' OR t1.stock_code LIKE '689%' THEN '科创板'  
+               WHEN t1.stock_code LIKE '600%' OR t1.stock_code LIKE '601%' OR t1.stock_code LIKE '603%' OR t1.stock_code LIKE '605%' THEN '上海主板' 
                ELSE '未知类型' 
                END AS market
             FROM quant.ods_stock_code_daily_insight     t1
@@ -264,7 +264,7 @@ class CalDWD:
                  ,tout.plate_names                 as out_plate
             from  
              ( select
-                  htsc_code                                         
+                  stock_code                                         
                  ,ymd                                               
                  ,open                                              
                  ,close                                             
@@ -292,7 +292,7 @@ class CalDWD:
               from  quant.ods_tdx_stock_pepb_info 
               WHERE ymd = (SELECT MAX(ymd) FROM quant.ods_tdx_stock_pepb_info)
             ) tpbe
-            ON SUBSTRING_INDEX(tkline.htsc_code, '.', 1) = tpbe.stock_code
+            ON SUBSTRING_INDEX(tkline.stock_code, '.', 1) = tpbe.stock_code
             left join 
             ( select 
                   ymd                                               
@@ -302,7 +302,7 @@ class CalDWD:
               from  quant.ods_stock_exchange_market 
               where ymd = (SELECT MAX(ymd) FROM quant.ods_stock_exchange_market)
             ) texchange 
-            on tkline.htsc_code = texchange.stock_code
+            on tkline.stock_code = texchange.stock_code
             left join 
             (
               select 
@@ -314,7 +314,7 @@ class CalDWD:
               where ymd = (SELECT MAX(ymd) FROM quant.dwd_stock_a_total_plate)
               group by ymd, stock_code, stock_name 
             ) tplate
-            ON SUBSTRING_INDEX(tkline.htsc_code, '.', 1) = tplate.stock_code
+            ON SUBSTRING_INDEX(tkline.stock_code, '.', 1) = tplate.stock_code
             LEFT JOIN 
                 (
                     SELECT 
@@ -326,7 +326,7 @@ class CalDWD:
                       AND source_table = 'ods_tdx_stock_concept_plate'
                     GROUP BY ymd, stock_code
                 ) tconcept
-            ON SUBSTRING_INDEX(tkline.htsc_code, '.', 1) = tconcept.stock_code
+            ON SUBSTRING_INDEX(tkline.stock_code, '.', 1) = tconcept.stock_code
             LEFT JOIN 
                 (
                     SELECT 
@@ -338,7 +338,7 @@ class CalDWD:
                       AND source_table = 'ods_tdx_stock_index_plate'
                     GROUP BY ymd, stock_code
                 ) tindex
-            ON SUBSTRING_INDEX(tkline.htsc_code, '.', 1) = tindex.stock_code
+            ON SUBSTRING_INDEX(tkline.stock_code, '.', 1) = tindex.stock_code
             LEFT JOIN 
                 (
                     SELECT 
@@ -350,7 +350,7 @@ class CalDWD:
                       AND source_table = 'ods_tdx_stock_industry_plate'
                     GROUP BY ymd, stock_code
                 ) tindustry
-            ON SUBSTRING_INDEX(tkline.htsc_code, '.', 1) = tindustry.stock_code
+            ON SUBSTRING_INDEX(tkline.stock_code, '.', 1) = tindustry.stock_code
             LEFT JOIN 
                 (
                     SELECT 
@@ -362,7 +362,7 @@ class CalDWD:
                       AND source_table = 'ods_tdx_stock_style_plate'
                     GROUP BY ymd, stock_code
                 ) tstyle
-            ON SUBSTRING_INDEX(tkline.htsc_code, '.', 1) = tstyle.stock_code
+            ON SUBSTRING_INDEX(tkline.stock_code, '.', 1) = tstyle.stock_code
             LEFT JOIN 
                 (
                     SELECT 
@@ -374,7 +374,7 @@ class CalDWD:
                       AND source_table = 'ods_stock_plate_redbook'
                     GROUP BY ymd, stock_code
                 ) tout
-            ON SUBSTRING_INDEX(tkline.htsc_code, '.', 1) = tout.stock_code;
+            ON SUBSTRING_INDEX(tkline.stock_code, '.', 1) = tout.stock_code;
             """]
 
         # 3.主程序替换 {ymd} 占位符
@@ -426,8 +426,6 @@ class CalDWD:
             # print(f"{time_start_date} - {time_end_date}日期的K线数据为空，终止 cal_ZT_DT 运行！")
             logging.info(f"{time_start_date} - {time_end_date}日期的K线数据为空，终止 cal_ZT_DT 运行！")
             return
-
-        df = df.rename(columns={'htsc_code': 'stock_code'})
 
         # 按照 ymd 排序，确保数据是按日期排列的
         latest_15_days = df.sort_values(by=['stock_code', 'ymd'])
