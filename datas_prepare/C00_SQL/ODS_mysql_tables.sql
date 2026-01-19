@@ -50,28 +50,28 @@ CREATE TABLE quant.ods_stock_kline_daily_insight (
 --1.3
 ------------------  ods_index_a_share_insight   大A的主要指数日K
 CREATE TABLE quant.ods_index_a_share_insight_now (
-     stock_code               VARCHAR(50) NOT NULL    COMMENT '指数代码'
-    ,stock_name               VARCHAR(50) NOT NULL    COMMENT '指数名称'
+     index_code               VARCHAR(50) NOT NULL    COMMENT '指数代码'
+    ,index_name               VARCHAR(50) NOT NULL    COMMENT '指数名称'
     ,ymd                      DATE        NOT NULL    COMMENT '交易日期'
     ,open                     FLOAT                   COMMENT '开盘价'
     ,close                    FLOAT                   COMMENT '收盘价'
     ,high                     FLOAT                   COMMENT '最高价'
     ,low                      FLOAT                   COMMENT '最低价'
     ,volume                   BIGINT                  COMMENT '成交量'
-    ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
+    ,UNIQUE KEY unique_ymd_stock_code (ymd, index_code)
 ) COMMENT='大A的主要指数日K(日增量表)';
 
 
 CREATE TABLE quant.ods_index_a_share_insight (
-     stock_code               VARCHAR(50) NOT NULL    COMMENT '指数代码'
-    ,stock_name               VARCHAR(50) NOT NULL    COMMENT '指数名称'
+     index_code               VARCHAR(50) NOT NULL    COMMENT '指数代码'
+    ,index_name               VARCHAR(50) NOT NULL    COMMENT '指数名称'
     ,ymd                      DATE        NOT NULL    COMMENT '交易日期'
     ,open                     FLOAT                   COMMENT '开盘价'
     ,close                    FLOAT                   COMMENT '收盘价'
     ,high                     FLOAT                   COMMENT '最高价'
     ,low                      FLOAT                   COMMENT '最低价'
     ,volume                   BIGINT                  COMMENT '成交量'
-    ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
+    ,UNIQUE KEY unique_ymd_stock_code (ymd, index_code)
 ) COMMENT='大A的主要指数日K(全量表)';
 
 
@@ -363,7 +363,6 @@ CREATE TABLE quant.ods_tdx_stock_pepb_info (
 CREATE TABLE quant.ods_akshare_stock_value_em (
      ymd                      DATE                    COMMENT '数据日期'
     ,stock_code               varchar(50)             COMMENT '股票代码'
-    ,stock_name               varchar(50)             COMMENT '股票名称'
     ,close                    float                   COMMENT '当日收盘价(元)'
     ,change_pct               float                   COMMENT '当日涨跌幅(%)'
     ,total_market             double                  COMMENT '总市值(元)'

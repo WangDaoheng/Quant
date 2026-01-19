@@ -1,18 +1,18 @@
 # 量化工程V1.0 代码梳理文档
-*生成时间: 2026-01-18 22:14:03*
+*生成时间: 2026-01-19 10:33:27*
 
 ## 项目统计信息
-- 项目根目录: F:\Quant\Backtrader_PJ1\Quant
+- 项目根目录: F:\Quant\Backtrader_PJ1
 - 总文件数: 46
 - Python文件数: 42
 - SQL文件数: 3
 - Shell文件数: 1
 - 有效目录数: 15
 
-# Quant 项目目录结构
-*生成时间: 2026-01-18 22:14:03*
+# Backtrader_PJ1 项目目录结构
+*生成时间: 2026-01-19 10:33:27*
 
-📁 Quant/
+📁 Backtrader_PJ1/
     📄 main-doubao.py
     📄 main.py
     📁 backtest/
@@ -3060,28 +3060,28 @@ CREATE TABLE quant.ods_stock_kline_daily_insight (
 --1.3
 ------------------  ods_index_a_share_insight   大A的主要指数日K
 CREATE TABLE quant.ods_index_a_share_insight_now (
-     stock_code               VARCHAR(50) NOT NULL    COMMENT '指数代码'
-    ,stock_name               VARCHAR(50) NOT NULL    COMMENT '指数名称'
+     index_code               VARCHAR(50) NOT NULL    COMMENT '指数代码'
+    ,index_name               VARCHAR(50) NOT NULL    COMMENT '指数名称'
     ,ymd                      DATE        NOT NULL    COMMENT '交易日期'
     ,open                     FLOAT                   COMMENT '开盘价'
     ,close                    FLOAT                   COMMENT '收盘价'
     ,high                     FLOAT                   COMMENT '最高价'
     ,low                      FLOAT                   COMMENT '最低价'
     ,volume                   BIGINT                  COMMENT '成交量'
-    ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
+    ,UNIQUE KEY unique_ymd_stock_code (ymd, index_code)
 ) COMMENT='大A的主要指数日K(日增量表)';
 
 
 CREATE TABLE quant.ods_index_a_share_insight (
-     stock_code               VARCHAR(50) NOT NULL    COMMENT '指数代码'
-    ,stock_name               VARCHAR(50) NOT NULL    COMMENT '指数名称'
+     index_code               VARCHAR(50) NOT NULL    COMMENT '指数代码'
+    ,index_name               VARCHAR(50) NOT NULL    COMMENT '指数名称'
     ,ymd                      DATE        NOT NULL    COMMENT '交易日期'
     ,open                     FLOAT                   COMMENT '开盘价'
     ,close                    FLOAT                   COMMENT '收盘价'
     ,high                     FLOAT                   COMMENT '最高价'
     ,low                      FLOAT                   COMMENT '最低价'
     ,volume                   BIGINT                  COMMENT '成交量'
-    ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
+    ,UNIQUE KEY unique_ymd_stock_code (ymd, index_code)
 ) COMMENT='大A的主要指数日K(全量表)';
 
 
@@ -3917,16 +3917,16 @@ class SaveInsightData:
 
             #  5.日期格式转换
             index_df['time'] = pd.to_datetime(index_df['time']).dt.strftime('%Y%m%d')
-            index_df.rename(columns={'time': 'ymd', 'htsc_code': 'stock_code'}, inplace=True)
+            index_df.rename(columns={'time': 'ymd', 'htsc_code': 'index_code', 'name': 'index_name'}, inplace=True)
 
             #  6.根据映射关系，添加stock_name
-            index_df['name'] = index_df['stock_code'].map(index_dict)
+            index_df['index_name'] = index_df['index_code'].map(index_dict)
 
             #  7.声明所有的列名，去除多余列
-            index_df = index_df[['stock_code', 'name', 'ymd', 'open', 'close', 'high', 'low', 'volume']]
+            index_df = index_df[['index_code', 'index_name', 'ymd', 'open', 'close', 'high', 'low', 'volume']]
 
             #  8.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
-            index_df = index_df.drop_duplicates(subset=['ymd', 'stock_code'], keep='first')
+            index_df = index_df.drop_duplicates(subset=['ymd', 'index_code'], keep='first')
 
             ############################   文件输出模块     ############################
             if platform.system() == "Windows":
@@ -3937,7 +3937,7 @@ class SaveInsightData:
                                                          database=local_database,
                                                          df=index_df,
                                                          table_name="ods_index_a_share_insight_now",
-                                                         merge_on=['ymd', 'stock_code'])
+                                                         merge_on=['ymd', 'index_code'])
 
                 #  12.结果数据保存到 远端 mysql中
                 mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
@@ -3946,7 +3946,7 @@ class SaveInsightData:
                                                          database=origin_database,
                                                          df=index_df,
                                                          table_name="ods_index_a_share_insight_now",
-                                                         merge_on=['ymd', 'stock_code'])
+                                                         merge_on=['ymd', 'index_code'])
             else:
                 #  12.结果数据保存到 远端 mysql中
                 mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
@@ -3955,7 +3955,7 @@ class SaveInsightData:
                                                          database=origin_database,
                                                          df=index_df,
                                                          table_name="ods_index_a_share_insight_now",
-                                                         merge_on=['ymd', 'stock_code'])
+                                                         merge_on=['ymd', 'index_code'])
         else:
             ## insight 返回为空值
             logging.info('    get_index_a_share 的返回值为空值')
@@ -5631,7 +5631,7 @@ class CalDWD:
               from  quant.ods_stock_exchange_market 
               where ymd = (SELECT MAX(ymd) FROM quant.ods_stock_exchange_market)
             ) texchange 
-            on tkline.htsc_code = texchange.stock_code
+            on tkline.stock_code = texchange.stock_code
             left join 
             (
               select 
@@ -5643,7 +5643,7 @@ class CalDWD:
               where ymd = (SELECT MAX(ymd) FROM quant.dwd_stock_a_total_plate)
               group by ymd, stock_code, stock_name 
             ) tplate
-            ON SUBSTRING_INDEX(tkline.htsc_code, '.', 1) = tplate.stock_code
+            ON SUBSTRING_INDEX(tkline.stock_code, '.', 1) = tplate.stock_code
             LEFT JOIN 
                 (
                     SELECT 
@@ -5655,7 +5655,7 @@ class CalDWD:
                       AND source_table = 'ods_tdx_stock_concept_plate'
                     GROUP BY ymd, stock_code
                 ) tconcept
-            ON SUBSTRING_INDEX(tkline.htsc_code, '.', 1) = tconcept.stock_code
+            ON SUBSTRING_INDEX(tkline.stock_code, '.', 1) = tconcept.stock_code
             LEFT JOIN 
                 (
                     SELECT 
@@ -5667,7 +5667,7 @@ class CalDWD:
                       AND source_table = 'ods_tdx_stock_index_plate'
                     GROUP BY ymd, stock_code
                 ) tindex
-            ON SUBSTRING_INDEX(tkline.htsc_code, '.', 1) = tindex.stock_code
+            ON SUBSTRING_INDEX(tkline.stock_code, '.', 1) = tindex.stock_code
             LEFT JOIN 
                 (
                     SELECT 
@@ -5679,7 +5679,7 @@ class CalDWD:
                       AND source_table = 'ods_tdx_stock_industry_plate'
                     GROUP BY ymd, stock_code
                 ) tindustry
-            ON SUBSTRING_INDEX(tkline.htsc_code, '.', 1) = tindustry.stock_code
+            ON SUBSTRING_INDEX(tkline.stock_code, '.', 1) = tindustry.stock_code
             LEFT JOIN 
                 (
                     SELECT 
@@ -5691,7 +5691,7 @@ class CalDWD:
                       AND source_table = 'ods_tdx_stock_style_plate'
                     GROUP BY ymd, stock_code
                 ) tstyle
-            ON SUBSTRING_INDEX(tkline.htsc_code, '.', 1) = tstyle.stock_code
+            ON SUBSTRING_INDEX(tkline.stock_code, '.', 1) = tstyle.stock_code
             LEFT JOIN 
                 (
                     SELECT 
@@ -5703,7 +5703,7 @@ class CalDWD:
                       AND source_table = 'ods_stock_plate_redbook'
                     GROUP BY ymd, stock_code
                 ) tout
-            ON SUBSTRING_INDEX(tkline.htsc_code, '.', 1) = tout.stock_code;
+            ON SUBSTRING_INDEX(tkline.stock_code, '.', 1) = tout.stock_code;
             """]
 
         # 3.主程序替换 {ymd} 占位符
@@ -5755,8 +5755,6 @@ class CalDWD:
             # print(f"{time_start_date} - {time_end_date}日期的K线数据为空，终止 cal_ZT_DT 运行！")
             logging.info(f"{time_start_date} - {time_end_date}日期的K线数据为空，终止 cal_ZT_DT 运行！")
             return
-
-        df = df.rename(columns={'htsc_code': 'stock_code'})
 
         # 按照 ymd 排序，确保数据是按日期排列的
         latest_15_days = df.sort_values(by=['stock_code', 'ymd'])
@@ -7022,11 +7020,13 @@ class SaveInsightHistoryData:
         stock_all_df.insert(0, 'ymd', formatted_date)
 
         #  4.声明所有的列名，去除多余列
-        stock_all_df = stock_all_df[['ymd', 'htsc_code', 'name', 'exchange']]
-        filtered_df = stock_all_df[~stock_all_df['name'].str.contains('ST|退|B')]
+        stock_all_df.rename(columns={'htsc_code': 'stock_code', 'name': 'stock_name'}, inplace=True)
+
+        stock_all_df = stock_all_df[['ymd', 'stock_code', 'stock_name', 'exchange']]
+        filtered_df = stock_all_df[~stock_all_df['stock_name'].str.contains('ST|退|B')]
 
         #  5.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
-        filtered_df = filtered_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
+        filtered_df = filtered_df.drop_duplicates(subset=['ymd', 'stock_code'], keep='first')
 
         #  6.已上市状态stock_codes
         self.stock_code_df = filtered_df
@@ -7079,17 +7079,15 @@ class SaveInsightHistoryData:
 
         #  9.日期格式转换
         kline_total_df['time'] = pd.to_datetime(kline_total_df['time']).dt.strftime('%Y%m%d')
-        kline_total_df.rename(columns={'time': 'ymd'}, inplace=True)
+        kline_total_df.rename(columns={'time': 'ymd', 'htsc_code': 'stock_code'}, inplace=True)
 
         #  10.声明所有的列名，去除value列
-        kline_total_df = kline_total_df[['htsc_code', 'ymd', 'open', 'close', 'high', 'low', 'num_trades', 'volume']]
+        kline_total_df = kline_total_df[['stock_code', 'ymd', 'open', 'close', 'high', 'low', 'num_trades', 'volume']]
 
         #  11.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
         # kline_total_df = kline_total_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
 
-
         ############################   文件输出模块     ############################
-
         if platform.system() == "Windows":
             #  13.结果数据保存到 本地 mysql中
             mysql_utils.data_from_dataframe_to_mysql(user=local_user,
@@ -7098,7 +7096,7 @@ class SaveInsightHistoryData:
                                                      database=local_database,
                                                      df=kline_total_df,
                                                      table_name="ods_stock_kline_daily_insight",
-                                                     merge_on=['ymd', 'htsc_code'])
+                                                     merge_on=['ymd', 'stock_code'])
 
             #  14.结果数据保存到 远端 mysql中
             mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
@@ -7107,7 +7105,7 @@ class SaveInsightHistoryData:
                                                      database=origin_database,
                                                      df=kline_total_df,
                                                      table_name="ods_stock_kline_daily_insight",
-                                                     merge_on=['ymd', 'htsc_code'])
+                                                     merge_on=['ymd', 'stock_code'])
         else:
             #  14.结果数据保存到 远端 mysql中
             mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
@@ -7116,7 +7114,7 @@ class SaveInsightHistoryData:
                                                      database=origin_database,
                                                      df=kline_total_df,
                                                      table_name="ods_stock_kline_daily_insight",
-                                                     merge_on=['ymd', 'htsc_code'])
+                                                     merge_on=['ymd', 'stock_code'])
 
 
     @timing_decorator
@@ -7166,16 +7164,16 @@ class SaveInsightHistoryData:
 
         #  5.日期格式转换
         index_df['time'] = pd.to_datetime(index_df['time']).dt.strftime('%Y%m%d')
-        index_df.rename(columns={'time': 'ymd'}, inplace=True)
+        index_df.rename(columns={'time': 'ymd', 'htsc_code': 'index_code', 'name': 'index_name'}, inplace=True)
 
         #  6.根据映射关系，添加stock_name
-        index_df['name'] = index_df['htsc_code'].map(index_dict)
+        index_df['index_name'] = index_df['index_code'].map(index_dict)
 
         #  7.声明所有的列名，去除多余列
-        index_df = index_df[['htsc_code', 'name', 'ymd', 'open', 'close', 'high', 'low', 'volume']]
+        index_df = index_df[['index_code', 'index_name', 'ymd', 'open', 'close', 'high', 'low', 'volume']]
 
         #  8.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
-        index_df = index_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
+        index_df = index_df.drop_duplicates(subset=['ymd', 'index_code'], keep='first')
 
         ############################   文件输出模块     ############################
         if platform.system() == "Windows":
@@ -7186,7 +7184,7 @@ class SaveInsightHistoryData:
                                                      database=local_database,
                                                      df=index_df,
                                                      table_name="ods_index_a_share_insight",
-                                                     merge_on=['ymd', 'htsc_code'])
+                                                     merge_on=['ymd', 'index_code'])
 
             #  11.结果数据保存到 远端 mysql中
             mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
@@ -7195,7 +7193,7 @@ class SaveInsightHistoryData:
                                                      database=origin_database,
                                                      df=index_df,
                                                      table_name="ods_index_a_share_insight",
-                                                     merge_on=['ymd', 'htsc_code'])
+                                                     merge_on=['ymd', 'index_code'])
         else:
             #  11.结果数据保存到 远端 mysql中
             mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
@@ -7204,7 +7202,7 @@ class SaveInsightHistoryData:
                                                      database=origin_database,
                                                      df=index_df,
                                                      table_name="ods_index_a_share_insight",
-                                                     merge_on=['ymd', 'htsc_code'])
+                                                     merge_on=['ymd', 'index_code'])
 
 
     @timing_decorator
@@ -7343,14 +7341,14 @@ class SaveInsightHistoryData:
 
         #  5.日期格式转换
         future_inside_df['time'] = pd.to_datetime(future_inside_df['time']).dt.strftime('%Y%m%d')
-        future_inside_df.rename(columns={'time': 'ymd'}, inplace=True)
+        future_inside_df.rename(columns={'time': 'ymd', 'htsc_code':'stock_code'}, inplace=True)
 
         #  6.声明所有的列名，去除多余列
         future_inside_df = future_inside_df[
-            ['htsc_code', 'ymd', 'open', 'close', 'high', 'low', 'volume', 'open_interest', 'settle']]
+            ['stock_code', 'ymd', 'open', 'close', 'high', 'low', 'volume', 'open_interest', 'settle']]
 
         #  7.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
-        future_inside_df = future_inside_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
+        future_inside_df = future_inside_df.drop_duplicates(subset=['ymd', 'stock_code'], keep='first')
 
         ############################   文件输出模块     ############################
         if platform.system() == "Windows":
@@ -7361,7 +7359,7 @@ class SaveInsightHistoryData:
                                                      database=local_database,
                                                      df=future_inside_df,
                                                      table_name="ods_future_inside_insight",
-                                                     merge_on=['ymd', 'htsc_code'])
+                                                     merge_on=['ymd', 'stock_code'])
 
             #  10.结果数据保存到 远端 mysql中
             mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
@@ -7370,7 +7368,7 @@ class SaveInsightHistoryData:
                                                      database=origin_database,
                                                      df=future_inside_df,
                                                      table_name="ods_future_inside_insight",
-                                                     merge_on=['ymd', 'htsc_code'])
+                                                     merge_on=['ymd', 'stock_code'])
         else:
             #  10.结果数据保存到 远端 mysql中
             mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
@@ -7379,7 +7377,7 @@ class SaveInsightHistoryData:
                                                      database=origin_database,
                                                      df=future_inside_df,
                                                      table_name="ods_future_inside_insight",
-                                                     merge_on=['ymd', 'htsc_code'])
+                                                     merge_on=['ymd', 'stock_code'])
 
 
     @timing_decorator
@@ -7434,25 +7432,21 @@ class SaveInsightHistoryData:
         sys.stdout.write("\n")
 
         #  5.日期格式转换
-        shareholder_num_df.rename(columns={'end_date': 'ymd'}, inplace=True)
+        shareholder_num_df.rename(columns={'end_date': 'ymd', 'htsc_code': 'stock_code', 'name': 'stock_name'}, inplace=True)
         shareholder_num_df['ymd'] = pd.to_datetime(shareholder_num_df['ymd']).dt.strftime('%Y%m%d')
 
-        north_bound_df.rename(columns={'trading_day': 'ymd'}, inplace=True)
+        north_bound_df.rename(columns={'trading_day': 'ymd', 'htsc_code': 'stock_code'}, inplace=True)
         north_bound_df['ymd'] = pd.to_datetime(shareholder_num_df['ymd']).dt.strftime('%Y%m%d')
 
         #  6.声明所有的列名，去除多余列
-        shareholder_num_df = shareholder_num_df[['htsc_code', 'name', 'ymd', 'total_sh', 'avg_share', 'pct_of_total_sh', 'pct_of_avg_sh']]
-        north_bound_df = north_bound_df[['htsc_code', 'ymd', 'sh_hkshare_hold', 'pct_total_share']]
+        shareholder_num_df = shareholder_num_df[['stock_code', 'stock_name', 'ymd', 'total_sh', 'avg_share', 'pct_of_total_sh', 'pct_of_avg_sh']]
+        north_bound_df = north_bound_df[['stock_code', 'ymd', 'sh_hkshare_hold', 'pct_total_share']]
 
         #  7.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
-        shareholder_num_df = shareholder_num_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
-        north_bound_df = north_bound_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
+        shareholder_num_df = shareholder_num_df.drop_duplicates(subset=['ymd', 'stock_code'], keep='first')
+        north_bound_df = north_bound_df.drop_duplicates(subset=['ymd', 'stock_code'], keep='first')
 
         ############################   文件输出模块     ############################
-        #  8.更新dataframe
-        self.shareholder_num_df = shareholder_num_df
-        self.north_bound_df = north_bound_df
-
         if platform.system() == "Windows":
             #  9.结果数据保存到 本地 mysql中
             mysql_utils.data_from_dataframe_to_mysql(user=local_user,
@@ -7461,7 +7455,7 @@ class SaveInsightHistoryData:
                                                      database=local_database,
                                                      df=shareholder_num_df,
                                                      table_name="ods_shareholder_num",
-                                                     merge_on=['ymd', 'htsc_code'])
+                                                     merge_on=['ymd', 'stock_code'])
 
             mysql_utils.data_from_dataframe_to_mysql(user=local_user,
                                                      password=local_password,
@@ -7469,7 +7463,7 @@ class SaveInsightHistoryData:
                                                      database=local_database,
                                                      df=north_bound_df,
                                                      table_name="ods_north_bound_daily",
-                                                     merge_on=['ymd', 'htsc_code'])
+                                                     merge_on=['ymd', 'stock_code'])
 
             #  10.结果数据保存到 远端 mysql中
             mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
@@ -7478,7 +7472,7 @@ class SaveInsightHistoryData:
                                                      database=origin_database,
                                                      df=shareholder_num_df,
                                                      table_name="ods_shareholder_num",
-                                                     merge_on=['ymd', 'htsc_code'])
+                                                     merge_on=['ymd', 'stock_code'])
 
             mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
                                                      password=origin_password,
@@ -7486,7 +7480,7 @@ class SaveInsightHistoryData:
                                                      database=origin_database,
                                                      df=north_bound_df,
                                                      table_name="ods_north_bound_daily",
-                                                     merge_on=['ymd', 'htsc_code'])
+                                                     merge_on=['ymd', 'stock_code'])
         else:
             #  10.结果数据保存到 远端 mysql中
             mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
@@ -7495,7 +7489,7 @@ class SaveInsightHistoryData:
                                                      database=origin_database,
                                                      df=shareholder_num_df,
                                                      table_name="ods_shareholder_num",
-                                                     merge_on=['ymd', 'htsc_code'])
+                                                     merge_on=['ymd', 'stock_code'])
 
             mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
                                                      password=origin_password,
@@ -7503,8 +7497,7 @@ class SaveInsightHistoryData:
                                                      database=origin_database,
                                                      df=north_bound_df,
                                                      table_name="ods_north_bound_daily",
-                                                     merge_on=['ymd', 'htsc_code'])
-
+                                                     merge_on=['ymd', 'stock_code'])
 
 
     @timing_decorator
@@ -7537,6 +7530,7 @@ class SaveInsightHistoryData:
 if __name__ == '__main__':
     save_insight_data = SaveInsightHistoryData()
     save_insight_data.setup()
+
 
 ```
 
@@ -9346,18 +9340,17 @@ class FactorLibrary:
                 table_name='ods_stock_kline_daily_insight',
                 start_date=start_date,
                 end_date=end_date,
-                cols=['htsc_code', 'ymd', 'open', 'high', 'low', 'close', 'volume']
+                cols=['stock_code', 'ymd', 'open', 'high', 'low', 'close', 'volume']
             )
 
             if kline_df.empty:
                 return pd.DataFrame()
 
             # 过滤指定股票代码
-            kline_df = kline_df[kline_df['htsc_code'].str.contains(stock_code_clean)]
+            kline_df = kline_df[kline_df['stock_code'].str.contains(stock_code_clean)]
 
             # 数据预处理
             kline_df = convert_ymd_format(kline_df, 'ymd')
-            kline_df.rename(columns={'htsc_code': 'stock_code'}, inplace=True)
 
             return kline_df
 

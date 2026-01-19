@@ -281,16 +281,16 @@ class SaveInsightData:
 
             #  5.日期格式转换
             index_df['time'] = pd.to_datetime(index_df['time']).dt.strftime('%Y%m%d')
-            index_df.rename(columns={'time': 'ymd', 'htsc_code': 'stock_code'}, inplace=True)
+            index_df.rename(columns={'time': 'ymd', 'htsc_code': 'index_code', 'name': 'index_name'}, inplace=True)
 
             #  6.根据映射关系，添加stock_name
-            index_df['name'] = index_df['stock_code'].map(index_dict)
+            index_df['index_name'] = index_df['index_code'].map(index_dict)
 
             #  7.声明所有的列名，去除多余列
-            index_df = index_df[['stock_code', 'name', 'ymd', 'open', 'close', 'high', 'low', 'volume']]
+            index_df = index_df[['index_code', 'index_name', 'ymd', 'open', 'close', 'high', 'low', 'volume']]
 
             #  8.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
-            index_df = index_df.drop_duplicates(subset=['ymd', 'stock_code'], keep='first')
+            index_df = index_df.drop_duplicates(subset=['ymd', 'index_code'], keep='first')
 
             ############################   文件输出模块     ############################
             if platform.system() == "Windows":
@@ -301,7 +301,7 @@ class SaveInsightData:
                                                          database=local_database,
                                                          df=index_df,
                                                          table_name="ods_index_a_share_insight_now",
-                                                         merge_on=['ymd', 'stock_code'])
+                                                         merge_on=['ymd', 'index_code'])
 
                 #  12.结果数据保存到 远端 mysql中
                 mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
@@ -310,7 +310,7 @@ class SaveInsightData:
                                                          database=origin_database,
                                                          df=index_df,
                                                          table_name="ods_index_a_share_insight_now",
-                                                         merge_on=['ymd', 'stock_code'])
+                                                         merge_on=['ymd', 'index_code'])
             else:
                 #  12.结果数据保存到 远端 mysql中
                 mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
@@ -319,7 +319,7 @@ class SaveInsightData:
                                                          database=origin_database,
                                                          df=index_df,
                                                          table_name="ods_index_a_share_insight_now",
-                                                         merge_on=['ymd', 'stock_code'])
+                                                         merge_on=['ymd', 'index_code'])
         else:
             ## insight 返回为空值
             logging.info('    get_index_a_share 的返回值为空值')
