@@ -133,7 +133,8 @@ class SaveAkshareHistoryData:
             column_mapping=column_mapping,
             numeric_columns=numeric_columns,
             date_format='%Y-%m-%d',
-            merge_on=['ymd', 'stock_code']
+            merge_on=['ymd', 'stock_code'],
+            auto_add_stock_code=True
         )
 
     @timing_decorator
@@ -143,116 +144,40 @@ class SaveAkshareHistoryData:
         接口: stock_zh_a_gdhs_detail_em
         说明: 个股的全量历史数据，不可选定日期
         """
-        try:
-            logging.info("开始下载股东户数数据...")
+        column_mapping = {
+            '股东户数统计截止日': 'ymd',
+            '代码': 'stock_code',
+            '名称': 'stock_name',
+            '区间涨跌幅': 'range_change_pct',
+            '股东户数-本次': 'holder_num_current',
+            '股东户数-上次': 'holder_num_last',
+            '股东户数-增减': 'holder_num_change',
+            '股东户数-增减比例': 'holder_num_change_pct',
+            '户均持股市值': 'avg_holder_market',
+            '户均持股数量': 'avg_holder_share_num',
+            '总市值': 'total_market',
+            '总股本': 'total_shares',
+            '股本变动': 'share_change',
+            '股本变动原因': 'share_change_reason',
+            '股东户数公告日期': 'holder_num_announce_date'
+        }
 
-            # 批次处理，避免内存过大
-            if not self.stock_codes:
-                self.get_stock_codes()
+        numeric_columns = [
+            'range_change_pct', 'holder_num_current', 'holder_num_last',
+            'holder_num_change', 'holder_num_change_pct', 'avg_holder_market',
+            'avg_holder_share_num', 'total_market', 'total_shares', 'share_change'
+        ]
 
-            if not self.stock_codes:
-                logging.warning("无股票代码，跳过股东户数数据下载")
-                return
+        return self.downloader.download_to_mysql(
+            ak_function_name='stock_zh_a_gdhs_detail_em',
+            table_name='ods_akshare_stock_zh_a_gdhs_detail_em',
+            column_mapping=column_mapping,
+            numeric_columns=numeric_columns,
+            date_format='%Y-%m-%d',
+            merge_on=['ymd', 'stock_code'],
+            auto_add_stock_code=False
+        )
 
-            batch_size = 50
-            total_batches = (len(self.stock_codes) + batch_size - 1) // batch_size
-            all_data = pd.DataFrame()
-
-            for i in range(0, len(self.stock_codes), batch_size):
-                batch = self.stock_codes[i:i + batch_size]
-                batch_data = pd.DataFrame()
-
-                for stock_code in batch:
-                    try:
-                        # 获取单个股票的股东户数数据
-                        df = ak.stock_zh_a_gdhs_detail_em(symbol=stock_code)
-                        if not df.empty:
-                            df['stock_code'] = stock_code
-                            batch_data = pd.concat([batch_data, df], ignore_index=True)
-                    except Exception as e:
-                        logging.warning(f"股票 {stock_code} 股东户数数据获取失败: {str(e)}")
-                        continue
-
-                all_data = pd.concat([all_data, batch_data], ignore_index=True)
-
-                # 进度显示
-                current_batch = i // batch_size + 1
-                sys.stdout.write(f"\r下载股东户数数据进度: {current_batch}/{total_batches} 批次")
-                sys.stdout.flush()
-                time.sleep(0.5)  # 避免请求过于频繁
-
-            sys.stdout.write("\n")
-
-            if not all_data.empty:
-                # 数据清洗和转换
-                column_mapping = {
-                    '股东户数统计截止日': 'ymd',
-                    '股票代码': 'stock_code',
-                    '股票简称': 'stock_name',
-                    '区间涨跌幅': 'range_change_pct',
-                    '股东户数-本次': 'holder_num_current',
-                    '股东户数-上次': 'holder_num_last',
-                    '股东户数-增减': 'holder_num_change',
-                    '股东户数-增减比例': 'holder_num_change_pct',
-                    '户均持股市值': 'avg_holder_market',
-                    '户均持股数量': 'avg_holder_share_num',
-                    '总市值': 'total_market',
-                    '总股本': 'total_shares',
-                    '股本变动': 'share_change',
-                    '股本变动原因': 'share_change_reason',
-                    '股东户数公告日期': 'holder_num_announce_date'
-                }
-
-                df = all_data.rename(columns=column_mapping)
-                available_columns = [col for col in column_mapping.values() if col in df.columns]
-                df = df[available_columns]
-
-                # 日期格式转换
-                date_columns = ['ymd', 'holder_num_announce_date']
-                for col in date_columns:
-                    if col in df.columns:
-                        df[col] = pd.to_datetime(df[col], errors='coerce').dt.strftime('%Y%m%d')
-
-                # 数值类型转换
-                numeric_columns = ['range_change_pct', 'holder_num_current', 'holder_num_last',
-                                   'holder_num_change', 'holder_num_change_pct', 'avg_holder_market',
-                                   'avg_holder_share_num', 'total_market', 'total_shares', 'share_change']
-                for col in numeric_columns:
-                    if col in df.columns:
-                        df[col] = pd.to_numeric(df[col], errors='coerce')
-
-                # 删除重复记录
-                df = df.drop_duplicates(subset=['ymd', 'stock_code'], keep='first')
-
-                logging.info(f"股东户数数据下载完成，共 {len(df)} 条记录")
-
-                # 保存到MySQL
-                if platform.system() == "Windows":
-                    mysql_utils.data_from_dataframe_to_mysql(
-                        user=local_user,
-                        password=local_password,
-                        host=local_host,
-                        database=local_database,
-                        df=df,
-                        table_name="ods_akshare_stock_zh_a_gdhs_detail_em",
-                        merge_on=['ymd', 'stock_code']
-                    )
-
-                mysql_utils.data_from_dataframe_to_mysql(
-                    user=origin_user,
-                    password=origin_password,
-                    host=origin_host,
-                    database=origin_database,
-                    df=df,
-                    table_name="ods_akshare_stock_zh_a_gdhs_detail_em",
-                    merge_on=['ymd', 'stock_code']
-                )
-
-            else:
-                logging.warning("股东户数数据为空")
-
-        except Exception as e:
-            logging.error(f"下载股东户数数据失败: {str(e)}")
 
     @timing_decorator
     def download_stock_cyq_em(self):
@@ -261,200 +186,120 @@ class SaveAkshareHistoryData:
         接口: stock_cyq_em
         说明: 个股的全量历史数据，不可选定日期
         """
-        try:
-            logging.info("开始下载筹码数据...")
+        column_mapping = {
+            '日期': 'ymd',
+            '获利比例': 'profit_ratio',
+            '平均成本': 'avg_cost',
+            '90成本-低': 'cost_low_90',
+            '90成本-高': 'cost_high_90',
+            '90集中度': 'concentration_90',
+            '70成本-低': 'cost_low_70',
+            '70成本-高': 'cost_high_70',
+            '70集中度': 'concentration_70'
+        }
 
-            # 获取股票代码
-            if not self.stock_codes:
-                self.get_stock_codes()
+        numeric_columns = [
+            'profit_ratio', 'avg_cost', 'cost_low_90', 'cost_high_90',
+            'concentration_90', 'cost_low_70', 'cost_high_70', 'concentration_70'
+        ]
 
-            if not self.stock_codes:
-                logging.warning("无股票代码，跳过筹码数据下载")
-                return
+        return self.downloader.download_to_mysql(
+            ak_function_name='stock_cyq_em',
+            table_name='ods_akshare_stock_cyq_em',
+            column_mapping=column_mapping,
+            numeric_columns=numeric_columns,
+            date_format='%Y-%m-%d',
+            merge_on=['ymd', 'stock_code'],
+            auto_add_stock_code=True,
+            adjust="qfq"  # 添加复权参数，前复权
+        )
 
-            all_data = pd.DataFrame()
-
-            for i, stock_code in enumerate(self.stock_codes):
-                try:
-                    # 获取单个股票的筹码数据
-                    df = ak.stock_cyq_em(symbol=stock_code)
-                    if not df.empty:
-                        df['stock_code'] = stock_code
-                        all_data = pd.concat([all_data, df], ignore_index=True)
-
-                    # 进度显示
-                    if (i + 1) % 100 == 0 or i == len(self.stock_codes) - 1:
-                        sys.stdout.write(f"\r下载筹码数据进度: {i + 1}/{len(self.stock_codes)} 只股票")
-                        sys.stdout.flush()
-
-                    time.sleep(0.1)  # 避免请求过于频繁
-
-                except Exception as e:
-                    logging.warning(f"股票 {stock_code} 筹码数据获取失败: {str(e)}")
-                    continue
-
-            sys.stdout.write("\n")
-
-            if not all_data.empty:
-                # 数据清洗和转换
-                column_mapping = {
-                    '日期': 'ymd',
-                    '股票代码': 'stock_code',
-                    '股票简称': 'stock_name',
-                    '获利比例': 'profit_ratio',
-                    '平均成本': 'avg_cost',
-                    '90成本-低': 'cost_low_90',
-                    '90成本-高': 'cost_high_90',
-                    '90集中度': 'concentration_90',
-                    '70成本-低': 'cost_low_70',
-                    '70成本-高': 'cost_high_70',
-                    '70集中度': 'concentration_70'
-                }
-
-                df = all_data.rename(columns=column_mapping)
-                available_columns = [col for col in column_mapping.values() if col in df.columns]
-                df = df[available_columns]
-
-                # 日期格式转换
-                if 'ymd' in df.columns:
-                    df['ymd'] = pd.to_datetime(df['ymd'], errors='coerce').dt.strftime('%Y%m%d')
-
-                # 数值类型转换
-                numeric_columns = ['profit_ratio', 'avg_cost', 'cost_low_90', 'cost_high_90',
-                                   'concentration_90', 'cost_low_70', 'cost_high_70', 'concentration_70']
-                for col in numeric_columns:
-                    if col in df.columns:
-                        df[col] = pd.to_numeric(df[col], errors='coerce')
-
-                # 删除重复记录
-                df = df.drop_duplicates(subset=['ymd', 'stock_code'], keep='first')
-
-                logging.info(f"筹码数据下载完成，共 {len(df)} 条记录")
-
-                # 保存到MySQL
-                if platform.system() == "Windows":
-                    mysql_utils.data_from_dataframe_to_mysql(
-                        user=local_user,
-                        password=local_password,
-                        host=local_host,
-                        database=local_database,
-                        df=df,
-                        table_name="ods_akshare_stock_cyq_em",
-                        merge_on=['ymd', 'stock_code']
-                    )
-
-                mysql_utils.data_from_dataframe_to_mysql(
-                    user=origin_user,
-                    password=origin_password,
-                    host=origin_host,
-                    database=origin_database,
-                    df=df,
-                    table_name="ods_akshare_stock_cyq_em",
-                    merge_on=['ymd', 'stock_code']
-                )
-
-            else:
-                logging.warning("筹码数据为空")
-
-        except Exception as e:
-            logging.error(f"下载筹码数据失败: {str(e)}")
 
     @timing_decorator
-    def download_stock_yjkb_em(self, date=None):
+    def download_stock_yjkb_em(self):
         """
         下载业绩快报数据 - ods_akshare_stock_yjkb_em
         接口: stock_yjkb_em
-        说明: 全量的每日切片数据，可选定日期
+        说明: 全量的每日切片数据，需要指定日期（YYYY0331, YYYY0630, YYYY0930, YYYY1231）
         """
         try:
-            # 如果没有指定日期，使用今天的日期
-            if date is None:
-                date = DateUtility.today()
+            # 获取当前年份和过去几年的数据
+            current_year = int(DateUtility.today()[:4])
+            years = list(range(2020, current_year + 1))  # 从2020年开始
 
-            logging.info(f"开始下载业绩快报数据，日期: {date}")
+            # 季度对应的日期后缀
+            quarter_dates = ["0331", "0630", "0930", "1231"]
 
-            # 转换日期格式
-            date_obj = datetime.strptime(date, '%Y%m%d')
-            year = date_obj.year
-            quarter = (date_obj.month - 1) // 3 + 1
+            all_data = pd.DataFrame()
 
-            # 获取业绩快报数据
-            df = ak.stock_yjkb_em(date=f"{year}年一季报")  # 这里需要根据实际情况调整
+            # 先收集所有数据
+            for year in years:
+                for date_suffix in quarter_dates:
+                    date_str = f"{year}{date_suffix}"
+                    try:
+                        df = ak.stock_yjkb_em(date=date_str)
+                        if not df.empty:
+                            all_data = pd.concat([all_data, df], ignore_index=True)
+                    except:
+                        continue
 
-            if not df.empty:
-                # 数据清洗和转换
-                column_mapping = {
-                    '公告日期': 'ymd',
-                    '序号': 'serial_num',
-                    '股票代码': 'stock_code',
-                    '股票简称': 'stock_name',
-                    '每股收益': 'eps',
-                    '营业收入-营业收入': 'income',
-                    '营业收入-去年同期': 'income_last_year',
-                    '营业收入-同比增长': 'income_yoy',
-                    '营业收入-季度环比增长': 'income_qoq',
-                    '净利润-净利润': 'profit',
-                    '净利润-去年同期': 'profit_last_year',
-                    '净利润-同比增长': 'profit_yoy',
-                    '净利润-季度环比增长': 'profit_qoq',
-                    '每股净资产': 'asset_per_share',
-                    '净资产收益率': 'roe',
-                    '所处行业': 'industry',
-                    '市场板块': 'market_board',
-                    '证券类型': 'securities_type'
-                }
+            if all_data.empty:
+                logging.warning("业绩快报数据为空")
+                return False
 
-                df = df.rename(columns=column_mapping)
-                available_columns = [col for col in column_mapping.values() if col in df.columns]
-                df = df[available_columns]
+            # 列映射
+            column_mapping = {
+                '序号': 'serial_num',
+                '股票代码': 'stock_code',
+                '股票简称': 'stock_name',
+                '每股收益': 'eps',
+                '营业收入-营业收入': 'income',
+                '营业收入-去年同期': 'income_last_year',
+                '营业收入-同比增长': 'income_yoy',
+                '营业收入-季度环比增长': 'income_qoq',
+                '净利润-净利润': 'profit',
+                '净利润-去年同期': 'profit_last_year',
+                '净利润-同比增长': 'profit_yoy',
+                '净利润-季度环比增长': 'profit_qoq',
+                '每股净资产': 'asset_per_share',
+                '净资产收益率': 'roe',
+                '所处行业': 'industry',
+                '公告日期': 'ymd',
+                '市场板块': 'market_board',
+                '证券类型': 'securities_type'
+            }
 
-                # 日期格式转换
-                if 'ymd' in df.columns:
-                    df['ymd'] = pd.to_datetime(df['ymd'], errors='coerce').dt.strftime('%Y%m%d')
+            numeric_columns = [
+                'serial_num', 'eps', 'income', 'income_last_year', 'income_yoy', 'income_qoq',
+                'profit', 'profit_last_year', 'profit_yoy', 'profit_qoq',
+                'asset_per_share', 'roe'
+            ]
 
-                # 数值类型转换
-                numeric_columns = ['eps', 'income', 'income_last_year', 'income_qoq',
-                                   'profit', 'profit_last_year', 'profit_qoq', 'asset_per_share', 'roe']
-                for col in numeric_columns:
-                    if col in df.columns:
-                        # 处理百分比和特殊字符
-                        if col in ['income_yoy', 'profit_yoy']:
-                            df[col] = df[col].astype(str).str.replace('%', '').astype(float)
-                        else:
-                            df[col] = pd.to_numeric(df[col], errors='coerce')
+            # 处理数据
+            processed_df = self.downloader._process_data(
+                all_data=all_data,
+                column_mapping=column_mapping,
+                date_column='ymd',
+                date_format='%Y-%m-%d',
+                numeric_columns=numeric_columns,
+                table_name='ods_akshare_stock_yjkb_em'
+            )
 
-                # 删除重复记录
-                df = df.drop_duplicates(subset=['ymd', 'stock_code'], keep='first')
+            if processed_df.empty:
+                return False
 
-                logging.info(f"业绩快报数据下载完成，共 {len(df)} 条记录")
-
-                # 保存到MySQL
-                if platform.system() == "Windows":
-                    mysql_utils.data_from_dataframe_to_mysql(
-                        user=local_user,
-                        password=local_password,
-                        host=local_host,
-                        database=local_database,
-                        df=df,
-                        table_name="ods_akshare_stock_yjkb_em",
-                        merge_on=['ymd', 'stock_code']
-                    )
-
-                mysql_utils.data_from_dataframe_to_mysql(
-                    user=origin_user,
-                    password=origin_password,
-                    host=origin_host,
-                    database=origin_database,
-                    df=df,
-                    table_name="ods_akshare_stock_yjkb_em",
-                    merge_on=['ymd', 'stock_code']
-                )
-
-            else:
-                logging.warning(f"日期 {date} 的业绩快报数据为空")
+            # 保存到MySQL
+            return self.downloader._save_to_mysql(
+                df=processed_df,
+                table_name='ods_akshare_stock_yjkb_em',
+                merge_on=['ymd', 'stock_code']
+            )
 
         except Exception as e:
             logging.error(f"下载业绩快报数据失败: {str(e)}")
+            return False
+
+
 
     @timing_decorator
     def download_stock_yjyg_em(self, date=None):

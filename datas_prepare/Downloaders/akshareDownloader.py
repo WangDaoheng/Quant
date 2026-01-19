@@ -16,8 +16,6 @@ from CommonProperties.DateUtility import DateUtility
 from CommonProperties.Base_utils import timing_decorator
 
 
-
-
 class AkshareDownloader:
     """akshare数据下载器 - 通用工具类"""
 
@@ -56,6 +54,8 @@ class AkshareDownloader:
                           date_column='ymd',  # 日期列名
                           date_format='%Y-%m-%d',  # 日期格式
                           numeric_columns=None,  # 数值列列表，自动识别
+                          auto_add_stock_code=True,  # 新增：是否自动添加stock_code列
+                          special_processing=None,  # 特殊处理函数
                           **kwargs):  # 传递给akshare函数的其他参数
         """
         通用下载函数：逐个股票下载akshare数据并保存到MySQL
@@ -71,6 +71,8 @@ class AkshareDownloader:
             date_column: 日期列名
             date_format: 日期格式
             numeric_columns: 数值列列表，None则自动识别
+            auto_add_stock_code: 是否自动添加stock_code列（默认True）
+            special_processing: 特殊处理函数，用于额外的数据处理
             **kwargs: 传递给akshare函数的其他参数
         """
         try:
@@ -103,7 +105,9 @@ class AkshareDownloader:
                         df = ak_function(**params)
 
                         if not df.empty:
-                            df['stock_code'] = stock_code
+                            # 只在需要时添加stock_code列
+                            if auto_add_stock_code and 'stock_code' not in df.columns:
+                                df['stock_code'] = stock_code
                             batch_data = pd.concat([batch_data, df], ignore_index=True)
 
                     except Exception as e:
@@ -136,6 +140,14 @@ class AkshareDownloader:
             if df.empty:
                 logging.warning(f"{table_name}数据处理后为空")
                 return False
+
+            # 特殊处理（如果有）
+            if special_processing and callable(special_processing):
+                try:
+                    df = special_processing(df)
+                    logging.info(f"特殊处理完成，处理后记录数: {len(df)}")
+                except Exception as e:
+                    logging.warning(f"特殊处理失败: {str(e)}")
 
             # 保存到MySQL
             success = self._save_to_mysql(df, table_name, merge_on or [date_column, 'stock_code'])
@@ -181,7 +193,11 @@ class AkshareDownloader:
 
             for col in num_cols_to_convert:
                 try:
-                    df[col] = pd.to_numeric(df[col], errors='coerce')
+                    # 处理百分比符号
+                    if df[col].dtype == 'object' and df[col].astype(str).str.contains('%').any():
+                        df[col] = df[col].astype(str).str.replace('%', '').astype(float)
+                    else:
+                        df[col] = pd.to_numeric(df[col], errors='coerce')
                 except Exception as e:
                     logging.warning(f"列 {col} 数值转换失败: {str(e)}")
 
@@ -194,12 +210,17 @@ class AkshareDownloader:
             if required_cols:
                 df = df.dropna(subset=required_cols)
 
+            # 7. 重置索引
+            df = df.reset_index(drop=True)
+
             logging.info(f"{table_name}数据清洗完成，共 {len(df)} 条记录，{df['stock_code'].nunique()} 只股票")
 
             return df
 
         except Exception as e:
             logging.error(f"数据处理失败: {str(e)}")
+            import traceback
+            logging.error(traceback.format_exc())
             return pd.DataFrame()
 
     def _save_to_mysql(self, df, table_name, merge_on):
@@ -231,9 +252,130 @@ class AkshareDownloader:
 
         except Exception as e:
             logging.error(f"保存到MySQL失败: {str(e)}")
+            import traceback
+            logging.error(traceback.format_exc())
             return False
 
+    def download_single_to_mysql(self,
+                                 ak_function_name,
+                                 table_name,
+                                 column_mapping,
+                                 merge_on=None,
+                                 date_column='ymd',
+                                 date_format='%Y-%m-%d',
+                                 numeric_columns=None,
+                                 **kwargs):
+        """
+        下载不需要股票代码的单一数据表到MySQL
 
+        Args:
+            ak_function_name: akshare函数名
+            table_name: MySQL表名
+            column_mapping: 列名映射字典
+            merge_on: 去重字段
+            date_column: 日期列名
+            date_format: 日期格式
+            numeric_columns: 数值列列表
+            **kwargs: 传递给akshare函数的参数
+        """
+        try:
+            # 获取akshare函数
+            try:
+                ak_function = getattr(ak, ak_function_name)
+            except AttributeError:
+                logging.error(f"akshare函数 {ak_function_name} 不存在")
+                return False
 
+            logging.info(f"开始下载{table_name}数据")
 
+            # 获取数据
+            df = ak_function(**kwargs)
 
+            if df.empty:
+                logging.warning(f"{table_name}数据为空")
+                return False
+
+            # 数据处理
+            df = self._process_data(
+                df, column_mapping, date_column,
+                date_format, numeric_columns, table_name
+            )
+
+            if df.empty:
+                logging.warning(f"{table_name}数据处理后为空")
+                return False
+
+            # 保存到MySQL
+            success = self._save_to_mysql(df, table_name, merge_on or [date_column])
+
+            return success
+
+        except Exception as e:
+            logging.error(f"下载{table_name}数据失败: {str(e)}")
+            import traceback
+            logging.error(traceback.format_exc())
+            return False
+
+    def batch_download_with_date(self,
+                                 ak_function_name,
+                                 table_name,
+                                 column_mapping,
+                                 start_date,
+                                 end_date,
+                                 merge_on=None,
+                                 date_column='ymd',
+                                 date_format='%Y-%m-%d',
+                                 numeric_columns=None,
+                                 **kwargs):
+        """
+        按日期批量下载数据到MySQL
+
+        Args:
+            ak_function_name: akshare函数名
+            table_name: MySQL表名
+            column_mapping: 列名映射字典
+            start_date: 开始日期
+            end_date: 结束日期
+            merge_on: 去重字段
+            date_column: 日期列名
+            date_format: 日期格式
+            numeric_columns: 数值列列表
+            **kwargs: 其他参数
+        """
+        try:
+            # 获取akshare函数
+            try:
+                ak_function = getattr(ak, ak_function_name)
+            except AttributeError:
+                logging.error(f"akshare函数 {ak_function_name} 不存在")
+                return False
+
+            logging.info(f"开始批量下载{table_name}数据，日期范围: {start_date} ~ {end_date}")
+
+            # 获取数据
+            df = ak_function(start_date=start_date, end_date=end_date, **kwargs)
+
+            if df.empty:
+                logging.warning(f"{table_name}数据为空")
+                return False
+
+            # 数据处理
+            df = self._process_data(
+                df, column_mapping, date_column,
+                date_format, numeric_columns, table_name
+            )
+
+            if df.empty:
+                logging.warning(f"{table_name}数据处理后为空")
+                return False
+
+            # 保存到MySQL
+            success = self._save_to_mysql(df, table_name, merge_on or [date_column])
+
+            return success
+
+        except Exception as e:
+            logging.error(f"批量下载{table_name}数据失败: {str(e)}")
+            import traceback
+            logging.error(traceback.format_exc())
+            return False
