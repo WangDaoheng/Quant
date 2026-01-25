@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+import time
+import random
+import requests
 import os
 import sys
 import time
@@ -137,7 +140,7 @@ class SaveAkshareHistoryData:
             auto_add_stock_code=True
         )
 
-    @timing_decorator
+    # @timing_decorator
     def download_stock_zh_a_gdhs_detail_em(self):
         """
         下载股东户数数据 - ods_akshare_stock_zh_a_gdhs_detail_em
@@ -179,7 +182,7 @@ class SaveAkshareHistoryData:
         )
 
 
-    @timing_decorator
+    # @timing_decorator
     def download_stock_cyq_em(self):
         """
         下载筹码数据 - ods_akshare_stock_cyq_em
@@ -215,7 +218,7 @@ class SaveAkshareHistoryData:
         )
 
 
-    @timing_decorator
+    # @timing_decorator
     def download_stock_yjkb_em(self):
         """
         下载业绩快报数据 - ods_akshare_stock_yjkb_em
@@ -301,166 +304,148 @@ class SaveAkshareHistoryData:
 
 
 
-    @timing_decorator
-    def download_stock_yjyg_em(self, date=None):
+    # @timing_decorator
+    def download_stock_yjyg_em(self):
         """
         下载业绩预告数据 - ods_akshare_stock_yjyg_em
         接口: stock_yjyg_em
-        说明: 全量的每日切片数据，可选定日期
+        说明: 全量的每日切片数据，需要指定日期（YYYY0331, YYYY0630, YYYY0930, YYYY1231）
         """
         try:
-            # 如果没有指定日期，使用今天的日期
-            if date is None:
-                date = DateUtility.today()
+            # 获取当前年份和过去几年的数据
+            current_year = int(DateUtility.today()[:4])
+            years = list(range(2020, current_year + 1))  # 从2020年开始
 
-            logging.info(f"开始下载业绩预告数据，日期: {date}")
+            # 季度对应的日期后缀
+            quarter_dates = ["0331", "0630", "0930", "1231"]
 
-            # 获取业绩预告数据
-            df = ak.stock_yjyg_em(date=date)
+            all_data = pd.DataFrame()
 
-            if not df.empty:
-                # 数据清洗和转换
-                column_mapping = {
-                    '公告日期': 'ymd',
-                    '序号': 'serial_num',
-                    '股票代码': 'stock_code',
-                    '股票简称': 'stock_name',
-                    '预测指标': 'forecast_index',
-                    '业绩变动': 'performance_change',
-                    '预测数值': 'forecast_value',
-                    '业绩变动幅度': 'change_pct',
-                    '业绩变动原因': 'change_reason',
-                    '预告类型': 'forecast_type',
-                    '上年同期值': 'last_year_value'
-                }
+            # 先收集所有数据
+            for year in years:
+                for date_suffix in quarter_dates:
+                    date_str = f"{year}{date_suffix}"
+                    try:
+                        df = ak.stock_yjyg_em(date=date_str)
+                        if df is not None and not df.empty:
+                            all_data = pd.concat([all_data, df], ignore_index=True)
+                    except:
+                        continue
 
-                df = df.rename(columns=column_mapping)
-                available_columns = [col for col in column_mapping.values() if col in df.columns]
-                df = df[available_columns]
+            if all_data.empty:
+                logging.warning("业绩预告数据为空")
+                return False
 
-                # 日期格式转换
-                if 'ymd' in df.columns:
-                    df['ymd'] = pd.to_datetime(df['ymd'], errors='coerce').dt.strftime('%Y%m%d')
+            # 列映射
+            column_mapping = {
+                '公告日期': 'ymd',
+                '序号': 'serial_num',
+                '股票代码': 'stock_code',
+                '股票简称': 'stock_name',
+                '预测指标': 'forecast_index',
+                '业绩变动': 'performance_change',
+                '预测数值': 'forecast_value',
+                '业绩变动幅度': 'change_pct',
+                '业绩变动原因': 'change_reason',
+                '预告类型': 'forecast_type',
+                '上年同期值': 'last_year_value'
+            }
 
-                # 数值类型转换
-                numeric_columns = ['forecast_index', 'performance_change', 'forecast_value',
-                                   'change_pct', 'last_year_value']
-                for col in numeric_columns:
-                    if col in df.columns:
-                        if col == 'change_pct':
-                            df[col] = df[col].astype(str).str.replace('%', '').astype(float)
-                        else:
-                            df[col] = pd.to_numeric(df[col], errors='coerce')
+            numeric_columns = [
+                'serial_num', 'forecast_index', 'performance_change', 'forecast_value',
+                'change_pct', 'last_year_value'
+            ]
 
-                # 删除重复记录
-                df = df.drop_duplicates(subset=['ymd', 'stock_code'], keep='first')
+            # 处理数据
+            processed_df = self.downloader._process_data(
+                all_data=all_data,
+                column_mapping=column_mapping,
+                date_column='ymd',
+                date_format='%Y-%m-%d',
+                numeric_columns=numeric_columns,
+                table_name='ods_akshare_stock_yjyg_em'
+            )
 
-                logging.info(f"业绩预告数据下载完成，共 {len(df)} 条记录")
+            if processed_df.empty:
+                return False
 
-                # 保存到MySQL
-                if platform.system() == "Windows":
-                    mysql_utils.data_from_dataframe_to_mysql(
-                        user=local_user,
-                        password=local_password,
-                        host=local_host,
-                        database=local_database,
-                        df=df,
-                        table_name="ods_akshare_stock_yjyg_em",
-                        merge_on=['ymd', 'stock_code']
-                    )
-
-                mysql_utils.data_from_dataframe_to_mysql(
-                    user=origin_user,
-                    password=origin_password,
-                    host=origin_host,
-                    database=origin_database,
-                    df=df,
-                    table_name="ods_akshare_stock_yjyg_em",
-                    merge_on=['ymd', 'stock_code']
-                )
-
-            else:
-                logging.warning(f"日期 {date} 的业绩预告数据为空")
+            # 保存到MySQL
+            return self.downloader._save_to_mysql(
+                df=processed_df,
+                table_name='ods_akshare_stock_yjyg_em',
+                merge_on=['ymd', 'stock_code']
+            )
 
         except Exception as e:
             logging.error(f"下载业绩预告数据失败: {str(e)}")
+            return False
 
-    @timing_decorator
-    def download_stock_a_high_low_statistics(self, symbol="沪深300"):
+
+    # @timing_decorator
+    def download_stock_a_high_low_statistics(self):
         """
         下载大盘高低统计数据 - ods_akshare_stock_a_high_low_statistics
-        接口: stock_a_high_low_statistics
-        说明: 全量的每日切片数据，不可指定日期
+        下载所有市场类型：全部A股、上证50、沪深300、中证500
         """
-        try:
-            logging.info(f"开始下载大盘高低统计数据，指数: {symbol}")
+        # 复用通用的数据处理和保存逻辑
+        markets = ["all", "sz50", "hs300", "zz500"]
 
-            # 获取数据
-            df = ak.stock_a_high_low_statistics(symbol=symbol)
+        # 获取数据
+        all_data = pd.DataFrame()
+        for market in markets:
+            try:
+                df = ak.stock_a_high_low_statistics(symbol=market)
+                if df is not None and not df.empty:
+                    df['market'] = market
+                    all_data = pd.concat([all_data, df], ignore_index=True)
+            except Exception as e:
+                logging.warning(f"获取 {market} 数据失败: {str(e)[:100]}")
+                continue
 
-            if not df.empty:
-                # 数据清洗和转换
-                column_mapping = {
-                    '交易日': 'ymd',
-                    '股票代码': 'stock_code',
-                    '股票名称': 'stock_name',
-                    '相关指数收盘价': 'close',
-                    '20日新高': 'high20',
-                    '20日新低': 'low20',
-                    '60日新高': 'high60',
-                    '60日新低': 'low60',
-                    '120日新高': 'high120',
-                    '120日新低': 'low120'
-                }
+        if all_data.empty:
+            logging.warning("大盘高低统计数据为空")
+            return False
 
-                df = df.rename(columns=column_mapping)
-                available_columns = [col for col in column_mapping.values() if col in df.columns]
-                df = df[available_columns]
+        # 直接使用downloader的数据处理和保存方法
+        column_mapping = {
+            'date': 'ymd',
+            'close': 'close',
+            'high20': 'high20',
+            'low20': 'low20',
+            'high60': 'high60',
+            'low60': 'low60',
+            'high120': 'high120',
+            'low120': 'low120'
+        }
 
-                # 日期格式转换
-                if 'ymd' in df.columns:
-                    df['ymd'] = pd.to_datetime(df['ymd'], errors='coerce').dt.strftime('%Y%m%d')
+        numeric_columns = [
+            'close', 'high20', 'low20', 'high60',
+            'low60', 'high120', 'low120'
+        ]
 
-                # 数值类型转换
-                numeric_columns = ['close', 'high20', 'low20', 'high60', 'low60', 'high120', 'low120']
-                for col in numeric_columns:
-                    if col in df.columns:
-                        df[col] = pd.to_numeric(df[col], errors='coerce')
+        # 使用_process_data处理数据
+        processed_df = self.downloader._process_data(
+            all_data=all_data,
+            column_mapping=column_mapping,
+            date_column='ymd',
+            date_format='%Y%m%d',
+            numeric_columns=numeric_columns,
+            table_name='ods_akshare_stock_a_high_low_statistics'
+        )
 
-                # 删除重复记录
-                df = df.drop_duplicates(subset=['ymd', 'stock_code'], keep='first')
+        # 使用_save_to_mysql保存数据
+        if not processed_df.empty:
+            return self.downloader._save_to_mysql(
+                df=processed_df,
+                table_name='ods_akshare_stock_a_high_low_statistics',
+                merge_on=['ymd', 'market']
+            )
 
-                logging.info(f"大盘高低统计数据下载完成，共 {len(df)} 条记录")
+        return False
 
-                # 保存到MySQL
-                if platform.system() == "Windows":
-                    mysql_utils.data_from_dataframe_to_mysql(
-                        user=local_user,
-                        password=local_password,
-                        host=local_host,
-                        database=local_database,
-                        df=df,
-                        table_name="ods_akshare_stock_a_high_low_statistics",
-                        merge_on=['ymd', 'stock_code']
-                    )
 
-                mysql_utils.data_from_dataframe_to_mysql(
-                    user=origin_user,
-                    password=origin_password,
-                    host=origin_host,
-                    database=origin_database,
-                    df=df,
-                    table_name="ods_akshare_stock_a_high_low_statistics",
-                    merge_on=['ymd', 'stock_code']
-                )
 
-            else:
-                logging.warning(f"指数 {symbol} 的大盘高低统计数据为空")
-
-        except Exception as e:
-            logging.error(f"下载大盘高低统计数据失败: {str(e)}")
-
-    @timing_decorator
+    # @timing_decorator
     def download_stock_zh_a_spot_em(self):
         """
         下载个股行情数据 - ods_akshare_stock_zh_a_spot_em
@@ -557,273 +542,561 @@ class SaveAkshareHistoryData:
         except Exception as e:
             logging.error(f"下载个股行情数据失败: {str(e)}")
 
-    @timing_decorator
+    # @timing_decorator
+    # def download_stock_board_concept_name_em(self):
+    #     """
+    #     下载板块概念数据 - ods_akshare_board_concept_name_em
+    #     接口: stock_board_concept_name_em
+    #     说明: 所有板块概念的基本信息，获取全部板块
+    #     """
+    #     try:
+    #         logging.info("开始下载板块概念数据...")
+    #
+    #         # 获取所有板块数据
+    #         df = ak.stock_board_concept_name_em()
+    #
+    #         if df.empty:
+    #             logging.warning("板块概念数据为空")
+    #             return False
+    #
+    #         # 添加日期列
+    #         today = DateUtility.today()
+    #         df['ymd'] = today
+    #
+    #         logging.info(f"板块概念数据获取完成，共 {len(df)} 条记录")
+    #
+    #         # 列映射
+    #         column_mapping = {
+    #             '排名': 'ranking',
+    #             '板块名称': 'board_name',
+    #             '板块代码': 'board_code',
+    #             '最新价': 'close',
+    #             '涨跌额': 'change_amt',
+    #             '涨跌幅': 'change_pct',
+    #             '总市值': 'total_market',
+    #             '换手率': 'turnover_rate',
+    #             '上涨家数': 'rising_stocks_num',
+    #             '下跌家数': 'falling_stocks_num',
+    #             '领涨股票': 'leading_stock',
+    #             '领涨股票-涨跌幅': 'leading_stock_pct'
+    #         }
+    #
+    #         numeric_columns = [
+    #             'ranking', 'close', 'change_amt', 'total_market',
+    #             'rising_stocks_num', 'falling_stocks_num',
+    #             'change_pct', 'turnover_rate', 'leading_stock_pct'
+    #         ]
+    #
+    #         # 使用downloader的数据处理方法
+    #         processed_df = self.downloader._process_data(
+    #             all_data=df,
+    #             column_mapping=column_mapping,
+    #             date_column='ymd',
+    #             date_format='%Y%m%d',
+    #             numeric_columns=numeric_columns,
+    #             table_name='ods_akshare_board_concept_name_em'
+    #         )
+    #
+    #         if processed_df.empty:
+    #             logging.warning("板块概念数据处理后为空")
+    #             return False
+    #
+    #         # 使用downloader的保存方法
+    #         success = self.downloader._save_to_mysql(
+    #             df=processed_df,
+    #             table_name='ods_akshare_board_concept_name_em',
+    #             merge_on=['ymd', 'board_code']
+    #         )
+    #
+    #         if success:
+    #             logging.info(
+    #                 f"板块概念数据保存成功，共 {len(processed_df)} 条记录，{processed_df['board_code'].nunique()} 个板块")
+    #         else:
+    #             logging.error("板块概念数据保存失败")
+    #
+    #         return success
+    #
+    #     except Exception as e:
+    #         logging.error(f"下载板块概念数据失败: {str(e)}")
+    #         import traceback
+    #         logging.error(traceback.format_exc())
+    #         return False
+
     def download_stock_board_concept_name_em(self):
-        """
-        下载板块行情数据 - ods_akshare_stock_board_concept_name_em
-        接口: stock_board_concept_name_em
-        说明: 全量的每日切片数据，不可指定日期
-        """
+        """下载板块概念数据 - 避免分页请求"""
         try:
-            logging.info("开始下载板块行情数据...")
+            logging.info("开始下载板块概念数据...")
 
-            # 获取板块数据
-            df = ak.stock_board_concept_name_em()
+            import time
+            import random
+            import requests
+            import pandas as pd
 
-            if not df.empty:
-                # 添加日期列（今天）
-                today = DateUtility.today()
-                df['ymd'] = today
+            # 直接调用API，避免使用akshare的分页函数
+            url = "https://79.push2.eastmoney.com/api/qt/clist/get"
 
-                # 数据清洗和转换
-                column_mapping = {
-                    '排名': 'ranking',
-                    '板块名称': 'board_name',
-                    '板块代码': 'board_code',
-                    '最新价': 'close',
-                    '涨跌额': 'change_amt',
-                    '涨跌幅': 'change_pct',
-                    '总市值': 'total_market',
-                    '换手率': 'turnover_rate',
-                    '上涨家数': 'rising_stocks_num',
-                    '下跌家数': 'falling_stocks_num',
-                    '领涨股票': 'leading_stock',
-                    '领涨股票-涨跌幅': 'leading_stock_pct'
-                }
+            # 关键：设置很大的pz参数，一次性获取所有数据
+            params = {
+                "pn": "1",
+                "pz": "1000",  # 设置足够大的值，一次性获取所有板块
+                "po": "1",
+                "np": "1",
+                "ut": "bd1d9ddb04089700cf9c27f6f7426281",
+                "fltt": "2",
+                "invt": "2",
+                "fid": "f12",
+                "fs": "m:90 t:3 f:!50",
+                "fields": "f2,f3,f4,f8,f12,f14,f15,f16,f17,f18,f20,f21,f24,f25,f22,f33,f11,f62,f128,f124,f107,f104,f105,f136",
+            }
 
-                df = df.rename(columns=column_mapping)
-                available_columns = [col for col in column_mapping.values() if col in df.columns]
-                available_columns.insert(0, 'ymd')
-                df = df[available_columns]
+            # 添加随机延迟
+            delay = random.uniform(5, 10)  # 5-10秒随机延迟
+            logging.info(f"等待 {delay:.2f} 秒后开始请求...")
+            time.sleep(delay)
 
-                # 数值类型转换（处理百分比）
-                percent_columns = ['change_pct', 'turnover_rate', 'leading_stock_pct']
-                for col in percent_columns:
-                    if col in df.columns:
-                        df[col] = df[col].astype(str).str.replace('%', '').astype(float)
+            # 自定义请求头
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Referer': 'https://quote.eastmoney.com/',
+                'Accept': 'application/json, text/plain, */*',
+                'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+            }
 
-                numeric_columns = ['ranking', 'close', 'change_amt', 'total_market',
-                                   'rising_stocks_num', 'falling_stocks_num']
-                for col in numeric_columns:
-                    if col in df.columns:
-                        df[col] = pd.to_numeric(df[col], errors='coerce')
+            # 尝试多次
+            max_retries = 3
+            for retry in range(max_retries):
+                try:
+                    logging.info(f"第 {retry + 1} 次尝试...")
 
-                # 删除重复记录
-                df = df.drop_duplicates(subset=['ymd', 'board_code'], keep='first')
+                    # 创建新session
+                    session = requests.Session()
+                    session.headers.update(headers)
 
-                logging.info(f"板块行情数据下载完成，共 {len(df)} 条记录")
+                    # 设置长超时
+                    response = session.get(url, params=params, timeout=30)
+                    response.raise_for_status()
 
-                # 保存到MySQL
-                if platform.system() == "Windows":
-                    mysql_utils.data_from_dataframe_to_mysql(
-                        user=local_user,
-                        password=local_password,
-                        host=local_host,
-                        database=local_database,
-                        df=df,
-                        table_name="ods_akshare_stock_board_concept_name_em",
+                    data_json = response.json()
+                    session.close()
+
+                    if data_json["data"] is None:
+                        raise ValueError("API返回数据为空")
+
+                    # 直接处理数据，不分页
+                    temp_df = pd.DataFrame(data_json["data"]["diff"])
+
+                    # 查看返回了多少数据
+                    total_count = data_json["data"]["total"]
+                    returned_count = len(temp_df)
+                    logging.info(f"总数据量: {total_count}, 本次返回: {returned_count}")
+
+                    # 如果返回数量少于总数，说明需要分页，但我们暂时忽略
+                    if returned_count < total_count:
+                        logging.warning(f"数据不完整: {returned_count}/{total_count}")
+
+                    # 列重命名
+                    temp_df.columns = [
+                        "排名",
+                        "最新价",
+                        "涨跌幅",
+                        "涨跌额",
+                        "换手率",
+                        "_",
+                        "板块代码",
+                        "板块名称",
+                        "_",
+                        "_",
+                        "_",
+                        "_",
+                        "总市值",
+                        "_",
+                        "_",
+                        "_",
+                        "_",
+                        "_",
+                        "_",
+                        "上涨家数",
+                        "下跌家数",
+                        "_",
+                        "_",
+                        "领涨股票",
+                        "_",
+                        "_",
+                        "领涨股票-涨跌幅",
+                    ]
+
+                    temp_df = temp_df[
+                        [
+                            "排名",
+                            "板块名称",
+                            "板块代码",
+                            "最新价",
+                            "涨跌额",
+                            "涨跌幅",
+                            "总市值",
+                            "换手率",
+                            "上涨家数",
+                            "下跌家数",
+                            "领涨股票",
+                            "领涨股票-涨跌幅",
+                        ]
+                    ]
+
+                    # 数值转换
+                    numeric_cols = ["最新价", "涨跌额", "涨跌幅", "总市值", "换手率",
+                                    "上涨家数", "下跌家数", "领涨股票-涨跌幅"]
+                    for col in numeric_cols:
+                        temp_df[col] = pd.to_numeric(temp_df[col], errors="coerce")
+
+                    # 添加日期
+                    today = DateUtility.today()
+                    temp_df['ymd'] = today
+
+                    # 使用downloader处理
+                    column_mapping = {
+                        '排名': 'ranking',
+                        '板块名称': 'board_name',
+                        '板块代码': 'board_code',
+                        '最新价': 'close',
+                        '涨跌额': 'change_amt',
+                        '涨跌幅': 'change_pct',
+                        '总市值': 'total_market',
+                        '换手率': 'turnover_rate',
+                        '上涨家数': 'rising_stocks_num',
+                        '下跌家数': 'falling_stocks_num',
+                        '领涨股票': 'leading_stock',
+                        '领涨股票-涨跌幅': 'leading_stock_pct'
+                    }
+
+                    processed_df = self.downloader._process_data(
+                        all_data=temp_df,
+                        column_mapping=column_mapping,
+                        date_column='ymd',
+                        date_format='%Y%m%d',
+                        numeric_columns=list(column_mapping.values()),
+                        table_name='ods_akshare_board_concept_name_em'
+                    )
+
+                    success = self.downloader._save_to_mysql(
+                        df=processed_df,
+                        table_name='ods_akshare_board_concept_name_em',
                         merge_on=['ymd', 'board_code']
                     )
 
-                mysql_utils.data_from_dataframe_to_mysql(
-                    user=origin_user,
-                    password=origin_password,
-                    host=origin_host,
-                    database=origin_database,
-                    df=df,
-                    table_name="ods_akshare_stock_board_concept_name_em",
-                    merge_on=['ymd', 'board_code']
-                )
+                    return success
 
-            else:
-                logging.warning("板块行情数据为空")
+                except Exception as e:
+                    if retry < max_retries - 1:
+                        wait_time = (retry + 1) * 10
+                        logging.warning(f"请求失败，等待 {wait_time} 秒后重试...")
+                        time.sleep(wait_time)
+                    else:
+                        raise e
+
+            return False
 
         except Exception as e:
-            logging.error(f"下载板块行情数据失败: {str(e)}")
+            logging.error(f"下载板块概念数据失败: {str(e)}")
+            return False
 
-    @timing_decorator
-    def download_stock_board_concept_cons_em(self, symbol="阿兹海默"):
+
+    # @timing_decorator
+    def download_stock_board_concept_cons_em(self):
         """
         下载板块内个股行情数据 - ods_akshare_stock_board_concept_cons_em
         接口: stock_board_concept_cons_em
-        说明: 全量的每日切片数据，不可指定日期
+        说明: 全量的每日切片数据，遍历所有板块（从数据库获取板块列表）
         """
         try:
-            logging.info(f"开始下载板块内个股行情数据，板块: {symbol}")
+            # 从MySQL获取最新的板块列表
+            logging.info("开始获取板块列表...")
 
-            # 获取板块成分股数据
-            df = ak.stock_board_concept_cons_em(symbol=symbol)
+            board_df = mysql_utils.data_from_mysql_to_dataframe_latest(
+                user=self.downloader.origin_user,
+                password=self.downloader.origin_password,
+                host=self.downloader.origin_host,
+                database=self.downloader.origin_database,
+                table_name="ods_akshare_board_concept_name_em",  # 板块信息表
+                cols=['board_name', 'board_code']  # 获取板块名称和代码
+            )
 
-            if not df.empty:
-                # 添加日期列（今天）
-                today = DateUtility.today()
-                df['ymd'] = today
-                df['board_name'] = symbol
-                df['board_code'] = symbol  # 这里可以根据需要映射为实际代码
+            if board_df.empty:
+                logging.warning("数据库中没有板块列表数据，请先运行 download_stock_board_concept_name_em()")
+                return False
 
-                # 数据清洗和转换
-                column_mapping = {
-                    '序号': 'serial_num',
-                    '代码': 'stock_code',
-                    '名称': 'stock_name',
-                    '最新价': 'close',
-                    '涨跌幅': 'change_pct',
-                    '涨跌额': 'change_amt',
-                    '成交量': 'trading_volume',
-                    '成交额': 'trading_amount',
-                    '振幅': 'amplitude',
-                    '最高': 'high',
-                    '最低': 'low',
-                    '今开': 'open',
-                    '昨收': 'prev_close',
-                    '换手率': 'turnover_rate',
-                    '市盈率-动态': 'pe_dynamic',
-                    '市净率': 'pb'
-                }
+            # 去重并获取板块名称列表
+            board_names = board_df['board_name'].dropna().unique().tolist()
+            logging.info(f"从数据库获取到 {len(board_names)} 个板块")
 
-                df = df.rename(columns=column_mapping)
-                available_columns = ['ymd', 'board_name', 'board_code'] + [col for col in column_mapping.values() if
-                                                                           col in df.columns]
-                df = df[available_columns]
+            if not board_names:
+                logging.warning("数据库中没有有效的板块名称")
+                return False
 
-                # 数值类型转换（处理百分比）
-                percent_columns = ['change_pct', 'amplitude', 'turnover_rate']
-                for col in percent_columns:
-                    if col in df.columns:
-                        df[col] = df[col].astype(str).str.replace('%', '').astype(float)
+            logging.info(f"开始下载 {len(board_names)} 个板块的成分股数据")
 
-                numeric_columns = ['serial_num', 'close', 'change_amt', 'trading_volume', 'trading_amount',
-                                   'high', 'low', 'open', 'prev_close', 'pe_dynamic', 'pb']
-                for col in numeric_columns:
-                    if col in df.columns:
-                        df[col] = pd.to_numeric(df[col], errors='coerce')
+            all_data = pd.DataFrame()
+            success_boards = []
+            failed_boards = []
 
-                # 删除重复记录
-                df = df.drop_duplicates(subset=['ymd', 'stock_code'], keep='first')
+            for i, board_name in enumerate(board_names):
+                try:
+                    # 跳过可能为空的板块名
+                    if pd.isna(board_name) or not str(board_name).strip():
+                        continue
 
-                logging.info(f"板块内个股行情数据下载完成，共 {len(df)} 条记录")
+                    logging.info(f"下载板块 [{i + 1}/{len(board_names)}]: {board_name}")
 
-                # 保存到MySQL
-                if platform.system() == "Windows":
-                    mysql_utils.data_from_dataframe_to_mysql(
-                        user=local_user,
-                        password=local_password,
-                        host=local_host,
-                        database=local_database,
-                        df=df,
-                        table_name="ods_akshare_stock_board_concept_cons_em",
-                        merge_on=['ymd', 'stock_code']
-                    )
+                    # 获取板块成分股数据
+                    df = ak.stock_board_concept_cons_em(symbol=str(board_name).strip())
 
-                mysql_utils.data_from_dataframe_to_mysql(
-                    user=origin_user,
-                    password=origin_password,
-                    host=origin_host,
-                    database=origin_database,
-                    df=df,
-                    table_name="ods_akshare_stock_board_concept_cons_em",
-                    merge_on=['ymd', 'stock_code']
-                )
+                    if not df.empty:
+                        # 添加日期和板块信息
+                        today = DateUtility.today()
+                        df['ymd'] = today
+                        df['board_name'] = str(board_name).strip()
 
+                        # 查找对应的board_code
+                        board_code_row = board_df[board_df['board_name'] == board_name]
+                        if not board_code_row.empty:
+                            df['board_code'] = board_code_row.iloc[0]['board_code']
+                        else:
+                            df['board_code'] = str(board_name).strip()  # 降级处理
+
+                        all_data = pd.concat([all_data, df], ignore_index=True)
+                        success_boards.append(board_name)
+
+                        logging.info(f"  {board_name}: 获取到 {len(df)} 条记录")
+                    else:
+                        logging.warning(f"  {board_name}: 成分股数据为空")
+                        failed_boards.append(board_name)
+
+                except Exception as e:
+                    logging.error(f"  下载 {board_name} 失败: {str(e)[:100]}")
+                    failed_boards.append(board_name)
+                    continue
+
+            if all_data.empty:
+                logging.warning("所有板块的成分股数据都为空")
+                return False
+
+            logging.info(f"板块成分股数据获取完成:")
+            logging.info(f"  成功板块: {len(success_boards)} 个")
+            logging.info(f"  失败板块: {len(failed_boards)} 个")
+            logging.info(f"  总记录数: {len(all_data)} 条")
+
+            # 列映射
+            column_mapping = {
+                '序号': 'serial_num',
+                '代码': 'stock_code',
+                '名称': 'stock_name',
+                '最新价': 'close',
+                '涨跌幅': 'change_pct',
+                '涨跌额': 'change_amt',
+                '成交量': 'trading_volume',
+                '成交额': 'trading_amount',
+                '振幅': 'amplitude',
+                '最高': 'high',
+                '最低': 'low',
+                '今开': 'open',
+                '昨收': 'prev_close',
+                '换手率': 'turnover_rate',
+                '市盈率-动态': 'pe_dynamic',
+                '市净率': 'pb'
+            }
+
+            numeric_columns = [
+                'serial_num', 'close', 'change_amt', 'trading_volume', 'trading_amount',
+                'high', 'low', 'open', 'prev_close', 'pe_dynamic', 'pb',
+                'change_pct', 'amplitude', 'turnover_rate'
+            ]
+
+            # 使用downloader的数据处理方法
+            processed_df = self.downloader._process_data(
+                all_data=all_data,
+                column_mapping=column_mapping,
+                date_column='ymd',
+                date_format='%Y%m%d',
+                numeric_columns=numeric_columns,
+                table_name='ods_akshare_stock_board_concept_cons_em'
+            )
+
+            if processed_df.empty:
+                logging.warning("板块成分股数据处理后为空")
+                return False
+
+            # 使用downloader的保存方法
+            success = self.downloader._save_to_mysql(
+                df=processed_df,
+                table_name='ods_akshare_stock_board_concept_cons_em',
+                merge_on=['ymd', 'stock_code']
+            )
+
+            if success:
+                logging.info(
+                    f"板块成分股数据保存成功，共 {len(processed_df)} 条记录，{processed_df['board_code'].nunique()} 个板块")
             else:
-                logging.warning(f"板块 {symbol} 的成分股数据为空")
+                logging.error("板块成分股数据保存失败")
+
+            return success
 
         except Exception as e:
-            logging.error(f"下载板块内个股行情数据失败: {str(e)}")
+            logging.error(f"下载板块成分股数据失败: {str(e)}")
+            import traceback
+            logging.error(traceback.format_exc())
+            return False
 
-    @timing_decorator
-    def download_stock_board_concept_hist_em(self, symbol="阿兹海默",
-                                             start_date=None, end_date=None):
+
+
+
+    # @timing_decorator
+    def download_stock_board_concept_hist_em(self, start_date=None, end_date=None):
         """
         下载板块历史行情数据 - ods_akshare_stock_board_concept_hist_em
         接口: stock_board_concept_hist_em
-        说明: 可指定日期范围
+        说明: 遍历所有板块的历史行情数据（从数据库获取板块列表）
         """
         try:
             # 如果没有指定日期，使用默认范围
             if start_date is None:
-                start_date = DateUtility.first_day_of_year(-1)
+                start_date = DateUtility.first_day_of_year(-1)  # 去年第一天
             if end_date is None:
                 end_date = DateUtility.today()
 
-            logging.info(f"开始下载板块历史行情数据，板块: {symbol}，日期: {start_date}~{end_date}")
+            # 从MySQL获取最新的板块列表
+            logging.info("开始获取板块列表...")
 
-            # 获取板块历史数据
-            df = ak.stock_board_concept_hist_em(symbol=symbol,
-                                                start_date=start_date,
-                                                end_date=end_date)
+            board_df = mysql_utils.data_from_mysql_to_dataframe_latest(
+                user=self.downloader.origin_user,
+                password=self.downloader.origin_password,
+                host=self.downloader.origin_host,
+                database=self.downloader.origin_database,
+                table_name="ods_akshare_board_concept_name_em",  # 板块信息表
+                cols=['board_name', 'board_code']  # 获取板块名称和代码
+            )
 
-            if not df.empty:
-                # 添加板块代码列
-                df['board_code'] = symbol
+            if board_df.empty:
+                logging.warning("数据库中没有板块列表数据，请先运行 download_stock_board_concept_name_em()")
+                return False
 
-                # 数据清洗和转换
-                column_mapping = {
-                    '日期': 'ymd',
-                    '开盘': 'open',
-                    '收盘': 'close',
-                    '最高': 'high',
-                    '最低': 'low',
-                    '涨跌幅': 'change_pct',
-                    '涨跌额': 'change_amt',
-                    '成交量': 'trading_volume',
-                    '成交额': 'trading_amount',
-                    '振幅': 'amplitude',
-                    '换手率': 'turnover_rate'
-                }
+            # 去重并获取板块名称列表
+            board_names = board_df['board_name'].dropna().unique().tolist()
+            logging.info(f"从数据库获取到 {len(board_names)} 个板块")
 
-                df = df.rename(columns=column_mapping)
-                available_columns = ['board_code'] + [col for col in column_mapping.values() if col in df.columns]
-                df = df[available_columns]
+            if not board_names:
+                logging.warning("数据库中没有有效的板块名称")
+                return False
 
-                # 日期格式转换
-                if 'ymd' in df.columns:
-                    df['ymd'] = pd.to_datetime(df['ymd'], errors='coerce').dt.strftime('%Y%m%d')
+            logging.info(f"开始下载 {len(board_names)} 个板块的历史数据，日期: {start_date}~{end_date}")
 
-                # 数值类型转换（处理百分比）
-                percent_columns = ['change_pct', 'amplitude', 'turnover_rate']
-                for col in percent_columns:
-                    if col in df.columns:
-                        df[col] = df[col].astype(str).str.replace('%', '').astype(float)
+            all_data = pd.DataFrame()
+            success_boards = []
+            failed_boards = []
 
-                numeric_columns = ['open', 'close', 'high', 'low', 'change_amt',
-                                   'trading_volume', 'trading_amount']
-                for col in numeric_columns:
-                    if col in df.columns:
-                        df[col] = pd.to_numeric(df[col], errors='coerce')
+            for i, board_name in enumerate(board_names):
+                try:
+                    # 跳过可能为空的板块名
+                    if pd.isna(board_name) or not str(board_name).strip():
+                        continue
 
-                # 删除重复记录
-                df = df.drop_duplicates(subset=['ymd', 'board_code'], keep='first')
+                    logging.info(f"下载板块 [{i + 1}/{len(board_names)}]: {board_name}")
 
-                logging.info(f"板块历史行情数据下载完成，共 {len(df)} 条记录")
-
-                # 保存到MySQL
-                if platform.system() == "Windows":
-                    mysql_utils.data_from_dataframe_to_mysql(
-                        user=local_user,
-                        password=local_password,
-                        host=local_host,
-                        database=local_database,
-                        df=df,
-                        table_name="ods_akshare_stock_board_concept_hist_em",
-                        merge_on=['ymd', 'board_code']
+                    # 获取板块历史数据
+                    df = ak.stock_board_concept_hist_em(
+                        symbol=str(board_name).strip(),
+                        start_date=start_date,
+                        end_date=end_date
                     )
 
-                mysql_utils.data_from_dataframe_to_mysql(
-                    user=origin_user,
-                    password=origin_password,
-                    host=origin_host,
-                    database=origin_database,
-                    df=df,
-                    table_name="ods_akshare_stock_board_concept_hist_em",
-                    merge_on=['ymd', 'board_code']
-                )
+                    if not df.empty:
+                        # 添加板块信息
+                        df['board_name'] = str(board_name).strip()
 
+                        # 查找对应的board_code
+                        board_code_row = board_df[board_df['board_name'] == board_name]
+                        if not board_code_row.empty:
+                            df['board_code'] = board_code_row.iloc[0]['board_code']
+                        else:
+                            df['board_code'] = str(board_name).strip()  # 降级处理
+
+                        all_data = pd.concat([all_data, df], ignore_index=True)
+                        success_boards.append(board_name)
+
+                        logging.info(f"  {board_name}: 获取到 {len(df)} 条记录")
+                    else:
+                        logging.warning(f"  {board_name}: 历史数据为空")
+                        failed_boards.append(board_name)
+
+                except Exception as e:
+                    logging.error(f"  下载 {board_name} 失败: {str(e)[:100]}")
+                    failed_boards.append(board_name)
+                    continue
+
+            if all_data.empty:
+                logging.warning("所有板块的历史行情数据都为空")
+                return False
+
+            logging.info(f"板块历史数据获取完成:")
+            logging.info(f"  成功板块: {len(success_boards)} 个")
+            logging.info(f"  失败板块: {len(failed_boards)} 个")
+            logging.info(f"  总记录数: {len(all_data)} 条")
+
+            # 列映射
+            column_mapping = {
+                '日期': 'ymd',
+                '开盘': 'open',
+                '收盘': 'close',
+                '最高': 'high',
+                '最低': 'low',
+                '涨跌幅': 'change_pct',
+                '涨跌额': 'change_amt',
+                '成交量': 'trading_volume',
+                '成交额': 'trading_amount',
+                '振幅': 'amplitude',
+                '换手率': 'turnover_rate'
+            }
+
+            numeric_columns = [
+                'open', 'close', 'high', 'low', 'change_amt',
+                'trading_volume', 'trading_amount',
+                'change_pct', 'amplitude', 'turnover_rate'
+            ]
+
+            # 使用downloader的数据处理方法
+            processed_df = self.downloader._process_data(
+                all_data=all_data,
+                column_mapping=column_mapping,
+                date_column='ymd',
+                date_format='%Y-%m-%d',  # akshare返回的是YYYY-MM-DD格式
+                numeric_columns=numeric_columns,
+                table_name='ods_akshare_stock_board_concept_hist_em'
+            )
+
+            if processed_df.empty:
+                logging.warning("板块历史行情数据处理后为空")
+                return False
+
+            # 使用downloader的保存方法
+            success = self.downloader._save_to_mysql(
+                df=processed_df,
+                table_name='ods_akshare_stock_board_concept_hist_em',
+                merge_on=['ymd', 'board_code']
+            )
+
+            if success:
+                logging.info(
+                    f"板块历史数据保存成功，共 {len(processed_df)} 条记录，{processed_df['board_code'].nunique()} 个板块")
             else:
-                logging.warning(f"板块 {symbol} 的历史行情数据为空")
+                logging.error("板块历史数据保存失败")
+
+            return success
 
         except Exception as e:
             logging.error(f"下载板块历史行情数据失败: {str(e)}")
+            import traceback
+            logging.error(traceback.format_exc())
+            return False
+
+
 
     # @timing_decorator
     def setup(self):
@@ -836,49 +1109,35 @@ class SaveAkshareHistoryData:
         # 1. 获取股票代码列表（用于需要股票代码的接口）
         self.get_stock_codes()
 
-        # 2. 下载股票估值数据
-        self.download_stock_value_em()
-
-        # # 3. 下载股东户数数据（需要股票代码，分批次处理）
+        # # 2. 下载股票估值数据
+        # self.download_stock_value_em()
+        #
+        # # 3. 下载股东户数数据（需要股票代码，分批次处理）   可用
         # self.download_stock_zh_a_gdhs_detail_em()
         #
-        # # 4. 下载筹码数据（需要股票代码，分批次处理）
+        # # 4. 下载筹码数据（需要股票代码，分批次处理）    不可用
         # self.download_stock_cyq_em()
         #
-        # # 5. 下载业绩快报数据（指定日期）
+        # # 5. 下载业绩快报数据（指定日期）         可用
         # self.download_stock_yjkb_em()
         #
-        # # 6. 下载业绩预告数据（指定日期）
+        # # 6. 下载业绩预告数据（指定日期）         可用
         # self.download_stock_yjyg_em()
         #
-        # # 7. 下载大盘高低统计数据（默认沪深300）
+        # # 7. 下载大盘高低统计数据（默认沪深300）   可用
         # self.download_stock_a_high_low_statistics()
         #
         # # 8. 下载个股行情数据（实时数据）
         # self.download_stock_zh_a_spot_em()
-        #
-        # # 9. 下载板块行情数据
-        # self.download_stock_board_concept_name_em()
 
-        # # 10. 下载板块内个股行情数据（示例板块）
-        # # 可以根据需要下载多个板块
-        # popular_boards = ["新能源汽车", "人工智能", "半导体", "医药", "白酒"]
-        # for board in popular_boards[:2]:  # 先下载前2个板块避免耗时过长
-        #     try:
-        #         self.download_stock_board_concept_cons_em(symbol=board)
-        #     except Exception as e:
-        #         logging.warning(f"板块 {board} 数据下载失败: {str(e)}")
-        #         continue
+        # # 9. 下载板块行情数据
+        self.download_stock_board_concept_name_em()
+
+        # # # 10. 下载板块内个股行情数据
+        # self.download_stock_board_concept_cons_em()
         #
-        # # 11. 下载板块历史行情数据（示例板块）
-        # for board in popular_boards[:1]:  # 先下载1个板块的历史数据
-        #     try:
-        #         self.download_stock_board_concept_hist_em(symbol=board)
-        #     except Exception as e:
-        #         logging.warning(f"板块 {board} 历史数据下载失败: {str(e)}")
-        #         continue
-        #
-        # logging.info("======= akshare历史数据下载完成 =======")
+        # # # 11. 下载板块历史行情数据
+        # self.download_stock_board_concept_hist_em()
 
 
 if __name__ == '__main__':

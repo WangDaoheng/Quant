@@ -58,7 +58,7 @@ class SaveInsightData:
         self.stock_code_df = pd.DataFrame()
 
 
-    @timing_decorator
+    # @timing_decorator
     def login(self):
         # 登陆前 初始化，没有密码可以访问进行自动化注册
         # https://findata-insight.htsc.com:9151/terminalWeb/#/signup
@@ -67,7 +67,7 @@ class SaveInsightData:
         common.login(market_service, user, password)
 
 
-    @timing_decorator
+    # @timing_decorator
     def get_stock_codes(self):
         """
         获取当日的stock代码合集
@@ -81,7 +81,6 @@ class SaveInsightData:
 
         #  2.请求insight数据   get_all_stocks_info
         stock_all_df = get_all_stocks_info(listing_state="上市交易")
-        print(stock_all_df.shape)
         #  3.日期格式转换
         stock_all_df.insert(0, 'ymd', formatted_date)
 
@@ -127,7 +126,7 @@ class SaveInsightData:
                                                      merge_on=['ymd', 'stock_code'])
 
 
-    @timing_decorator
+    # @timing_decorator
     def get_stock_kline(self):
         """
         根据当日上市的stock_codes，来获得全部(去除ST|退|B)股票的历史数据
@@ -229,7 +228,7 @@ class SaveInsightData:
             logging.info('    get_stock_kline 的返回值为空值')
 
 
-    @timing_decorator
+    # @timing_decorator
     def get_index_a_share(self):
         """
         000001.SH    上证指数
@@ -325,7 +324,7 @@ class SaveInsightData:
             logging.info('    get_index_a_share 的返回值为空值')
 
 
-    @timing_decorator
+    # @timing_decorator
     def get_limit_summary(self):
         """
         大盘涨跌停分析数据
@@ -362,6 +361,7 @@ class SaveInsightData:
 
         #  2.请求insight数据   get_kline
         res = get_change_summary(market=["a_share"], trading_day=[start_date, end_date])
+        res.to_csv('./res.csv')
 
         #  3.limit_summary 的总和dataframe
         limit_summary_df = pd.DataFrame()
@@ -419,7 +419,7 @@ class SaveInsightData:
             logging.info('    get_limit_summary 的返回值为空值')
 
 
-    @timing_decorator
+    # @timing_decorator
     def get_future_inside(self):
         """
         期货市场数据
@@ -513,7 +513,7 @@ class SaveInsightData:
             logging.info('    get_future_inside 的返回值为空值')
 
 
-    @timing_decorator
+    # @timing_decorator
     def get_chouma_datas(self):
         """
         1.获取每日的筹码分布数据
@@ -559,7 +559,7 @@ class SaveInsightData:
                 chouma_total_df = pd.concat([chouma_total_df, res], ignore_index=True)
             except Exception as e:
                 continue
-            time.sleep(0.1)
+            time.sleep(0.01)
 
         sys.stdout.write("\n")
 
@@ -573,7 +573,7 @@ class SaveInsightData:
                                             'htsc_code': 'stock_code'}, inplace=True)
 
             #  9.数据格式调整
-            cols_to_clean = ['last', 'prev_close', 'avg_cost', 'max_cost', 'min_cost', 'winner_rate', 'diversity',
+            cols_to_clean = ['close', 'prev_close', 'avg_cost', 'max_cost', 'min_cost', 'winner_rate', 'diversity',
                              'pre_winner_rate', 'restricted_avg_cost', 'restricted_max_cost', 'restricted_min_cost',
                              'large_shareholders_avg_cost', 'large_shareholders_total_share_pct']
 
@@ -638,7 +638,7 @@ class SaveInsightData:
 
 
 
-    @timing_decorator
+    # @timing_decorator
     def get_Ashare_industry_overview(self):
         """
         获取行业信息 申万三级 的行业信息
@@ -706,7 +706,7 @@ class SaveInsightData:
             logging.info('    get_Ashare_industry_overview 的返回值为空值')
 
 
-    @timing_decorator
+    # @timing_decorator
     def get_Ashare_industry_detail(self):
         """
         获取股票的行业信息 申万三级 的行业信息
@@ -799,7 +799,7 @@ class SaveInsightData:
 
 
 
-    @timing_decorator
+    # @timing_decorator
     def get_shareholder_north_bound_num(self):
         """
         获取 股东数 & 北向资金情况
@@ -921,22 +921,22 @@ class SaveInsightData:
         self.login()
 
         #  除去 ST |  退  | B 的股票集合
-        self.get_stock_codes()
+        # self.get_stock_codes()
 
         #  获取上述股票的当月日K
-        self.get_stock_kline()
+        # self.get_stock_kline()
 
         #  获取主要股指
-        self.get_index_a_share()
+        # self.get_index_a_share()
 
         #  大盘涨跌概览
         self.get_limit_summary()
 
         #  期货__内盘
-        self.get_future_inside()
+        # self.get_future_inside()
 
         # 筹码概览
-        self.get_chouma_datas()
+        # self.get_chouma_datas()
 
         # 获取A股的行业分类数据, 是行业数据
         self.get_Ashare_industry_overview()

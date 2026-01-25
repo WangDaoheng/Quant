@@ -42,7 +42,7 @@ class AkshareDownloader:
         """设置股票代码列表"""
         self.stock_codes = stock_codes
 
-    @timing_decorator
+    # @timing_decorator
     def download_to_mysql(self,
                           ak_function_name,  # akshare函数名
                           table_name,  # MySQL表名
@@ -92,6 +92,7 @@ class AkshareDownloader:
 
             logging.info(f"开始下载{table_name}数据，共{len(self.stock_codes)}只股票，{total_batches}个批次")
 
+            MAX_RETRY = 2
             # 分批下载
             for batch_idx in range(0, len(self.stock_codes), batch_size):
                 batch_codes = self.stock_codes[batch_idx:batch_idx + batch_size]
@@ -99,28 +100,36 @@ class AkshareDownloader:
                 current_batch = batch_idx // batch_size + 1
 
                 for i, stock_code in enumerate(batch_codes):
-                    try:
-                        # 构造请求参数
-                        params = {symbol_param: stock_code, **kwargs}
-                        df = ak_function(**params)
+                    df = None
+                    last_error = None
 
-                        if not df.empty:
-                            # 只在需要时添加stock_code列
-                            if auto_add_stock_code and 'stock_code' not in df.columns:
-                                df['stock_code'] = stock_code
-                            batch_data = pd.concat([batch_data, df], ignore_index=True)
+                    for retry in range(MAX_RETRY + 1):
+                        try:
+                            params = {symbol_param: stock_code, **kwargs}
+                            df = ak_function(**params)
 
-                    except Exception as e:
-                        logging.warning(f"股票 {stock_code} {table_name}数据获取失败: {str(e)}")
+                            if df is not None:
+                                break  # 成功获取数据，跳出重试循环
+
+                        except Exception as e:
+                            last_error = e
+                            if retry < MAX_RETRY:
+                                time.sleep(0.5 * (retry + 1))
+
+                    # 检查最终结果
+                    if df is None:
+                        error_msg = str(last_error) if last_error else "接口返回None"
+                        logging.warning(f"股票 {stock_code} 数据获取失败: {error_msg}")
                         continue
 
-                    # 进度显示
-                    if (i + 1) % 10 == 0:
-                        sys.stdout.write(
-                            f"\r批次 {current_batch}/{total_batches}: 已处理 {i + 1}/{len(batch_codes)} 只股票")
-                        sys.stdout.flush()
+                    if df.empty:
+                        logging.debug(f"股票 {stock_code} 返回空DataFrame")
+                        continue
 
-                    time.sleep(sleep_time)
+                    # 处理成功获取的数据
+                    if auto_add_stock_code and 'stock_code' not in df.columns:
+                        df['stock_code'] = stock_code
+                    batch_data = pd.concat([batch_data, df], ignore_index=True)
 
                 all_data = pd.concat([all_data, batch_data], ignore_index=True)
                 logging.info(f"批次 {current_batch}/{total_batches} 完成，累计获取 {len(all_data)} 条记录")
@@ -226,16 +235,16 @@ class AkshareDownloader:
     def _save_to_mysql(self, df, table_name, merge_on):
         """保存数据到MySQL"""
         try:
-            if platform.system() == "Windows":
-                mysql_utils.data_from_dataframe_to_mysql(
-                    user=self.local_user,
-                    password=self.local_password,
-                    host=self.local_host,
-                    database=self.local_database,
-                    df=df,
-                    table_name=table_name,
-                    merge_on=merge_on
-                )
+            # if platform.system() == "Windows":
+            #     mysql_utils.data_from_dataframe_to_mysql(
+            #         user=self.local_user,
+            #         password=self.local_password,
+            #         host=self.local_host,
+            #         database=self.local_database,
+            #         df=df,
+            #         table_name=table_name,
+            #         merge_on=merge_on
+            #     )
 
             mysql_utils.data_from_dataframe_to_mysql(
                 user=self.origin_user,
@@ -315,6 +324,7 @@ class AkshareDownloader:
             import traceback
             logging.error(traceback.format_exc())
             return False
+
 
     def batch_download_with_date(self,
                                  ak_function_name,

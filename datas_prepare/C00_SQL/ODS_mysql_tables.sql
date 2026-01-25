@@ -466,8 +466,7 @@ CREATE TABLE quant.ods_akshare_stock_yjyg_em (
 ------------------  ods_akshare_stock_a_high_low_statistics   大盘情绪数据_大盘区间内的新低新高股票数  全量的每日切片数据 不可指定日期
 CREATE TABLE quant.ods_akshare_stock_a_high_low_statistics (
      ymd                      DATE                    COMMENT '交易日'
-    ,stock_code               varchar(50)             COMMENT '股票代码'
-    ,stock_name               varchar(50)             COMMENT '股票名称'
+    ,market                   varchar(50)             COMMENT '市场类型'
     ,close                    float                   COMMENT '相关指数收盘价'
     ,high20                   int                     COMMENT '20日新高'
     ,low20                    int                     COMMENT '20日新低'

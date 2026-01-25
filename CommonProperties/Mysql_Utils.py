@@ -80,7 +80,8 @@ def data_from_dataframe_to_mysql(user, password, host, database='quant', df=pd.D
     columns = df.columns.tolist()
 
     # 检查是否存在重复数据，并将其去除
-    df.drop_duplicates(subset=merge_on, keep='first', inplace=True)
+    if merge_on:
+        df.drop_duplicates(subset=merge_on, keep='first', inplace=True)
 
     total_rows = df.shape[0]
     if total_rows == 0:
