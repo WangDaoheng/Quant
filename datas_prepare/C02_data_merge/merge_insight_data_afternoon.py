@@ -106,7 +106,7 @@ class MergeInsightData:
         """
         source_table = 'ods_index_a_share_insight_now'
         target_table = 'ods_index_a_share_insight'
-        columns = ['stock_code', 'stock_name', 'ymd', 'open', 'close', 'high', 'low', 'volume']
+        columns = ['index_code', 'index_name', 'ymd', 'open', 'close', 'high', 'low', 'volume']
         ############################   文件输出模块     ############################
         if platform.system() == "Windows":
             # 对本地 Mysql 做数据聚合
@@ -221,7 +221,7 @@ class MergeInsightData:
         """
         source_table = 'ods_future_inside_insight_now'
         target_table = 'ods_future_inside_insight'
-        columns = ['htsc_code', 'ymd', 'open', 'close', 'high', 'low', 'volume', 'open_interest', 'settle']
+        columns = ['stock_code', 'ymd', 'open', 'close', 'high', 'low', 'volume', 'open_interest', 'settle']
         ############################   文件输出模块     ############################
         if platform.system() == "Windows":
             # 对本地 Mysql 做数据聚合
@@ -299,7 +299,7 @@ class MergeInsightData:
         """
         source_table = 'ods_north_bound_daily_now'
         target_table = 'ods_north_bound_daily'
-        columns = ['htsc_code', 'ymd', 'sh_hkshare_hold', 'pct_total_share']
+        columns = ['stock_code', 'ymd', 'sh_hkshare_hold', 'pct_total_share']
         ############################   文件输出模块     ############################
         if platform.system() == "Windows":
             # 对本地 Mysql 做数据聚合

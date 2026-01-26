@@ -7,17 +7,19 @@ import datetime
 class CodeOrganizer:
     """代码梳理工具，用于遍历项目目录并整理代码结构和内容"""
 
-    def __init__(self, root_dir, output_path):
+    def __init__(self, root_dir, output_path, selected_dirs=None):
         """
         初始化代码梳理工具
 
         Args:
             root_dir: 项目根目录（绝对/相对路径）
             output_path: 输出文件的完整路径（支持自动创建目录）
+            selected_dirs: 选择的目录列表，None表示全部输出
         """
         # 强制解析为绝对路径，避免相对路径歧义
         self.root_dir = Path(root_dir).resolve()
         self.output_path = Path(output_path).resolve()
+        self.selected_dirs = selected_dirs  # 选择的目录列表
 
         # 核心排除目录：重点标记 Others
         self.exclude_dir_names = {
@@ -75,23 +77,61 @@ class CodeOrganizer:
             return True
         return False
 
-    def get_file_content(self, file_path):
-        """读取文件内容，处理编码问题"""
-        try:
-            with open(file_path, 'r', encoding='utf-8') as f:
-                return f.read()
-        except UnicodeDecodeError:
-            try:
-                with open(file_path, 'r', encoding='gbk') as f:
-                    return f.read()
-            except Exception as e:
-                return f"[读取失败: {str(e)}]"
+    def is_in_selected_dirs(self, dir_path):
+        """检查目录是否在选中的目录范围内"""
+        if self.selected_dirs is None:
+            return True  # 未选择时包含所有目录
+
+        # 获取相对于根目录的路径
+        rel_path = dir_path.relative_to(self.root_dir)
+
+        # 如果是根目录或空路径，包含
+        if len(rel_path.parts) == 0:
+            return True
+
+        # 特殊规则：无论是否选择 datas_prepare，都包含其下的 C00_SQL 目录
+        if len(rel_path.parts) >= 2:
+            # 检查是否是 datas_prepare/C00_SQL 或其子目录
+            if rel_path.parts[0] == "datas_prepare" and rel_path.parts[1] == "C00_SQL":
+                return True
+
+        # 检查一级目录是否在选中列表中
+        first_level_dir = rel_path.parts[0]
+        return first_level_dir in self.selected_dirs
+
+    def should_show_in_tree(self, dir_path):
+        """检查目录是否应该在目录树中显示（稍微宽松的规则）"""
+        if self.selected_dirs is None:
+            return True
+
+        # 获取相对于根目录的路径
+        rel_path = dir_path.relative_to(self.root_dir)
+
+        # 如果是根目录或空路径，显示
+        if len(rel_path.parts) == 0:
+            return True
+
+        # 特殊规则：总是显示 datas_prepare/C00_SQL
+        if len(rel_path.parts) >= 2:
+            if rel_path.parts[0] == "datas_prepare" and rel_path.parts[1] == "C00_SQL":
+                return True
+
+        # 如果一级目录在选中列表中，显示其所有子目录
+        first_level_dir = rel_path.parts[0]
+        return first_level_dir in self.selected_dirs
 
     def generate_directory_tree(self):
         """生成清晰的目录树（彻底排除 Others）"""
         tree = []
         tree.append(f"# {self.root_dir.name} 项目目录结构")
         tree.append(f"*生成时间: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*")
+
+        # 显示选择的目录信息
+        if self.selected_dirs:
+            tree.append(f"*选中的目录: {', '.join(self.selected_dirs)}*")
+        else:
+            tree.append("*选中目录: 全部*")
+        tree.append("*特殊包含: datas_prepare/C00_SQL 目录（无论是否选中）*")
         tree.append("")
 
         for root, dirs, files in os.walk(self.root_dir):
@@ -99,6 +139,10 @@ class CodeOrganizer:
 
             # 过滤目录：彻底移除 Others
             dirs[:] = [d for d in dirs if self.should_include_dir(root_path / d)]
+
+            # 检查是否需要包含此目录在目录树中
+            if not self.should_show_in_tree(root_path) and root_path != self.root_dir:
+                continue
 
             # 计算层级
             rel_path = root_path.relative_to(self.root_dir)
@@ -109,18 +153,28 @@ class CodeOrganizer:
             if not self.should_include_dir(root_path):
                 continue
 
-            # 添加目录名
+            # 添加目录名（如果包含 C00_SQL 则特殊标记）
+            dir_name = root_path.name
             if level == 0:
                 tree.append(f"📁 {self.root_dir.name}/")
             else:
-                tree.append(f"{indent}📁 {root_path.name}/")
+                # 标记 C00_SQL 目录
+                if len(rel_path.parts) >= 2 and rel_path.parts[0] == "datas_prepare" and rel_path.parts[1] == "C00_SQL":
+                    tree.append(f"{indent}📁 {dir_name} 🔸")
+                else:
+                    tree.append(f"{indent}📁 {dir_name}/")
 
             # 添加文件
             sub_indent = "    " * (level + 1)
             for file in sorted(files):
                 file_path = root_path / file
                 if self.should_include_file(file_path):
-                    tree.append(f"{sub_indent}📄 {file}")
+                    # 标记 C00_SQL 中的文件
+                    if len(rel_path.parts) >= 2 and rel_path.parts[0] == "datas_prepare" and rel_path.parts[
+                        1] == "C00_SQL":
+                        tree.append(f"{sub_indent}📄 {file} 🔸")
+                    else:
+                        tree.append(f"{sub_indent}📄 {file}")
 
         return "\n".join(tree)
 
@@ -128,6 +182,13 @@ class CodeOrganizer:
         """生成所有代码文件的内容（排除 Others 下的文件）"""
         content = []
         content.append("# 项目代码内容")
+
+        # 显示选择的目录信息
+        if self.selected_dirs:
+            content.append(f"*选中的目录: {', '.join(self.selected_dirs)}*")
+        else:
+            content.append("*选中目录: 全部*")
+        content.append("*特殊包含: datas_prepare/C00_SQL 目录（无论是否选中）*")
         content.append("")
 
         file_count = 0
@@ -136,6 +197,10 @@ class CodeOrganizer:
 
             # 过滤目录
             dirs[:] = [d for d in dirs if self.should_include_dir(root_path / d)]
+
+            # 检查是否需要包含此目录
+            if not self.is_in_selected_dirs(root_path):
+                continue
 
             # 跳过 Others 目录下的所有文件处理
             if not self.should_include_dir(root_path):
@@ -150,7 +215,14 @@ class CodeOrganizer:
 
                     # 添加文件分隔符
                     content.append("-" * 80)
-                    content.append(f"## {rel_path}")
+
+                    # 标记 C00_SQL 中的文件
+                    rel_path_str = str(rel_path)
+                    if "datas_prepare/C00_SQL" in rel_path_str:
+                        content.append(f"## {rel_path} 🔸")
+                    else:
+                        content.append(f"## {rel_path}")
+
                     content.append("")
 
                     # 读取文件内容
@@ -178,6 +250,18 @@ class CodeOrganizer:
 
         return "\n".join(content)
 
+    def get_file_content(self, file_path):
+        """读取文件内容，处理编码问题"""
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                return f.read()
+        except UnicodeDecodeError:
+            try:
+                with open(file_path, 'r', encoding='gbk') as f:
+                    return f.read()
+            except Exception as e:
+                return f"[读取失败: {str(e)}]"
+
     def get_project_stats(self):
         """精准统计（排除 Others）"""
         stats = {
@@ -185,7 +269,8 @@ class CodeOrganizer:
             'py_files': 0,
             'sql_files': 0,
             'sh_files': 0,
-            'total_dirs': 0
+            'total_dirs': 0,
+            'special_sql_files': 0  # 特殊包含的 C00_SQL 文件数
         }
 
         for root, dirs, files in os.walk(self.root_dir):
@@ -193,6 +278,10 @@ class CodeOrganizer:
 
             # 过滤目录
             dirs[:] = [d for d in dirs if self.should_include_dir(root_path / d)]
+
+            # 检查是否需要包含此目录
+            if not self.is_in_selected_dirs(root_path):
+                continue
 
             # 跳过 Others 目录的统计
             if not self.should_include_dir(root_path):
@@ -206,6 +295,13 @@ class CodeOrganizer:
                 file_path = root_path / file
                 if self.should_include_file(file_path):
                     stats['total_files'] += 1
+
+                    # 检查是否是 C00_SQL 中的文件
+                    rel_path = file_path.relative_to(self.root_dir)
+                    rel_path_str = str(rel_path)
+                    if "datas_prepare/C00_SQL" in rel_path_str:
+                        stats['special_sql_files'] += 1
+
                     if file_path.suffix == '.py':
                         stats['py_files'] += 1
                     elif file_path.suffix == '.sql':
@@ -222,12 +318,20 @@ class CodeOrganizer:
         full_content = []
         full_content.append(f"# 量化工程V1.0 代码梳理文档")
         full_content.append(f"*生成时间: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*")
+
+        # 显示选择的目录信息
+        if self.selected_dirs:
+            full_content.append(f"*选中的目录: {', '.join(self.selected_dirs)}*")
+        else:
+            full_content.append("*选中目录: 全部*")
+        full_content.append("*特殊包含: datas_prepare/C00_SQL 目录（无论是否选中）*")
         full_content.append("")
 
         # 统计信息
         full_content.append("## 项目统计信息")
         full_content.append(f"- 项目根目录: {self.root_dir}")
-        full_content.append(f"- 总文件数: {stats['total_files']}")
+        full_content.append(
+            f"- 总文件数: {stats['total_files']} (其中包含 {stats['special_sql_files']} 个 C00_SQL 特殊文件)")
         full_content.append(f"- Python文件数: {stats['py_files']}")
         full_content.append(f"- SQL文件数: {stats['sql_files']}")
         full_content.append(f"- Shell文件数: {stats['sh_files']}")
@@ -261,24 +365,46 @@ class CodeOrganizer:
         print(f"   - SQL文件: {stats['sql_files']}")
         print(f"   - Shell文件: {stats['sh_files']}")
         print(f"   - 有效目录数: {stats['total_dirs']}")
+        if stats['special_sql_files'] > 0:
+            print(f"   - C00_SQL特殊包含: {stats['special_sql_files']} 个文件")
 
 
 def main():
-    """主函数（动态推导路径，支持迁移）"""
-    # ====================== 动态路径配置（核心优化） ======================
-    # 1. 获取当前脚本（record_project.py）的绝对路径和所在目录
-    # __file__ 表示当前脚本的完整路径，Path(__file__) 转换为Path对象方便操作
+    """主函数（直接在代码中指定要处理的目录）"""
+    # ====================== 动态路径配置 ======================
     current_script_path = Path(__file__).resolve()
-    current_script_dir = current_script_path.parent  # 对应 Quant/Others 目录
-
-    # 2. 动态推导项目根目录（Quant 目录，即 Others 目录的上一级）
-    project_root = current_script_dir.parent  # 从 Quant/Others 向上一级得到 Quant
-
-    # 3. 动态推导输出文件路径（Quant/Others/output/quant_project_summary.md）
-    # 先构造 output 目录路径（在 Others 目录下），再构造完整输出文件路径
+    current_script_dir = current_script_path.parent
+    project_root = current_script_dir.parent
     output_dir = current_script_dir / "output"
     output_path = output_dir / "quant_project_summary.md"
     # =====================================================
+
+    # ====================== 在这里指定要处理的目录 ======================
+    # 方法1：指定特定的目录
+    # selected_dirs = ["backtest", "strategy", "CommonProperties"]
+
+    # 方法2：处理所有目录（注释掉selected_dirs即可）
+    # selected_dirs = None
+
+    # 方法3：根据你的需要选择组合
+    # 组合1：核心策略相关
+    # selected_dirs = ["backtest", "strategy", "CommonProperties"]
+
+    # 组合2：数据处理相关
+    # selected_dirs = ["datas_prepare", "CommonProperties"]
+
+    # 组合3：监控和仪表板
+    # selected_dirs = ["monitor", "dashboard", "review"]
+
+    # 组合4：所有目录（默认）
+    selected_dirs = ['CommonProperties']  # 修改这一行即可
+
+    # 示例1：只处理 backtest 和 CommonProperties（但仍会包含 C00_SQL）
+    # selected_dirs = ["backtest", "CommonProperties"]
+
+    # 示例2：完全不包含 datas_prepare（但仍会包含 C00_SQL）
+    # selected_dirs = ["backtest", "strategy", "monitor"]
+    # ===============================================================
 
     # 检查项目目录是否存在
     if not project_root.exists():
@@ -286,10 +412,11 @@ def main():
         print(f"   当前脚本路径：{current_script_path}")
         sys.exit(1)
 
-    # 创建实例并运行（直接传入推导后的Path对象，无需手动转字符串）
+    # 创建实例并运行
     organizer = CodeOrganizer(
         root_dir=project_root,
-        output_path=output_path
+        output_path=output_path,
+        selected_dirs=selected_dirs
     )
     organizer.save_summary()
 

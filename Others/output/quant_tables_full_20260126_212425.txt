@@ -1,0 +1,1730 @@
+QUANT数据库表结构及数据样例报告（完整版）
+====================================================================================================
+生成时间: 2026-01-26 21:24:29
+数据库: quant @ 117.72.162.13
+总表数: 44
+本次导出表数: 44
+====================================================================================================
+
+导出表目录:
+  1. dmart_stock_zt_details
+  2. dmart_stock_zt_details_expanded
+  3. dwd_ashare_stock_base_info
+  4. dwd_stock_a_total_plate
+  5. dwd_stock_dt_list
+  6. dwd_stock_zt_list
+  7. ods_akshare_stock_a_high_low_statistics
+  8. ods_akshare_stock_board_concept_cons_em
+  9. ods_akshare_stock_board_concept_hist_em
+ 10. ods_akshare_stock_board_concept_name_em
+ 11. ods_akshare_stock_cyq_em
+ 12. ods_akshare_stock_value_em
+ 13. ods_akshare_stock_yjkb_em
+ 14. ods_akshare_stock_yjyg_em
+ 15. ods_akshare_stock_zh_a_gdhs_detail_em
+ 16. ods_akshare_stock_zh_a_spot_em
+ 17. ods_astock_industry_detail
+ 18. ods_astock_industry_overview
+ 19. ods_exchange_dxy_vantage
+ 20. ods_exchange_rate_vantage_detail
+ 21. ods_future_inside_insight
+ 22. ods_future_inside_insight_now
+ 23. ods_index_a_share_insight
+ 24. ods_index_a_share_insight_now
+ 25. ods_north_bound_daily
+ 26. ods_north_bound_daily_now
+ 27. ods_shareholder_num
+ 28. ods_shareholder_num_now
+ 29. ods_stock_chouma_insight
+ 30. ods_stock_code_daily_insight
+ 31. ods_stock_exchange_market
+ 32. ods_stock_kline_daily_insight
+ 33. ods_stock_kline_daily_insight_now
+ 34. ods_stock_limit_summary_insight
+ 35. ods_stock_limit_summary_insight_now
+ 36. ods_stock_plate_redbook
+ 37. ods_tdx_stock_concept_plate
+ 38. ods_tdx_stock_index_plate
+ 39. ods_tdx_stock_industry_plate
+ 40. ods_tdx_stock_pepb_info
+ 41. ods_tdx_stock_region_plate
+ 42. ods_tdx_stock_style_plate
+ 43. ods_trading_days_insight
+ 44. ods_us_stock_daily_vantage
+
+====================================================================================================
+
+
+【DMART层】(2张表)
+================================================================================
+
+
+【表 1/44】dmart_stock_zt_details
+====================================================================================================
+基本信息:
+  行数: 5227
+  列数: 8
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 YES   MUL   NULL                      
+stock_code           varchar(50)          YES         NULL                      
+stock_name           varchar(50)          YES         NULL                      
+concept_plate        varchar(500)         YES         NULL                      
+index_plate          varchar(500)         YES         NULL                      
+industry_plate       varchar(500)         YES         NULL                      
+style_plate          varchar(500)         YES         NULL                      
+out_plate            varchar(500)         YES         NULL                      
+
+数据样例（前5行，完整列）:
+--------------------------------------------------------------------------------
+所有列(8个):
+   1. ymd
+   2. stock_code
+   3. stock_name
+   4. concept_plate
+   5. index_plate
+   6. industry_plate
+   7. style_plate
+   8. out_plate
+
+       ymd stock_code stock_name                                                                                                  concept_plate   index_plate industry_plate                                             style_plate out_plate
+2024-11-26     000409       云鼎科技               5G概念,ChatGPT概念,人工智能,信息安全,军民融合,华为鸿蒙,卫星导航,国产软件,多模态AI,工业互联,数据中心,数据要素,时空大数据,智能电网,智能穿戴,机器人概念,物联网,边缘计算        国证2000           软件服务                                             久不分红,活跃小盘国企      None
+2024-11-26     000595       宝塔实业                                                                                   储能,光伏,减速器,国防军工,机器人概念,铁路基建,风电          None           通用机械 久不分红,亏损股,低安全分,并购重组预案,户数增加,昨日跌停,最近情绪,私募新进,近期弱势,连续亏损,高市净率      None
+2024-11-26     000712       锦龙股份                                                                                                           算力租赁        中证1000             证券                              参股新股,并购重组预案,户数增加,连续亏损,高质押股      None
+2024-11-26     000721       西安饮食                                                                                              地摊经济,新零售,职业教育,预制菜          投资时钟           酒店餐饮              QFII新进,久不分红,亏损股,即将解禁,活跃小盘国企,近已解禁,连续亏损,高市净率      None
+2024-11-26     000727       冠捷科技 MicroLED,MiniLED,PCB概念,一带一路,中俄贸易,信创,充电桩,小米概念,数字孪生,无线耳机,智慧城市,智能医疗,智能家居,汽车电子,消费电子概念,电子纸,腾讯概念,虚拟现实,超清视频,跨境电商,阿里概念 中证1000,国证2000            元器件                                 业绩预降,久不分红,低价股,海外业务,高应收款      None
+
+
+【表 2/44】dmart_stock_zt_details_expanded
+====================================================================================================
+基本信息:
+  行数: 2232149
+  列数: 8
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 YES         NULL                      
+stock_code           varchar(20)          YES         NULL                      
+stock_name           varchar(50)          YES         NULL                      
+concept_plate        varchar(500)         YES         NULL                      
+index_plate          varchar(500)         YES         NULL                      
+industry_plate       varchar(500)         YES         NULL                      
+style_plate          varchar(500)         YES         NULL                      
+out_plate            varchar(500)         YES         NULL                      
+
+数据样例（前5行，完整列）:
+--------------------------------------------------------------------------------
+所有列(8个):
+   1. ymd
+   2. stock_code
+   3. stock_name
+   4. concept_plate
+   5. index_plate
+   6. industry_plate
+   7. style_plate
+   8. out_plate
+
+       ymd stock_code stock_name concept_plate index_plate industry_plate style_plate out_plate
+2024-11-26     000409       云鼎科技          5G概念      国证2000           软件服务        久不分红      None
+2024-11-26     000409       云鼎科技     ChatGPT概念        None           None      活跃小盘国企      None
+2024-11-26     000409       云鼎科技          人工智能        None           None        None      None
+2024-11-26     000409       云鼎科技          信息安全        None           None        None      None
+2024-11-26     000409       云鼎科技          军民融合        None           None        None      None
+
+
+【DWD层】(4张表)
+================================================================================
+
+
+【表 3/44】dwd_ashare_stock_base_info
+====================================================================================================
+基本信息:
+  行数: 724990
+  列数: 20
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 YES   MUL   NULL                      
+stock_code           varchar(50)          YES         NULL                      
+stock_name           varchar(50)          YES         NULL                      
+close                double               YES         NULL                      
+market_value         double               YES         NULL                      
+total_value          double               YES         NULL                      
+total_asset          double               YES         NULL                      
+net_asset            double               YES         NULL                      
+total_capital        double               YES         NULL                      
+float_capital        double               YES         NULL                      
+shareholder_num      bigint               YES         NULL                      
+pb                   varchar(50)          YES         NULL                      
+pe                   varchar(50)          YES         NULL                      
+market               varchar(50)          YES         NULL                      
+plate_names          varchar(500)         YES         NULL                      
+concept_plate        varchar(500)         YES         NULL                      
+index_plate          varchar(500)         YES         NULL                      
+industry_plate       varchar(500)         YES         NULL                      
+style_plate          varchar(500)         YES         NULL                      
+out_plate            varchar(500)         YES         NULL                      
+
+数据样例（前5行，完整列）:
+--------------------------------------------------------------------------------
+所有列(20个):
+   1. ymd
+   2. stock_code
+   3. stock_name
+   4. close
+   5. market_value
+   6. total_value
+   7. total_asset
+   8. net_asset
+   9. total_capital
+  10. float_capital
+  11. shareholder_num
+  12. pb
+  13. pe
+  14. market
+  15. plate_names
+  16. concept_plate
+  17. index_plate
+  18. industry_plate
+  19. style_plate
+  20. out_plate
+
+       ymd stock_code stock_name  close  market_value  total_value  total_asset  net_asset  total_capital  float_capital  shareholder_num    pb     pe market                                                                                                                                                              plate_names                                  concept_plate                                                                     index_plate industry_plate                                            style_plate out_plate
+2024-11-29     000001       平安银行  11.38       2268.52     2208.403     57459.88    4904.69         194.06         194.06           517695  0.54   4.28   深圳主板                                                         MSCI成份,中证800,低市净率,低市盈率,保险重仓,北上重仓,区块链50,周期股,大盘股,持续增长,沪深300,深圳板块,深证100,深证300,深证成指,深证红利,珠三角,破净资产,近期新高,通达信热股,银行,高股息股                                       跨境支付CIPS                           中证800,区块链50,国证价值,大盘价值,沪深300,深证100,深证300,深证成指,深证红利,珠三角             银行 MSCI成份,低市净率,低市盈率,保险重仓,北上重仓,周期股,基金重仓,大盘股,持续增长,破净资产,高股息股      None
+2024-11-29     000002       万 科Ａ   8.60        905.62     1026.066     13571.80    2341.20         119.31          97.17           627280  0.47   --     深圳主板 MSCI成份,中证100,中证800,低市净率,周期股,国企改革,国证价值,国证治理,国证红利,大盘价值,大盘股,央视50,房地产,承诺不减,投资时钟,昨日涨停,昨日连板,最近多板,最近情绪,板块趋势,沪深300,深圳板块,深证100,深证300,深证价值,深证成指,深证治理,深证红利,珠三角,破净资产,行业龙头,近期强势,通达信热股                          体育概念,含H股,物业管理概念,装配式建筑 中证800,中证A100,国企改革,国证治理,国证红利,央视50,投资时钟,沪深300,深证100,深证300,深证价值,深证成指,深证治理,深证红利,珠三角            房地产      MSCI成份,低市净率,周期股,基金重仓,大盘股,承诺不减,破净资产,私募重仓,行业龙头,高应收款      None
+2024-11-29     000004       国华网安  18.15         25.35       23.958         3.85       1.60           1.32           1.26            54248 16.63   --     深圳主板                                                                                                                      久不分红,低安全分,壳资源,拟减持,昨日首板,昨高换手,活跃股,深圳板块,软件服务,风险提示,高市净率 5G概念,互联金融,人工智能,信创,信息安全,华为鸿蒙,工业互联,抖音概念,物联网,网络游戏                                                                            None           软件服务            QFII新进,久不分红,亏损股,低安全分,壳资源,微盘股,近期弱势,连续亏损,风险提示      None
+2024-11-29     000006       深振业Ａ   8.89        133.78      120.015       208.89      64.49          13.50          13.50            68571  2.07   --     深圳主板                                                                                                                                    国证2000,房地产,深圳板块,证金汇金持股,近期强势,近期新高,连续亏损                                新型城镇,物业管理概念,粤港澳                                                                            None            房地产                                            证金汇金持股,连续亏损      None
+2024-11-29     000007        全新好   7.26         23.91       25.120         3.32       1.29           3.46           3.09            10917 20.81 633.23   深圳主板                                                                                                                              久不分红,商业连锁,摘帽,活跃小盘非融,深圳板块,被举牌,近期强势,近期新高,高市净率                  口罩防护,大数据,物业管理概念,租购同权,稀缺资源,粤港澳                                                                            None           商业连锁                                      久不分红,微小盘股,摘帽,高市净率      None
+
+
+【表 4/44】dwd_stock_a_total_plate
+====================================================================================================
+基本信息:
+  行数: 118545
+  列数: 6
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 NO    MUL   NULL                      
+plate_name           varchar(50)          NO          NULL                      
+stock_code           varchar(50)          YES         NULL                      
+stock_name           varchar(50)          YES         NULL                      
+source_table         varchar(50)          YES         NULL                      
+remark               varchar(50)          YES         NULL                      
+
+数据样例（前5行，完整列）:
+--------------------------------------------------------------------------------
+所有列(6个):
+   1. ymd
+   2. plate_name
+   3. stock_code
+   4. stock_name
+   5. source_table
+   6. remark
+
+       ymd plate_name stock_code stock_name              source_table remark
+2024-10-04       专精特新     000032       深桑达Ａ ods_tdx_stock_style_plate       
+2024-10-04       专精特新     000584      *ST工智 ods_tdx_stock_style_plate       
+2024-10-04       专精特新     000586       汇源通信 ods_tdx_stock_style_plate       
+2024-10-04       专精特新     000795        英洛华 ods_tdx_stock_style_plate       
+2024-10-04       专精特新     000801       四川九洲 ods_tdx_stock_style_plate       
+
+
+【表 5/44】dwd_stock_dt_list
+====================================================================================================
+基本信息:
+  行数: 4569
+  列数: 17
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 NO    PRI   NULL                      
+stock_code           varchar(50)          NO    PRI   NULL                      
+stock_name           varchar(50)          YES         NULL                      
+last_close           float                YES         NULL                      
+close                float                YES         NULL                      
+rate                 float                YES         NULL                      
+market_value         double               YES         NULL                      
+total_value          double               YES         NULL                      
+total_asset          double               YES         NULL                      
+net_asset            double               YES         NULL                      
+total_capital        double               YES         NULL                      
+float_capital        double               YES         NULL                      
+shareholder_num      bigint               YES         NULL                      
+pb                   varchar(50)          YES         NULL                      
+pe                   varchar(50)          YES         NULL                      
+market               varchar(50)          YES         NULL                      
+plate_names          varchar(500)         YES         NULL                      
+
+数据样例（前5行，完整列）:
+--------------------------------------------------------------------------------
+所有列(17个):
+   1. ymd
+   2. stock_code
+   3. stock_name
+   4. last_close
+   5. close
+   6. rate
+   7. market_value
+   8. total_value
+   9. total_asset
+  10. net_asset
+  11. total_capital
+  12. float_capital
+  13. shareholder_num
+  14. pb
+  15. pe
+  16. market
+  17. plate_names
+
+       ymd stock_code stock_name  last_close  close   rate  market_value  total_value  total_asset  net_asset  total_capital  float_capital  shareholder_num   pb      pe market                                    plate_names
+2024-11-26     000573       粤宏远Ａ        3.89   3.50 -10.03         21.33       21.501        21.99      15.94           6.38           6.33            46869 1.35    --     深圳主板                   低价股,壳资源,广东板块,微盘股,活跃小盘非融,电气设备
+2024-11-26     000605       渤海股份       12.18  10.96 -10.02         30.30       32.158        80.51      21.20           3.53           3.33            20039 1.52  199.27   深圳主板 养老金持股,北京板块,微盘精选,微盘股,水务,活跃小盘国企,活跃小盘非融,破净资产,社保新进
+2024-11-26     000695       滨海能源       16.91  15.22  -9.99         27.49       27.528        12.89       1.86           2.22           2.22             9906 14.8 1143.95   深圳主板                       久不分红,低安全分,天津板块,广告包装,高市净率
+2024-11-26     000795        英洛华       12.01  10.81  -9.99        135.70      135.740        39.05      26.91          11.34          11.34            77825 5.04   49.29   深圳主板    专精特新,中证1000,回购计划,国证2000,浙江板块,矿物制品,能源金属,资源优势
+2024-11-26     000801       四川九洲       21.43  19.29  -9.99        163.55      163.578        67.81      29.76          10.23          10.23            66516 5.49  102.36   深圳主板               专精特新,中证1000,四川板块,国证2000,家用电器,重组股
+
+
+【表 6/44】dwd_stock_zt_list
+====================================================================================================
+基本信息:
+  行数: 10665
+  列数: 17
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 NO    PRI   NULL                      
+stock_code           varchar(50)          NO    PRI   NULL                      
+stock_name           varchar(50)          YES         NULL                      
+last_close           float                YES         NULL                      
+close                float                YES         NULL                      
+rate                 float                YES         NULL                      
+market_value         double               YES         NULL                      
+total_value          double               YES         NULL                      
+total_asset          double               YES         NULL                      
+net_asset            double               YES         NULL                      
+total_capital        double               YES         NULL                      
+float_capital        double               YES         NULL                      
+shareholder_num      bigint               YES         NULL                      
+pb                   varchar(50)          YES         NULL                      
+pe                   varchar(50)          YES         NULL                      
+market               varchar(50)          YES         NULL                      
+plate_names          varchar(500)         YES         NULL                      
+
+数据样例（前5行，完整列）:
+--------------------------------------------------------------------------------
+所有列(17个):
+   1. ymd
+   2. stock_code
+   3. stock_name
+   4. last_close
+   5. close
+   6. rate
+   7. market_value
+   8. total_value
+   9. total_asset
+  10. net_asset
+  11. total_capital
+  12. float_capital
+  13. shareholder_num
+  14. pb
+  15. pe
+  16. market
+  17. plate_names
+
+       ymd stock_code stock_name  last_close  close  rate  market_value  total_value  total_asset  net_asset  total_capital  float_capital  shareholder_num    pb     pe market                                                                      plate_names
+2024-11-26     000409       云鼎科技        9.49  10.44 10.01         43.22       69.224        24.56      14.93           6.78           4.23            50643  4.63   64.3   深圳主板                                                            久不分红,国证2000,山东板块,软件服务
+2024-11-26     000595       宝塔实业        7.98   8.78 10.03        103.56      103.649        10.38       4.25          11.39          11.38           111226  24.4   --     深圳主板 久不分红,低安全分,宁夏板块,定增预案,昨日上榜,昨日振荡,昨高换手,最近多板,最近异动,近期强势,近期新高,连续亏损,通用机械,通达信热股,重组预案,高市净率
+2024-11-26     000712       锦龙股份       13.47  14.82 10.02        146.63      146.765       241.71      23.91           8.96           8.95            96141  6.14   --     深圳主板                     中证1000,参股新股,广东板块,昨日涨停,最近多板,最近异动,最近情绪,证券,连续亏损,通达信热股,重组预案,高质押股
+2024-11-26     000721       西安饮食        9.00   9.90 10.00         44.58       58.491        14.63       3.33           5.74           4.38           115000 17.57   --     深圳主板                                 久不分红,亏损股,投资时钟,昨日振荡,昨高换手,最近异动,连续亏损,酒店餐饮,陕西板块,高市净率
+2024-11-26     000727       冠捷科技        2.84   3.12  9.86        147.21      147.225       360.08      28.58          45.30          45.30           164000  5.15 138.06   深圳主板                                        中证1000,久不分红,低价股,元器件,国证2000,扣非亏损,江苏板块,海外业务
+
+
+【ODS层】(38张表)
+================================================================================
+
+
+【表 7/44】ods_akshare_stock_a_high_low_statistics
+====================================================================================================
+基本信息:
+  行数: 2000
+  列数: 9
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 YES   MUL   NULL                      
+market               varchar(50)          YES         NULL                      
+close                float                YES         NULL                      
+high20               int                  YES         NULL                      
+low20                int                  YES         NULL                      
+high60               int                  YES         NULL                      
+low60                int                  YES         NULL                      
+high120              int                  YES         NULL                      
+low120               int                  YES         NULL                      
+
+数据样例（前5行，完整列）:
+--------------------------------------------------------------------------------
+所有列(9个):
+   1. ymd
+   2. market
+   3. close
+   4. high20
+   5. low20
+   6. high60
+   7. low60
+   8. high120
+   9. low120
+
+       ymd market   close  high20  low20  high60  low60  high120  low120
+2024-01-01    all 2962.28     797    136     314     54      183      35
+2024-01-02    all 2967.25     525    271     236    118      124      79
+2024-01-03    all 2954.35     514    406     232    203      136     151
+2024-01-04    all 2929.18     194   1024      84    512       63     361
+2024-01-07    all 2887.54      88   2095      56   1203       35     928
+
+
+【表 8/44】ods_akshare_stock_board_concept_cons_em
+====================================================================================================
+基本信息:
+  行数: 0
+  列数: 19
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 YES   MUL   NULL                      
+board_name           varchar(100)         YES         NULL                      
+board_code           varchar(50)          YES         NULL                      
+serial_num           int                  YES         NULL                      
+stock_code           varchar(50)          YES         NULL                      
+stock_name           varchar(50)          YES         NULL                      
+close                float                YES         NULL                      
+change_pct           float                YES         NULL                      
+change_amt           float                YES         NULL                      
+trading_volume       float                YES         NULL                      
+trading_amount       float                YES         NULL                      
+amplitude            float                YES         NULL                      
+high                 float                YES         NULL                      
+low                  float                YES         NULL                      
+open                 float                YES         NULL                      
+prev_close           float                YES         NULL                      
+turnover_rate        float                YES         NULL                      
+pe_dynamic           float                YES         NULL                      
+pb                   float                YES         NULL                      
+
+数据样例: 表为空或无法读取数据
+
+
+
+【表 9/44】ods_akshare_stock_board_concept_hist_em
+====================================================================================================
+基本信息:
+  行数: 0
+  列数: 12
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 YES   MUL   NULL                      
+board_code           varchar(50)          YES         NULL                      
+open                 float                YES         NULL                      
+close                float                YES         NULL                      
+high                 float                YES         NULL                      
+low                  float                YES         NULL                      
+change_pct           float                YES         NULL                      
+change_amt           float                YES         NULL                      
+trading_volume       bigint               YES         NULL                      
+trading_amount       double               YES         NULL                      
+amplitude            float                YES         NULL                      
+turnover_rate        float                YES         NULL                      
+
+数据样例: 表为空或无法读取数据
+
+
+
+【表 10/44】ods_akshare_stock_board_concept_name_em
+====================================================================================================
+基本信息:
+  行数: 0
+  列数: 13
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 YES   MUL   NULL                      
+ranking              int                  YES         NULL                      
+board_name           varchar(100)         YES         NULL                      
+board_code           varchar(50)          YES         NULL                      
+close                float                YES         NULL                      
+change_amt           float                YES         NULL                      
+change_pct           float                YES         NULL                      
+total_market         double               YES         NULL                      
+turnover_rate        float                YES         NULL                      
+rising_stocks_num    int                  YES         NULL                      
+falling_stocks_num   int                  YES         NULL                      
+leading_stock        varchar(100)         YES         NULL                      
+leading_stock_pct    float                YES         NULL                      
+
+数据样例: 表为空或无法读取数据
+
+
+
+【表 11/44】ods_akshare_stock_cyq_em
+====================================================================================================
+基本信息:
+  行数: 0
+  列数: 11
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 YES   MUL   NULL                      
+stock_code           varchar(50)          YES         NULL                      
+stock_name           varchar(50)          YES         NULL                      
+profit_ratio         float                YES         NULL                      
+avg_cost             float                YES         NULL                      
+cost_low_90          float                YES         NULL                      
+cost_high_90         float                YES         NULL                      
+concentration_90     float                YES         NULL                      
+cost_low_70          float                YES         NULL                      
+cost_high_70         float                YES         NULL                      
+concentration_70     float                YES         NULL                      
+
+数据样例: 表为空或无法读取数据
+
+
+
+【表 12/44】ods_akshare_stock_value_em
+====================================================================================================
+基本信息:
+  行数: 0
+  列数: 14
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 YES   MUL   NULL                      
+stock_code           varchar(50)          YES         NULL                      
+close                float                YES         NULL                      
+change_pct           float                YES         NULL                      
+total_market         double               YES         NULL                      
+circulation_market   double               YES         NULL                      
+total_shares         double               YES         NULL                      
+circulation_shares   double               YES         NULL                      
+pe_ttm               float                YES         NULL                      
+pe_static            float                YES         NULL                      
+pb                   float                YES         NULL                      
+peg                  float                YES         NULL                      
+pcf                  float                YES         NULL                      
+ps                   float                YES         NULL                      
+
+数据样例: 表为空或无法读取数据
+
+
+
+【表 13/44】ods_akshare_stock_yjkb_em
+====================================================================================================
+基本信息:
+  行数: 8091
+  列数: 18
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 YES   MUL   NULL                      
+serial_num           varchar(50)          YES         NULL                      
+stock_code           varchar(50)          YES         NULL                      
+stock_name           varchar(50)          YES         NULL                      
+eps                  double               YES         NULL                      
+income               double               YES         NULL                      
+income_last_year     double               YES         NULL                      
+income_yoy           varchar(50)          YES         NULL                      
+income_qoq           double               YES         NULL                      
+profit               double               YES         NULL                      
+profit_last_year     double               YES         NULL                      
+profit_yoy           varchar(50)          YES         NULL                      
+profit_qoq           double               YES         NULL                      
+asset_per_share      float                YES         NULL                      
+roe                  double               YES         NULL                      
+industry             varchar(100)         YES         NULL                      
+market_board         varchar(50)          YES         NULL                      
+securities_type      varchar(50)          YES         NULL                      
+
+数据样例（前5行，完整列）:
+--------------------------------------------------------------------------------
+所有列(18个):
+   1. ymd
+   2. serial_num
+   3. stock_code
+   4. stock_name
+   5. eps
+   6. income
+   7. income_last_year
+   8. income_yoy
+   9. income_qoq
+  10. profit
+  11. profit_last_year
+  12. profit_yoy
+  13. profit_qoq
+  14. asset_per_share
+  15. roe
+  16. industry
+  17. market_board
+  18. securities_type
+
+       ymd serial_num stock_code stock_name  eps      income  income_last_year      income_yoy income_qoq      profit  profit_last_year       profit_yoy profit_qoq asset_per_share  roe industry market_board securities_type
+2023-04-14          1     301598       博科测试 None  29426000.0               NaN            None       None  -6603300.0               NaN             None       None            None None     专用设备         None            None
+2022-05-31          2     301386       未来电器 None  48920000.0        52578400.0 -6.957990353453       None   4413300.0         8720800.0 -49.393404274837       None            None None     电源设备         None            None
+2021-10-22          3     301296        新巨丰 None 227025100.0               NaN            None       None  36955800.0               NaN             None       None            None None     包装材料         None            None
+2021-09-30          4     301302       华如科技 None    229600.0               NaN            None       None -34671700.0               NaN             None       None            None None     软件开发         None            None
+2021-09-29          5     301167       建研设计 None  24474700.0               NaN            None       None  -3056400.0               NaN             None       None            None None   工程咨询服务         None            None
+
+
+【表 14/44】ods_akshare_stock_yjyg_em
+====================================================================================================
+基本信息:
+  行数: 35106
+  列数: 11
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 YES   MUL   NULL                      
+serial_num           varchar(50)          YES         NULL                      
+stock_code           varchar(50)          YES         NULL                      
+stock_name           varchar(50)          YES         NULL                      
+forecast_index       double               YES         NULL                      
+performance_change   double               YES         NULL                      
+forecast_value       double               YES         NULL                      
+change_pct           double               YES         NULL                      
+change_reason        varchar(255)         YES         NULL                      
+forecast_type        varchar(50)          YES         NULL                      
+last_year_value      double               YES         NULL                      
+
+数据样例（前5行，完整列）:
+--------------------------------------------------------------------------------
+所有列(11个):
+   1. ymd
+   2. serial_num
+   3. stock_code
+   4. stock_name
+   5. forecast_index
+   6. performance_change
+   7. forecast_value
+   8. change_pct
+   9. change_reason
+  10. forecast_type
+  11. last_year_value
+
+       ymd serial_num stock_code stock_name forecast_index  performance_change  forecast_value  change_pct                                                                                                                                                                                                                                                   change_reason forecast_type  last_year_value
+2020-07-08          1     003030       祖名股份           None                 0.0      20760200.0       78.13                                                            2020年一季度净利润变动幅度高于营业收入变动幅度的主要原因系:①2020年一季度受疫情影响,由于部分社会保险费用减免、高速公路过路费免费及水电气降价等因素影响,提升了净利润水平。②通常情况下,受春节影响一季度为豆制品销售淡季,以前年度一季度销售收入相对较低,2020年一季度受疫情影响,居民通过商超渠道采购的豆制品有所增加,由于商超渠道的毛利率较高,因此导致净利润的增加幅度高于收入的增长。            预增      11654700.00
+2020-05-15          4     003031       中瓷电子           None                 0.0      14300000.0        0.47 虽然疫情导致发行人2020年第一季度经营业绩增幅收窄,但发行人所处行业情况及自身经营特点,预计疫情对发行人的持续盈利能力不会产生重大不利影响,具体分析如下:(1)从历年来看,发行人第一季度营业收入对发行人全年业绩贡献比例较低,上半年营业收入对全年业绩贡献比例一般也低于下半年营业收入对全年业绩的贡献。根据2017至2019年度财务数据,发行人第一季度营业收入占全年比例平均为20.44%,上半年营业收入占全年比例平均为46.08%。其中,2019年度第一季度营业收入占全年比例为20.31%,第一季度扣非后净利            略增      14233600.00
+2020-05-12          7     300835       龙磁科技           None                 0.0      11545000.0      -28.09                                                                                                                                                                                             2020年1-3月经营业绩有所下降,主要系受疫情影响,当期销售收入较上年同期略有下降,同时由于复工时间延迟,单位生产成本有所上升所致。            略减      16055698.19
+2020-05-07          9     688157       松井股份           None                 0.0      82124500.0       -5.24 2020年一季度,公司营业收入及净利润预期同比下降,主要系:受新型冠状病毒疫情等因素影响,生产订单交付周期延后所致。具体体现为:(一)受疫情影响,公司响应相关政策延期复工,2020年度截至本招股说明书签署日开工率仅为78.85%(实际工作天数/法定工作日),且公司为了有效防范疫情,采取轮班生产的形式,产品生产量预计同比下滑;(二)受疫情影响,公司主要下游模厂延期开工,部分原计划一季度交付的订单发货滞后,一季度出货量预计同比下降;(三)上游原材料供应商延期开工,公司2月生产主要以消耗春节前库存原材料为主。上            略减      86663200.00
+2020-05-06         11     688418       震有科技           None                 0.0      22838600.0       28.46 2020年初,新冠疫情在我国境内爆发,三月中下旬以来我国疫情得到有效控制。发行人预计2020年第一季度可实现营业收入2,283.86万元(未经审计),同比增加28.46%。2020年第一季度,公司预计完成境内业务营业收入353.47万元,相较去年一季度同比降低42.56%,疫情对公司在外协生产方面和产品交付方面造成一定影响。外协生产方面,外协厂商因疫情原因在二月份产能有限,致使公司部分外协产品延期交付;产品交付方面,部分客户因疫情原因无法进行产品/项目验收,对公司造成一定影响。上述影响导致公司一季度境内业            略增      18276234.18
+
+
+【表 15/44】ods_akshare_stock_zh_a_gdhs_detail_em
+====================================================================================================
+基本信息:
+  行数: 388669
+  列数: 15
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 YES   MUL   NULL                      
+stock_code           varchar(50)          YES         NULL                      
+stock_name           varchar(50)          YES         NULL                      
+range_change_pct     float                YES         NULL                      
+holder_num_current   bigint               YES         NULL                      
+holder_num_last      bigint               YES         NULL                      
+holder_num_change    bigint               YES         NULL                      
+holder_num_change_pct float                YES         NULL                      
+avg_holder_market    double               YES         NULL                      
+avg_holder_share_num float                YES         NULL                      
+total_market         double               YES         NULL                      
+total_shares         bigint               YES         NULL                      
+share_change         bigint               YES         NULL                      
+share_change_reason  varchar(255)         YES         NULL                      
+holder_num_announce_date date                 YES         NULL                      
+
+数据样例（前5行，完整列）:
+--------------------------------------------------------------------------------
+所有列(15个):
+   1. ymd
+   2. stock_code
+   3. stock_name
+   4. range_change_pct
+   5. holder_num_current
+   6. holder_num_last
+   7. holder_num_change
+   8. holder_num_change_pct
+   9. avg_holder_market
+  10. avg_holder_share_num
+  11. total_market
+  12. total_shares
+  13. share_change
+  14. share_change_reason
+  15. holder_num_announce_date
+
+       ymd stock_code stock_name  range_change_pct  holder_num_current  holder_num_last  holder_num_change  holder_num_change_pct  avg_holder_market  avg_holder_share_num  total_market  total_shares  share_change share_change_reason holder_num_announce_date
+2013-03-01     000001       平安银行          43.94510              233517           263477             -29960              -11.37100      505935.159294               21939.9  1.181445e+11    5123350416             0                None               2013-03-08
+2013-03-31     000001       平安银行         -12.74930              256985           233517              23468               10.04980      401119.950075               19936.4  1.030818e+11    5123350416             0                None               2013-04-24
+2013-06-30     000001       平安银行         -20.01730              281819           256985              24834                9.66360      290000.623911               29087.3  8.172769e+10    8197360665    3074010249                分红派息               2013-08-23
+2013-09-30     000001       平安银行          19.15750              291054           281819               9235                3.27693      334593.046995               28164.4  9.738464e+10    8197360665             0                None               2013-10-23
+2013-12-31     000001       平安银行           3.11448              298070           291054               7016                2.41055      336892.904842               27501.5  1.004177e+11    8197360665             0                None               2014-03-07
+
+
+【表 16/44】ods_akshare_stock_zh_a_spot_em
+====================================================================================================
+基本信息:
+  行数: 0
+  列数: 24
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 YES   MUL   NULL                      
+serial_num           bigint               YES         NULL                      
+stock_code           varchar(50)          YES         NULL                      
+stock_name           varchar(50)          YES         NULL                      
+close                float                YES         NULL                      
+change_pct           float                YES         NULL                      
+change_amt           float                YES         NULL                      
+trading_volume       float                YES         NULL                      
+trading_amount       double               YES         NULL                      
+amplitude            float                YES         NULL                      
+high                 float                YES         NULL                      
+low                  float                YES         NULL                      
+open                 float                YES         NULL                      
+prev_close           float                YES         NULL                      
+volume_ratio         float                YES         NULL                      
+turnover_rate        float                YES         NULL                      
+pe_dynamic           float                YES         NULL                      
+pb                   float                YES         NULL                      
+total_market         double               YES         NULL                      
+circulation_market   double               YES         NULL                      
+price_rise_speed     float                YES         NULL                      
+five_min_price_change float                YES         NULL                      
+sixty_day_price_change float                YES         NULL                      
+ytd_price_change     float                YES         NULL                      
+
+数据样例: 表为空或无法读取数据
+
+
+
+【表 17/44】ods_astock_industry_detail
+====================================================================================================
+基本信息:
+  行数: 540842
+  列数: 11
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 YES   MUL   NULL                      
+stock_code           varchar(100)         YES         NULL                      
+stock_name           varchar(50)          YES         NULL                      
+industry_name        varchar(100)         YES         NULL                      
+industry_code        varchar(100)         YES         NULL                      
+l1_code              varchar(100)         YES         NULL                      
+l1_name              varchar(100)         YES         NULL                      
+l2_code              varchar(100)         YES         NULL                      
+l2_name              varchar(100)         YES         NULL                      
+l3_code              varchar(100)         YES         NULL                      
+l3_name              varchar(100)         YES         NULL                      
+
+数据样例（前5行，完整列）:
+--------------------------------------------------------------------------------
+所有列(11个):
+   1. ymd
+   2. stock_code
+   3. stock_name
+   4. industry_name
+   5. industry_code
+   6. l1_code
+   7. l1_name
+   8. l2_code
+   9. l2_name
+  10. l3_code
+  11. l3_name
+
+       ymd stock_code stock_name industry_name industry_code l1_code l1_name l2_code l2_name l3_code  l3_name
+2024-08-25  600095.SH       湘财股份           证券Ⅲ        490101  490000    非银金融  490100     证券Ⅱ  490101      证券Ⅲ
+2024-08-25  600699.SH       均胜电子      汽车电子电气系统        280206  280000      汽车  280200   汽车零部件  280206 汽车电子电气系统
+2024-08-25  600418.SH       江淮汽车         商用载货车        280601  280000      汽车  280600     商用车  280601    商用载货车
+2024-08-25  600741.SH       华域汽车       车身附件及饰件        280202  280000      汽车  280200   汽车零部件  280202  车身附件及饰件
+2024-08-25  600592.SH       龙溪股份          金属制品        640108  640000    机械设备  640100    通用设备  640108     金属制品
+
+
+【表 18/44】ods_astock_industry_overview
+====================================================================================================
+基本信息:
+  行数: 103800
+  列数: 10
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 YES   MUL   NULL                      
+classified           varchar(100)         YES         NULL                      
+industry_name        varchar(100)         YES         NULL                      
+industry_code        varchar(100)         YES         NULL                      
+l1_code              varchar(100)         YES         NULL                      
+l1_name              varchar(100)         YES         NULL                      
+l2_code              varchar(100)         YES         NULL                      
+l2_name              varchar(100)         YES         NULL                      
+l3_code              varchar(100)         YES         NULL                      
+l3_name              varchar(100)         YES         NULL                      
+
+数据样例（前5行，完整列）:
+--------------------------------------------------------------------------------
+所有列(10个):
+   1. ymd
+   2. classified
+   3. industry_name
+   4. industry_code
+   5. l1_code
+   6. l1_name
+   7. l2_code
+   8. l2_name
+   9. l3_code
+  10. l3_name
+
+       ymd classified industry_name industry_code l1_code l1_name l2_code l2_name l3_code l3_name
+2024-08-25      sw_l3          磁性材料        240202  240000    有色金属  240200   金属新材料  240202    磁性材料
+2024-08-25      sw_l3             铝        240301  240000    有色金属  240300    工业金属  240301       铝
+2024-08-25      sw_l3             铜        240302  240000    有色金属  240300    工业金属  240302       铜
+2024-08-25      sw_l3            铅锌        240303  240000    有色金属  240300    工业金属  240303      铅锌
+2024-08-25      sw_l3            黄金        240401  240000    有色金属  240400     贵金属  240401      黄金
+
+
+【表 19/44】ods_exchange_dxy_vantage
+====================================================================================================
+基本信息:
+  行数: 0
+  列数: 2
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 NO    PRI   NULL                      
+stock_name           varchar(50)          NO    PRI   NULL                      
+
+数据样例: 表为空或无法读取数据
+
+
+
+【表 20/44】ods_exchange_rate_vantage_detail
+====================================================================================================
+基本信息:
+  行数: 880
+  列数: 6
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+stock_name           varchar(50)          NO    PRI   NULL                      
+ymd                  date                 NO    PRI   NULL                      
+open                 float                YES         NULL                      
+high                 float                YES         NULL                      
+low                  float                YES         NULL                      
+close                float                YES         NULL                      
+
+数据样例（前5行，完整列）:
+--------------------------------------------------------------------------------
+所有列(6个):
+   1. stock_name
+   2. ymd
+   3. open
+   4. high
+   5. low
+   6. close
+
+stock_name        ymd    open    high     low   close
+   EUR_USD 2024-03-24 1.08075 1.08436 1.08026 1.08075
+   EUR_USD 2024-03-25 1.08382 1.08641 1.08260 1.08382
+   EUR_USD 2024-03-26 1.08324 1.08393 1.08117 1.08324
+   EUR_USD 2024-03-27 1.08134 1.08284 1.07755 1.08134
+   EUR_USD 2024-03-28 1.07945 1.08073 1.07689 1.07945
+
+
+【表 21/44】ods_future_inside_insight
+====================================================================================================
+基本信息:
+  行数: 5209
+  列数: 9
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+stock_code           varchar(50)          NO    PRI   NULL                      
+ymd                  date                 NO    PRI   NULL                      
+open                 float                YES         NULL                      
+close                float                YES         NULL                      
+high                 float                YES         NULL                      
+low                  float                YES         NULL                      
+volume               bigint               YES         NULL                      
+open_interest        bigint               YES         NULL                      
+settle               bigint               YES         NULL                      
+
+数据样例（前5行，完整列）:
+--------------------------------------------------------------------------------
+所有列(9个):
+   1. stock_code
+   2. ymd
+   3. open
+   4. close
+   5. high
+   6. low
+   7. volume
+   8. open_interest
+   9. settle
+
+stock_code        ymd   open  close   high    low  volume  open_interest  settle
+EC2410.INE 2023-08-18  852.2  936.0  936.0  804.4    1572            680     923
+EC2410.INE 2023-08-21  977.0  997.0 1006.0  940.0    1750            850     976
+EC2410.INE 2023-08-22  968.2 1041.0 1074.1  966.5    4272           1499    1050
+EC2410.INE 2023-08-23 1041.0 1080.8 1138.8 1041.0    5970           2143    1095
+EC2410.INE 2023-08-24 1089.6  985.2 1107.4  985.2    7031           2235    1027
+
+
+【表 22/44】ods_future_inside_insight_now
+====================================================================================================
+基本信息:
+  行数: 4326
+  列数: 9
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+stock_code           varchar(50)          NO    PRI   NULL                      
+ymd                  date                 NO    PRI   NULL                      
+open                 float                YES         NULL                      
+close                float                YES         NULL                      
+high                 float                YES         NULL                      
+low                  float                YES         NULL                      
+volume               bigint               YES         NULL                      
+open_interest        bigint               YES         NULL                      
+settle               bigint               YES         NULL                      
+
+数据样例（前5行，完整列）:
+--------------------------------------------------------------------------------
+所有列(9个):
+   1. stock_code
+   2. ymd
+   3. open
+   4. close
+   5. high
+   6. low
+   7. volume
+   8. open_interest
+   9. settle
+
+stock_code        ymd   open  close   high    low  volume  open_interest  settle
+AG2410.SHF 2024-06-03 8335.0 7968.0 8399.0 7838.0  277237         129338    8094
+AG2410.SHF 2024-06-04 8050.0 8096.0 8132.0 7952.0  176351         132457    8036
+AG2410.SHF 2024-06-05 7900.0 7791.0 7958.0 7746.0  198458         133149    7815
+AG2410.SHF 2024-06-06 7820.0 8050.0 8096.0 7775.0  209074         136655    7932
+AG2410.SHF 2024-06-07 7990.0 8227.0 8341.0 7976.0  245508         138487    8184
+
+
+【表 23/44】ods_index_a_share_insight
+====================================================================================================
+基本信息:
+  行数: 10578
+  列数: 8
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+index_code           varchar(50)          NO    PRI   NULL                      
+index_name           varchar(50)          NO          NULL                      
+ymd                  date                 NO    PRI   NULL                      
+open                 float                YES         NULL                      
+close                float                YES         NULL                      
+high                 float                YES         NULL                      
+low                  float                YES         NULL                      
+volume               bigint               YES         NULL                      
+
+数据样例（前5行，完整列）:
+--------------------------------------------------------------------------------
+所有列(8个):
+   1. index_code
+   2. index_name
+   3. ymd
+   4. open
+   5. close
+   6. high
+   7. low
+   8. volume
+
+index_code index_name        ymd     open    close     high      low      volume
+ 000001.SH       上证指数 2021-01-04  3474.68  3502.96  3511.66  3457.21 38079080000
+ 000016.SH       上证50 2021-01-04  3632.69  3643.36  3659.17  3608.34  4354664400
+ 000300.SH      沪深300 2021-01-04  5212.93  5267.72  5284.43  5190.94 21171138200
+ 000688.SH       科创50 2021-01-04  1398.96  1422.12  1425.70  1389.58   585545100
+ 000849.SH      300非银 2021-01-04 12124.00 12025.70 12133.10 11857.80  3946603500
+
+
+【表 24/44】ods_index_a_share_insight_now
+====================================================================================================
+基本信息:
+  行数: 2370
+  列数: 8
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+index_code           varchar(50)          NO    PRI   NULL                      
+index_name           varchar(50)          NO          NULL                      
+ymd                  date                 NO    PRI   NULL                      
+open                 float                YES         NULL                      
+close                float                YES         NULL                      
+high                 float                YES         NULL                      
+low                  float                YES         NULL                      
+volume               bigint               YES         NULL                      
+
+数据样例（前5行，完整列）:
+--------------------------------------------------------------------------------
+所有列(8个):
+   1. index_code
+   2. index_name
+   3. ymd
+   4. open
+   5. close
+   6. high
+   7. low
+   8. volume
+
+index_code index_name        ymd    open   close    high     low      volume
+ 000001.SH       上证指数 2024-08-01 2940.12 2932.39 2947.88 2928.83 34662113700
+ 000001.SH       上证指数 2024-08-02 2913.02 2905.34 2931.26 2902.72 31220503900
+ 000001.SH       上证指数 2024-08-05 2889.36 2860.70 2919.02 2860.70 35554057200
+ 000001.SH       上证指数 2024-08-06 2878.65 2867.28 2888.20 2845.33 29730080300
+ 000001.SH       上证指数 2024-08-07 2864.01 2869.83 2886.94 2857.73 26309715000
+
+
+【表 25/44】ods_north_bound_daily
+====================================================================================================
+基本信息:
+  行数: 35505
+  列数: 4
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+stock_code           varchar(100)         YES         NULL                      
+ymd                  date                 YES   MUL   NULL                      
+sh_hkshare_hold      bigint               YES         NULL                      
+pct_total_share      float                YES         NULL                      
+
+数据样例（前5行，完整列）:
+--------------------------------------------------------------------------------
+所有列(4个):
+   1. stock_code
+   2. ymd
+   3. sh_hkshare_hold
+   4. pct_total_share
+
+stock_code        ymd  sh_hkshare_hold  pct_total_share
+ 600095.SH 2022-12-31         10263454             0.90
+ 600095.SH 2023-03-31         10255360             0.90
+ 600095.SH 2023-06-30         10071171             0.89
+ 600095.SH 2023-09-30          9792468             0.86
+ 600095.SH 2023-12-31          9792468             0.86
+
+
+【表 26/44】ods_north_bound_daily_now
+====================================================================================================
+基本信息:
+  行数: 0
+  列数: 4
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+stock_code           varchar(100)         YES         NULL                      
+ymd                  date                 YES   MUL   NULL                      
+sh_hkshare_hold      bigint               YES         NULL                      
+pct_total_share      float                YES         NULL                      
+
+数据样例: 表为空或无法读取数据
+
+
+
+【表 27/44】ods_shareholder_num
+====================================================================================================
+基本信息:
+  行数: 196046
+  列数: 7
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+stock_code           varchar(100)         YES         NULL                      
+stock_name           varchar(50)          YES         NULL                      
+ymd                  date                 YES   MUL   NULL                      
+total_sh             double               YES         NULL                      
+avg_share            double(10,4)         YES         NULL                      
+pct_of_total_sh      double(10,4)         YES         NULL                      
+pct_of_avg_sh        double(10,4)         YES         NULL                      
+
+数据样例（前5行，完整列）:
+--------------------------------------------------------------------------------
+所有列(7个):
+   1. stock_code
+   2. stock_name
+   3. ymd
+   4. total_sh
+   5. avg_share
+   6. pct_of_total_sh
+   7. pct_of_avg_sh
+
+stock_code stock_name        ymd  total_sh  avg_share  pct_of_total_sh  pct_of_avg_sh
+ 600095.SH       湘财股份 2021-09-30   98527.0  9709.4454         -20.0599        25.0936
+ 600095.SH       湘财股份 2021-12-31   91290.0 10479.1601          -7.3452         7.9275
+ 600095.SH       湘财股份 2022-03-31   90297.0 12509.9466          -1.0877        19.3793
+ 600095.SH       湘财股份 2022-06-30   84326.0 13395.7575          -6.6126         7.0809
+ 600095.SH       湘财股份 2022-09-30   80144.0 14094.7626          -4.9593         5.2181
+
+
+【表 28/44】ods_shareholder_num_now
+====================================================================================================
+基本信息:
+  行数: 60823
+  列数: 7
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+stock_code           varchar(100)         YES         NULL                      
+stock_name           varchar(50)          YES         NULL                      
+ymd                  date                 YES   MUL   NULL                      
+total_sh             double               YES         NULL                      
+avg_share            double(10,4)         YES         NULL                      
+pct_of_total_sh      double(10,4)         YES         NULL                      
+pct_of_avg_sh        double(10,4)         YES         NULL                      
+
+数据样例（前5行，完整列）:
+--------------------------------------------------------------------------------
+所有列(7个):
+   1. stock_code
+   2. stock_name
+   3. ymd
+   4. total_sh
+   5. avg_share
+   6. pct_of_total_sh
+   7. pct_of_avg_sh
+
+stock_code stock_name        ymd  total_sh  avg_share  pct_of_total_sh  pct_of_avg_sh
+ 600095.SH       湘财股份 2024-06-30   97602.0 29294.3561          -4.9019         5.1546
+ 600699.SH       均胜电子 2024-06-30   90662.0 15089.9453          -1.0888         1.1008
+ 600418.SH       江淮汽车 2024-06-30  180739.0 12083.7771           2.5237        -2.4616
+ 600592.SH       龙溪股份 2024-06-30   33219.0 12027.8627          -3.2503         3.3595
+ 600211.SH       西藏药业 2024-06-30   45354.0  7106.7424           9.3289        18.9073
+
+
+【表 29/44】ods_stock_chouma_insight
+====================================================================================================
+基本信息:
+  行数: 1062867
+  列数: 27
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+stock_code           varchar(50)          NO    PRI   NULL                      
+ymd                  date                 NO    PRI   NULL                      
+exchange             varchar(50)          YES         NULL                      
+close                float                YES         NULL                      
+prev_close           float                YES         NULL                      
+total_shares         bigint               YES         NULL                      
+a_total_share        bigint               YES         NULL                      
+a_listed_share       bigint               YES         NULL                      
+listed_share         bigint               YES         NULL                      
+restricted_share     bigint               YES         NULL                      
+cost_5pct            float                YES         NULL                      
+cost_15pct           float                YES         NULL                      
+cost_50pct           float                YES         NULL                      
+cost_85pct           float                YES         NULL                      
+cost_95pct           float                YES         NULL                      
+avg_cost             float                YES         NULL                      
+max_cost             float                YES         NULL                      
+min_cost             float                YES         NULL                      
+winner_rate          float                YES         NULL                      
+diversity            float                YES         NULL                      
+pre_winner_rate      float                YES         NULL                      
+restricted_avg_cost  float                YES         NULL                      
+restricted_max_cost  float                YES         NULL                      
+restricted_min_cost  float                YES         NULL                      
+large_shareholders_avg_cost float                YES         NULL                      
+large_shareholders_total_share float                YES         NULL                      
+large_shareholders_total_share_pct float                YES         NULL                      
+
+数据样例（前5行，完整列）:
+--------------------------------------------------------------------------------
+所有列(27个):
+   1. stock_code
+   2. ymd
+   3. exchange
+   4. close
+   5. prev_close
+   6. total_shares
+   7. a_total_share
+   8. a_listed_share
+   9. listed_share
+  10. restricted_share
+  11. cost_5pct
+  12. cost_15pct
+  13. cost_50pct
+  14. cost_85pct
+  15. cost_95pct
+  16. avg_cost
+  17. max_cost
+  18. min_cost
+  19. winner_rate
+  20. diversity
+  21. pre_winner_rate
+  22. restricted_avg_cost
+  23. restricted_max_cost
+  24. restricted_min_cost
+  25. large_shareholders_avg_cost
+  26. large_shareholders_total_share
+  27. large_shareholders_total_share_pct
+
+stock_code        ymd exchange  close  prev_close  total_shares  a_total_share  a_listed_share  listed_share  restricted_share  cost_5pct  cost_15pct  cost_50pct  cost_85pct  cost_95pct  avg_cost  max_cost  min_cost  winner_rate  diversity  pre_winner_rate  restricted_avg_cost  restricted_max_cost  restricted_min_cost  large_shareholders_avg_cost  large_shareholders_total_share  large_shareholders_total_share_pct
+ 000001.SZ 2024-08-14     XSHE   9.92        9.95   19405918198    19405918198     19405546950   19405546950            371248       8.38        9.05        9.91       12.07       13.03     13.53      23.7       6.8        18.01      76.62            17.56                 15.5                 15.5                 15.5                         9.91                    1.270890e+10                               65.49
+ 000001.SZ 2024-08-15     XSHE  10.03        9.92   19405918198    19405918198     19405546950   19405546950            371248       8.38        9.05        9.91       12.07       13.03     13.52      23.7       6.8        25.62      76.62            17.99                 15.5                 15.5                 15.5                         9.91                    1.270890e+10                               65.49
+ 000001.SZ 2024-08-16     XSHE  10.13       10.03   19405918198    19405918198     19405546950   19405546950            371248       8.38        9.06        9.91       12.06       13.03     13.52      23.7       6.8        31.59      76.62            25.55                 15.5                 15.5                 15.5                         9.91                    1.270890e+10                               65.49
+ 000001.SZ 2024-08-19     XSHE  10.29       10.13   19405918198    19405918198     19405617528   19405617528            300670       8.38        9.06        9.91       12.06       13.03     13.52      23.7       6.8        36.76      76.62            31.50                 15.5                 15.5                 15.5                        10.18                    1.274130e+10                               65.66
+ 000001.SZ 2024-08-20     XSHE  10.34       10.29   19405918198    19405918198     19405617528   19405617528            300670       8.38        9.06        9.91       12.07       13.03     13.52      23.7       6.8        41.60      76.62            36.65                 15.5                 15.5                 15.5                        10.18                    1.274130e+10                               65.66
+
+
+【表 30/44】ods_stock_code_daily_insight
+====================================================================================================
+基本信息:
+  行数: 1604665
+  列数: 4
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 NO    PRI   NULL                      
+stock_code           varchar(50)          NO    PRI   NULL                      
+stock_name           varchar(50)          YES         NULL                      
+exchange             varchar(50)          YES         NULL                      
+
+数据样例（前5行，完整列）:
+--------------------------------------------------------------------------------
+所有列(4个):
+   1. ymd
+   2. stock_code
+   3. stock_name
+   4. exchange
+
+       ymd stock_code stock_name exchange
+2024-08-12  000001.SZ       平安银行     XSHE
+2024-08-12  000002.SZ        万科A     XSHE
+2024-08-12  000004.SZ       国华网安     XSHE
+2024-08-12  000006.SZ       深振业A     XSHE
+2024-08-12  000007.SZ        全新好     XSHE
+
+
+【表 31/44】ods_stock_exchange_market
+====================================================================================================
+基本信息:
+  行数: 1503407
+  列数: 4
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 NO    MUL   NULL                      
+stock_code           varchar(50)          YES         NULL                      
+stock_name           varchar(50)          YES         NULL                      
+market               varchar(50)          YES         NULL                      
+
+数据样例（前5行，完整列）:
+--------------------------------------------------------------------------------
+所有列(4个):
+   1. ymd
+   2. stock_code
+   3. stock_name
+   4. market
+
+       ymd stock_code stock_name market
+2024-08-12  000001.SZ       平安银行   深圳主板
+2024-08-12  000002.SZ        万科A   深圳主板
+2024-08-12  000004.SZ       国华网安   深圳主板
+2024-08-12  000006.SZ       深振业A   深圳主板
+2024-08-12  000007.SZ        全新好   深圳主板
+
+
+【表 32/44】ods_stock_kline_daily_insight
+====================================================================================================
+基本信息:
+  行数: 5760909
+  列数: 8
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+stock_code           varchar(50)          NO    PRI   NULL                      
+ymd                  date                 NO    PRI   NULL                      
+open                 float                YES         NULL                      
+close                float                YES         NULL                      
+high                 float                YES         NULL                      
+low                  float                YES         NULL                      
+num_trades           bigint               YES         NULL                      
+volume               bigint               YES         NULL                      
+
+数据样例（前5行，完整列）:
+--------------------------------------------------------------------------------
+所有列(8个):
+   1. stock_code
+   2. ymd
+   3. open
+   4. close
+   5. high
+   6. low
+   7. num_trades
+   8. volume
+
+stock_code        ymd   open  close   high    low  num_trades    volume
+ 000001.SZ 2021-01-04 16.959 16.515 16.959 16.373      119328 155421643
+ 000002.SZ 2021-01-04 24.047 23.522 24.047 23.302      142616 146844133
+ 000004.SZ 2021-01-04 20.690 21.020 21.190 20.520        7117   2739801
+ 000006.SZ 2021-01-04  5.172  5.062  5.172  5.044        4133   8132668
+ 000007.SZ 2021-01-04  6.270  6.270  6.270  6.270         839    850900
+
+
+【表 33/44】ods_stock_kline_daily_insight_now
+====================================================================================================
+基本信息:
+  行数: 1331435
+  列数: 8
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+stock_code           varchar(50)          NO    PRI   NULL                      
+ymd                  date                 NO    PRI   NULL                      
+open                 float                YES         NULL                      
+close                float                YES         NULL                      
+high                 float                YES         NULL                      
+low                  float                YES         NULL                      
+num_trades           bigint               YES         NULL                      
+volume               bigint               YES         NULL                      
+
+数据样例（前5行，完整列）:
+--------------------------------------------------------------------------------
+所有列(8个):
+   1. stock_code
+   2. ymd
+   3. open
+   4. close
+   5. high
+   6. low
+   7. num_trades
+   8. volume
+
+stock_code        ymd  open  close  high   low  num_trades    volume
+ 000001.SZ 2024-08-01 10.25  10.27 10.32 10.17       46222  73388377
+ 000001.SZ 2024-08-02 10.22  10.14 10.25 10.13       35394  59022876
+ 000001.SZ 2024-08-05 10.11  10.05 10.22 10.05       44001  75897852
+ 000001.SZ 2024-08-06 10.07   9.93 10.12  9.89       70962 126553691
+ 000001.SZ 2024-08-07  9.95   9.93  9.98  9.91       30537  51760842
+
+
+【表 34/44】ods_stock_limit_summary_insight
+====================================================================================================
+基本信息:
+  行数: 1215
+  列数: 7
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 NO    PRI   NULL                      
+name                 varchar(50)          NO    PRI   NULL                      
+today_ZT             int                  YES         NULL                      
+today_DT             int                  YES         NULL                      
+yesterday_ZT         int                  YES         NULL                      
+yesterday_DT         int                  YES         NULL                      
+yesterday_ZT_rate    float                YES         NULL                      
+
+数据样例（前5行，完整列）:
+--------------------------------------------------------------------------------
+所有列(7个):
+   1. ymd
+   2. name
+   3. today_ZT
+   4. today_DT
+   5. yesterday_ZT
+   6. yesterday_DT
+   7. yesterday_ZT_rate
+
+       ymd name  today_ZT  today_DT  yesterday_ZT  yesterday_DT  yesterday_ZT_rate
+2021-01-04   全A       136        15            72            10               4.36
+2021-01-05   全A       100        40           136            15               2.74
+2021-01-06   全A        63        36           100            40               0.62
+2021-01-07   全A        55        70            63            36               1.66
+2021-01-08   全A        73        27            55            70               1.12
+
+
+【表 35/44】ods_stock_limit_summary_insight_now
+====================================================================================================
+基本信息:
+  行数: 140
+  列数: 7
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 NO    PRI   NULL                      
+name                 varchar(50)          NO    PRI   NULL                      
+today_ZT             int                  YES         NULL                      
+today_DT             int                  YES         NULL                      
+yesterday_ZT         int                  YES         NULL                      
+yesterday_DT         int                  YES         NULL                      
+yesterday_ZT_rate    float                YES         NULL                      
+
+数据样例（前5行，完整列）:
+--------------------------------------------------------------------------------
+所有列(7个):
+   1. ymd
+   2. name
+   3. today_ZT
+   4. today_DT
+   5. yesterday_ZT
+   6. yesterday_DT
+   7. yesterday_ZT_rate
+
+       ymd name  today_ZT  today_DT  yesterday_ZT  yesterday_DT  yesterday_ZT_rate
+2024-08-01   全A        73         7            89             5               2.87
+2024-08-02   全A        59        12            73             7               1.50
+2024-08-05   全A        52        41            59            12               0.53
+2024-08-06   全A        73        27            52            41               2.48
+2024-08-07   全A        74        17            73            27               1.73
+
+
+【表 36/44】ods_stock_plate_redbook
+====================================================================================================
+基本信息:
+  行数: 0
+  列数: 5
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 NO          NULL                      
+plate_name           varchar(50)          NO          NULL                      
+stock_code           varchar(50)          YES         NULL                      
+stock_name           varchar(50)          YES         NULL                      
+remark               varchar(50)          YES         NULL                      
+
+数据样例: 表为空或无法读取数据
+
+
+
+【表 37/44】ods_tdx_stock_concept_plate
+====================================================================================================
+基本信息:
+  行数: 63525
+  列数: 5
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 NO          NULL                      
+concept_code         varchar(50)          NO          NULL                      
+concept_name         varchar(50)          YES         NULL                      
+stock_code           varchar(50)          YES         NULL                      
+stock_name           varchar(50)          YES         NULL                      
+
+数据样例（前5行，完整列）:
+--------------------------------------------------------------------------------
+所有列(5个):
+   1. ymd
+   2. concept_code
+   3. concept_name
+   4. stock_code
+   5. stock_name
+
+       ymd concept_code concept_name stock_code stock_name
+2024-10-24       880515        通达信88     000100      TCL科技
+2024-10-24       880515        通达信88     000568       泸州老窖
+2024-10-24       880515        通达信88     000625       长安汽车
+2024-10-24       880515        通达信88     000631       顺发恒业
+2024-10-24       880515        通达信88     000708       中信特钢
+
+
+【表 38/44】ods_tdx_stock_index_plate
+====================================================================================================
+基本信息:
+  行数: 23778
+  列数: 5
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 NO          NULL                      
+index_code           varchar(50)          NO          NULL                      
+index_name           varchar(50)          YES         NULL                      
+stock_code           varchar(50)          YES         NULL                      
+stock_name           varchar(50)          YES         NULL                      
+
+数据样例（前5行，完整列）:
+--------------------------------------------------------------------------------
+所有列(5个):
+   1. ymd
+   2. index_code
+   3. index_name
+   4. stock_code
+   5. stock_name
+
+       ymd index_code index_name stock_code stock_name
+2024-10-04     000300      沪深300     000001       平安银行
+2024-10-04     000300      沪深300     000002       万 科Ａ
+2024-10-04     000300      沪深300     000063       中兴通讯
+2024-10-04     000300      沪深300     000100      TCL科技
+2024-10-04     000300      沪深300     000157       中联重科
+
+
+【表 39/44】ods_tdx_stock_industry_plate
+====================================================================================================
+基本信息:
+  行数: 10756
+  列数: 5
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 NO          NULL                      
+industry_code        varchar(50)          NO          NULL                      
+industry_name        varchar(50)          YES         NULL                      
+stock_code           varchar(50)          YES         NULL                      
+stock_name           varchar(50)          YES         NULL                      
+
+数据样例（前5行，完整列）:
+--------------------------------------------------------------------------------
+所有列(5个):
+   1. ymd
+   2. industry_code
+   3. industry_name
+   4. stock_code
+   5. stock_name
+
+       ymd industry_code industry_name stock_code stock_name
+2024-10-04        880301            煤炭     000552       甘肃能化
+2024-10-04        880301            煤炭     000571       新大洲A
+2024-10-04        880301            煤炭     000723       美锦能源
+2024-10-04        880301            煤炭     000937       冀中能源
+2024-10-04        880301            煤炭     000983       山西焦煤
+
+
+【表 40/44】ods_tdx_stock_pepb_info
+====================================================================================================
+基本信息:
+  行数: 0
+  列数: 12
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 YES   MUL   NULL                      
+stock_code           varchar(50)          YES         NULL                      
+stock_name           varchar(50)          YES         NULL                      
+market_value         double               YES         NULL                      
+total_asset          double               YES         NULL                      
+net_asset            double               YES         NULL                      
+total_capital        double               YES         NULL                      
+float_capital        double               YES         NULL                      
+shareholder_num      bigint               YES         NULL                      
+pb                   double               YES         NULL                      
+pe                   double               YES         NULL                      
+industry             varchar(50)          YES         NULL                      
+
+数据样例: 表为空或无法读取数据
+
+
+
+【表 41/44】ods_tdx_stock_region_plate
+====================================================================================================
+基本信息:
+  行数: 10756
+  列数: 5
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 NO          NULL                      
+region_code          varchar(50)          NO          NULL                      
+region_name          varchar(50)          YES         NULL                      
+stock_code           varchar(50)          YES         NULL                      
+stock_name           varchar(50)          YES         NULL                      
+
+数据样例（前5行，完整列）:
+--------------------------------------------------------------------------------
+所有列(5个):
+   1. ymd
+   2. region_code
+   3. region_name
+   4. stock_code
+   5. stock_name
+
+       ymd region_code region_name stock_code stock_name
+2024-10-04      880201         黑龙江     000711      *ST京蓝
+2024-10-04      880201         黑龙江     000901       航天科技
+2024-10-04      880201         黑龙江     000922       佳电股份
+2024-10-04      880201         黑龙江     000985       大庆华科
+2024-10-04      880201         黑龙江     002437       誉衡药业
+
+
+【表 42/44】ods_tdx_stock_style_plate
+====================================================================================================
+基本信息:
+  行数: 40549
+  列数: 5
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 NO          NULL                      
+style_code           varchar(50)          NO          NULL                      
+style_name           varchar(50)          YES         NULL                      
+stock_code           varchar(50)          YES         NULL                      
+stock_name           varchar(50)          YES         NULL                      
+
+数据样例（前5行，完整列）:
+--------------------------------------------------------------------------------
+所有列(5个):
+   1. ymd
+   2. style_code
+   3. style_name
+   4. stock_code
+   5. stock_name
+
+       ymd style_code style_name stock_code stock_name
+2024-10-04     880735       专精特新     000032       深桑达Ａ
+2024-10-04     880735       专精特新     000584      *ST工智
+2024-10-04     880735       专精特新     000586       汇源通信
+2024-10-04     880735       专精特新     000795        英洛华
+2024-10-04     880735       专精特新     000801       四川九洲
+
+
+【表 43/44】ods_trading_days_insight
+====================================================================================================
+基本信息:
+  行数: 2184
+  列数: 2
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+exchange             varchar(50)          YES   MUL   NULL                      
+ymd                  date                 NO          NULL                      
+
+数据样例（前5行，完整列）:
+--------------------------------------------------------------------------------
+所有列(2个):
+   1. exchange
+   2. ymd
+
+exchange        ymd
+    XSHG 2018-01-02
+    XSHG 2018-01-03
+    XSHG 2018-01-04
+    XSHG 2018-01-05
+    XSHG 2018-01-08
+
+
+【表 44/44】ods_us_stock_daily_vantage
+====================================================================================================
+基本信息:
+  行数: 25523
+  列数: 7
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+stock_name           varchar(50)          NO    PRI   NULL                      
+ymd                  date                 NO    PRI   NULL                      
+open                 float                YES         NULL                      
+high                 float                YES         NULL                      
+low                  float                YES         NULL                      
+close                float                YES         NULL                      
+volume               bigint               YES         NULL                      
+
+数据样例（前5行，完整列）:
+--------------------------------------------------------------------------------
+所有列(7个):
+   1. stock_name
+   2. ymd
+   3. open
+   4. high
+   5. low
+   6. close
+   7. volume
+
+stock_name        ymd  open  high   low  close   volume
+      AAPL 1999-11-01 80.00 80.69 77.37  77.62  2487300
+      MSFT 1999-11-01 93.25 94.19 92.12  92.37 26630600
+      NVDA 1999-11-01 21.75 24.38 21.75  23.50  1630300
+      AAPL 1999-11-02 78.00 81.69 77.31  80.25  3564600
+      MSFT 1999-11-02 92.75 94.50 91.94  92.56 23174500
+

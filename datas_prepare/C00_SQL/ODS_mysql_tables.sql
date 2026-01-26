@@ -574,6 +574,28 @@ CREATE TABLE quant.ods_akshare_stock_board_concept_hist_em (
 ) COMMENT='行情数据_板块历史行情数据';
 
 
+
+
+--4.11
+------------------  ods_akshare_board_concept_name_ths      行情数据_板块码值            全量的每日切片数据 不可指定日期   同花顺板块三剑客1 
+CREATE TABLE quant.ods_akshare_board_concept_name_ths (
+     ymd                      DATE                    COMMENT '数据日期（核心日期维度，适配量化数据统一归档）'
+    ,board_name               varchar(100)            COMMENT '板块名称'
+    ,board_code               varchar(50)             COMMENT '板块代码'
+    ,UNIQUE KEY unique_ymd_board_code (ymd, board_code)
+) COMMENT='板块数据_同花顺板块码值';
+
+
+
+
+
+
+
+
+
+
+
+
 --5.1        多渠道板块数据 -- 小红书
 ------------------  ods_stock_plate_redbook
 CREATE TABLE quant.ods_stock_plate_redbook (

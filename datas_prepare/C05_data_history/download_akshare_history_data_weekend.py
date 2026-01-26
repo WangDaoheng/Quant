@@ -542,262 +542,95 @@ class SaveAkshareHistoryData:
         except Exception as e:
             logging.error(f"下载个股行情数据失败: {str(e)}")
 
-    # @timing_decorator
-    # def download_stock_board_concept_name_em(self):
-    #     """
-    #     下载板块概念数据 - ods_akshare_board_concept_name_em
-    #     接口: stock_board_concept_name_em
-    #     说明: 所有板块概念的基本信息，获取全部板块
-    #     """
-    #     try:
-    #         logging.info("开始下载板块概念数据...")
-    #
-    #         # 获取所有板块数据
-    #         df = ak.stock_board_concept_name_em()
-    #
-    #         if df.empty:
-    #             logging.warning("板块概念数据为空")
-    #             return False
-    #
-    #         # 添加日期列
-    #         today = DateUtility.today()
-    #         df['ymd'] = today
-    #
-    #         logging.info(f"板块概念数据获取完成，共 {len(df)} 条记录")
-    #
-    #         # 列映射
-    #         column_mapping = {
-    #             '排名': 'ranking',
-    #             '板块名称': 'board_name',
-    #             '板块代码': 'board_code',
-    #             '最新价': 'close',
-    #             '涨跌额': 'change_amt',
-    #             '涨跌幅': 'change_pct',
-    #             '总市值': 'total_market',
-    #             '换手率': 'turnover_rate',
-    #             '上涨家数': 'rising_stocks_num',
-    #             '下跌家数': 'falling_stocks_num',
-    #             '领涨股票': 'leading_stock',
-    #             '领涨股票-涨跌幅': 'leading_stock_pct'
-    #         }
-    #
-    #         numeric_columns = [
-    #             'ranking', 'close', 'change_amt', 'total_market',
-    #             'rising_stocks_num', 'falling_stocks_num',
-    #             'change_pct', 'turnover_rate', 'leading_stock_pct'
-    #         ]
-    #
-    #         # 使用downloader的数据处理方法
-    #         processed_df = self.downloader._process_data(
-    #             all_data=df,
-    #             column_mapping=column_mapping,
-    #             date_column='ymd',
-    #             date_format='%Y%m%d',
-    #             numeric_columns=numeric_columns,
-    #             table_name='ods_akshare_board_concept_name_em'
-    #         )
-    #
-    #         if processed_df.empty:
-    #             logging.warning("板块概念数据处理后为空")
-    #             return False
-    #
-    #         # 使用downloader的保存方法
-    #         success = self.downloader._save_to_mysql(
-    #             df=processed_df,
-    #             table_name='ods_akshare_board_concept_name_em',
-    #             merge_on=['ymd', 'board_code']
-    #         )
-    #
-    #         if success:
-    #             logging.info(
-    #                 f"板块概念数据保存成功，共 {len(processed_df)} 条记录，{processed_df['board_code'].nunique()} 个板块")
-    #         else:
-    #             logging.error("板块概念数据保存失败")
-    #
-    #         return success
-    #
-    #     except Exception as e:
-    #         logging.error(f"下载板块概念数据失败: {str(e)}")
-    #         import traceback
-    #         logging.error(traceback.format_exc())
-    #         return False
 
+
+
+
+
+
+
+
+
+    # @timing_decorator
     def download_stock_board_concept_name_em(self):
-        """下载板块概念数据 - 避免分页请求"""
+        """
+        下载板块概念数据 - ods_akshare_board_concept_name_em
+        接口: stock_board_concept_name_em
+        说明: 所有板块概念的基本信息，获取全部板块
+        """
         try:
             logging.info("开始下载板块概念数据...")
 
-            import time
-            import random
-            import requests
-            import pandas as pd
+            # 获取所有板块数据
+            df = ak.stock_board_concept_name_em()
 
-            # 直接调用API，避免使用akshare的分页函数
-            url = "https://79.push2.eastmoney.com/api/qt/clist/get"
+            if df.empty:
+                logging.warning("板块概念数据为空")
+                return False
 
-            # 关键：设置很大的pz参数，一次性获取所有数据
-            params = {
-                "pn": "1",
-                "pz": "1000",  # 设置足够大的值，一次性获取所有板块
-                "po": "1",
-                "np": "1",
-                "ut": "bd1d9ddb04089700cf9c27f6f7426281",
-                "fltt": "2",
-                "invt": "2",
-                "fid": "f12",
-                "fs": "m:90 t:3 f:!50",
-                "fields": "f2,f3,f4,f8,f12,f14,f15,f16,f17,f18,f20,f21,f24,f25,f22,f33,f11,f62,f128,f124,f107,f104,f105,f136",
+            # 添加日期列
+            today = DateUtility.today()
+            df['ymd'] = today
+
+            logging.info(f"板块概念数据获取完成，共 {len(df)} 条记录")
+
+            # 列映射
+            column_mapping = {
+                '排名': 'ranking',
+                '板块名称': 'board_name',
+                '板块代码': 'board_code',
+                '最新价': 'close',
+                '涨跌额': 'change_amt',
+                '涨跌幅': 'change_pct',
+                '总市值': 'total_market',
+                '换手率': 'turnover_rate',
+                '上涨家数': 'rising_stocks_num',
+                '下跌家数': 'falling_stocks_num',
+                '领涨股票': 'leading_stock',
+                '领涨股票-涨跌幅': 'leading_stock_pct'
             }
 
-            # 添加随机延迟
-            delay = random.uniform(5, 10)  # 5-10秒随机延迟
-            logging.info(f"等待 {delay:.2f} 秒后开始请求...")
-            time.sleep(delay)
+            numeric_columns = [
+                'ranking', 'close', 'change_amt', 'total_market',
+                'rising_stocks_num', 'falling_stocks_num',
+                'change_pct', 'turnover_rate', 'leading_stock_pct'
+            ]
 
-            # 自定义请求头
-            headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                'Referer': 'https://quote.eastmoney.com/',
-                'Accept': 'application/json, text/plain, */*',
-                'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
-            }
+            # 使用downloader的数据处理方法
+            processed_df = self.downloader._process_data(
+                all_data=df,
+                column_mapping=column_mapping,
+                date_column='ymd',
+                date_format='%Y%m%d',
+                numeric_columns=numeric_columns,
+                table_name='ods_akshare_board_concept_name_em'
+            )
 
-            # 尝试多次
-            max_retries = 3
-            for retry in range(max_retries):
-                try:
-                    logging.info(f"第 {retry + 1} 次尝试...")
+            if processed_df.empty:
+                logging.warning("板块概念数据处理后为空")
+                return False
 
-                    # 创建新session
-                    session = requests.Session()
-                    session.headers.update(headers)
+            # 使用downloader的保存方法
+            success = self.downloader._save_to_mysql(
+                df=processed_df,
+                table_name='ods_akshare_board_concept_name_em',
+                merge_on=['ymd', 'board_code']
+            )
 
-                    # 设置长超时
-                    response = session.get(url, params=params, timeout=30)
-                    response.raise_for_status()
+            if success:
+                logging.info(
+                    f"板块概念数据保存成功，共 {len(processed_df)} 条记录，{processed_df['board_code'].nunique()} 个板块")
+            else:
+                logging.error("板块概念数据保存失败")
 
-                    data_json = response.json()
-                    session.close()
-
-                    if data_json["data"] is None:
-                        raise ValueError("API返回数据为空")
-
-                    # 直接处理数据，不分页
-                    temp_df = pd.DataFrame(data_json["data"]["diff"])
-
-                    # 查看返回了多少数据
-                    total_count = data_json["data"]["total"]
-                    returned_count = len(temp_df)
-                    logging.info(f"总数据量: {total_count}, 本次返回: {returned_count}")
-
-                    # 如果返回数量少于总数，说明需要分页，但我们暂时忽略
-                    if returned_count < total_count:
-                        logging.warning(f"数据不完整: {returned_count}/{total_count}")
-
-                    # 列重命名
-                    temp_df.columns = [
-                        "排名",
-                        "最新价",
-                        "涨跌幅",
-                        "涨跌额",
-                        "换手率",
-                        "_",
-                        "板块代码",
-                        "板块名称",
-                        "_",
-                        "_",
-                        "_",
-                        "_",
-                        "总市值",
-                        "_",
-                        "_",
-                        "_",
-                        "_",
-                        "_",
-                        "_",
-                        "上涨家数",
-                        "下跌家数",
-                        "_",
-                        "_",
-                        "领涨股票",
-                        "_",
-                        "_",
-                        "领涨股票-涨跌幅",
-                    ]
-
-                    temp_df = temp_df[
-                        [
-                            "排名",
-                            "板块名称",
-                            "板块代码",
-                            "最新价",
-                            "涨跌额",
-                            "涨跌幅",
-                            "总市值",
-                            "换手率",
-                            "上涨家数",
-                            "下跌家数",
-                            "领涨股票",
-                            "领涨股票-涨跌幅",
-                        ]
-                    ]
-
-                    # 数值转换
-                    numeric_cols = ["最新价", "涨跌额", "涨跌幅", "总市值", "换手率",
-                                    "上涨家数", "下跌家数", "领涨股票-涨跌幅"]
-                    for col in numeric_cols:
-                        temp_df[col] = pd.to_numeric(temp_df[col], errors="coerce")
-
-                    # 添加日期
-                    today = DateUtility.today()
-                    temp_df['ymd'] = today
-
-                    # 使用downloader处理
-                    column_mapping = {
-                        '排名': 'ranking',
-                        '板块名称': 'board_name',
-                        '板块代码': 'board_code',
-                        '最新价': 'close',
-                        '涨跌额': 'change_amt',
-                        '涨跌幅': 'change_pct',
-                        '总市值': 'total_market',
-                        '换手率': 'turnover_rate',
-                        '上涨家数': 'rising_stocks_num',
-                        '下跌家数': 'falling_stocks_num',
-                        '领涨股票': 'leading_stock',
-                        '领涨股票-涨跌幅': 'leading_stock_pct'
-                    }
-
-                    processed_df = self.downloader._process_data(
-                        all_data=temp_df,
-                        column_mapping=column_mapping,
-                        date_column='ymd',
-                        date_format='%Y%m%d',
-                        numeric_columns=list(column_mapping.values()),
-                        table_name='ods_akshare_board_concept_name_em'
-                    )
-
-                    success = self.downloader._save_to_mysql(
-                        df=processed_df,
-                        table_name='ods_akshare_board_concept_name_em',
-                        merge_on=['ymd', 'board_code']
-                    )
-
-                    return success
-
-                except Exception as e:
-                    if retry < max_retries - 1:
-                        wait_time = (retry + 1) * 10
-                        logging.warning(f"请求失败，等待 {wait_time} 秒后重试...")
-                        time.sleep(wait_time)
-                    else:
-                        raise e
-
-            return False
+            return success
 
         except Exception as e:
             logging.error(f"下载板块概念数据失败: {str(e)}")
+            import traceback
+            logging.error(traceback.format_exc())
             return False
+
 
 
     # @timing_decorator
@@ -1096,6 +929,226 @@ class SaveAkshareHistoryData:
             logging.error(traceback.format_exc())
             return False
 
+    # @timing_decorator
+    def download_stock_board_concept_name_ths(self):
+        """
+        下载同花顺概念板块基本信息 - ods_akshare_board_concept_name_ths
+        接口: stock_board_concept_name_ths
+        说明: 获取同花顺所有概念板块的基本信息
+        """
+        try:
+            logging.info("开始下载同花顺概念板块数据...")
+
+            # 获取所有同花顺概念板块数据
+            df = ak.stock_board_concept_name_ths()
+
+            if df.empty:
+                logging.warning("同花顺概念板块数据为空")
+                return False
+
+            # 添加日期列
+            today = DateUtility.today()
+            df['ymd'] = today
+
+            logging.info(f"同花顺概念板块数据获取完成，共 {len(df)} 条记录")
+
+            # 列映射
+            column_mapping = {
+                'name': 'board_name',
+                'code': 'board_code'
+            }
+
+            # 使用downloader的数据处理方法
+            processed_df = self.downloader._process_data(
+                all_data=df,
+                column_mapping=column_mapping,
+                date_column='ymd',
+                date_format='%Y%m%d',
+                numeric_columns=None,
+                table_name='ods_akshare_board_concept_name_ths'
+            )
+
+            if processed_df.empty:
+                logging.warning("同花顺概念板块数据处理后为空")
+                return False
+
+            # 删除重复记录
+            if 'ymd' in processed_df.columns and 'board_code' in processed_df.columns:
+                processed_df = processed_df.drop_duplicates(subset=['ymd', 'board_code'], keep='first')
+
+            # 使用downloader的保存方法
+            success = self.downloader._save_to_mysql(
+                df=processed_df,
+                table_name='ods_akshare_board_concept_name_ths',
+                merge_on=['ymd', 'board_code']
+            )
+
+            if success:
+                logging.info(
+                    f"同花顺概念板块数据保存成功，共 {len(processed_df)} 条记录，{processed_df['board_code'].nunique()} 个概念")
+            else:
+                logging.error("同花顺概念板块数据保存失败")
+
+            return success
+
+        except Exception as e:
+            logging.error(f"下载同花顺概念板块数据失败: {str(e)}")
+            import traceback
+            logging.error(traceback.format_exc())
+            return False
+
+    # @timing_decorator
+    def download_stock_board_concept_index_ths(self, start_date=None, end_date=None):
+        """
+        下载同花顺概念板块指数数据 - ods_akshare_stock_board_concept_index_ths
+        接口: stock_board_concept_index_ths
+        说明: 遍历所有概念板块的历史指数数据
+        """
+        try:
+            # 如果没有指定日期，使用默认范围
+            if start_date is None:
+                start_date = DateUtility.first_day_of_year(-1)  # 去年第一天
+            if end_date is None:
+                end_date = DateUtility.today()
+
+            # 从MySQL获取最新的同花顺概念板块列表
+            logging.info("开始获取同花顺概念板块列表...")
+
+            board_df = mysql_utils.data_from_mysql_to_dataframe_latest(
+                user=self.downloader.origin_user,
+                password=self.downloader.origin_password,
+                host=self.downloader.origin_host,
+                database=self.downloader.origin_database,
+                table_name="ods_akshare_board_concept_name_ths",  # 使用新表的同花顺概念信息
+                cols=['concept_name', 'concept_code']  # 获取概念名称和代码
+            )
+
+            if board_df.empty:
+                logging.warning("数据库中没有同花顺概念板块列表数据，请先运行 download_stock_board_concept_name_ths()")
+                return False
+
+            # 去重并获取概念名称列表
+            concept_names = board_df['concept_name'].dropna().unique().tolist()
+            logging.info(f"从数据库获取到 {len(concept_names)} 个同花顺概念板块")
+
+            if not concept_names:
+                logging.warning("数据库中没有有效的概念板块名称")
+                return False
+
+            logging.info(f"开始下载 {len(concept_names)} 个概念板块的指数数据，日期: {start_date}~{end_date}")
+
+            all_data = pd.DataFrame()
+            success_concepts = []
+            failed_concepts = []
+
+            for i, concept_name in enumerate(concept_names):
+                try:
+                    # 跳过可能为空的板块名
+                    if pd.isna(concept_name) or not str(concept_name).strip():
+                        continue
+
+                    logging.info(f"下载概念板块 [{i + 1}/{len(concept_names)}]: {concept_name}")
+
+                    # 获取概念板块指数数据
+                    df = ak.stock_board_concept_index_ths(
+                        symbol=str(concept_name).strip(),
+                        start_date=start_date,
+                        end_date=end_date
+                    )
+
+                    if not df.empty:
+                        # 添加概念板块信息
+                        df['concept_name'] = str(concept_name).strip()
+
+                        # 查找对应的concept_code
+                        concept_code_row = board_df[board_df['concept_name'] == concept_name]
+                        if not concept_code_row.empty:
+                            df['concept_code'] = concept_code_row.iloc[0]['concept_code']
+                        else:
+                            df['concept_code'] = str(concept_name).strip()  # 降级处理
+
+                        all_data = pd.concat([all_data, df], ignore_index=True)
+                        success_concepts.append(concept_name)
+
+                        logging.info(f"  {concept_name}: 获取到 {len(df)} 条记录")
+                    else:
+                        logging.warning(f"  {concept_name}: 指数数据为空")
+                        failed_concepts.append(concept_name)
+
+                    # 添加延迟以避免封IP
+                    time.sleep(random.uniform(0.5, 1.5))
+
+                except Exception as e:
+                    error_msg = str(e)
+                    if "404" in error_msg or "无法获取" in error_msg:
+                        logging.warning(f"  {concept_name}: 可能不存在或无法访问")
+                    else:
+                        logging.error(f"  下载 {concept_name} 失败: {error_msg[:100]}")
+                    failed_concepts.append(concept_name)
+                    time.sleep(2)  # 失败后等待更长时间
+                    continue
+
+            if all_data.empty:
+                logging.warning("所有概念板块的指数数据都为空")
+                return False
+
+            logging.info(f"同花顺概念板块指数数据获取完成:")
+            logging.info(f"  成功板块: {len(success_concepts)} 个")
+            logging.info(f"  失败板块: {len(failed_concepts)} 个")
+            logging.info(f"  总记录数: {len(all_data)} 条")
+
+            # 列映射
+            column_mapping = {
+                '日期': 'ymd',
+                '开盘价': 'open',
+                '最高价': 'high',
+                '最低价': 'low',
+                '收盘价': 'close',
+                '成交量': 'trading_volume',
+                '成交额': 'trading_amount'
+            }
+
+            numeric_columns = [
+                'open', 'close', 'high', 'low',
+                'trading_volume', 'trading_amount'
+            ]
+
+            # 使用downloader的数据处理方法
+            processed_df = self.downloader._process_data(
+                all_data=all_data,
+                column_mapping=column_mapping,
+                date_column='ymd',
+                date_format='%Y-%m-%d',  # akshare返回的是YYYY-MM-DD格式
+                numeric_columns=numeric_columns,
+                table_name='ods_akshare_stock_board_concept_index_ths'
+            )
+
+            if processed_df.empty:
+                logging.warning("概念板块指数数据处理后为空")
+                return False
+
+            # 使用downloader的保存方法
+            success = self.downloader._save_to_mysql(
+                df=processed_df,
+                table_name='ods_akshare_stock_board_concept_index_ths',
+                merge_on=['ymd', 'concept_code']
+            )
+
+            if success:
+                logging.info(
+                    f"概念板块指数数据保存成功，共 {len(processed_df)} 条记录，{processed_df['concept_code'].nunique()} 个概念板块")
+            else:
+                logging.error("概念板块指数数据保存失败")
+
+            return success
+
+        except Exception as e:
+            logging.error(f"下载概念板块指数数据失败: {str(e)}")
+            import traceback
+            logging.error(traceback.format_exc())
+            return False
+
+    # @timing_decorator
 
 
     # @timing_decorator
@@ -1131,13 +1184,19 @@ class SaveAkshareHistoryData:
         # self.download_stock_zh_a_spot_em()
 
         # # 9. 下载板块行情数据
-        self.download_stock_board_concept_name_em()
+        # self.download_stock_board_concept_name_em()
 
         # # # 10. 下载板块内个股行情数据
         # self.download_stock_board_concept_cons_em()
         #
         # # # 11. 下载板块历史行情数据
         # self.download_stock_board_concept_hist_em()
+
+        # # # 12. 同花顺板块数据
+        self.download_stock_board_concept_name_ths()
+
+        # # # 12. 同花顺板块数据
+        self.download_stock_board_concept_index_ths()
 
 
 if __name__ == '__main__':
