@@ -169,68 +169,35 @@ class AkshareDownloader:
             logging.error(traceback.format_exc())
             return False
 
+
     def _process_data(self, all_data, column_mapping, date_column,
                       date_format, numeric_columns, table_name):
-        """数据处理：重命名、日期转换、数值转换等"""
+        """数据处理：重命名、日期转换、数值转换"""
         try:
-            # 1. 显示原始列名（调试用）
-            logging.debug(f"{table_name}原始列名: {all_data.columns.tolist()}")
+            # 1. 重命名
+            df = all_data.rename(columns=column_mapping)
 
-            # 2. 重命名列（只重命名存在的列）
-            existing_mapping = {k: v for k, v in column_mapping.items() if k in all_data.columns}
-            df = all_data.rename(columns=existing_mapping)
-
-            # 3. 日期格式转换
+            # 2. 日期标准化
             if date_column in df.columns:
-                try:
-                    df[date_column] = pd.to_datetime(df[date_column], format=date_format).dt.strftime('%Y%m%d')
-                except Exception as e:
-                    logging.warning(f"日期转换失败，尝试自动转换: {str(e)}")
-                    df[date_column] = pd.to_datetime(df[date_column], errors='coerce').dt.strftime('%Y%m%d')
+                df[date_column] = pd.to_datetime(df[date_column]).dt.strftime('%Y%m%d')
 
-            # 4. 数值列转换
+            # 3. 数值转换
             if numeric_columns:
-                # 使用指定的数值列
-                num_cols_to_convert = [col for col in numeric_columns if col in df.columns]
-            else:
-                # 自动识别：排除非数值列
-                exclude_cols = ['stock_code', date_column, 'stock_name', '名称', '股票简称']
-                num_cols_to_convert = [
-                    col for col in df.columns
-                    if col not in exclude_cols and df[col].dtype == 'object'
-                ]
-
-            for col in num_cols_to_convert:
-                try:
-                    # 处理百分比符号
-                    if df[col].dtype == 'object' and df[col].astype(str).str.contains('%').any():
-                        df[col] = df[col].astype(str).str.replace('%', '').astype(float)
-                    else:
+                for col in numeric_columns:
+                    if col in df.columns:
                         df[col] = pd.to_numeric(df[col], errors='coerce')
-                except Exception as e:
-                    logging.warning(f"列 {col} 数值转换失败: {str(e)}")
 
-            # 5. 删除重复记录
-            if date_column in df.columns and 'stock_code' in df.columns:
-                df = df.drop_duplicates(subset=[date_column, 'stock_code'], keep='first')
+            # 4. 去重
+            id_cols = [c for c in ['stock_code', 'board_code', 'concept_code'] if c in df.columns]
+            if date_column in df.columns and id_cols:
+                df = df.drop_duplicates(subset=[date_column] + id_cols[:1])
 
-            # 6. 删除关键字段为空的行
-            required_cols = [col for col in [date_column, 'stock_code'] if col in df.columns]
-            if required_cols:
-                df = df.dropna(subset=required_cols)
-
-            # 7. 重置索引
-            df = df.reset_index(drop=True)
-
-            logging.info(f"{table_name}数据清洗完成，共 {len(df)} 条记录，{df['stock_code'].nunique()} 只股票")
-
-            return df
+            return df.reset_index(drop=True)
 
         except Exception as e:
-            logging.error(f"数据处理失败: {str(e)}")
-            import traceback
-            logging.error(traceback.format_exc())
+            logging.error(f"{table_name} 处理失败: {e}")
             return pd.DataFrame()
+
 
     def _save_to_mysql(self, df, table_name, merge_on):
         """保存数据到MySQL"""

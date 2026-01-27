@@ -1007,7 +1007,7 @@ class SaveAkshareHistoryData:
         try:
             # 如果没有指定日期，使用默认范围
             if start_date is None:
-                start_date = DateUtility.first_day_of_year(-1)  # 去年第一天
+                start_date = DateUtility.first_day_of_year(-2)  # 去年第一天
             if end_date is None:
                 end_date = DateUtility.today()
 
@@ -1020,60 +1020,50 @@ class SaveAkshareHistoryData:
                 host=self.downloader.origin_host,
                 database=self.downloader.origin_database,
                 table_name="ods_akshare_board_concept_name_ths",  # 使用新表的同花顺概念信息
-                cols=['concept_name', 'concept_code']  # 获取概念名称和代码
+                cols=['board_name', 'board_code']  # 获取概念名称和代码
             )
 
-            if board_df.empty:
-                logging.warning("数据库中没有同花顺概念板块列表数据，请先运行 download_stock_board_concept_name_ths()")
-                return False
-
             # 去重并获取概念名称列表
-            concept_names = board_df['concept_name'].dropna().unique().tolist()
-            logging.info(f"从数据库获取到 {len(concept_names)} 个同花顺概念板块")
-
-            if not concept_names:
-                logging.warning("数据库中没有有效的概念板块名称")
-                return False
-
-            logging.info(f"开始下载 {len(concept_names)} 个概念板块的指数数据，日期: {start_date}~{end_date}")
+            board_names = board_df['board_name'].dropna().unique().tolist()
+            logging.info(f"开始下载 {len(board_names)} 个概念板块的指数数据，日期: {start_date}~{end_date}")
 
             all_data = pd.DataFrame()
             success_concepts = []
             failed_concepts = []
 
-            for i, concept_name in enumerate(concept_names):
+            for i, board_name in enumerate(board_names):
                 try:
                     # 跳过可能为空的板块名
-                    if pd.isna(concept_name) or not str(concept_name).strip():
+                    if pd.isna(board_name) or not str(board_name).strip():
                         continue
 
-                    logging.info(f"下载概念板块 [{i + 1}/{len(concept_names)}]: {concept_name}")
+                    logging.info(f"下载概念板块 [{i + 1}/{len(board_names)}]: {board_name}")
 
                     # 获取概念板块指数数据
                     df = ak.stock_board_concept_index_ths(
-                        symbol=str(concept_name).strip(),
+                        symbol=str(board_name).strip(),
                         start_date=start_date,
                         end_date=end_date
                     )
 
                     if not df.empty:
                         # 添加概念板块信息
-                        df['concept_name'] = str(concept_name).strip()
+                        df['board_name'] = str(board_name).strip()
 
                         # 查找对应的concept_code
-                        concept_code_row = board_df[board_df['concept_name'] == concept_name]
+                        concept_code_row = board_df[board_df['board_name'] == board_name]
                         if not concept_code_row.empty:
-                            df['concept_code'] = concept_code_row.iloc[0]['concept_code']
+                            df['board_code'] = concept_code_row.iloc[0]['board_code']
                         else:
-                            df['concept_code'] = str(concept_name).strip()  # 降级处理
+                            df['board_code'] = str(board_name).strip()  # 降级处理
 
                         all_data = pd.concat([all_data, df], ignore_index=True)
-                        success_concepts.append(concept_name)
+                        success_concepts.append(board_name)
 
-                        logging.info(f"  {concept_name}: 获取到 {len(df)} 条记录")
+                        logging.info(f"  {board_name}: 获取到 {len(df)} 条记录")
                     else:
-                        logging.warning(f"  {concept_name}: 指数数据为空")
-                        failed_concepts.append(concept_name)
+                        logging.warning(f"  {board_name}: 指数数据为空")
+                        failed_concepts.append(board_name)
 
                     # 添加延迟以避免封IP
                     time.sleep(random.uniform(0.5, 1.5))
@@ -1081,21 +1071,12 @@ class SaveAkshareHistoryData:
                 except Exception as e:
                     error_msg = str(e)
                     if "404" in error_msg or "无法获取" in error_msg:
-                        logging.warning(f"  {concept_name}: 可能不存在或无法访问")
+                        logging.warning(f"  {board_name}: 可能不存在或无法访问")
                     else:
-                        logging.error(f"  下载 {concept_name} 失败: {error_msg[:100]}")
-                    failed_concepts.append(concept_name)
+                        logging.error(f"  下载 {board_name} 失败: {error_msg[:100]}")
+                    failed_concepts.append(board_name)
                     time.sleep(2)  # 失败后等待更长时间
                     continue
-
-            if all_data.empty:
-                logging.warning("所有概念板块的指数数据都为空")
-                return False
-
-            logging.info(f"同花顺概念板块指数数据获取完成:")
-            logging.info(f"  成功板块: {len(success_concepts)} 个")
-            logging.info(f"  失败板块: {len(failed_concepts)} 个")
-            logging.info(f"  总记录数: {len(all_data)} 条")
 
             # 列映射
             column_mapping = {
@@ -1123,23 +1104,12 @@ class SaveAkshareHistoryData:
                 table_name='ods_akshare_stock_board_concept_index_ths'
             )
 
-            if processed_df.empty:
-                logging.warning("概念板块指数数据处理后为空")
-                return False
-
             # 使用downloader的保存方法
             success = self.downloader._save_to_mysql(
                 df=processed_df,
                 table_name='ods_akshare_stock_board_concept_index_ths',
-                merge_on=['ymd', 'concept_code']
+                merge_on=['ymd', 'board_code']
             )
-
-            if success:
-                logging.info(
-                    f"概念板块指数数据保存成功，共 {len(processed_df)} 条记录，{processed_df['concept_code'].nunique()} 个概念板块")
-            else:
-                logging.error("概念板块指数数据保存失败")
-
             return success
 
         except Exception as e:
@@ -1148,7 +1118,6 @@ class SaveAkshareHistoryData:
             logging.error(traceback.format_exc())
             return False
 
-    # @timing_decorator
 
 
     # @timing_decorator
@@ -1193,7 +1162,7 @@ class SaveAkshareHistoryData:
         # self.download_stock_board_concept_hist_em()
 
         # # # 12. 同花顺板块数据
-        self.download_stock_board_concept_name_ths()
+        # self.download_stock_board_concept_name_ths()
 
         # # # 12. 同花顺板块数据
         self.download_stock_board_concept_index_ths()
@@ -1210,5 +1179,11 @@ if __name__ == '__main__':
 
     saver = SaveAkshareHistoryData()
     saver.setup()
+
+
+
+
+
+
 
 

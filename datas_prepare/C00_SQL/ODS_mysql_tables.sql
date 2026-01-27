@@ -586,12 +586,20 @@ CREATE TABLE quant.ods_akshare_board_concept_name_ths (
 ) COMMENT='板块数据_同花顺板块码值';
 
 
-
-
-
-
-
-
+--4.12
+------------------  ods_akshare_stock_board_concept_index_ths   行情数据_板块内个股的行情数据    全量的每日切片数据 不可指定日期   板块三剑客2
+CREATE TABLE quant.ods_akshare_stock_board_concept_index_ths (
+     ymd                      DATE                    COMMENT '数据日期（核心日期维度，用于归档和跨表关联）'
+    ,board_name               varchar(100)            COMMENT '板块名称'
+    ,board_code               varchar(50)             COMMENT '板块代码'
+    ,open                     float                   COMMENT '今开'
+    ,high                     float                   COMMENT '最高'
+    ,low                      float                   COMMENT '最低'
+    ,close                    float                   COMMENT '最新价'
+    ,trading_volume           float                   COMMENT '成交量(手)'
+    ,trading_amount           float                   COMMENT '成交额'
+    ,UNIQUE KEY unique_ymd_board_code (ymd, board_code)
+) COMMENT='行情数据_板块内个股的行情数据';
 
 
 
