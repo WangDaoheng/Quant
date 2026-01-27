@@ -11,7 +11,6 @@ from datetime import datetime
 import time
 import platform
 
-
 import CommonProperties.Base_Properties as base_properties
 import CommonProperties.Base_utils as base_utils
 import CommonProperties.Mysql_Utils as mysql_utils
@@ -51,7 +50,6 @@ class SaveInsightHistoryData:
         #  除去 ST|退|B 的五要素   [ymd	stock_code	stock_name	exchange]
         self.stock_code_df = pd.DataFrame()
 
-
     @timing_decorator
     def login(self):
         # 登陆前 初始化，没有密码可以访问进行自动化注册
@@ -59,7 +57,6 @@ class SaveInsightHistoryData:
         user = base_properties.user
         password = base_properties.password
         common.login(market_service, user, password)
-
 
     def get_trading_days_from_insight(self):
         """
@@ -93,34 +90,28 @@ class SaveInsightHistoryData:
 
         # 可选：重置排序后的索引（避免索引混乱）
         trading_df.reset_index(drop=True, inplace=True)
-        if platform.system() == "Windows":
-            #  结果数据保存到 本地 mysql中
-            mysql_utils.data_from_dataframe_to_mysql(user=local_user,
-                                                     password=local_password,
-                                                     host=local_host,
-                                                     database=local_database,
-                                                     df=trading_df,
-                                                     table_name="ods_trading_days_insight",
-                                                     merge_on=['exchange', 'ymd'])
+        # Windows下先保存到本地数据库
+        # if platform.system() == "Windows":
+        #     mysql_utils.data_from_dataframe_to_mysql(
+        #         user=local_user,
+        #         password=local_password,
+        #         host=local_host,
+        #         database=local_database,
+        #         df=trading_df,
+        #         table_name="ods_trading_days_insight",
+        #         merge_on=['exchange', 'ymd']
+        #     )
 
-            #  结果数据保存到 远端 mysql中
-            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
-                                                     password=origin_password,
-                                                     host=origin_host,
-                                                     database=origin_database,
-                                                     df=trading_df,
-                                                     table_name="ods_trading_days_insight",
-                                                     merge_on=['exchange', 'ymd'])
-        else:
-            #  结果数据保存到 远端 mysql中
-            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
-                                                     password=origin_password,
-                                                     host=origin_host,
-                                                     database=origin_database,
-                                                     df=trading_df,
-                                                     table_name="ods_trading_days_insight",
-                                                     merge_on=['exchange', 'ymd'])
-
+        # 总是保存到远端数据库
+        mysql_utils.data_from_dataframe_to_mysql(
+            user=origin_user,
+            password=origin_password,
+            host=origin_host,
+            database=origin_database,
+            df=trading_df,
+            table_name="ods_trading_days_insight",
+            merge_on=['exchange', 'ymd']
+        )
 
     @timing_decorator
     def get_stock_codes(self):
@@ -150,7 +141,6 @@ class SaveInsightHistoryData:
 
         #  6.已上市状态stock_codes
         self.stock_code_df = filtered_df
-
 
     @timing_decorator
     def get_stock_kline(self):
@@ -208,34 +198,28 @@ class SaveInsightHistoryData:
         # kline_total_df = kline_total_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
 
         ############################   文件输出模块     ############################
-        if platform.system() == "Windows":
-            #  13.结果数据保存到 本地 mysql中
-            mysql_utils.data_from_dataframe_to_mysql(user=local_user,
-                                                     password=local_password,
-                                                     host=local_host,
-                                                     database=local_database,
-                                                     df=kline_total_df,
-                                                     table_name="ods_stock_kline_daily_insight",
-                                                     merge_on=['ymd', 'stock_code'])
+        # Windows下先保存到本地数据库
+        # if platform.system() == "Windows":
+        #     mysql_utils.data_from_dataframe_to_mysql(
+        #         user=local_user,
+        #         password=local_password,
+        #         host=local_host,
+        #         database=local_database,
+        #         df=kline_total_df,
+        #         table_name="ods_stock_kline_daily_insight",
+        #         merge_on=['ymd', 'stock_code']
+        #     )
 
-            #  14.结果数据保存到 远端 mysql中
-            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
-                                                     password=origin_password,
-                                                     host=origin_host,
-                                                     database=origin_database,
-                                                     df=kline_total_df,
-                                                     table_name="ods_stock_kline_daily_insight",
-                                                     merge_on=['ymd', 'stock_code'])
-        else:
-            #  14.结果数据保存到 远端 mysql中
-            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
-                                                     password=origin_password,
-                                                     host=origin_host,
-                                                     database=origin_database,
-                                                     df=kline_total_df,
-                                                     table_name="ods_stock_kline_daily_insight",
-                                                     merge_on=['ymd', 'stock_code'])
-
+        # 总是保存到远端数据库
+        mysql_utils.data_from_dataframe_to_mysql(
+            user=origin_user,
+            password=origin_password,
+            host=origin_host,
+            database=origin_database,
+            df=kline_total_df,
+            table_name="ods_stock_kline_daily_insight",
+            merge_on=['ymd', 'stock_code']
+        )
 
     @timing_decorator
     def get_index_a_share(self):
@@ -296,34 +280,28 @@ class SaveInsightHistoryData:
         index_df = index_df.drop_duplicates(subset=['ymd', 'index_code'], keep='first')
 
         ############################   文件输出模块     ############################
-        if platform.system() == "Windows":
-            #  10.结果数据保存到 本地 mysql中
-            mysql_utils.data_from_dataframe_to_mysql(user=local_user,
-                                                     password=local_password,
-                                                     host=local_host,
-                                                     database=local_database,
-                                                     df=index_df,
-                                                     table_name="ods_index_a_share_insight",
-                                                     merge_on=['ymd', 'index_code'])
+        # Windows下先保存到本地数据库
+        # if platform.system() == "Windows":
+        #     mysql_utils.data_from_dataframe_to_mysql(
+        #         user=local_user,
+        #         password=local_password,
+        #         host=local_host,
+        #         database=local_database,
+        #         df=index_df,
+        #         table_name="ods_index_a_share_insight",
+        #         merge_on=['ymd', 'index_code']
+        #     )
 
-            #  11.结果数据保存到 远端 mysql中
-            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
-                                                     password=origin_password,
-                                                     host=origin_host,
-                                                     database=origin_database,
-                                                     df=index_df,
-                                                     table_name="ods_index_a_share_insight",
-                                                     merge_on=['ymd', 'index_code'])
-        else:
-            #  11.结果数据保存到 远端 mysql中
-            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
-                                                     password=origin_password,
-                                                     host=origin_host,
-                                                     database=origin_database,
-                                                     df=index_df,
-                                                     table_name="ods_index_a_share_insight",
-                                                     merge_on=['ymd', 'index_code'])
-
+        # 总是保存到远端数据库
+        mysql_utils.data_from_dataframe_to_mysql(
+            user=origin_user,
+            password=origin_password,
+            host=origin_host,
+            database=origin_database,
+            df=index_df,
+            table_name="ods_index_a_share_insight",
+            merge_on=['ymd', 'index_code']
+        )
 
     @timing_decorator
     def get_limit_summary(self):
@@ -366,12 +344,12 @@ class SaveInsightHistoryData:
 
         #  4.声明所有的列名，去除多余列
         filter_limit_df = filter_limit_df[['time',
-                                     'name',
-                                     'ups_downs_limit_count_up_limits',
-                                     'ups_downs_limit_count_down_limits',
-                                     'ups_downs_limit_count_pre_up_limits',
-                                     'ups_downs_limit_count_pre_down_limits',
-                                     'ups_downs_limit_count_pre_up_limits_average_change_percent']]
+                                           'name',
+                                           'ups_downs_limit_count_up_limits',
+                                           'ups_downs_limit_count_down_limits',
+                                           'ups_downs_limit_count_pre_up_limits',
+                                           'ups_downs_limit_count_pre_down_limits',
+                                           'ups_downs_limit_count_pre_up_limits_average_change_percent']]
         filter_limit_df.columns = ['ymd', 'name', 'today_ZT', 'today_DT', 'yesterday_ZT', 'yesterday_DT',
                                    'yesterday_ZT_rate']
 
@@ -382,33 +360,28 @@ class SaveInsightHistoryData:
         filter_limit_df = filter_limit_df.drop_duplicates(subset=['ymd', 'name'], keep='first')
 
         ############################   文件输出模块     ############################
-        if platform.system() == "Windows":
-            #  8.结果数据保存到 本地 mysql中
-            mysql_utils.data_from_dataframe_to_mysql(user=local_user,
-                                                     password=local_password,
-                                                     host=local_host,
-                                                     database=local_database,
-                                                     df=filter_limit_df,
-                                                     table_name="ods_stock_limit_summary_insight",
-                                                     merge_on=['ymd', 'name'])
+        # Windows下先保存到本地数据库
+        # if platform.system() == "Windows":
+        #     mysql_utils.data_from_dataframe_to_mysql(
+        #         user=local_user,
+        #         password=local_password,
+        #         host=local_host,
+        #         database=local_database,
+        #         df=filter_limit_df,
+        #         table_name="ods_stock_limit_summary_insight",
+        #         merge_on=['ymd', 'name']
+        #     )
 
-            #  9.结果数据保存到 远端 mysql中
-            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
-                                                     password=origin_password,
-                                                     host=origin_host,
-                                                     database=origin_database,
-                                                     df=filter_limit_df,
-                                                     table_name="ods_stock_limit_summary_insight",
-                                                     merge_on=['ymd', 'name'])
-        else:
-            #  9.结果数据保存到 远端 mysql中
-            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
-                                                     password=origin_password,
-                                                     host=origin_host,
-                                                     database=origin_database,
-                                                     df=filter_limit_df,
-                                                     table_name="ods_stock_limit_summary_insight",
-                                                     merge_on=['ymd', 'name'])
+        # 总是保存到远端数据库
+        mysql_utils.data_from_dataframe_to_mysql(
+            user=origin_user,
+            password=origin_password,
+            host=origin_host,
+            database=origin_database,
+            df=filter_limit_df,
+            table_name="ods_stock_limit_summary_insight",
+            merge_on=['ymd', 'name']
+        )
 
     @timing_decorator
     def get_future_inside(self):
@@ -461,7 +434,7 @@ class SaveInsightHistoryData:
 
         #  5.日期格式转换
         future_inside_df['time'] = pd.to_datetime(future_inside_df['time']).dt.strftime('%Y%m%d')
-        future_inside_df.rename(columns={'time': 'ymd', 'htsc_code':'stock_code'}, inplace=True)
+        future_inside_df.rename(columns={'time': 'ymd', 'htsc_code': 'stock_code'}, inplace=True)
 
         #  6.声明所有的列名，去除多余列
         future_inside_df = future_inside_df[
@@ -471,34 +444,28 @@ class SaveInsightHistoryData:
         future_inside_df = future_inside_df.drop_duplicates(subset=['ymd', 'stock_code'], keep='first')
 
         ############################   文件输出模块     ############################
-        if platform.system() == "Windows":
-            #  9.结果数据保存到 本地 mysql中
-            mysql_utils.data_from_dataframe_to_mysql(user=local_user,
-                                                     password=local_password,
-                                                     host=local_host,
-                                                     database=local_database,
-                                                     df=future_inside_df,
-                                                     table_name="ods_future_inside_insight",
-                                                     merge_on=['ymd', 'stock_code'])
+        # Windows下先保存到本地数据库
+        # if platform.system() == "Windows":
+        #     mysql_utils.data_from_dataframe_to_mysql(
+        #         user=local_user,
+        #         password=local_password,
+        #         host=local_host,
+        #         database=local_database,
+        #         df=future_inside_df,
+        #         table_name="ods_future_inside_insight",
+        #         merge_on=['ymd', 'stock_code']
+        #     )
 
-            #  10.结果数据保存到 远端 mysql中
-            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
-                                                     password=origin_password,
-                                                     host=origin_host,
-                                                     database=origin_database,
-                                                     df=future_inside_df,
-                                                     table_name="ods_future_inside_insight",
-                                                     merge_on=['ymd', 'stock_code'])
-        else:
-            #  10.结果数据保存到 远端 mysql中
-            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
-                                                     password=origin_password,
-                                                     host=origin_host,
-                                                     database=origin_database,
-                                                     df=future_inside_df,
-                                                     table_name="ods_future_inside_insight",
-                                                     merge_on=['ymd', 'stock_code'])
-
+        # 总是保存到远端数据库
+        mysql_utils.data_from_dataframe_to_mysql(
+            user=origin_user,
+            password=origin_password,
+            host=origin_host,
+            database=origin_database,
+            df=future_inside_df,
+            table_name="ods_future_inside_insight",
+            merge_on=['ymd', 'stock_code']
+        )
 
     @timing_decorator
     def get_shareholder_north_bound_num(self):
@@ -525,25 +492,27 @@ class SaveInsightHistoryData:
         #  4.请求insight  个股股东数   数据
         #    请求insight  北向资金持仓  数据
         total_xunhuan = len(code_list)
-        i = 1                       # 总循环标记
-        valid_shareholder = 1       # 个股股东数有效标记
-        valid_north_bound = 1       # 北向资金持仓有效标记
+        i = 1  # 总循环标记
+        valid_shareholder = 1  # 个股股东数有效标记
+        valid_north_bound = 1  # 北向资金持仓有效标记
 
         for stock_code in code_list:
             # 屏蔽 stdout 和 stderr
             with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
                 res_shareholder = get_shareholder_num(htsc_code=stock_code, end_date=[time_start_date, time_end_date])
-                res_north_bound =get_north_bound(htsc_code=stock_code, trading_day=[time_start_date, time_end_date])
+                res_north_bound = get_north_bound(htsc_code=stock_code, trading_day=[time_start_date, time_end_date])
 
             if res_shareholder is not None:
                 shareholder_num_df = pd.concat([shareholder_num_df, res_shareholder], ignore_index=True)
-                sys.stdout.write(f"\r当前执行 get_shareholder_num  第 {i} 次循环，总共 {total_xunhuan} 个批次, {valid_shareholder}个有效股东数据")
+                sys.stdout.write(
+                    f"\r当前执行 get_shareholder_num  第 {i} 次循环，总共 {total_xunhuan} 个批次, {valid_shareholder}个有效股东数据")
                 sys.stdout.flush()
                 valid_shareholder += 1
 
             if res_north_bound is not None:
                 north_bound_df = pd.concat([north_bound_df, res_north_bound], ignore_index=True)
-                sys.stdout.write(f"\r当前执行 get_north_bound  第 {i} 次循环，总共 {total_xunhuan} 个批次, {valid_north_bound}个有效北向持仓数据")
+                sys.stdout.write(
+                    f"\r当前执行 get_north_bound  第 {i} 次循环，总共 {total_xunhuan} 个批次, {valid_north_bound}个有效北向持仓数据")
                 sys.stdout.flush()
                 valid_north_bound += 1
 
@@ -552,14 +521,16 @@ class SaveInsightHistoryData:
         sys.stdout.write("\n")
 
         #  5.日期格式转换
-        shareholder_num_df.rename(columns={'end_date': 'ymd', 'htsc_code': 'stock_code', 'name': 'stock_name'}, inplace=True)
+        shareholder_num_df.rename(columns={'end_date': 'ymd', 'htsc_code': 'stock_code', 'name': 'stock_name'},
+                                  inplace=True)
         shareholder_num_df['ymd'] = pd.to_datetime(shareholder_num_df['ymd']).dt.strftime('%Y%m%d')
 
         north_bound_df.rename(columns={'trading_day': 'ymd', 'htsc_code': 'stock_code'}, inplace=True)
         north_bound_df['ymd'] = pd.to_datetime(shareholder_num_df['ymd']).dt.strftime('%Y%m%d')
 
         #  6.声明所有的列名，去除多余列
-        shareholder_num_df = shareholder_num_df[['stock_code', 'stock_name', 'ymd', 'total_sh', 'avg_share', 'pct_of_total_sh', 'pct_of_avg_sh']]
+        shareholder_num_df = shareholder_num_df[
+            ['stock_code', 'stock_name', 'ymd', 'total_sh', 'avg_share', 'pct_of_total_sh', 'pct_of_avg_sh']]
         north_bound_df = north_bound_df[['stock_code', 'ymd', 'sh_hkshare_hold', 'pct_total_share']]
 
         #  7.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
@@ -567,58 +538,48 @@ class SaveInsightHistoryData:
         north_bound_df = north_bound_df.drop_duplicates(subset=['ymd', 'stock_code'], keep='first')
 
         ############################   文件输出模块     ############################
-        if platform.system() == "Windows":
-            #  9.结果数据保存到 本地 mysql中
-            mysql_utils.data_from_dataframe_to_mysql(user=local_user,
-                                                     password=local_password,
-                                                     host=local_host,
-                                                     database=local_database,
-                                                     df=shareholder_num_df,
-                                                     table_name="ods_shareholder_num",
-                                                     merge_on=['ymd', 'stock_code'])
+        # Windows下先保存到本地数据库
+        # if platform.system() == "Windows":
+        #     mysql_utils.data_from_dataframe_to_mysql(
+        #         user=local_user,
+        #         password=local_password,
+        #         host=local_host,
+        #         database=local_database,
+        #         df=shareholder_num_df,
+        #         table_name="ods_shareholder_num",
+        #         merge_on=['ymd', 'stock_code']
+        #     )
+        #
+        #     mysql_utils.data_from_dataframe_to_mysql(
+        #         user=local_user,
+        #         password=local_password,
+        #         host=local_host,
+        #         database=local_database,
+        #         df=north_bound_df,
+        #         table_name="ods_north_bound_daily",
+        #         merge_on=['ymd', 'stock_code']
+        #     )
 
-            mysql_utils.data_from_dataframe_to_mysql(user=local_user,
-                                                     password=local_password,
-                                                     host=local_host,
-                                                     database=local_database,
-                                                     df=north_bound_df,
-                                                     table_name="ods_north_bound_daily",
-                                                     merge_on=['ymd', 'stock_code'])
+        # 总是保存到远端数据库
+        mysql_utils.data_from_dataframe_to_mysql(
+            user=origin_user,
+            password=origin_password,
+            host=origin_host,
+            database=origin_database,
+            df=shareholder_num_df,
+            table_name="ods_shareholder_num",
+            merge_on=['ymd', 'stock_code']
+        )
 
-            #  10.结果数据保存到 远端 mysql中
-            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
-                                                     password=origin_password,
-                                                     host=origin_host,
-                                                     database=origin_database,
-                                                     df=shareholder_num_df,
-                                                     table_name="ods_shareholder_num",
-                                                     merge_on=['ymd', 'stock_code'])
-
-            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
-                                                     password=origin_password,
-                                                     host=origin_host,
-                                                     database=origin_database,
-                                                     df=north_bound_df,
-                                                     table_name="ods_north_bound_daily",
-                                                     merge_on=['ymd', 'stock_code'])
-        else:
-            #  10.结果数据保存到 远端 mysql中
-            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
-                                                     password=origin_password,
-                                                     host=origin_host,
-                                                     database=origin_database,
-                                                     df=shareholder_num_df,
-                                                     table_name="ods_shareholder_num",
-                                                     merge_on=['ymd', 'stock_code'])
-
-            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
-                                                     password=origin_password,
-                                                     host=origin_host,
-                                                     database=origin_database,
-                                                     df=north_bound_df,
-                                                     table_name="ods_north_bound_daily",
-                                                     merge_on=['ymd', 'stock_code'])
-
+        mysql_utils.data_from_dataframe_to_mysql(
+            user=origin_user,
+            password=origin_password,
+            host=origin_host,
+            database=origin_database,
+            df=north_bound_df,
+            table_name="ods_north_bound_daily",
+            merge_on=['ymd', 'stock_code']
+        )
 
     @timing_decorator
     def setup(self):
@@ -650,4 +611,3 @@ class SaveInsightHistoryData:
 if __name__ == '__main__':
     save_insight_data = SaveInsightHistoryData()
     save_insight_data.setup()
-

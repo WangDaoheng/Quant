@@ -97,33 +97,29 @@ class SaveInsightData:
         self.stock_code_df = filtered_df
 
         ############################   文件输出模块     ############################
-        if platform.system() == "Windows":
-            #  8.结果数据保存到 本地 mysql中
-            mysql_utils.data_from_dataframe_to_mysql(user=local_user,
-                                                     password=local_password,
-                                                     host=local_host,
-                                                     database=local_database,
-                                                     df=filtered_df,
-                                                     table_name="ods_stock_code_daily_insight",
-                                                     merge_on=['ymd', 'stock_code'])
+        # Windows下先保存到本地
+        # if platform.system() == "Windows":
+        #     mysql_utils.data_from_dataframe_to_mysql(
+        #         user=local_user,
+        #         password=local_password,
+        #         host=local_host,
+        #         database=local_database,
+        #         df=filtered_df,
+        #         table_name="ods_stock_code_daily_insight",
+        #         merge_on=['ymd', 'stock_code']
+        #     )
 
-            #  9.结果数据保存到 远端 mysql中
-            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
-                                                     password=origin_password,
-                                                     host=origin_host,
-                                                     database=origin_database,
-                                                     df=filtered_df,
-                                                     table_name="ods_stock_code_daily_insight",
-                                                     merge_on=['ymd', 'stock_code'])
-        else:
-            #  9.结果数据保存到 远端 mysql中
-            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
-                                                     password=origin_password,
-                                                     host=origin_host,
-                                                     database=origin_database,
-                                                     df=filtered_df,
-                                                     table_name="ods_stock_code_daily_insight",
-                                                     merge_on=['ymd', 'stock_code'])
+        # 远端数据库总是保存
+        mysql_utils.data_from_dataframe_to_mysql(
+            user=origin_user,
+            password=origin_password,
+            host=origin_host,
+            database=origin_database,
+            df=filtered_df,
+            table_name="ods_stock_code_daily_insight",
+            merge_on=['ymd', 'stock_code']
+        )
+
 
 
     # @timing_decorator
@@ -196,33 +192,29 @@ class SaveInsightData:
             kline_total_df = kline_total_df.drop_duplicates(subset=['ymd', 'stock_code'], keep='first')
 
             ############################   文件输出模块     ############################
-            if platform.system() == "Windows":
-                #  13.结果数据保存到 本地 mysql中
-                mysql_utils.data_from_dataframe_to_mysql(user=local_user,
-                                                         password=local_password,
-                                                         host=local_host,
-                                                         database=local_database,
-                                                         df=kline_total_df,
-                                                         table_name="ods_stock_kline_daily_insight_now",
-                                                         merge_on=['ymd', 'stock_code'])
+            # Windows下先保存到本地数据库
+            # if platform.system() == "Windows":
+            #     mysql_utils.data_from_dataframe_to_mysql(
+            #         user=local_user,
+            #         password=local_password,
+            #         host=local_host,
+            #         database=local_database,
+            #         df=kline_total_df,
+            #         table_name="ods_stock_kline_daily_insight_now",
+            #         merge_on=['ymd', 'stock_code']
+            #     )
 
-                #  14.结果数据保存到 远端 mysql中
-                mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
-                                                         password=origin_password,
-                                                         host=origin_host,
-                                                         database=origin_database,
-                                                         df=kline_total_df,
-                                                         table_name="ods_stock_kline_daily_insight_now",
-                                                         merge_on=['ymd', 'stock_code'])
-            else:
-                #  14.结果数据保存到 远端 mysql中
-                mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
-                                                         password=origin_password,
-                                                         host=origin_host,
-                                                         database=origin_database,
-                                                         df=kline_total_df,
-                                                         table_name="ods_stock_kline_daily_insight_now",
-                                                         merge_on=['ymd', 'stock_code'])
+            # 总是保存到远端数据库
+            mysql_utils.data_from_dataframe_to_mysql(
+                user=origin_user,
+                password=origin_password,
+                host=origin_host,
+                database=origin_database,
+                df=kline_total_df,
+                table_name="ods_stock_kline_daily_insight_now",
+                merge_on=['ymd', 'stock_code']
+            )
+
         else:
             ## insight 返回为空值
             logging.info('    get_stock_kline 的返回值为空值')
@@ -292,33 +284,29 @@ class SaveInsightData:
             index_df = index_df.drop_duplicates(subset=['ymd', 'index_code'], keep='first')
 
             ############################   文件输出模块     ############################
-            if platform.system() == "Windows":
-                #  11.结果数据保存到 本地 mysql中
-                mysql_utils.data_from_dataframe_to_mysql(user=local_user,
-                                                         password=local_password,
-                                                         host=local_host,
-                                                         database=local_database,
-                                                         df=index_df,
-                                                         table_name="ods_index_a_share_insight_now",
-                                                         merge_on=['ymd', 'index_code'])
+            # Windows下先保存到本地数据库
+            # if platform.system() == "Windows":
+            #     mysql_utils.data_from_dataframe_to_mysql(
+            #         user=local_user,
+            #         password=local_password,
+            #         host=local_host,
+            #         database=local_database,
+            #         df=index_df,
+            #         table_name="ods_index_a_share_insight_now",
+            #         merge_on=['ymd', 'index_code']
+            #     )
 
-                #  12.结果数据保存到 远端 mysql中
-                mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
-                                                         password=origin_password,
-                                                         host=origin_host,
-                                                         database=origin_database,
-                                                         df=index_df,
-                                                         table_name="ods_index_a_share_insight_now",
-                                                         merge_on=['ymd', 'index_code'])
-            else:
-                #  12.结果数据保存到 远端 mysql中
-                mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
-                                                         password=origin_password,
-                                                         host=origin_host,
-                                                         database=origin_database,
-                                                         df=index_df,
-                                                         table_name="ods_index_a_share_insight_now",
-                                                         merge_on=['ymd', 'index_code'])
+            # 总是保存到远端数据库
+            mysql_utils.data_from_dataframe_to_mysql(
+                user=origin_user,
+                password=origin_password,
+                host=origin_host,
+                database=origin_database,
+                df=index_df,
+                table_name="ods_index_a_share_insight_now",
+                merge_on=['ymd', 'index_code']
+            )
+
         else:
             ## insight 返回为空值
             logging.info('    get_index_a_share 的返回值为空值')
@@ -387,33 +375,29 @@ class SaveInsightData:
             limit_summary_df = limit_summary_df.drop_duplicates(subset=['ymd', 'name'], keep='first')
 
             ############################   文件输出模块     ############################
-            if platform.system() == "Windows":
-                #  9.结果数据保存到 本地 mysql中
-                mysql_utils.data_from_dataframe_to_mysql(user=local_user,
-                                                         password=local_password,
-                                                         host=local_host,
-                                                         database=local_database,
-                                                         df=limit_summary_df,
-                                                         table_name="ods_stock_limit_summary_insight_now",
-                                                         merge_on=['ymd', 'name'])
+            # Windows下先保存到本地数据库
+            # if platform.system() == "Windows":
+            #     mysql_utils.data_from_dataframe_to_mysql(
+            #         user=local_user,
+            #         password=local_password,
+            #         host=local_host,
+            #         database=local_database,
+            #         df=limit_summary_df,
+            #         table_name="ods_stock_limit_summary_insight_now",
+            #         merge_on=['ymd', 'name']
+            #     )
 
-                #  10.结果数据保存到 远端 mysql中
-                mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
-                                                         password=origin_password,
-                                                         host=origin_host,
-                                                         database=origin_database,
-                                                         df=limit_summary_df,
-                                                         table_name="ods_stock_limit_summary_insight_now",
-                                                         merge_on=['ymd', 'name'])
-            else:
-                #  10.结果数据保存到 远端 mysql中
-                mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
-                                                         password=origin_password,
-                                                         host=origin_host,
-                                                         database=origin_database,
-                                                         df=limit_summary_df,
-                                                         table_name="ods_stock_limit_summary_insight_now",
-                                                         merge_on=['ymd', 'name'])
+            # 总是保存到远端数据库
+            mysql_utils.data_from_dataframe_to_mysql(
+                user=origin_user,
+                password=origin_password,
+                host=origin_host,
+                database=origin_database,
+                df=limit_summary_df,
+                table_name="ods_stock_limit_summary_insight_now",
+                merge_on=['ymd', 'name']
+            )
+
         else:
             ## insight 返回为空值
             logging.info('    get_limit_summary 的返回值为空值')
@@ -481,33 +465,29 @@ class SaveInsightData:
             future_inside_df = future_inside_df.drop_duplicates(subset=['ymd', 'stock_code'], keep='first')
 
             ############################   文件输出模块     ############################
-            if platform.system() == "Windows":
-                #  10.结果数据保存到 本地 mysql中
-                mysql_utils.data_from_dataframe_to_mysql(user=local_user,
-                                                         password=local_password,
-                                                         host=local_host,
-                                                         database=local_database,
-                                                         df=future_inside_df,
-                                                         table_name="ods_future_inside_insight_now",
-                                                         merge_on=['ymd', 'stock_code'])
+            # Windows下先保存到本地数据库
+            # if platform.system() == "Windows":
+            #     mysql_utils.data_from_dataframe_to_mysql(
+            #         user=local_user,
+            #         password=local_password,
+            #         host=local_host,
+            #         database=local_database,
+            #         df=future_inside_df,
+            #         table_name="ods_future_inside_insight_now",
+            #         merge_on=['ymd', 'stock_code']
+            #     )
 
-                #  11.结果数据保存到 远端 mysql中
-                mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
-                                                         password=origin_password,
-                                                         host=origin_host,
-                                                         database=origin_database,
-                                                         df=future_inside_df,
-                                                         table_name="ods_future_inside_insight_now",
-                                                         merge_on=['ymd', 'stock_code'])
-            else:
-                #  11.结果数据保存到 远端 mysql中
-                mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
-                                                         password=origin_password,
-                                                         host=origin_host,
-                                                         database=origin_database,
-                                                         df=future_inside_df,
-                                                         table_name="ods_future_inside_insight_now",
-                                                         merge_on=['ymd', 'stock_code'])
+            # 总是保存到远端数据库
+            mysql_utils.data_from_dataframe_to_mysql(
+                user=origin_user,
+                password=origin_password,
+                host=origin_host,
+                database=origin_database,
+                df=future_inside_df,
+                table_name="ods_future_inside_insight_now",
+                merge_on=['ymd', 'stock_code']
+            )
+
         else:
             ## insight 返回为空值
             logging.info('    get_future_inside 的返回值为空值')
@@ -605,33 +585,29 @@ class SaveInsightData:
             # chouma_total_df[cols_to_clean] = chouma_total_df[cols_to_clean].round(2)
 
             ############################   文件输出模块     ############################
-            if platform.system() == "Windows":
-                #  11.结果数据保存到 本地 mysql中
-                mysql_utils.data_from_dataframe_to_mysql(user=local_user,
-                                                         password=local_password,
-                                                         host=local_host,
-                                                         database=local_database,
-                                                         df=chouma_total_df,
-                                                         table_name="ods_stock_chouma_insight",
-                                                         merge_on=['ymd', 'stock_code'])
+            # Windows下先保存到本地数据库
+            # if platform.system() == "Windows":
+            #     mysql_utils.data_from_dataframe_to_mysql(
+            #         user=local_user,
+            #         password=local_password,
+            #         host=local_host,
+            #         database=local_database,
+            #         df=chouma_total_df,
+            #         table_name="ods_stock_chouma_insight",
+            #         merge_on=['ymd', 'stock_code']
+            #     )
 
-                #  12.结果数据保存到 远端 mysql中
-                mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
-                                                         password=origin_password,
-                                                         host=origin_host,
-                                                         database=origin_database,
-                                                         df=chouma_total_df,
-                                                         table_name="ods_stock_chouma_insight",
-                                                         merge_on=['ymd', 'stock_code'])
-            else:
-                #  12.结果数据保存到 远端 mysql中
-                mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
-                                                         password=origin_password,
-                                                         host=origin_host,
-                                                         database=origin_database,
-                                                         df=chouma_total_df,
-                                                         table_name="ods_stock_chouma_insight",
-                                                         merge_on=['ymd', 'stock_code'])
+            # 总是保存到远端数据库
+            mysql_utils.data_from_dataframe_to_mysql(
+                user=origin_user,
+                password=origin_password,
+                host=origin_host,
+                database=origin_database,
+                df=chouma_total_df,
+                table_name="ods_stock_chouma_insight",
+                merge_on=['ymd', 'stock_code']
+            )
+
         else:
             # insight 返回为空值
             logging.info('    get_chouma_datas 的返回值为空值')
@@ -674,33 +650,29 @@ class SaveInsightData:
             industry_df = industry_df.drop_duplicates(subset=['ymd', 'industry_code'], keep='first')
 
             ############################   文件输出模块     ############################
-            if platform.system() == "Windows":
-                #  9.结果数据保存到 本地 mysql中
-                mysql_utils.data_from_dataframe_to_mysql(user=local_user,
-                                                         password=local_password,
-                                                         host=local_host,
-                                                         database=local_database,
-                                                         df=industry_df,
-                                                         table_name="ods_astock_industry_overview",
-                                                         merge_on=['ymd', 'industry_code'])
+            # Windows下先保存到本地数据库
+            # if platform.system() == "Windows":
+            #     mysql_utils.data_from_dataframe_to_mysql(
+            #         user=local_user,
+            #         password=local_password,
+            #         host=local_host,
+            #         database=local_database,
+            #         df=industry_df,
+            #         table_name="ods_astock_industry_overview",
+            #         merge_on=['ymd', 'industry_code']
+            #     )
 
-                #  10.结果数据保存到 远端 mysql中
-                mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
-                                                         password=origin_password,
-                                                         host=origin_host,
-                                                         database=origin_database,
-                                                         df=industry_df,
-                                                         table_name="ods_astock_industry_overview",
-                                                         merge_on=['ymd', 'industry_code'])
-            else:
-                #  10.结果数据保存到 远端 mysql中
-                mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
-                                                         password=origin_password,
-                                                         host=origin_host,
-                                                         database=origin_database,
-                                                         df=industry_df,
-                                                         table_name="ods_astock_industry_overview",
-                                                         merge_on=['ymd', 'industry_code'])
+            # 总是保存到远端数据库
+            mysql_utils.data_from_dataframe_to_mysql(
+                user=origin_user,
+                password=origin_password,
+                host=origin_host,
+                database=origin_database,
+                df=industry_df,
+                table_name="ods_astock_industry_overview",
+                merge_on=['ymd', 'industry_code']
+            )
+
         else:
             ## insight 返回为空值
             logging.info('    get_Ashare_industry_overview 的返回值为空值')
@@ -766,33 +738,28 @@ class SaveInsightData:
             stock_in_industry_df = stock_in_industry_df.drop_duplicates(subset=['ymd', 'stock_code'], keep='first')
 
             ############################   文件输出模块     ############################
-            if platform.system() == "Windows":
-                #  10.结果数据保存到 本地 mysql中
-                mysql_utils.data_from_dataframe_to_mysql(user=local_user,
-                                                         password=local_password,
-                                                         host=local_host,
-                                                         database=local_database,
-                                                         df=stock_in_industry_df,
-                                                         table_name="ods_astock_industry_detail",
-                                                         merge_on=['ymd', 'stock_code'])
+            # Windows下先保存到本地数据库
+            # if platform.system() == "Windows":
+            #     mysql_utils.data_from_dataframe_to_mysql(
+            #         user=local_user,
+            #         password=local_password,
+            #         host=local_host,
+            #         database=local_database,
+            #         df=stock_in_industry_df,
+            #         table_name="ods_astock_industry_detail",
+            #         merge_on=['ymd', 'stock_code']
+            #     )
 
-                #  11.结果数据保存到 远端 mysql中
-                mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
-                                                         password=origin_password,
-                                                         host=origin_host,
-                                                         database=origin_database,
-                                                         df=stock_in_industry_df,
-                                                         table_name="ods_astock_industry_detail",
-                                                         merge_on=['ymd', 'stock_code'])
-            else:
-                #  11.结果数据保存到 远端 mysql中
-                mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
-                                                         password=origin_password,
-                                                         host=origin_host,
-                                                         database=origin_database,
-                                                         df=stock_in_industry_df,
-                                                         table_name="ods_astock_industry_detail",
-                                                         merge_on=['ymd', 'stock_code'])
+            # 总是保存到远端数据库
+            mysql_utils.data_from_dataframe_to_mysql(
+                user=origin_user,
+                password=origin_password,
+                host=origin_host,
+                database=origin_database,
+                df=stock_in_industry_df,
+                table_name="ods_astock_industry_detail",
+                merge_on=['ymd', 'stock_code']
+            )
         else:
             ## insight 返回为空值
             logging.info('    get_Ashare_industry_detail 的返回值为空值')
@@ -866,16 +833,19 @@ class SaveInsightData:
             # north_bound_df = north_bound_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
 
             ############################   文件输出模块     ############################
+            # Windows下先保存到本地数据库
             if platform.system() == "Windows":
-                #  10.结果数据保存到 本地 mysql中
-                mysql_utils.data_from_dataframe_to_mysql(user=local_user,
-                                                         password=local_password,
-                                                         host=local_host,
-                                                         database=local_database,
-                                                         df=shareholder_num_df,
-                                                         table_name="ods_shareholder_num_now",
-                                                         merge_on=['ymd', 'stock_code'])
+                mysql_utils.data_from_dataframe_to_mysql(
+                    user=local_user,
+                    password=local_password,
+                    host=local_host,
+                    database=local_database,
+                    df=shareholder_num_df,
+                    table_name="ods_shareholder_num_now",
+                    merge_on=['ymd', 'stock_code']
+                )
 
+                # 注释掉的部分可以保留
                 # mysql_utils.data_from_dataframe_to_mysql(user=local_user,
                 #                                          password=local_password,
                 #                                          host=local_host,
@@ -884,31 +854,26 @@ class SaveInsightData:
                 #                                          table_name="north_bound_daily_now",
                 #                                          merge_on=['ymd', 'stock_code'])
 
-                #  11.结果数据保存到 远端 mysql中
-                mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
-                                                         password=origin_password,
-                                                         host=origin_host,
-                                                         database=origin_database,
-                                                         df=shareholder_num_df,
-                                                         table_name="ods_shareholder_num_now",
-                                                         merge_on=['ymd', 'stock_code'])
+            # 总是保存到远端数据库
+            mysql_utils.data_from_dataframe_to_mysql(
+                user=origin_user,
+                password=origin_password,
+                host=origin_host,
+                database=origin_database,
+                df=shareholder_num_df,
+                table_name="ods_shareholder_num_now",
+                merge_on=['ymd', 'stock_code']
+            )
 
-                # mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
-                #                                          password=origin_password,
-                #                                          host=origin_host,
-                #                                          database=origin_database,
-                #                                          df=north_bound_df,
-                #                                          table_name="north_bound_daily_now",
-                #                                          merge_on=['ymd', 'stock_code'])
-            else:
-                #  11.结果数据保存到 远端 mysql中
-                mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
-                                                         password=origin_password,
-                                                         host=origin_host,
-                                                         database=origin_database,
-                                                         df=shareholder_num_df,
-                                                         table_name="ods_shareholder_num_now",
-                                                         merge_on=['ymd', 'stock_code'])
+            # 注释掉的部分可以保留
+            # mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
+            #                                          password=origin_password,
+            #                                          host=origin_host,
+            #                                          database=origin_database,
+            #                                          df=north_bound_df,
+            #                                          table_name="north_bound_daily_now",
+            #                                          merge_on=['ymd', 'stock_code'])
+
         else:
             ## insight 返回为空值
             logging.info('    get_shareholder_north_bound_num 的返回值为空值')

@@ -40,14 +40,10 @@ origin_database = Base_Properties.origin_mysql_database
 origin_host = Base_Properties.origin_mysql_host
 
 
-
-
-
 class MergeInsightData:
 
     def __init__(self):
         pass
-
 
     @timing_decorator
     def merge_stock_kline(self):
@@ -60,33 +56,24 @@ class MergeInsightData:
         target_table = 'ods_stock_kline_daily_insight'
         columns = ['stock_code', 'ymd', 'open', 'close', 'high', 'low', 'num_trades', 'volume']
         ############################   文件输出模块     ############################
-        if platform.system() == "Windows":
-            # 对本地 Mysql 做数据聚合
-            mysql_utils.upsert_table(user=local_user,
-                                     password=local_password,
-                                     host=local_host,
-                                     database=local_database,
-                                     source_table=source_table,
-                                     target_table=target_table,
-                                     columns=columns)
+        # Windows下先对本地Mysql做数据聚合
+        # if platform.system() == "Windows":
+        #     mysql_utils.upsert_table(user=local_user,
+        #                              password=local_password,
+        #                              host=local_host,
+        #                              database=local_database,
+        #                              source_table=source_table,
+        #                              target_table=target_table,
+        #                              columns=columns)
 
-            # 对远端 Mysql 做数据聚合
-            mysql_utils.upsert_table(user=origin_user,
-                                     password=origin_password,
-                                     host=origin_host,
-                                     database=origin_database,
-                                     source_table=source_table,
-                                     target_table=target_table,
-                                     columns=columns)
-        else:
-            # 对远端 Mysql 做数据聚合
-            mysql_utils.upsert_table(user=origin_user,
-                                     password=origin_password,
-                                     host=origin_host,
-                                     database=origin_database,
-                                     source_table=source_table,
-                                     target_table=target_table,
-                                     columns=columns)
+        # 总是对远端Mysql做数据聚合
+        mysql_utils.upsert_table(user=origin_user,
+                                 password=origin_password,
+                                 host=origin_host,
+                                 database=origin_database,
+                                 source_table=source_table,
+                                 target_table=target_table,
+                                 columns=columns)
 
 
     @timing_decorator
@@ -108,33 +95,24 @@ class MergeInsightData:
         target_table = 'ods_index_a_share_insight'
         columns = ['index_code', 'index_name', 'ymd', 'open', 'close', 'high', 'low', 'volume']
         ############################   文件输出模块     ############################
-        if platform.system() == "Windows":
-            # 对本地 Mysql 做数据聚合
-            mysql_utils.upsert_table(user=local_user,
-                                     password=local_password,
-                                     host=local_host,
-                                     database=local_database,
-                                     source_table=source_table,
-                                     target_table=target_table,
-                                     columns=columns)
+        # Windows下先对本地Mysql做数据聚合
+        # if platform.system() == "Windows":
+        #     mysql_utils.upsert_table(user=local_user,
+        #                              password=local_password,
+        #                              host=local_host,
+        #                              database=local_database,
+        #                              source_table=source_table,
+        #                              target_table=target_table,
+        #                              columns=columns)
 
-            # 对远端 Mysql 做数据聚合
-            mysql_utils.upsert_table(user=origin_user,
-                                     password=origin_password,
-                                     host=origin_host,
-                                     database=origin_database,
-                                     source_table=source_table,
-                                     target_table=target_table,
-                                     columns=columns)
-        else:
-            # 对远端 Mysql 做数据聚合
-            mysql_utils.upsert_table(user=origin_user,
-                                     password=origin_password,
-                                     host=origin_host,
-                                     database=origin_database,
-                                     source_table=source_table,
-                                     target_table=target_table,
-                                     columns=columns)
+        # 总是对远端Mysql做数据聚合
+        mysql_utils.upsert_table(user=origin_user,
+                                 password=origin_password,
+                                 host=origin_host,
+                                 database=origin_database,
+                                 source_table=source_table,
+                                 target_table=target_table,
+                                 columns=columns)
 
 
     @timing_decorator
@@ -164,33 +142,24 @@ class MergeInsightData:
         target_table = 'ods_stock_limit_summary_insight'
         columns = ['ymd', 'name', 'today_ZT', 'today_DT', 'yesterday_ZT', 'yesterday_DT', 'yesterday_ZT_rate']
         ############################   文件输出模块     ############################
-        if platform.system() == "Windows":
-            # 对本地 Mysql 做数据聚合
-            mysql_utils.upsert_table(user=local_user,
-                                     password=local_password,
-                                     host=local_host,
-                                     database=local_database,
-                                     source_table=source_table,
-                                     target_table=target_table,
-                                     columns=columns)
+        # Windows下先对本地Mysql做数据聚合
+        # if platform.system() == "Windows":
+        #     mysql_utils.upsert_table(user=local_user,
+        #                              password=local_password,
+        #                              host=local_host,
+        #                              database=local_database,
+        #                              source_table=source_table,
+        #                              target_table=target_table,
+        #                              columns=columns)
 
-            # 对远端 Mysql 做数据聚合
-            mysql_utils.upsert_table(user=origin_user,
-                                     password=origin_password,
-                                     host=origin_host,
-                                     database=origin_database,
-                                     source_table=source_table,
-                                     target_table=target_table,
-                                     columns=columns)
-        else:
-            # 对远端 Mysql 做数据聚合
-            mysql_utils.upsert_table(user=origin_user,
-                                     password=origin_password,
-                                     host=origin_host,
-                                     database=origin_database,
-                                     source_table=source_table,
-                                     target_table=target_table,
-                                     columns=columns)
+        # 总是对远端Mysql做数据聚合
+        mysql_utils.upsert_table(user=origin_user,
+                                 password=origin_password,
+                                 host=origin_host,
+                                 database=origin_database,
+                                 source_table=source_table,
+                                 target_table=target_table,
+                                 columns=columns)
 
 
     @timing_decorator
@@ -223,33 +192,24 @@ class MergeInsightData:
         target_table = 'ods_future_inside_insight'
         columns = ['stock_code', 'ymd', 'open', 'close', 'high', 'low', 'volume', 'open_interest', 'settle']
         ############################   文件输出模块     ############################
-        if platform.system() == "Windows":
-            # 对本地 Mysql 做数据聚合
-            mysql_utils.upsert_table(user=local_user,
-                                     password=local_password,
-                                     host=local_host,
-                                     database=local_database,
-                                     source_table=source_table,
-                                     target_table=target_table,
-                                     columns=columns)
+        # Windows下先对本地Mysql做数据聚合
+        # if platform.system() == "Windows":
+        #     mysql_utils.upsert_table(user=local_user,
+        #                              password=local_password,
+        #                              host=local_host,
+        #                              database=local_database,
+        #                              source_table=source_table,
+        #                              target_table=target_table,
+        #                              columns=columns)
 
-            # 对远端 Mysql 做数据聚合
-            mysql_utils.upsert_table(user=origin_user,
-                                     password=origin_password,
-                                     host=origin_host,
-                                     database=origin_database,
-                                     source_table=source_table,
-                                     target_table=target_table,
-                                     columns=columns)
-        else:
-            # 对远端 Mysql 做数据聚合
-            mysql_utils.upsert_table(user=origin_user,
-                                     password=origin_password,
-                                     host=origin_host,
-                                     database=origin_database,
-                                     source_table=source_table,
-                                     target_table=target_table,
-                                     columns=columns)
+        # 总是对远端Mysql做数据聚合
+        mysql_utils.upsert_table(user=origin_user,
+                                 password=origin_password,
+                                 host=origin_host,
+                                 database=origin_database,
+                                 source_table=source_table,
+                                 target_table=target_table,
+                                 columns=columns)
 
 
     @timing_decorator
@@ -262,33 +222,24 @@ class MergeInsightData:
         target_table = 'ods_shareholder_num'
         columns = ['stock_code', 'stock_name', 'ymd', 'total_sh', 'avg_share', 'pct_of_total_sh', 'pct_of_avg_sh']
         ############################   文件输出模块     ############################
-        if platform.system() == "Windows":
-            # 对本地 Mysql 做数据聚合
-            mysql_utils.upsert_table(user=local_user,
-                                     password=local_password,
-                                     host=local_host,
-                                     database=local_database,
-                                     source_table=source_table,
-                                     target_table=target_table,
-                                     columns=columns)
+        # Windows下先对本地Mysql做数据聚合
+        # if platform.system() == "Windows":
+        #     mysql_utils.upsert_table(user=local_user,
+        #                              password=local_password,
+        #                              host=local_host,
+        #                              database=local_database,
+        #                              source_table=source_table,
+        #                              target_table=target_table,
+        #                              columns=columns)
 
-            # 对远端 Mysql 做数据聚合
-            mysql_utils.upsert_table(user=origin_user,
-                                     password=origin_password,
-                                     host=origin_host,
-                                     database=origin_database,
-                                     source_table=source_table,
-                                     target_table=target_table,
-                                     columns=columns)
-        else:
-            # 对远端 Mysql 做数据聚合
-            mysql_utils.upsert_table(user=origin_user,
-                                     password=origin_password,
-                                     host=origin_host,
-                                     database=origin_database,
-                                     source_table=source_table,
-                                     target_table=target_table,
-                                     columns=columns)
+        # 总是对远端Mysql做数据聚合
+        mysql_utils.upsert_table(user=origin_user,
+                                 password=origin_password,
+                                 host=origin_host,
+                                 database=origin_database,
+                                 source_table=source_table,
+                                 target_table=target_table,
+                                 columns=columns)
 
 
     @timing_decorator
@@ -301,33 +252,24 @@ class MergeInsightData:
         target_table = 'ods_north_bound_daily'
         columns = ['stock_code', 'ymd', 'sh_hkshare_hold', 'pct_total_share']
         ############################   文件输出模块     ############################
-        if platform.system() == "Windows":
-            # 对本地 Mysql 做数据聚合
-            mysql_utils.upsert_table(user=local_user,
-                                     password=local_password,
-                                     host=local_host,
-                                     database=local_database,
-                                     source_table=source_table,
-                                     target_table=target_table,
-                                     columns=columns)
+        # Windows下先对本地Mysql做数据聚合
+        # if platform.system() == "Windows":
+        #     mysql_utils.upsert_table(user=local_user,
+        #                              password=local_password,
+        #                              host=local_host,
+        #                              database=local_database,
+        #                              source_table=source_table,
+        #                              target_table=target_table,
+        #                              columns=columns)
 
-            # 对远端 Mysql 做数据聚合
-            mysql_utils.upsert_table(user=origin_user,
-                                     password=origin_password,
-                                     host=origin_host,
-                                     database=origin_database,
-                                     source_table=source_table,
-                                     target_table=target_table,
-                                     columns=columns)
-        else:
-            # 对远端 Mysql 做数据聚合
-            mysql_utils.upsert_table(user=origin_user,
-                                     password=origin_password,
-                                     host=origin_host,
-                                     database=origin_database,
-                                     source_table=source_table,
-                                     target_table=target_table,
-                                     columns=columns)
+        # 总是对远端Mysql做数据聚合
+        mysql_utils.upsert_table(user=origin_user,
+                                 password=origin_password,
+                                 host=origin_host,
+                                 database=origin_database,
+                                 source_table=source_table,
+                                 target_table=target_table,
+                                 columns=columns)
 
 
     def setup(self):
@@ -349,7 +291,6 @@ class MergeInsightData:
 
         #  北向
         #self.merge_north_bound()
-
 
 
 if __name__ == '__main__':

@@ -111,29 +111,13 @@ class CalDMART:
         # 3.主程序替换 {ymd} 占位符
         sql_statements = [stmt.format(time_start_date=time_start_date, time_end_date=time_end_date) for stmt in sql_statements_template]
 
-        # 4.执行 SQL
-        if platform.system() == "Windows":
-
-            # mysql_utils.execute_sql_statements(
-            #     user=local_user,
-            #     password=local_password,
-            #     host=local_host,
-            #     database=local_database,
-            #     sql_statements=sql_statements)
-
-            mysql_utils.execute_sql_statements(
-                user=origin_user,
-                password=origin_password,
-                host=origin_host,
-                database=origin_database,
-                sql_statements=sql_statements)
-        else:
-            mysql_utils.execute_sql_statements(
-                user=origin_user,
-                password=origin_password,
-                host=origin_host,
-                database=origin_database,
-                sql_statements=sql_statements)
+        # 总是执行远端MySQL
+        mysql_utils.execute_sql_statements(
+            user=origin_user,
+            password=origin_password,
+            host=origin_host,
+            database=origin_database,
+            sql_statements=sql_statements)
 
     def cal_zt_details_explode(self):
         """
@@ -210,48 +194,34 @@ class CalDMART:
         output_df = unpack_plates(df)
 
         # 5. 将处理后的数据保存到 MySQL
-        if platform.system() == "Windows":
-            mysql_utils.data_from_dataframe_to_mysql(
-                user=local_user,
-                password=local_password,
-                host=local_host,
-                database=local_database,
-                df=output_df,
-                table_name="dmart_stock_zt_details_expanded",
-                merge_on=['ymd', 'stock_code', 'concept_plate', 'index_plate', 'industry_plate', 'style_plate',
-                          'out_plate']
-            )
-            logging.info(
-                f"数据处理完成，已将结果保存到 {local_host} 的 {local_database}.dmart_stock_zt_details_expanded 表中。")
+        # Windows下先保存到本地数据库
+        # if platform.system() == "Windows":
+        #     mysql_utils.data_from_dataframe_to_mysql(
+        #         user=local_user,
+        #         password=local_password,
+        #         host=local_host,
+        #         database=local_database,
+        #         df=output_df,
+        #         table_name="dmart_stock_zt_details_expanded",
+        #         merge_on=['ymd', 'stock_code', 'concept_plate', 'index_plate', 'industry_plate', 'style_plate',
+        #                   'out_plate']
+        #     )
+        #     logging.info(
+        #         f"数据处理完成，已将结果保存到 {local_host} 的 {local_database}.dmart_stock_zt_details_expanded 表中。")
 
-            mysql_utils.data_from_dataframe_to_mysql(
-                user=origin_user,
-                password=origin_password,
-                host=origin_host,
-                database=origin_database,
-                df=output_df,
-                table_name="dmart_stock_zt_details_expanded",
-                merge_on=['ymd', 'stock_code', 'concept_plate', 'index_plate', 'industry_plate', 'style_plate',
-                          'out_plate']
-            )
-            logging.info(
-                f"数据处理完成，已将结果保存到 {origin_host} 的 {origin_database}.dmart_stock_zt_details_expanded 表中。")
-
-
-        else:
-            mysql_utils.data_from_dataframe_to_mysql(
-                user=origin_user,
-                password=origin_password,
-                host=origin_host,
-                database=origin_database,
-                df=output_df,
-                table_name="dmart_stock_zt_details_expanded",
-                merge_on=['ymd', 'stock_code', 'concept_plate', 'index_plate', 'industry_plate', 'style_plate',
-                          'out_plate']
-            )
-            logging.info(
-                f"数据处理完成，已将结果保存到 {origin_host} 的 {origin_database}.dmart_stock_zt_details_expanded 表中。")
-
+        # 总是保存到远端数据库
+        mysql_utils.data_from_dataframe_to_mysql(
+            user=origin_user,
+            password=origin_password,
+            host=origin_host,
+            database=origin_database,
+            df=output_df,
+            table_name="dmart_stock_zt_details_expanded",
+            merge_on=['ymd', 'stock_code', 'concept_plate', 'index_plate', 'industry_plate', 'style_plate',
+                      'out_plate']
+        )
+        logging.info(
+            f"数据处理完成，已将结果保存到 {origin_host} 的 {origin_database}.dmart_stock_zt_details_expanded 表中。")
 
 
     def setup(self):
@@ -265,6 +235,3 @@ class CalDMART:
 if __name__ == '__main__':
     cal_dmart_data = CalDMART()
     cal_dmart_data.setup()
-
-
-

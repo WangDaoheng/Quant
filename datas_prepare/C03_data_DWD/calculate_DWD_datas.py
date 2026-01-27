@@ -9,7 +9,6 @@ import time
 import platform
 import logging
 
-
 # import dataprepare_properties
 # import dataprepare_utils
 from CommonProperties import Base_Properties
@@ -26,7 +25,6 @@ from CommonProperties import set_config
 # 需要下载的数据:
 # 1.上市股票代码
 # 2.筹码分布数据   get_chouma_datas()
-
 
 # ************************************************************************
 #  调用日志配置
@@ -47,8 +45,6 @@ origin_host = Base_Properties.origin_mysql_host
 class CalDWD:
 
     def __init__(self):
-
-
 
         pass
 
@@ -136,28 +132,22 @@ class CalDWD:
         sql_statements = [stmt.format(ymd=ymd) for stmt in sql_statements_template]
 
         # 4.执行 SQL
-        if platform.system() == "Windows":
+        # Windows下先执行本地MySQL
+        # if platform.system() == "Windows":
+        #     mysql_utils.execute_sql_statements(
+        #         user=local_user,
+        #         password=local_password,
+        #         host=local_host,
+        #         database=local_database,
+        #         sql_statements=sql_statements)
 
-            mysql_utils.execute_sql_statements(
-                user=local_user,
-                password=local_password,
-                host=local_host,
-                database=local_database,
-                sql_statements=sql_statements)
-
-            mysql_utils.execute_sql_statements(
-                user=origin_user,
-                password=origin_password,
-                host=origin_host,
-                database=origin_database,
-                sql_statements=sql_statements)
-        else:
-            mysql_utils.execute_sql_statements(
-                user=origin_user,
-                password=origin_password,
-                host=origin_host,
-                database=origin_database,
-                sql_statements=sql_statements)
+        # 总是执行远端MySQL
+        mysql_utils.execute_sql_statements(
+            user=origin_user,
+            password=origin_password,
+            host=origin_host,
+            database=origin_database,
+            sql_statements=sql_statements)
 
 
     @timing_decorator
@@ -199,28 +189,22 @@ class CalDWD:
         sql_statements = [stmt.format(ymd=ymd) for stmt in sql_statements_template]
 
         # 4.执行 SQL
-        if platform.system() == "Windows":
+        # Windows下先执行本地MySQL
+        # if platform.system() == "Windows":
+        #     mysql_utils.execute_sql_statements(
+        #         user=local_user,
+        #         password=local_password,
+        #         host=local_host,
+        #         database=local_database,
+        #         sql_statements=sql_statements)
 
-            mysql_utils.execute_sql_statements(
-                user=local_user,
-                password=local_password,
-                host=local_host,
-                database=local_database,
-                sql_statements=sql_statements)
-
-            mysql_utils.execute_sql_statements(
-                user=origin_user,
-                password=origin_password,
-                host=origin_host,
-                database=origin_database,
-                sql_statements=sql_statements)
-        else:
-            mysql_utils.execute_sql_statements(
-                user=origin_user,
-                password=origin_password,
-                host=origin_host,
-                database=origin_database,
-                sql_statements=sql_statements)
+        # 总是执行远端MySQL
+        mysql_utils.execute_sql_statements(
+            user=origin_user,
+            password=origin_password,
+            host=origin_host,
+            database=origin_database,
+            sql_statements=sql_statements)
 
 
     @timing_decorator
@@ -381,28 +365,22 @@ class CalDWD:
         sql_statements = [stmt.format(ymd=ymd) for stmt in sql_statements_template]
 
         # 4.执行 SQL
-        if platform.system() == "Windows":
+        # Windows下先执行本地MySQL
+        # if platform.system() == "Windows":
+        #     mysql_utils.execute_sql_statements(
+        #         user=local_user,
+        #         password=local_password,
+        #         host=local_host,
+        #         database=local_database,
+        #         sql_statements=sql_statements)
 
-            mysql_utils.execute_sql_statements(
-                user=local_user,
-                password=local_password,
-                host=local_host,
-                database=local_database,
-                sql_statements=sql_statements)
-
-            mysql_utils.execute_sql_statements(
-                user=origin_user,
-                password=origin_password,
-                host=origin_host,
-                database=origin_database,
-                sql_statements=sql_statements)
-        else:
-            mysql_utils.execute_sql_statements(
-                user=origin_user,
-                password=origin_password,
-                host=origin_host,
-                database=origin_database,
-                sql_statements=sql_statements)
+        # 总是执行远端MySQL
+        mysql_utils.execute_sql_statements(
+            user=origin_user,
+            password=origin_password,
+            host=origin_host,
+            database=origin_database,
+            sql_statements=sql_statements)
 
 
     @timing_decorator
@@ -411,7 +389,6 @@ class CalDWD:
         计算一只股票是否 涨停 / 跌停
         Returns:
         """
-
         # 1.确定起止日期
         time_start_date = DateUtility.next_day(-7)
         time_end_date = DateUtility.next_day(0)
@@ -514,60 +491,48 @@ class CalDWD:
         dt_df = dt_df.sort_values(by=['ymd', 'stock_code'])
 
         ############################   文件输出模块     ############################
-        if platform.system() == "Windows":
-            #  涨停数据保存到 本地 mysql中
-            mysql_utils.data_from_dataframe_to_mysql(user=local_user,
-                                                     password=local_password,
-                                                     host=local_host,
-                                                     database=local_database,
-                                                     df=zt_df,
-                                                     table_name="dwd_stock_zt_list",
-                                                     merge_on=['ymd', 'stock_code'])
+        # Windows下先保存到本地数据库
+        # if platform.system() == "Windows":
+        #     # 涨停数据保存到本地mysql中
+        #     mysql_utils.data_from_dataframe_to_mysql(
+        #         user=local_user,
+        #         password=local_password,
+        #         host=local_host,
+        #         database=local_database,
+        #         df=zt_df,
+        #         table_name="dwd_stock_zt_list",
+        #         merge_on=['ymd', 'stock_code'])
+        #
+        #     # 跌停数据保存到本地mysql中
+        #     mysql_utils.data_from_dataframe_to_mysql(
+        #         user=local_user,
+        #         password=local_password,
+        #         host=local_host,
+        #         database=local_database,
+        #         df=dt_df,
+        #         table_name="dwd_stock_dt_list",
+        #         merge_on=['ymd', 'stock_code'])
 
-            #  涨停数据保存到 远端 mysql中
-            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
-                                                     password=origin_password,
-                                                     host=origin_host,
-                                                     database=origin_database,
-                                                     df=zt_df,
-                                                     table_name="dwd_stock_zt_list",
-                                                     merge_on=['ymd', 'stock_code'])
+        # 总是保存到远端数据库
+        # 涨停数据保存到远端mysql中
+        mysql_utils.data_from_dataframe_to_mysql(
+            user=origin_user,
+            password=origin_password,
+            host=origin_host,
+            database=origin_database,
+            df=zt_df,
+            table_name="dwd_stock_zt_list",
+            merge_on=['ymd', 'stock_code'])
 
-            #  跌停数据保存到 本地 mysql中
-            mysql_utils.data_from_dataframe_to_mysql(user=local_user,
-                                                     password=local_password,
-                                                     host=local_host,
-                                                     database=local_database,
-                                                     df=dt_df,
-                                                     table_name="dwd_stock_dt_list",
-                                                     merge_on=['ymd', 'stock_code'])
-
-            #  跌停数据保存到 远端 mysql中
-            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
-                                                     password=origin_password,
-                                                     host=origin_host,
-                                                     database=origin_database,
-                                                     df=dt_df,
-                                                     table_name="dwd_stock_dt_list",
-                                                     merge_on=['ymd', 'stock_code'])
-        else:
-            #  涨停数据保存到 远端 mysql中
-            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
-                                                     password=origin_password,
-                                                     host=origin_host,
-                                                     database=origin_database,
-                                                     df=zt_df,
-                                                     table_name="dwd_stock_zt_list",
-                                                     merge_on=['ymd', 'stock_code'])
-
-            #  跌停数据保存到 远端 mysql中
-            mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
-                                                     password=origin_password,
-                                                     host=origin_host,
-                                                     database=origin_database,
-                                                     df=dt_df,
-                                                     table_name="dwd_stock_dt_list",
-                                                     merge_on=['ymd', 'stock_code'])
+        # 跌停数据保存到远端mysql中
+        mysql_utils.data_from_dataframe_to_mysql(
+            user=origin_user,
+            password=origin_password,
+            host=origin_host,
+            database=origin_database,
+            df=dt_df,
+            table_name="dwd_stock_dt_list",
+            merge_on=['ymd', 'stock_code'])
 
 
     def setup(self):
