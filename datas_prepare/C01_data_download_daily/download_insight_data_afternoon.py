@@ -886,22 +886,22 @@ class SaveInsightData:
         self.login()
 
         #  除去 ST |  退  | B 的股票集合
-        # self.get_stock_codes()
+        self.get_stock_codes()
 
         #  获取上述股票的当月日K
-        # self.get_stock_kline()
+        self.get_stock_kline()
 
         #  获取主要股指
-        # self.get_index_a_share()
+        self.get_index_a_share()
 
         #  大盘涨跌概览
         self.get_limit_summary()
 
         #  期货__内盘
-        # self.get_future_inside()
+        self.get_future_inside()
 
         # 筹码概览
-        # self.get_chouma_datas()
+        self.get_chouma_datas()
 
         # 获取A股的行业分类数据, 是行业数据
         self.get_Ashare_industry_overview()

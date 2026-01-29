@@ -474,7 +474,7 @@ CREATE TABLE quant.ods_akshare_stock_a_high_low_statistics (
     ,low60                    int                     COMMENT '60日新低'
     ,high120                  int                     COMMENT '120日新高'
     ,low120                   int                     COMMENT '120日新低'
-    ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
+    ,UNIQUE KEY unique_ymd_market (ymd, market)
 ) COMMENT='大盘情绪数据_大盘区间内的新低新高股票数';
 
 
