@@ -577,7 +577,7 @@ CREATE TABLE quant.ods_akshare_stock_board_concept_hist_em (
 
 
 --4.11
-------------------  ods_akshare_board_concept_name_ths      行情数据_板块码值            全量的每日切片数据 不可指定日期   同花顺板块三剑客1 
+------------------  ods_akshare_board_concept_name_ths          行情数据_同花顺板块码值       全量的每日切片数据 不可指定日期   同花顺板块三剑客1 
 CREATE TABLE quant.ods_akshare_board_concept_name_ths (
      ymd                      DATE                    COMMENT '数据日期（核心日期维度，适配量化数据统一归档）'
     ,board_name               varchar(100)            COMMENT '板块名称'
@@ -587,7 +587,7 @@ CREATE TABLE quant.ods_akshare_board_concept_name_ths (
 
 
 --4.12
-------------------  ods_akshare_stock_board_concept_index_ths   行情数据_板块内个股的行情数据    全量的每日切片数据 不可指定日期   板块三剑客2
+------------------  ods_akshare_stock_board_concept_index_ths   行情数据_同花顺板块行情数据    全量的每日切片数据 不可指定日期   板块三剑客2
 CREATE TABLE quant.ods_akshare_stock_board_concept_index_ths (
      ymd                      DATE                    COMMENT '数据日期（核心日期维度，用于归档和跨表关联）'
     ,board_name               varchar(100)            COMMENT '板块名称'
