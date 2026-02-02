@@ -4,6 +4,7 @@ import sys
 import time
 import logging
 from datetime import datetime
+import warnings
 
 
 import CommonProperties.Base_Properties as base_properties
@@ -12,6 +13,9 @@ import CommonProperties.Mysql_Utils as mysql_utils
 from CommonProperties.DateUtility import DateUtility
 from CommonProperties.Base_utils import timing_decorator
 from CommonProperties import set_config
+
+# 方法1：屏蔽所有 FutureWarning（最简单有效）
+warnings.filterwarnings('ignore', category=FutureWarning)
 
 class StockDataFetcher:
     def __init__(self, tushare_token, stock_code_df=None):
@@ -75,11 +79,10 @@ class StockDataFetcher:
 
                     if df_batch is not None and not df_batch.empty:
                         # 添加股票代码列（去除后缀）
-                        df_batch['stock_code'] = ts_code
                         kline_total_df = pd.concat([kline_total_df, df_batch], ignore_index=True)
 
                 # 控制请求频率，避免触发限制（非常重要！）
-                time.sleep(0.19)  # Tushare免费版限制5次/秒
+                time.sleep(0.2)  # Tushare免费版限制5次/秒
 
             except Exception as e:
                 logging.warning(f"批次{i}获取失败: {e}")
@@ -98,15 +101,16 @@ class StockDataFetcher:
                 'close': 'close',
                 'high': 'high',
                 'low': 'low',
+                'pct_chg': 'change_pct',
                 'vol': 'volume',  # Tushare中成交量字段为vol
-                'amount': 'amount'  # 成交额，可选
+                'amount': 'trading_amount'  # 成交额，可选
             }, inplace=True)
 
             # 转换日期格式（Tushare返回YYYYMMDD格式字符串）
             kline_total_df['ymd'] = pd.to_datetime(kline_total_df['ymd']).dt.strftime('%Y%m%d')
 
             # 选择需要的列（根据你的数据库表结构调整）
-            required_columns = ['stock_code', 'ymd', 'open', 'close', 'high', 'low', 'volume', 'amount']
+            required_columns = ['stock_code', 'ymd', 'open', 'close', 'high', 'low', 'change_pct', 'volume', 'amount']
             kline_total_df = kline_total_df[required_columns]
 
             # 去除重复（复用你的逻辑）
@@ -119,7 +123,7 @@ class StockDataFetcher:
                 host=base_properties.origin_mysql_host,
                 database=base_properties.origin_mysql_database,
                 df=kline_total_df,
-                table_name="ods_stock_kline_daily_tushare",  # 建议新表名
+                table_name="ods_stock_kline_daily_ts",  # 建议新表名
                 merge_on=['ymd', 'stock_code']
             )
 
@@ -130,7 +134,7 @@ class StockDataFetcher:
             return pd.DataFrame()
 
 
-if __name__ =='__main__':
+if __name__ == '__main__':
     # 1. 初始化（替换为你的真实Token）
     fetcher = StockDataFetcher(
         tushare_token="300919ac6f3f72efe445092de7643f7e40f8458096149c315c0e467a")
