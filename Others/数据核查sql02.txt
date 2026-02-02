@@ -1,0 +1,53 @@
+
+
+
+select 'dmart_stock_zt_details', * from  dmart_stock_zt_details                                             order by ymd desc limit 10
+select 'dmart_stock_zt_details_expanded', * from  dmart_stock_zt_details_expanded                           order by ymd desc limit 10
+select 'dwd_ashare_stock_base_info', * from  dwd_ashare_stock_base_info                                     order by ymd desc limit 10
+select 'dwd_stock_a_total_plate', * from  dwd_stock_a_total_plate                                           order by ymd desc limit 10
+select 'dwd_stock_dt_list', * from  dwd_stock_dt_list                                                       order by ymd desc limit 10
+select 'dwd_stock_zt_list', * from  dwd_stock_zt_list                                                       order by ymd desc limit 10
+select 'ods_akshare_board_concept_name_ths', * from  ods_akshare_board_concept_name_ths                     order by ymd desc limit 10
+select 'ods_akshare_stock_a_high_low_statistics', * from  ods_akshare_stock_a_high_low_statistics           order by ymd desc limit 10
+select 'ods_akshare_stock_board_concept_cons_em', * from  ods_akshare_stock_board_concept_cons_em           order by ymd desc limit 10
+select 'ods_akshare_stock_board_concept_hist_em', * from  ods_akshare_stock_board_concept_hist_em           order by ymd desc limit 10
+select 'ods_akshare_stock_board_concept_index_ths', * from  ods_akshare_stock_board_concept_index_ths       order by ymd desc limit 10
+select 'ods_akshare_stock_board_concept_name_em', * from  ods_akshare_stock_board_concept_name_em           order by ymd desc limit 10
+select 'ods_akshare_stock_cyq_em', * from  ods_akshare_stock_cyq_em                                         order by ymd desc limit 10
+select 'ods_akshare_stock_value_em', * from  ods_akshare_stock_value_em                                     order by ymd desc limit 10
+select 'ods_akshare_stock_yjkb_em', * from  ods_akshare_stock_yjkb_em                                       order by ymd desc limit 10
+select 'ods_akshare_stock_yjyg_em', * from  ods_akshare_stock_yjyg_em                                       order by ymd desc limit 10
+select 'ods_akshare_stock_zh_a_gdhs_detail_em', * from  ods_akshare_stock_zh_a_gdhs_detail_em               order by ymd desc limit 10
+select 'ods_akshare_stock_zh_a_spot_em', * from  ods_akshare_stock_zh_a_spot_em                             order by ymd desc limit 10
+select 'ods_astock_industry_detail', * from  ods_astock_industry_detail                                     order by ymd desc limit 10
+select 'ods_astock_industry_overview', * from  ods_astock_industry_overview                                 order by ymd desc limit 10
+select 'ods_exchange_dxy_vantage', * from  ods_exchange_dxy_vantage                                         order by ymd desc limit 10
+select 'ods_exchange_rate_vantage_detail', * from  ods_exchange_rate_vantage_detail                         order by ymd desc limit 10
+select 'ods_future_inside_insight', * from  ods_future_inside_insight                                       order by ymd desc limit 10
+select 'ods_future_inside_insight_now', * from  ods_future_inside_insight_now                               order by ymd desc limit 10
+select 'ods_index_a_share_insight', * from  ods_index_a_share_insight                                       order by ymd desc limit 10
+select 'ods_index_a_share_insight_now', * from  ods_index_a_share_insight_now                               order by ymd desc limit 10
+select 'ods_north_bound_daily', * from  ods_north_bound_daily                                               order by ymd desc limit 10
+select 'ods_north_bound_daily_now', * from  ods_north_bound_daily_now                                       order by ymd desc limit 10
+select 'ods_shareholder_num', * from  ods_shareholder_num                                                   order by ymd desc limit 10
+select 'ods_shareholder_num_now', * from  ods_shareholder_num_now                                           order by ymd desc limit 10
+select 'ods_stock_chouma_insight', * from  ods_stock_chouma_insight                                         order by ymd desc limit 10
+select 'ods_stock_code_daily_insight', * from  ods_stock_code_daily_insight                                 order by ymd desc limit 10
+select 'ods_stock_exchange_market', * from  ods_stock_exchange_market                                       order by ymd desc limit 10
+select 'ods_stock_kline_daily_insight', * from  ods_stock_kline_daily_insight                               order by ymd desc limit 10
+select 'ods_stock_kline_daily_insight_now', * from  ods_stock_kline_daily_insight_now                       order by ymd desc limit 10
+select 'ods_stock_limit_summary_insight', * from  ods_stock_limit_summary_insight                           order by ymd desc limit 10
+select 'ods_stock_limit_summary_insight_now', * from  ods_stock_limit_summary_insight_now                   order by ymd desc limit 10
+select 'ods_stock_plate_redbook', * from  ods_stock_plate_redbook                                           order by ymd desc limit 10
+select 'ods_tdx_stock_concept_plate', * from  ods_tdx_stock_concept_plate                                   order by ymd desc limit 10
+select 'ods_tdx_stock_index_plate', * from  ods_tdx_stock_index_plate                                       order by ymd desc limit 10
+select 'ods_tdx_stock_industry_plate', * from  ods_tdx_stock_industry_plate                                 order by ymd desc limit 10
+select 'ods_tdx_stock_pepb_info', * from  ods_tdx_stock_pepb_info                                           order by ymd desc limit 10
+select 'ods_tdx_stock_region_plate', * from  ods_tdx_stock_region_plate                                     order by ymd desc limit 10
+select 'ods_tdx_stock_style_plate', * from  ods_tdx_stock_style_plate                                       order by ymd desc limit 10
+select 'ods_trading_days_insight', * from  ods_trading_days_insight                                         order by ymd desc limit 10
+select 'ods_us_stock_daily_vantage', * from  ods_us_stock_daily_vantage                                     order by ymd desc limit 10
+
+
+
+

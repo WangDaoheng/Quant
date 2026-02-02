@@ -1,0 +1,184 @@
+select 'dmart_stock_zt_details' as table_name, ymd, count(1) as record_count 
+from dmart_stock_zt_details 
+group by ymd 
+union all 
+select 'dmart_stock_zt_details_expanded', ymd, count(1) 
+from dmart_stock_zt_details_expanded 
+group by ymd 
+union all 
+select 'dwd_ashare_stock_base_info', ymd, count(1) 
+from dwd_ashare_stock_base_info 
+group by ymd 
+union all 
+select 'dwd_stock_a_total_plate', ymd, count(1) 
+from dwd_stock_a_total_plate 
+group by ymd 
+union all 
+select 'dwd_stock_dt_list', ymd, count(1) 
+from dwd_stock_dt_list 
+group by ymd 
+union all 
+select 'dwd_stock_zt_list', ymd, count(1) 
+from dwd_stock_zt_list 
+group by ymd 
+union all 
+select 'ods_akshare_board_concept_name_ths', ymd, count(1) 
+from ods_akshare_board_concept_name_ths 
+group by ymd 
+union all 
+select 'ods_akshare_stock_a_high_low_statistics', ymd, count(1) 
+from ods_akshare_stock_a_high_low_statistics 
+group by ymd 
+union all 
+select 'ods_akshare_stock_board_concept_cons_em', ymd, count(1) 
+from ods_akshare_stock_board_concept_cons_em 
+group by ymd 
+union all 
+select 'ods_akshare_stock_board_concept_hist_em', ymd, count(1) 
+from ods_akshare_stock_board_concept_hist_em 
+group by ymd 
+union all 
+select 'ods_akshare_stock_board_concept_index_ths', ymd, count(1) 
+from ods_akshare_stock_board_concept_index_ths 
+group by ymd 
+union all 
+select 'ods_akshare_stock_board_concept_name_em', ymd, count(1) 
+from ods_akshare_stock_board_concept_name_em 
+group by ymd 
+union all 
+select 'ods_akshare_stock_cyq_em', ymd, count(1) 
+from ods_akshare_stock_cyq_em 
+group by ymd 
+union all 
+select 'ods_akshare_stock_value_em', ymd, count(1) 
+from ods_akshare_stock_value_em 
+group by ymd 
+union all 
+select 'ods_akshare_stock_yjkb_em', ymd, count(1) 
+from ods_akshare_stock_yjkb_em 
+group by ymd 
+union all 
+select 'ods_akshare_stock_yjyg_em', ymd, count(1) 
+from ods_akshare_stock_yjyg_em 
+group by ymd 
+union all 
+select 'ods_akshare_stock_zh_a_gdhs_detail_em', ymd, count(1) 
+from ods_akshare_stock_zh_a_gdhs_detail_em 
+group by ymd 
+union all 
+select 'ods_akshare_stock_zh_a_spot_em', ymd, count(1) 
+from ods_akshare_stock_zh_a_spot_em 
+group by ymd 
+union all 
+select 'ods_astock_industry_detail', ymd, count(1) 
+from ods_astock_industry_detail 
+group by ymd 
+union all 
+select 'ods_astock_industry_overview', ymd, count(1) 
+from ods_astock_industry_overview 
+group by ymd 
+union all 
+select 'ods_exchange_dxy_vantage', ymd, count(1) 
+from ods_exchange_dxy_vantage 
+group by ymd 
+union all 
+select 'ods_exchange_rate_vantage_detail', ymd, count(1) 
+from ods_exchange_rate_vantage_detail 
+group by ymd 
+union all 
+select 'ods_future_inside_insight', ymd, count(1) 
+from ods_future_inside_insight 
+group by ymd 
+union all 
+select 'ods_future_inside_insight_now', ymd, count(1) 
+from ods_future_inside_insight_now 
+group by ymd 
+union all 
+select 'ods_index_a_share_insight', ymd, count(1) 
+from ods_index_a_share_insight 
+group by ymd 
+union all 
+select 'ods_index_a_share_insight_now', ymd, count(1) 
+from ods_index_a_share_insight_now 
+group by ymd 
+union all 
+select 'ods_north_bound_daily', ymd, count(1) 
+from ods_north_bound_daily 
+group by ymd 
+union all 
+select 'ods_north_bound_daily_now', ymd, count(1) 
+from ods_north_bound_daily_now 
+group by ymd 
+union all 
+select 'ods_shareholder_num', ymd, count(1) 
+from ods_shareholder_num 
+group by ymd 
+union all 
+select 'ods_shareholder_num_now', ymd, count(1) 
+from ods_shareholder_num_now 
+group by ymd 
+union all 
+select 'ods_stock_chouma_insight', ymd, count(1) 
+from ods_stock_chouma_insight 
+group by ymd 
+union all 
+select 'ods_stock_code_daily_insight', ymd, count(1) 
+from ods_stock_code_daily_insight 
+group by ymd 
+union all 
+select 'ods_stock_exchange_market', ymd, count(1) 
+from ods_stock_exchange_market 
+group by ymd 
+union all 
+select 'ods_stock_kline_daily_insight', ymd, count(1) 
+from ods_stock_kline_daily_insight 
+group by ymd 
+union all 
+select 'ods_stock_kline_daily_insight_now', ymd, count(1) 
+from ods_stock_kline_daily_insight_now 
+group by ymd 
+union all 
+select 'ods_stock_limit_summary_insight', ymd, count(1) 
+from ods_stock_limit_summary_insight 
+group by ymd 
+union all 
+select 'ods_stock_limit_summary_insight_now', ymd, count(1) 
+from ods_stock_limit_summary_insight_now 
+group by ymd 
+union all 
+select 'ods_stock_plate_redbook', ymd, count(1) 
+from ods_stock_plate_redbook 
+group by ymd 
+union all 
+select 'ods_tdx_stock_concept_plate', ymd, count(1) 
+from ods_tdx_stock_concept_plate 
+group by ymd 
+union all 
+select 'ods_tdx_stock_index_plate', ymd, count(1) 
+from ods_tdx_stock_index_plate 
+group by ymd 
+union all 
+select 'ods_tdx_stock_industry_plate', ymd, count(1) 
+from ods_tdx_stock_industry_plate 
+group by ymd 
+union all 
+select 'ods_tdx_stock_pepb_info', ymd, count(1) 
+from ods_tdx_stock_pepb_info 
+group by ymd 
+union all 
+select 'ods_tdx_stock_region_plate', ymd, count(1) 
+from ods_tdx_stock_region_plate 
+group by ymd 
+union all 
+select 'ods_tdx_stock_style_plate', ymd, count(1) 
+from ods_tdx_stock_style_plate 
+group by ymd 
+union all 
+select 'ods_trading_days_insight', ymd, count(1) 
+from ods_trading_days_insight 
+group by ymd 
+union all 
+select 'ods_us_stock_daily_vantage', ymd, count(1) 
+from ods_us_stock_daily_vantage 
+group by ymd 
+ORDER BY table_name, ymd DESC;

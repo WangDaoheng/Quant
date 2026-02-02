@@ -8,6 +8,7 @@ import pandas as pd
 import akshare as ak
 from datetime import datetime
 import logging
+import random
 
 import CommonProperties.Base_Properties as base_properties
 import CommonProperties.Base_utils as base_utils
@@ -107,6 +108,8 @@ class AkshareDownloader:
                         try:
                             params = {symbol_param: stock_code, **kwargs}
                             df = ak_function(**params)
+                            sleep_time = random.uniform(0.1, 0.2)
+                            time.sleep(sleep_time)
 
                             if df is not None:
                                 break  # 成功获取数据，跳出重试循环

@@ -604,7 +604,29 @@ CREATE TABLE quant.ods_akshare_stock_board_concept_index_ths (
 
 
 
---5.1        多渠道板块数据 -- 小红书
+--6.1
+------------------  ods_stock_kline_daily_ts   行情数据_A股历史日K tushare数据
+CREATE TABLE quant.ods_stock_kline_daily_ts (
+     stock_code               VARCHAR(50) NOT NULL    COMMENT '股票代码'
+    ,ymd                      DATE        NOT NULL    COMMENT '交易日期'
+    ,open                     FLOAT                   COMMENT '开盘价'
+    ,close                    FLOAT                   COMMENT '收盘价'
+    ,high                     FLOAT                   COMMENT '最高价'
+    ,low                      FLOAT                   COMMENT '最低价'
+    ,volume                   BIGINT                  COMMENT '成交量'
+    ,trading_amount           double                  COMMENT '成交额'
+    ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
+) COMMENT='当日已上市股票的历史日K(全量表)';
+
+
+
+
+
+
+
+
+
+--6.1        多渠道板块数据 -- 小红书
 ------------------  ods_stock_plate_redbook
 CREATE TABLE quant.ods_stock_plate_redbook (
      ymd                      DATE        NOT NULL    COMMENT '日期'
@@ -615,7 +637,7 @@ CREATE TABLE quant.ods_stock_plate_redbook (
 ) COMMENT='多渠道板块数据 -- 小红书';
 
 
---5.1        股票基本面数据_所属交易所，主板/创业板/科创板/北证
+--6.2        股票基本面数据_所属交易所，主板/创业板/科创板/北证
 ------------------  ods_stock_exchange_market
 CREATE TABLE quant.ods_stock_exchange_market (
      ymd                      DATE        NOT NULL    COMMENT '日期'
