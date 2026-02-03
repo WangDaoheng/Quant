@@ -33,12 +33,17 @@ local_mysql_password = "123456"
 local_mysql_database = 'quant'
 local_mysql_host = 'localhost'
 
+
 ######################  远程 mysql 账号信息  #############################
 origin_mysql_user = "root"
 # origin_mysql_password = "000000"
 origin_mysql_password = "WZHwzh123!!!"
 origin_mysql_host = "117.72.162.13"
 origin_mysql_database = "quant"
+
+
+######################  tushare   #############################
+ts_token = "300919ac6f3f72efe445092de7643f7e40f8458096149c315c0e467a"
 
 
 ######################  京东云 日志文件 留存地址  #############################

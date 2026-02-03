@@ -103,7 +103,7 @@ class SaveAkshareHistoryData:
         """
         下载股票估值数据 - ods_akshare_stock_value_em
         接口: stock_value_em
-        说明: 个股的全量历史数据，需要逐个股票获取
+        说明: 个股的全量历史数据，需要逐个股票获取    封堵IP  不可用
         """
 
         # 根据实际列名进行映射
@@ -140,12 +140,13 @@ class SaveAkshareHistoryData:
             auto_add_stock_code=True
         )
 
+
     # @timing_decorator
     def download_stock_zh_a_gdhs_detail_em(self):
         """
         下载股东户数数据 - ods_akshare_stock_zh_a_gdhs_detail_em
         接口: stock_zh_a_gdhs_detail_em
-        说明: 个股的全量历史数据，不可选定日期
+        说明: 个股的全量历史数据，不可选定日期   建议周末跑
         """
         column_mapping = {
             '股东户数统计截止日': 'ymd',
@@ -182,12 +183,13 @@ class SaveAkshareHistoryData:
         )
 
 
+
     # @timing_decorator
     def download_stock_cyq_em(self):
         """
         下载筹码数据 - ods_akshare_stock_cyq_em
         接口: stock_cyq_em
-        说明: 个股的全量历史数据，不可选定日期
+        说明: 个股的全量历史数据，需逐一遍历，不可选定日期      封堵IP   不可用
         """
         column_mapping = {
             '日期': 'ymd',
@@ -223,7 +225,7 @@ class SaveAkshareHistoryData:
         """
         下载业绩快报数据 - ods_akshare_stock_yjkb_em
         接口: stock_yjkb_em
-        说明: 全量的每日切片数据，需要指定日期（YYYY0331, YYYY0630, YYYY0930, YYYY1231）
+        说明: 全量的每日切片数据，需要指定日期（YYYY0331, YYYY0630, YYYY0930, YYYY1231）   日跑
         """
         try:
             # 获取当前年份和过去几年的数据
@@ -309,7 +311,7 @@ class SaveAkshareHistoryData:
         """
         下载业绩预告数据 - ods_akshare_stock_yjyg_em
         接口: stock_yjyg_em
-        说明: 全量的每日切片数据，需要指定日期（YYYY0331, YYYY0630, YYYY0930, YYYY1231）
+        说明: 全量的每日切片数据，需要指定日期（YYYY0331, YYYY0630, YYYY0930, YYYY1231）   日跑
         """
         try:
             # 获取当前年份和过去几年的数据
@@ -450,7 +452,7 @@ class SaveAkshareHistoryData:
         """
         下载个股行情数据 - ods_akshare_stock_zh_a_spot_em
         接口: stock_zh_a_spot_em
-        说明: 全量的每日切片数据，不可指定日期
+        说明: 单次返回所有沪深京 A 股上市公司的实时行情数据，不可指定日期     目前只能返回100条  不可用
         """
         try:
             logging.info("开始下载个股行情数据...")
@@ -1123,13 +1125,13 @@ class SaveAkshareHistoryData:
         # 1. 获取股票代码列表（用于需要股票代码的接口）
         self.get_stock_codes()
 
-        # # 2. 下载股票估值数据
+        # # 2. 下载股票估值数据                       封堵IP    不可用
         # self.download_stock_value_em()
         #
-        # # 3. 下载股东户数数据（需要股票代码，分批次处理）   可用
-        # self.download_stock_zh_a_gdhs_detail_em()
+        # # 3. 下载股东户数数据（需要股票代码，分批次处理）   可用但周末跑
+        self.download_stock_zh_a_gdhs_detail_em()
         #
-        # # 4. 下载筹码数据（需要股票代码，分批次处理）    不可用
+        # # 4. 下载筹码数据（需要股票代码，分批次处理）    封堵IP   不可用
         # self.download_stock_cyq_em()
         #
         # # 5. 下载业绩快报数据（指定日期）         可用
@@ -1139,41 +1141,36 @@ class SaveAkshareHistoryData:
         # self.download_stock_yjyg_em()
         #
         # # 7. 下载大盘高低统计数据（默认沪深300）   可用
-        self.download_stock_a_high_low_statistics()
+        # self.download_stock_a_high_low_statistics()
         #
-        # # 8. 下载个股行情数据（实时数据）
+        # # 8. 下载个股行情数据（实时数据）     目前只能返回100条  不可用
         # self.download_stock_zh_a_spot_em()
 
-        # # 9. 下载板块行情数据
+        # # 9. 下载板块行情数据               封堵IP   不可用
         # self.download_stock_board_concept_name_em()
 
-        # # # 10. 下载板块内个股行情数据
+        # # 10. 下载板块内个股行情数据       封堵IP   不可用
         # self.download_stock_board_concept_cons_em()
         #
-        # # # 11. 下载板块历史行情数据
+        # # 11. 下载板块历史行情数据         封堵IP   不可用
         # self.download_stock_board_concept_hist_em()
 
         # # 12. 同花顺板块数据
-        self.download_stock_board_concept_name_ths()
+        # self.download_stock_board_concept_name_ths()
 
         # # 12. 同花顺板块数据
-        self.download_stock_board_concept_index_ths()
+        # self.download_stock_board_concept_index_ths()
 
 
 if __name__ == '__main__':
+
     # 只在周末执行
-    # if DateUtility.is_weekend():
-    #     logging.info("今天是周末，开始执行akshare历史数据下载任务")
-    #     saver = SaveAkshareHistoryData()
-    #     saver.setup()
-    # else:
-    #     logging.info("今天不是周末，跳过akshare历史数据下载")
-
-    saver = SaveAkshareHistoryData()
-    saver.setup()
-
-
-
+    if DateUtility.is_weekend():
+        logging.info("今天是周末，开始执行akshare历史数据下载任务")
+        saver = SaveAkshareHistoryData()
+        saver.setup()
+    else:
+        logging.info("今天不是周末，跳过akshare历史数据下载")
 
 
 

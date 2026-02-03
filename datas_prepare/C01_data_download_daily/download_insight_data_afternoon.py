@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import os
 import sys
 import io
 import numpy as np
@@ -888,17 +887,17 @@ class SaveInsightData:
         #  除去 ST |  退  | B 的股票集合
         self.get_stock_codes()
 
-        #  获取上述股票的当月日K
-        self.get_stock_kline()
+        # #  获取上述股票的当月日K  使用tushare 数据以便于 17点获取，不适用该接口了
+        # self.get_stock_kline()
 
-        #  获取主要股指
-        self.get_index_a_share()
+        # #  获取主要股指    放到凌晨执行
+        # self.get_index_a_share()
 
         #  大盘涨跌概览
         self.get_limit_summary()
 
-        #  期货__内盘
-        self.get_future_inside()
+        # #  期货__内盘      放到凌晨执行
+        # self.get_future_inside()
 
         # 筹码概览
         self.get_chouma_datas()
@@ -909,8 +908,8 @@ class SaveInsightData:
         # 获取A股的行业分类数据, 是stock_code & industry 关联后的大表数据
         self.get_Ashare_industry_detail()
 
-        #  个股股东数
-        self.get_shareholder_north_bound_num()
+        # #  个股股东数        放到凌晨执行
+        # self.get_shareholder_north_bound_num()
 
 
 

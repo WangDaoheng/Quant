@@ -13,8 +13,9 @@ if project_root not in sys.path:
 
 
 from datas_prepare.C01_data_download_daily.download_insight_data_afternoon import SaveInsightData
-from datas_prepare.C06_data_history.download_insight_history_data import SaveInsightHistoryData
 from datas_prepare.C01_data_download_daily.download_vantage_data_afternoon import SaveVantageData
+from datas_prepare.C01_data_download_daily.download_akshare_data_afternoon import SaveAkshareDailyData
+from datas_prepare.C01_data_download_daily.download_tushare_data_afternoon import SaveTushareDailyData
 
 from datas_prepare.C03_data_merge.merge_insight_data_afternoon import MergeInsightData
 from datas_prepare.C04_data_DWD.calculate_DWD_datas import CalDWD
@@ -44,8 +45,9 @@ class RunDataPrepare:
 
     def __init__(self):
         self.save_insight_now = SaveInsightData()
-        self.save_insight_history = SaveInsightHistoryData()
-        self.save_vantage_now = SaveVantageData()
+        self.save_tushare_data = SaveTushareDailyData()
+        self.save_akshare_data = SaveAkshareDailyData()
+        # self.save_vantage_now = SaveVantageData()
         self.merge_insight = MergeInsightData()
         self.dwd_cal = CalDWD()
         self.dmart_cal = CalDMART()
@@ -65,6 +67,13 @@ class RunDataPrepare:
         #  下载 insight 当日数据
         self.save_insight_now.setup()
 
+        #  下载 akshare 当日数据
+        self.save_akshare_data.setup()
+
+        #  下载 tushare 当日数据
+        self.save_tushare_data.setup()
+
+
         #  合并 insight 当日跑批的数据至历史数据中
         self.merge_insight.setup()
 
@@ -76,9 +85,6 @@ class RunDataPrepare:
 
         #  下载 vantage 当日数据
         # self.save_vantage_now.setup()
-
-        #  下载历史数据
-        # self.save_insight_history.setup()
 
         #  发送邮件
         self.send_logfile_email()

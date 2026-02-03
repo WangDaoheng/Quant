@@ -1,14 +1,14 @@
+# -*- coding: utf-8 -*-
+
 import tushare as ts
 import pandas as pd
 import sys
 import time
 import logging
-from datetime import datetime
 import warnings
 
 
 import CommonProperties.Base_Properties as base_properties
-import CommonProperties.Base_utils as base_utils
 import CommonProperties.Mysql_Utils as mysql_utils
 from CommonProperties.DateUtility import DateUtility
 from CommonProperties.Base_utils import timing_decorator
@@ -17,15 +17,16 @@ from CommonProperties import set_config
 # 方法1：屏蔽所有 FutureWarning（最简单有效）
 warnings.filterwarnings('ignore', category=FutureWarning)
 
-class StockDataFetcher:
-    def __init__(self, tushare_token, stock_code_df=None):
+
+class SaveTushareDailyData:
+    def __init__(self, stock_code_df=None):
         """
         初始化Tushare
         :param tushare_token: 你的Tushare API Token
         :param stock_code_df: 股票代码DataFrame，可选
         """
         # 设置Tushare Token
-        ts.set_token(tushare_token)
+        ts.set_token(base_properties.ts_token)
         self.pro = ts.pro_api()
         self.stock_code_df = stock_code_df
 
@@ -37,12 +38,11 @@ class StockDataFetcher:
         # 1. 获取日期范围（复用你的逻辑）
         today = DateUtility.today()
 
-        # if int(today[6:8]) > 15:
-        #     time_start_date = DateUtility.next_day(-15)  # 15天前
-        # else:
-        #     time_start_date = DateUtility.first_day_of_month()  # 当月1号
-        time_start_date = DateUtility.first_day_of_year(-5)
-        time_end_date = DateUtility.first_day_of_year(-1)
+        if int(today[6:8]) > 15:
+            time_start_date = DateUtility.next_day(-15)  # 15天前
+        else:
+            time_start_date = DateUtility.first_day_of_month()  # 当月1号
+        time_end_date = today
 
         # 2. 获取股票代码列表（复用你的函数）
         stock_code_list = mysql_utils.get_stock_codes_latest(self.stock_code_df)
@@ -134,10 +134,17 @@ class StockDataFetcher:
             return pd.DataFrame()
 
 
+    def setup(self):
+
+        # 下载每日收盘后的日K线行情数据
+        self.get_stock_kline_tushare()
+
+
+
+
 if __name__ == '__main__':
     # 1. 初始化（替换为你的真实Token）
-    fetcher = StockDataFetcher(
-        tushare_token="300919ac6f3f72efe445092de7643f7e40f8458096149c315c0e467a")
+    fetcher = SaveTushareDailyData(base_properties.ts_token)
 
     # 2. 获取数据
     kline_data = fetcher.get_stock_kline_tushare()
