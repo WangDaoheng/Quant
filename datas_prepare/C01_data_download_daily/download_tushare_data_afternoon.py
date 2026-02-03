@@ -42,7 +42,7 @@ class StockDataFetcher:
         # else:
         #     time_start_date = DateUtility.first_day_of_month()  # 当月1号
         time_start_date = DateUtility.first_day_of_year(-5)
-        time_end_date = today
+        time_end_date = DateUtility.first_day_of_year(-1)
 
         # 2. 获取股票代码列表（复用你的函数）
         stock_code_list = mysql_utils.get_stock_codes_latest(self.stock_code_df)
@@ -110,7 +110,7 @@ class StockDataFetcher:
             kline_total_df['ymd'] = pd.to_datetime(kline_total_df['ymd']).dt.strftime('%Y%m%d')
 
             # 选择需要的列（根据你的数据库表结构调整）
-            required_columns = ['stock_code', 'ymd', 'open', 'close', 'high', 'low', 'change_pct', 'volume', 'amount']
+            required_columns = ['stock_code', 'ymd', 'open', 'close', 'high', 'low', 'change_pct', 'volume', 'trading_amount']
             kline_total_df = kline_total_df[required_columns]
 
             # 去除重复（复用你的逻辑）

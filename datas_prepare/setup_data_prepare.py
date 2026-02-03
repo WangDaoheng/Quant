@@ -13,12 +13,12 @@ if project_root not in sys.path:
 
 
 from datas_prepare.C01_data_download_daily.download_insight_data_afternoon import SaveInsightData
-from datas_prepare.C05_data_history.download_insight_history_data import SaveInsightHistoryData
+from datas_prepare.C06_data_history.download_insight_history_data import SaveInsightHistoryData
 from datas_prepare.C01_data_download_daily.download_vantage_data_afternoon import SaveVantageData
 
-from datas_prepare.C02_data_merge.merge_insight_data_afternoon import MergeInsightData
-from datas_prepare.C03_data_DWD.calculate_DWD_datas import CalDWD
-from datas_prepare.C04_data_MART.calculate_MART_datas import CalDMART
+from datas_prepare.C03_data_merge.merge_insight_data_afternoon import MergeInsightData
+from datas_prepare.C04_data_DWD.calculate_DWD_datas import CalDWD
+from datas_prepare.C05_data_MART.calculate_MART_datas import CalDMART
 
 
 import CommonProperties.set_config as set_config
@@ -33,7 +33,7 @@ import CommonProperties.set_config as set_config
 #      历史数据下载
 #         download_insight_data_afternoon_of_history
 #
-#   2. 数据merge      C02_data_merge
+#   2. 数据merge      C03_data_merge
 #         merge_insight_data_afternoon.py
 #
 # ************************************************************************

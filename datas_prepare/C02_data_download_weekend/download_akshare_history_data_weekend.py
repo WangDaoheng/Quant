@@ -1139,7 +1139,7 @@ class SaveAkshareHistoryData:
         # self.download_stock_yjyg_em()
         #
         # # 7. 下载大盘高低统计数据（默认沪深300）   可用
-        # self.download_stock_a_high_low_statistics()
+        self.download_stock_a_high_low_statistics()
         #
         # # 8. 下载个股行情数据（实时数据）
         # self.download_stock_zh_a_spot_em()
