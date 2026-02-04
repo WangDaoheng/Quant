@@ -1,35 +1,17 @@
 # -*- coding: utf-8 -*-
 
-import os
-from datetime import datetime
-
 import pandas as pd
-from sqlalchemy import create_engine, text
-import time
-import platform
 import logging
 
-# import dataprepare_properties
-# import dataprepare_utils
 from CommonProperties import Base_Properties
-import CommonProperties.Base_utils as base_utils
 from CommonProperties.DateUtility import DateUtility
 from CommonProperties.Base_utils import timing_decorator
-
 import CommonProperties.Mysql_Utils as mysql_utils
-
 from CommonProperties import set_config
-
-# ************************************************************************
-# 本代码的作用是下午收盘后针对 insight 行情源数据的本地保存部分开展merge
-# 需要下载的数据:
-# 1.上市股票代码
-# 2.筹码分布数据   get_chouma_datas()
 
 # ************************************************************************
 #  调用日志配置
 set_config.setup_logging_config()
-
 ######################  mysql 配置信息  本地和远端服务器  ####################
 local_user = Base_Properties.local_mysql_user
 local_password = Base_Properties.local_mysql_password
@@ -45,19 +27,15 @@ origin_host = Base_Properties.origin_mysql_host
 class CalDWD:
 
     def __init__(self):
-
         pass
 
     @timing_decorator
     def cal_ashare_plate(self):
         """
         聚合股票的板块，把各个板块数据聚合在一起
-        Returns:
         """
-
         #  1.获取日期
         ymd = DateUtility.today()
-        # ymd = "20241004"
 
         # 2.定义 SQL 模板
         sql_statements_template = [
@@ -131,17 +109,7 @@ class CalDWD:
         # 3.主程序替换 {ymd} 占位符
         sql_statements = [stmt.format(ymd=ymd) for stmt in sql_statements_template]
 
-        # 4.执行 SQL
-        # Windows下先执行本地MySQL
-        # if platform.system() == "Windows":
-        #     mysql_utils.execute_sql_statements(
-        #         user=local_user,
-        #         password=local_password,
-        #         host=local_host,
-        #         database=local_database,
-        #         sql_statements=sql_statements)
-
-        # 总是执行远端MySQL
+        # 4.执行远端MySQL
         mysql_utils.execute_sql_statements(
             user=origin_user,
             password=origin_password,
@@ -154,12 +122,9 @@ class CalDWD:
     def cal_stock_exchange(self):
         """
         计算股票所归属的交易所，判断其是主办、创业板、科创板、北交所等等
-        Returns:
         """
-
         #  1.获取日期
         ymd = DateUtility.today()
-        # ymd = "20241122"
 
         # 2.定义 SQL 模板
         sql_statements_template = [
@@ -188,17 +153,7 @@ class CalDWD:
         # 3.主程序替换 {ymd} 占位符
         sql_statements = [stmt.format(ymd=ymd) for stmt in sql_statements_template]
 
-        # 4.执行 SQL
-        # Windows下先执行本地MySQL
-        # if platform.system() == "Windows":
-        #     mysql_utils.execute_sql_statements(
-        #         user=local_user,
-        #         password=local_password,
-        #         host=local_host,
-        #         database=local_database,
-        #         sql_statements=sql_statements)
-
-        # 总是执行远端MySQL
+        # 4.执行远端MySQL
         mysql_utils.execute_sql_statements(
             user=origin_user,
             password=origin_password,
@@ -211,12 +166,9 @@ class CalDWD:
     def cal_stock_base_info(self):
         """
         计算股票基础信息，汇总表，名称、编码、板块、股本、市值、净资产
-        Returns:
         """
-
         #  1.获取日期
         ymd = DateUtility.today()
-        # ymd = "20241122"
 
         # 2.定义 SQL 模板
         sql_statements_template = [
@@ -364,17 +316,7 @@ class CalDWD:
         # 3.主程序替换 {ymd} 占位符
         sql_statements = [stmt.format(ymd=ymd) for stmt in sql_statements_template]
 
-        # 4.执行 SQL
-        # Windows下先执行本地MySQL
-        # if platform.system() == "Windows":
-        #     mysql_utils.execute_sql_statements(
-        #         user=local_user,
-        #         password=local_password,
-        #         host=local_host,
-        #         database=local_database,
-        #         sql_statements=sql_statements)
-
-        # 总是执行远端MySQL
+        # 4.执行远端MySQL
         mysql_utils.execute_sql_statements(
             user=origin_user,
             password=origin_password,
@@ -491,28 +433,6 @@ class CalDWD:
         dt_df = dt_df.sort_values(by=['ymd', 'stock_code'])
 
         ############################   文件输出模块     ############################
-        # Windows下先保存到本地数据库
-        # if platform.system() == "Windows":
-        #     # 涨停数据保存到本地mysql中
-        #     mysql_utils.data_from_dataframe_to_mysql(
-        #         user=local_user,
-        #         password=local_password,
-        #         host=local_host,
-        #         database=local_database,
-        #         df=zt_df,
-        #         table_name="dwd_stock_zt_list",
-        #         merge_on=['ymd', 'stock_code'])
-        #
-        #     # 跌停数据保存到本地mysql中
-        #     mysql_utils.data_from_dataframe_to_mysql(
-        #         user=local_user,
-        #         password=local_password,
-        #         host=local_host,
-        #         database=local_database,
-        #         df=dt_df,
-        #         table_name="dwd_stock_dt_list",
-        #         merge_on=['ymd', 'stock_code'])
-
         # 总是保存到远端数据库
         # 涨停数据保存到远端mysql中
         mysql_utils.data_from_dataframe_to_mysql(
@@ -537,8 +457,8 @@ class CalDWD:
 
     def setup(self):
 
-        # 聚合股票的板块，把各个板块数据聚合在一起
-        self.cal_ashare_plate()
+        # # 聚合股票的板块，把各个板块数据聚合在一起   周末手动执行
+        # self.cal_ashare_plate()
 
         # 计算股票所归属的交易所，判断其是主办、创业板、科创板、北交所等等
         self.cal_stock_exchange()

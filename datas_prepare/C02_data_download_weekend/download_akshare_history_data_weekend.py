@@ -1,21 +1,15 @@
 # -*- coding: utf-8 -*-
 
-import time
 import random
-import requests
-import os
-import sys
 import time
-import platform
+import requests
 import pandas as pd
 import akshare as ak
-from datetime import datetime
 import logging
 
 from datas_prepare.Downloaders.akshareDownloader import AkshareDownloader
 
 import CommonProperties.Base_Properties as base_properties
-import CommonProperties.Base_utils as base_utils
 import CommonProperties.Mysql_Utils as mysql_utils
 from CommonProperties.DateUtility import DateUtility
 from CommonProperties.Base_utils import timing_decorator
@@ -51,7 +45,7 @@ origin_database = base_properties.origin_mysql_database
 origin_host = base_properties.origin_mysql_host
 
 
-class SaveAkshareHistoryData:
+class SaveAkshareWeekendData:
     """周末执行，下载akshare历史数据到MySQL"""
 
     def __init__(self):
@@ -446,13 +440,12 @@ class SaveAkshareHistoryData:
         return False
 
 
-
     # @timing_decorator
     def download_stock_zh_a_spot_em(self):
         """
         下载个股行情数据 - ods_akshare_stock_zh_a_spot_em
         接口: stock_zh_a_spot_em
-        说明: 单次返回所有沪深京 A 股上市公司的实时行情数据，不可指定日期     目前只能返回100条  不可用
+        说明: 单次返回所有沪深京 A 股上市公司的实时行情数据，不可指定日期     目前只能返回100条  爬虫可解 不可用
         """
         try:
             logging.info("开始下载个股行情数据...")
@@ -517,17 +510,6 @@ class SaveAkshareHistoryData:
                 logging.info(f"个股行情数据下载完成，共 {len(df)} 条记录")
 
                 # 保存到MySQL
-                if platform.system() == "Windows":
-                    mysql_utils.data_from_dataframe_to_mysql(
-                        user=local_user,
-                        password=local_password,
-                        host=local_host,
-                        database=local_database,
-                        df=df,
-                        table_name="ods_akshare_stock_zh_a_spot_em",
-                        merge_on=['ymd', 'stock_code']
-                    )
-
                 mysql_utils.data_from_dataframe_to_mysql(
                     user=origin_user,
                     password=origin_password,
@@ -548,25 +530,124 @@ class SaveAkshareHistoryData:
     # @timing_decorator
     def download_stock_board_concept_name_em(self):
         """
-        下载板块概念数据 - ods_akshare_board_concept_name_em
+        下载板块概念数据 - ods_akshare_stock_board_concept_name_em
         接口: stock_board_concept_name_em
-        说明: 所有板块概念的基本信息，获取全部板块
+        说明: 所有板块概念的基本信息，分页获取全部板块
         """
         try:
             logging.info("开始下载板块概念数据...")
 
-            # 获取所有板块数据
-            df = ak.stock_board_concept_name_em()
+            # 分页获取所有板块数据
+            all_data = []
+            page = 1
+            page_size = 100
+            total_records = 0
+            total_num = None
+            max_retries = 3  # 添加重试机制
+            table_name = 'ods_akshare_stock_board_concept_name_em'  # 定义表名
 
-            if df.empty:
+            while True:
+                retry_count = 0
+                success = False
+
+                # 重试机制
+                while retry_count < max_retries and not success:
+                    try:
+                        url = "https://79.push2.eastmoney.com/api/qt/clist/get"
+                        params = {
+                            "pn": str(page),
+                            "pz": str(page_size),
+                            "po": "1",
+                            "np": "2",
+                            "ut": "bd1d9ddb04089700cf9c27f6f7426281",
+                            "fltt": "2",
+                            "invt": "2",
+                            "fid": "f3",
+                            "fs": "m:90 t:3 f:!50",
+                            "fields": "f2,f3,f4,f8,f12,f14,f15,f16,f17,f18,f20,f21,f24,f25,f22,f33,f11,f62,f128,f124,f107,f104,f105,f136",
+                            "_": str(int(time.time() * 1000)),
+                        }
+
+                        r = requests.get(url, params=params, timeout=30)  # 增加超时时间
+                        r.raise_for_status()
+                        data_json = r.json()
+
+                        if not data_json.get("data") or not data_json["data"].get("diff"):
+                            logging.warning(f"第{page}页无数据")
+                            success = True
+                            break
+
+                        diff_data = data_json["data"]["diff"]
+                        if not diff_data:
+                            logging.info(f"第{page}页数据为空，已获取完所有数据")
+                            success = True
+                            break
+
+                        # 只在第一页获取总数据量
+                        if page == 1:
+                            total_num = data_json["data"]["total"]
+                            logging.info(f"板块概念数据总计: {total_num} 条")
+
+                        temp_df = pd.DataFrame(diff_data).T
+                        temp_df.reset_index(inplace=True)
+                        temp_df["index"] = range((page - 1) * page_size + 1,
+                                                 (page - 1) * page_size + len(temp_df) + 1)
+
+                        all_data.append(temp_df)
+                        total_records += len(temp_df)
+
+                        logging.info(f"第{page}页获取成功: {len(temp_df)}条，累计{total_records}条")
+                        success = True
+
+                    except (requests.exceptions.RequestException, requests.exceptions.ConnectionError) as e:
+                        retry_count += 1
+                        if retry_count < max_retries:
+                            wait_time = retry_count * 5  # 递增等待时间
+                            logging.warning(f"第{page}页第{retry_count}次重试失败: {str(e)}，等待{wait_time}秒后重试...")
+                            time.sleep(wait_time)
+                        else:
+                            logging.error(f"第{page}页请求失败，已达到最大重试次数: {str(e)}")
+                            break
+                    except Exception as e:
+                        logging.error(f"第{page}页处理失败: {str(e)}")
+                        break
+
+                # 如果重试后仍然失败，退出循环
+                if not success:
+                    break
+
+                # 判断是否继续获取下一页
+                if total_num is not None:
+                    if total_records >= total_num:
+                        logging.info(f"已获取所有数据: 累计{total_records}条 >= 总计{total_num}条")
+                        break
+                else:
+                    # 如果没有获取到总数，使用备用判断
+                    if len(temp_df) < page_size:
+                        logging.info(f"第{page}页数据不足{page_size}条，判断为最后一页")
+                        break
+
+                page += 1
+                time.sleep(3.1)  # 保持原有的3.1秒延迟
+
+            if not all_data:
                 logging.warning("板块概念数据为空")
                 return False
+
+            # 合并所有数据
+            df = pd.concat(all_data, ignore_index=True)
+
+            # 检查是否获取了完整数据
+            if total_num is not None and len(df) < total_num:
+                missing_count = total_num - len(df)
+                logging.warning(f"数据获取不全: 实际获取{len(df)}条，应有{total_num}条，缺少{missing_count}条")
+                # 可以考虑在这里尝试获取缺失的数据
+
+            logging.info(f"板块概念数据获取完成，共 {len(df)} 条记录")
 
             # 添加日期列
             today = DateUtility.today()
             df['ymd'] = today
-
-            logging.info(f"板块概念数据获取完成，共 {len(df)} 条记录")
 
             # 列映射
             column_mapping = {
@@ -597,17 +678,17 @@ class SaveAkshareHistoryData:
                 date_column='ymd',
                 date_format='%Y%m%d',
                 numeric_columns=numeric_columns,
-                table_name='ods_akshare_board_concept_name_em'
+                table_name=table_name  # 使用正确的表名
             )
 
             if processed_df.empty:
                 logging.warning("板块概念数据处理后为空")
                 return False
 
-            # 使用downloader的保存方法
+            # 使用downloader的保存方法（传入正确的表名）
             success = self.downloader._save_to_mysql(
                 df=processed_df,
-                table_name='ods_akshare_board_concept_name_em',
+                table_name=table_name,  # 使用正确的表名
                 merge_on=['ymd', 'board_code']
             )
 
@@ -624,7 +705,6 @@ class SaveAkshareHistoryData:
             import traceback
             logging.error(traceback.format_exc())
             return False
-
 
 
     # @timing_decorator
@@ -1125,11 +1205,11 @@ class SaveAkshareHistoryData:
         # 1. 获取股票代码列表（用于需要股票代码的接口）
         self.get_stock_codes()
 
-        # # 2. 下载股票估值数据                       封堵IP    不可用
+        # # 2. 下载股票估值数据              封堵IP  周末跑应该可以 800w+条
         # self.download_stock_value_em()
         #
         # # 3. 下载股东户数数据（需要股票代码，分批次处理）   可用但周末跑
-        self.download_stock_zh_a_gdhs_detail_em()
+        # self.download_stock_zh_a_gdhs_detail_em()
         #
         # # 4. 下载筹码数据（需要股票代码，分批次处理）    封堵IP   不可用
         # self.download_stock_cyq_em()
@@ -1143,10 +1223,10 @@ class SaveAkshareHistoryData:
         # # 7. 下载大盘高低统计数据（默认沪深300）   可用
         # self.download_stock_a_high_low_statistics()
         #
-        # # 8. 下载个股行情数据（实时数据）     目前只能返回100条  不可用
+        # # 8. 下载个股行情数据（实时数据）     目前只能返回100条  不可用  换个IP，用爬虫分页，时间间隔要大于3秒可以测试
         # self.download_stock_zh_a_spot_em()
 
-        # # 9. 下载板块行情数据               封堵IP   不可用
+        # # 9. 下载板块行情数据               封堵IP   换IP有机会 不可用
         # self.download_stock_board_concept_name_em()
 
         # # 10. 下载板块内个股行情数据       封堵IP   不可用
@@ -1164,15 +1244,16 @@ class SaveAkshareHistoryData:
 
 if __name__ == '__main__':
 
-    # 只在周末执行
-    if DateUtility.is_weekend():
-        logging.info("今天是周末，开始执行akshare历史数据下载任务")
-        saver = SaveAkshareHistoryData()
-        saver.setup()
-    else:
-        logging.info("今天不是周末，跳过akshare历史数据下载")
+    # # 只在周末执行
+    # if DateUtility.is_weekend():
+    #     logging.info("今天是周末，开始执行akshare历史数据下载任务")
+    #     saver = SaveAkshareWeekendData()
+    #     saver.setup()
+    # else:
+    #     logging.info("今天不是周末，跳过akshare历史数据下载")
 
-
+    saver = SaveAkshareWeekendData()
+    saver.setup()
 
 
 

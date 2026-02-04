@@ -108,7 +108,7 @@ class AkshareDownloader:
                         try:
                             params = {symbol_param: stock_code, **kwargs}
                             df = ak_function(**params)
-                            sleep_time = random.uniform(0.1, 0.2)
+                            sleep_time = random.uniform(1.1, 1.6)
                             time.sleep(sleep_time)
 
                             if df is not None:
@@ -205,17 +205,6 @@ class AkshareDownloader:
     def _save_to_mysql(self, df, table_name, merge_on):
         """保存数据到MySQL"""
         try:
-            # if platform.system() == "Windows":
-            #     mysql_utils.data_from_dataframe_to_mysql(
-            #         user=self.local_user,
-            #         password=self.local_password,
-            #         host=self.local_host,
-            #         database=self.local_database,
-            #         df=df,
-            #         table_name=table_name,
-            #         merge_on=merge_on
-            #     )
-
             mysql_utils.data_from_dataframe_to_mysql(
                 user=self.origin_user,
                 password=self.origin_password,

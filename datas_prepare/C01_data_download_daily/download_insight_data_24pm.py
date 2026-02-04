@@ -20,7 +20,6 @@ from CommonProperties import set_config
 # 本代码的作用是凌晨24点后下载 insight 行情源数据, 本地保存,用于后续分析
 # ************************************************************************
 
-
 # ************************************************************************
 #  调用日志配置
 set_config.setup_logging_config()
@@ -37,7 +36,7 @@ origin_host = base_properties.origin_mysql_host
 # ************************************************************************
 
 
-class SaveInsightData:
+class SaveInsightData24PM:
 
     # @timing_decorator
     def login(self):
@@ -291,5 +290,5 @@ class SaveInsightData:
 
 
 if __name__ == '__main__':
-    save_insight_data = SaveInsightData()
+    save_insight_data = SaveInsightData24PM()
     save_insight_data.setup()

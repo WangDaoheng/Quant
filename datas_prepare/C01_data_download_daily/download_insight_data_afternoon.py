@@ -13,22 +13,11 @@ import time
 import logging
 import platform
 
-
 import CommonProperties.Base_Properties as base_properties
-import CommonProperties.Base_utils as base_utils
 import CommonProperties.Mysql_Utils as mysql_utils
 from CommonProperties.DateUtility import DateUtility
 from CommonProperties.Base_utils import timing_decorator
 from CommonProperties import set_config
-
-# ************************************************************************
-# 本代码的作用是下午收盘后下载 insight 行情源数据, 本地保存,用于后续分析
-# 需要下载的数据:
-# 1.上市股票代码   get_all_stocks()
-# 2.筹码分布数据   get_chouma_datas()
-
-
-# ************************************************************************
 
 
 # ************************************************************************
@@ -45,7 +34,6 @@ origin_password = base_properties.origin_mysql_password
 origin_database = base_properties.origin_mysql_database
 origin_host = base_properties.origin_mysql_host
 # ************************************************************************
-
 
 class SaveInsightData:
 
@@ -96,18 +84,6 @@ class SaveInsightData:
         self.stock_code_df = filtered_df
 
         ############################   文件输出模块     ############################
-        # Windows下先保存到本地
-        # if platform.system() == "Windows":
-        #     mysql_utils.data_from_dataframe_to_mysql(
-        #         user=local_user,
-        #         password=local_password,
-        #         host=local_host,
-        #         database=local_database,
-        #         df=filtered_df,
-        #         table_name="ods_stock_code_daily_insight",
-        #         merge_on=['ymd', 'stock_code']
-        #     )
-
         # 远端数据库总是保存
         mysql_utils.data_from_dataframe_to_mysql(
             user=origin_user,
@@ -118,7 +94,6 @@ class SaveInsightData:
             table_name="ods_stock_code_daily_insight",
             merge_on=['ymd', 'stock_code']
         )
-
 
 
     # @timing_decorator
@@ -191,18 +166,6 @@ class SaveInsightData:
             kline_total_df = kline_total_df.drop_duplicates(subset=['ymd', 'stock_code'], keep='first')
 
             ############################   文件输出模块     ############################
-            # Windows下先保存到本地数据库
-            # if platform.system() == "Windows":
-            #     mysql_utils.data_from_dataframe_to_mysql(
-            #         user=local_user,
-            #         password=local_password,
-            #         host=local_host,
-            #         database=local_database,
-            #         df=kline_total_df,
-            #         table_name="ods_stock_kline_daily_insight_now",
-            #         merge_on=['ymd', 'stock_code']
-            #     )
-
             # 总是保存到远端数据库
             mysql_utils.data_from_dataframe_to_mysql(
                 user=origin_user,
@@ -283,18 +246,6 @@ class SaveInsightData:
             index_df = index_df.drop_duplicates(subset=['ymd', 'index_code'], keep='first')
 
             ############################   文件输出模块     ############################
-            # Windows下先保存到本地数据库
-            # if platform.system() == "Windows":
-            #     mysql_utils.data_from_dataframe_to_mysql(
-            #         user=local_user,
-            #         password=local_password,
-            #         host=local_host,
-            #         database=local_database,
-            #         df=index_df,
-            #         table_name="ods_index_a_share_insight_now",
-            #         merge_on=['ymd', 'index_code']
-            #     )
-
             # 总是保存到远端数据库
             mysql_utils.data_from_dataframe_to_mysql(
                 user=origin_user,
@@ -333,7 +284,6 @@ class SaveInsightData:
                  ups_downs_limit_count_pre_up_limits_average_change_percent
 
                  [time	name	今日涨停	今日跌停	昨日涨停	昨日跌停	昨日涨停表现]
-
         """
 
         #  1.当月数据的起止时间
@@ -374,18 +324,6 @@ class SaveInsightData:
             limit_summary_df = limit_summary_df.drop_duplicates(subset=['ymd', 'name'], keep='first')
 
             ############################   文件输出模块     ############################
-            # Windows下先保存到本地数据库
-            # if platform.system() == "Windows":
-            #     mysql_utils.data_from_dataframe_to_mysql(
-            #         user=local_user,
-            #         password=local_password,
-            #         host=local_host,
-            #         database=local_database,
-            #         df=limit_summary_df,
-            #         table_name="ods_stock_limit_summary_insight_now",
-            #         merge_on=['ymd', 'name']
-            #     )
-
             # 总是保存到远端数据库
             mysql_utils.data_from_dataframe_to_mysql(
                 user=origin_user,
@@ -464,18 +402,6 @@ class SaveInsightData:
             future_inside_df = future_inside_df.drop_duplicates(subset=['ymd', 'stock_code'], keep='first')
 
             ############################   文件输出模块     ############################
-            # Windows下先保存到本地数据库
-            # if platform.system() == "Windows":
-            #     mysql_utils.data_from_dataframe_to_mysql(
-            #         user=local_user,
-            #         password=local_password,
-            #         host=local_host,
-            #         database=local_database,
-            #         df=future_inside_df,
-            #         table_name="ods_future_inside_insight_now",
-            #         merge_on=['ymd', 'stock_code']
-            #     )
-
             # 总是保存到远端数据库
             mysql_utils.data_from_dataframe_to_mysql(
                 user=origin_user,
@@ -580,22 +506,7 @@ class SaveInsightData:
             chouma_total_df[cols_to_clean] = chouma_total_df[cols_to_clean].apply(
                 lambda s: s.map(lambda x: f"{x:.2f}")
             )
-            # 修复方案2：如果想保留数值类型（推荐，避免后续数据库插入的类型问题），可替换为：
-            # chouma_total_df[cols_to_clean] = chouma_total_df[cols_to_clean].round(2)
-
             ############################   文件输出模块     ############################
-            # Windows下先保存到本地数据库
-            # if platform.system() == "Windows":
-            #     mysql_utils.data_from_dataframe_to_mysql(
-            #         user=local_user,
-            #         password=local_password,
-            #         host=local_host,
-            #         database=local_database,
-            #         df=chouma_total_df,
-            #         table_name="ods_stock_chouma_insight",
-            #         merge_on=['ymd', 'stock_code']
-            #     )
-
             # 总是保存到远端数据库
             mysql_utils.data_from_dataframe_to_mysql(
                 user=origin_user,
@@ -610,7 +521,6 @@ class SaveInsightData:
         else:
             # insight 返回为空值
             logging.info('    get_chouma_datas 的返回值为空值')
-
 
 
     # @timing_decorator
@@ -649,18 +559,6 @@ class SaveInsightData:
             industry_df = industry_df.drop_duplicates(subset=['ymd', 'industry_code'], keep='first')
 
             ############################   文件输出模块     ############################
-            # Windows下先保存到本地数据库
-            # if platform.system() == "Windows":
-            #     mysql_utils.data_from_dataframe_to_mysql(
-            #         user=local_user,
-            #         password=local_password,
-            #         host=local_host,
-            #         database=local_database,
-            #         df=industry_df,
-            #         table_name="ods_astock_industry_overview",
-            #         merge_on=['ymd', 'industry_code']
-            #     )
-
             # 总是保存到远端数据库
             mysql_utils.data_from_dataframe_to_mysql(
                 user=origin_user,
@@ -692,8 +590,6 @@ class SaveInsightData:
 
         #  1.当月数据的起止时间
         time_today = DateUtility.today()
-        # time_today = '20240930'
-
         time_today = datetime.strptime(time_today, '%Y%m%d')
 
         #  2.行业信息的总和dataframe
@@ -737,18 +633,6 @@ class SaveInsightData:
             stock_in_industry_df = stock_in_industry_df.drop_duplicates(subset=['ymd', 'stock_code'], keep='first')
 
             ############################   文件输出模块     ############################
-            # Windows下先保存到本地数据库
-            # if platform.system() == "Windows":
-            #     mysql_utils.data_from_dataframe_to_mysql(
-            #         user=local_user,
-            #         password=local_password,
-            #         host=local_host,
-            #         database=local_database,
-            #         df=stock_in_industry_df,
-            #         table_name="ods_astock_industry_detail",
-            #         merge_on=['ymd', 'stock_code']
-            #     )
-
             # 总是保存到远端数据库
             mysql_utils.data_from_dataframe_to_mysql(
                 user=origin_user,
@@ -762,7 +646,6 @@ class SaveInsightData:
         else:
             ## insight 返回为空值
             logging.info('    get_Ashare_industry_detail 的返回值为空值')
-
 
 
     # @timing_decorator
@@ -887,7 +770,7 @@ class SaveInsightData:
         #  除去 ST |  退  | B 的股票集合
         self.get_stock_codes()
 
-        # #  获取上述股票的当月日K  使用tushare 数据以便于 17点获取，不适用该接口了
+        # #  获取上述股票的当月日K  使用tushare 数据以便于 17点获取，不使用该接口了
         # self.get_stock_kline()
 
         # #  获取主要股指    放到凌晨执行
@@ -910,7 +793,6 @@ class SaveInsightData:
 
         # #  个股股东数        放到凌晨执行
         # self.get_shareholder_north_bound_num()
-
 
 
 if __name__ == '__main__':

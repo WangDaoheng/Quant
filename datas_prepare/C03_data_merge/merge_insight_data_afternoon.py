@@ -1,33 +1,15 @@
 # -*- coding: utf-8 -*-
 
-import os
-from datetime import datetime
-
-import pandas as pd
-from sqlalchemy import create_engine, text
-import time
-import platform
-
-# import dataprepare_properties
-# import dataprepare_utils
 from CommonProperties import Base_Properties
-import CommonProperties.Base_utils as base_utils
-from CommonProperties.DateUtility import DateUtility
 from CommonProperties.Base_utils import timing_decorator
 import CommonProperties.Mysql_Utils as mysql_utils
 from CommonProperties import set_config
-
 # ************************************************************************
-# 本代码的作用是下午收盘后针对 insight 行情源数据的本地保存部分开展merge
-# 需要下载的数据:
-# 1.上市股票代码   get_all_stocks()
-# 2.筹码分布数据   get_chouma_datas()
-
+# 本代码的作用是下午收盘后针对 insight 行情源的_now 表跟全量表进行合并
 
 # ************************************************************************
 #  调用日志配置
 set_config.setup_logging_config()
-
 ######################  mysql 配置信息  本地和远端服务器  ####################
 local_user = Base_Properties.local_mysql_user
 local_password = Base_Properties.local_mysql_password
@@ -56,16 +38,6 @@ class MergeInsightData:
         target_table = 'ods_stock_kline_daily_insight'
         columns = ['stock_code', 'ymd', 'open', 'close', 'high', 'low', 'num_trades', 'volume']
         ############################   文件输出模块     ############################
-        # Windows下先对本地Mysql做数据聚合
-        # if platform.system() == "Windows":
-        #     mysql_utils.upsert_table(user=local_user,
-        #                              password=local_password,
-        #                              host=local_host,
-        #                              database=local_database,
-        #                              source_table=source_table,
-        #                              target_table=target_table,
-        #                              columns=columns)
-
         # 总是对远端Mysql做数据聚合
         mysql_utils.upsert_table(user=origin_user,
                                  password=origin_password,
@@ -95,16 +67,6 @@ class MergeInsightData:
         target_table = 'ods_index_a_share_insight'
         columns = ['index_code', 'index_name', 'ymd', 'open', 'close', 'high', 'low', 'volume']
         ############################   文件输出模块     ############################
-        # Windows下先对本地Mysql做数据聚合
-        # if platform.system() == "Windows":
-        #     mysql_utils.upsert_table(user=local_user,
-        #                              password=local_password,
-        #                              host=local_host,
-        #                              database=local_database,
-        #                              source_table=source_table,
-        #                              target_table=target_table,
-        #                              columns=columns)
-
         # 总是对远端Mysql做数据聚合
         mysql_utils.upsert_table(user=origin_user,
                                  password=origin_password,
@@ -142,16 +104,6 @@ class MergeInsightData:
         target_table = 'ods_stock_limit_summary_insight'
         columns = ['ymd', 'name', 'today_ZT', 'today_DT', 'yesterday_ZT', 'yesterday_DT', 'yesterday_ZT_rate']
         ############################   文件输出模块     ############################
-        # Windows下先对本地Mysql做数据聚合
-        # if platform.system() == "Windows":
-        #     mysql_utils.upsert_table(user=local_user,
-        #                              password=local_password,
-        #                              host=local_host,
-        #                              database=local_database,
-        #                              source_table=source_table,
-        #                              target_table=target_table,
-        #                              columns=columns)
-
         # 总是对远端Mysql做数据聚合
         mysql_utils.upsert_table(user=origin_user,
                                  password=origin_password,
@@ -192,16 +144,6 @@ class MergeInsightData:
         target_table = 'ods_future_inside_insight'
         columns = ['stock_code', 'ymd', 'open', 'close', 'high', 'low', 'volume', 'open_interest', 'settle']
         ############################   文件输出模块     ############################
-        # Windows下先对本地Mysql做数据聚合
-        # if platform.system() == "Windows":
-        #     mysql_utils.upsert_table(user=local_user,
-        #                              password=local_password,
-        #                              host=local_host,
-        #                              database=local_database,
-        #                              source_table=source_table,
-        #                              target_table=target_table,
-        #                              columns=columns)
-
         # 总是对远端Mysql做数据聚合
         mysql_utils.upsert_table(user=origin_user,
                                  password=origin_password,
@@ -222,16 +164,6 @@ class MergeInsightData:
         target_table = 'ods_shareholder_num'
         columns = ['stock_code', 'stock_name', 'ymd', 'total_sh', 'avg_share', 'pct_of_total_sh', 'pct_of_avg_sh']
         ############################   文件输出模块     ############################
-        # Windows下先对本地Mysql做数据聚合
-        # if platform.system() == "Windows":
-        #     mysql_utils.upsert_table(user=local_user,
-        #                              password=local_password,
-        #                              host=local_host,
-        #                              database=local_database,
-        #                              source_table=source_table,
-        #                              target_table=target_table,
-        #                              columns=columns)
-
         # 总是对远端Mysql做数据聚合
         mysql_utils.upsert_table(user=origin_user,
                                  password=origin_password,
@@ -252,16 +184,6 @@ class MergeInsightData:
         target_table = 'ods_north_bound_daily'
         columns = ['stock_code', 'ymd', 'sh_hkshare_hold', 'pct_total_share']
         ############################   文件输出模块     ############################
-        # Windows下先对本地Mysql做数据聚合
-        # if platform.system() == "Windows":
-        #     mysql_utils.upsert_table(user=local_user,
-        #                              password=local_password,
-        #                              host=local_host,
-        #                              database=local_database,
-        #                              source_table=source_table,
-        #                              target_table=target_table,
-        #                              columns=columns)
-
         # 总是对远端Mysql做数据聚合
         mysql_utils.upsert_table(user=origin_user,
                                  password=origin_password,
@@ -274,8 +196,8 @@ class MergeInsightData:
 
     def setup(self):
 
-        #  获取当前已上市股票过去3年到今天的历史kline
-        self.merge_stock_kline()
+        # #  获取当前已上市股票过去3年到今天的历史kline  目前接口暂时废弃，不再取insight 的日K，取的是tushare的日K
+        # self.merge_stock_kline()
 
         #  获取主要股指
         self.merge_index_a_share()
@@ -296,3 +218,4 @@ class MergeInsightData:
 if __name__ == '__main__':
     save_insight_data = MergeInsightData()
     save_insight_data.setup()
+
