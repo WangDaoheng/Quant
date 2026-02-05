@@ -1205,11 +1205,11 @@ class SaveAkshareWeekendData:
         # 1. 获取股票代码列表（用于需要股票代码的接口）
         self.get_stock_codes()
 
-        # # 2. 下载股票估值数据              封堵IP  周末跑应该可以 800w+条
-        # self.download_stock_value_em()
-        #
-        # # 3. 下载股东户数数据（需要股票代码，分批次处理）   可用但周末跑
-        # self.download_stock_zh_a_gdhs_detail_em()
+        # 2. 下载股票估值数据              封堵IP  周末跑应该可以 800w+条
+        self.download_stock_value_em()
+
+        # 3. 下载股东户数数据（需要股票代码，分批次处理）   可用但周末跑
+        self.download_stock_zh_a_gdhs_detail_em()
         #
         # # 4. 下载筹码数据（需要股票代码，分批次处理）    封堵IP   不可用
         # self.download_stock_cyq_em()

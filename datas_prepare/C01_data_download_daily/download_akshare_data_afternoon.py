@@ -706,7 +706,7 @@ class SaveAkshareDailyData:
         """
         下载板块概念数据 - ods_akshare_board_concept_name_em
         接口: stock_board_concept_name_em
-        说明: 所有板块概念的基本信息，获取全部板块
+        说明: 所有板块概念的基本信息，获取全部板块  爬虫换IP有希望突破，不如买token
         """
         try:
             logging.info("开始下载板块概念数据...")
@@ -1290,20 +1290,20 @@ class SaveAkshareDailyData:
         # # 4. 下载筹码数据（需要股票代码，分批次处理）    封堵IP   不可用
         # self.download_stock_cyq_em()
         #
-        # # 5. 下载业绩快报数据（指定日期）         可用  日跑
-        # self.download_stock_yjkb_em()
+        # 5. 下载业绩快报数据（指定日期）         可用  日跑
+        self.download_stock_yjkb_em()
+
+        # 6. 下载业绩预告数据（指定日期）         可用  日跑
+        self.download_stock_yjyg_em()
         #
-        # # 6. 下载业绩预告数据（指定日期）         可用  日跑
-        # self.download_stock_yjyg_em()
-        #
-        # # 7. 下载大盘高低统计数据               可用  日跑
-        # self.download_stock_a_high_low_statistics()
+        # 7. 下载大盘高低统计数据               可用  日跑
+        self.download_stock_a_high_low_statistics()
         #
         # # 8. 下载个股行情数据（实时数据）     目前只能返回100条  IP封堵严重 不可用
         # self.download_stock_zh_a_spot_em()
 
         # # 9. 下载板块行情数据               封堵IP   不可用
-        self.download_stock_board_concept_name_em()
+        # self.download_stock_board_concept_name_em()
 
         # # 10. 下载板块内个股行情数据       封堵IP   不可用
         # self.download_stock_board_concept_cons_em()
@@ -1311,11 +1311,11 @@ class SaveAkshareDailyData:
         # # 11. 下载板块历史行情数据         封堵IP   不可用
         # self.download_stock_board_concept_hist_em()
 
-        # # 12. 同花顺板块数据                  可用    日跑
-        # self.download_stock_board_concept_name_ths()
-        #
-        # # 12. 同花顺板块数据                  可用    日跑
-        # self.download_stock_board_concept_index_ths()
+        # 12. 同花顺板块码值                  可用    日跑
+        self.download_stock_board_concept_name_ths()
+
+        # 13. 同花顺板块日K行情数据            可用    日跑
+        self.download_stock_board_concept_index_ths()
 
 
 if __name__ == '__main__':

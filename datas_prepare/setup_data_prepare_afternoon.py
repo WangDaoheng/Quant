@@ -13,7 +13,6 @@ if project_root not in sys.path:
 
 
 from datas_prepare.C01_data_download_daily.download_insight_data_afternoon import SaveInsightData
-from datas_prepare.C01_data_download_daily.download_vantage_data_afternoon import SaveVantageData
 from datas_prepare.C01_data_download_daily.download_akshare_data_afternoon import SaveAkshareDailyData
 from datas_prepare.C01_data_download_daily.download_tushare_data_afternoon import SaveTushareDailyData
 
