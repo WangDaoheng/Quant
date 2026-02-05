@@ -603,6 +603,126 @@ CREATE TABLE quant.ods_akshare_stock_board_concept_index_ths (
 
 
 
+--4.13
+------------------  ods_akshare_stock_board_concept_index_ths   行情数据_同花顺板块内含股票    手动跑爬虫获取
+CREATE TABLE quant.ods_akshare_stock_board_concept_maps_ths (
+     ymd                      DATE                    COMMENT '数据日期（核心日期维度，用于归档和跨表关联）'
+    ,board_name               varchar(100)            COMMENT '板块名称'
+    ,board_code               varchar(50)             COMMENT '板块代码'
+    ,stock_code               varchar(50)             COMMENT '代码'
+    ,stock_name               varchar(50)             COMMENT '名称'
+    ,UNIQUE KEY unique_ymd_board_code (ymd, board_code)
+) COMMENT='行情数据_同花顺板块内含股票';
+
+
+
+----------------------------------------- tushare 数据  ----------------------------------------------
+-- ============ 1. 同花顺板块指数列表 (ths_index) ============
+-- ============ 1. 同花顺板块码值（基础信息） ============
+-- 对应接口：ths_index
+CREATE TABLE quant.ods_tushare_board_concept_name_ths (
+     ymd                      DATE                    COMMENT '数据日期（核心日期维度，适配量化数据统一归档）'
+    ,board_name               varchar(100)            COMMENT '板块名称'
+    ,board_code               varchar(50)             COMMENT '板块代码'
+    ,component_count          int                     COMMENT '成分个数'
+    ,market                   varchar(10)             COMMENT '交易所（A-沪深 HK-港股 US-美股）'
+    ,list_date                varchar(8)              COMMENT '上市日期YYYYMMDD'
+    ,index_type               varchar(10)             COMMENT '指数类型（N-概念 I-行业 R-地域 S-特色 ST-风格 TH-主题 BB-宽基）'
+    ,UNIQUE KEY unique_ymd_board_code (ymd, board_code)
+) COMMENT='板块数据_同花顺板块码值_Tushare';
+
+
+-- ============ 2. 同花顺板块历史行情数据 ============
+-- 对应接口：ths_daily
+CREATE TABLE quant.ods_tushare_stock_board_concept_hist_ths (
+     ymd                      DATE                    COMMENT '日期（行情交易日）'
+    ,board_name               varchar(100)            COMMENT '板块名称'
+    ,board_code               varchar(50)             COMMENT '板块代码'
+    ,open                     float                   COMMENT '开盘点位'
+    ,high                     float                   COMMENT '最高点位'
+    ,low                      float                   COMMENT '最低点位'
+    ,close                    float                   COMMENT '收盘点位'
+    ,prev_close               float                   COMMENT '昨日收盘点'
+    ,avg_price                float                   COMMENT '平均价'
+    ,change_amt               float                   COMMENT '涨跌点位'
+    ,change_pct               float                   COMMENT '涨跌幅(%)'
+    ,trading_volume           float                   COMMENT '成交量'
+    ,turnover_rate            float                   COMMENT '换手率(%)'
+    ,total_market_value       float                   COMMENT '总市值'
+    ,float_market_value       float                   COMMENT '流通市值'
+    ,UNIQUE KEY unique_ymd_board_code (ymd, board_code)
+) COMMENT='行情数据_同花顺板块历史行情_Tushare';
+
+
+-- ============ 3. 同花顺板块内含股票（核心） ============
+-- 对应接口：ths_member
+CREATE TABLE quant.ods_tushare_stock_board_concept_maps_ths (
+     ymd                      DATE                    COMMENT '数据日期（核心日期维度，用于归档和跨表关联）'
+    ,board_name               varchar(100)            COMMENT '板块名称'
+    ,board_code               varchar(50)             COMMENT '板块代码'
+    ,stock_code               varchar(50)             COMMENT '股票代码'
+    ,stock_name               varchar(100)            COMMENT '股票名称'
+    ,weight                   float                   COMMENT '权重'
+    ,in_date                  varchar(8)              COMMENT '纳入日期YYYYMMDD'
+    ,out_date                 varchar(8)              COMMENT '剔除日期YYYYMMDD'
+    ,is_new                   varchar(1)              COMMENT '是否最新(Y/N)'
+    ,UNIQUE KEY unique_ymd_board_stock (ymd, board_code, stock_code)
+) COMMENT='行情数据_同花顺板块内含股票_Tushare';
+
+
+-- ============ 4. 东方财富概念板块行情数据 ============
+-- 对应接口：dc_index
+CREATE TABLE quant.ods_tushare_stock_board_concept_name_em (
+     ymd                      DATE                    COMMENT '数据日期（核心日期维度，适配量化数据统一归档）'
+    ,board_name               varchar(100)            COMMENT '板块名称'
+    ,board_code               varchar(50)             COMMENT '板块代码'
+    ,leading_stock            varchar(100)            COMMENT '领涨股票名称'
+    ,leading_stock_code       varchar(50)             COMMENT '领涨股票代码'
+    ,change_pct               float                   COMMENT '涨跌幅(%)'
+    ,leading_stock_pct        float                   COMMENT '领涨股票涨跌幅(%)'
+    ,total_market_value       float                   COMMENT '总市值（万元）'
+    ,turnover_rate            float                   COMMENT '换手率(%)'
+    ,rising_stocks_num        int                     COMMENT '上涨家数'
+    ,falling_stocks_num       int                     COMMENT '下降家数'
+    ,UNIQUE KEY unique_ymd_board_code (ymd, board_code)
+) COMMENT='行情数据_东方财富概念板块行情_Tushare';
+
+
+-- ============ 5. 东方财富板块历史行情数据 ============
+-- 对应接口：dc_daily
+CREATE TABLE quant.ods_tushare_stock_board_concept_hist_em (
+     ymd                      DATE                    COMMENT '日期（行情交易日）'
+    ,board_name               varchar(100)            COMMENT '板块名称'
+    ,board_code               varchar(50)             COMMENT '板块代码'
+    ,open                     float                   COMMENT '开盘点位'
+    ,high                     float                   COMMENT '最高点位'
+    ,low                      float                   COMMENT '最低点位'
+    ,close                    float                   COMMENT '收盘点位'
+    ,change_amt               float                   COMMENT '涨跌点位'
+    ,change_pct               float                   COMMENT '涨跌幅(%)'
+    ,trading_volume           float                   COMMENT '成交量(股)'
+    ,trading_amount           float                   COMMENT '成交额(元)'
+    ,amplitude                float                   COMMENT '振幅(%)'
+    ,turnover_rate            float                   COMMENT '换手率(%)'
+    ,category                 varchar(20)             COMMENT '板块类型（概念板块/行业板块/地域板块）'
+    ,UNIQUE KEY unique_ymd_board_code (ymd, board_code)
+) COMMENT='行情数据_东方财富板块历史行情_Tushare';
+
+
+-- ============ 6. 东方财富板块内含股票 ============
+-- 对应接口：dc_member
+CREATE TABLE quant.ods_tushare_stock_board_concept_maps_em (
+     ymd                      DATE                    COMMENT '数据日期（核心日期维度，用于归档和跨表关联）'
+    ,board_name               varchar(100)            COMMENT '板块名称'
+    ,board_code               varchar(50)             COMMENT '板块代码'
+    ,stock_code               varchar(50)             COMMENT '成分股票代码'
+    ,stock_name               varchar(100)            COMMENT '成分股名称'
+    ,UNIQUE KEY unique_ymd_board_stock (ymd, board_code, stock_code)
+) COMMENT='行情数据_东方财富板块内含股票_Tushare';
+
+
+
+
 
 --6.1
 ------------------  ods_stock_kline_daily_ts   行情数据_A股历史日K线的tushare数据

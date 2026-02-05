@@ -1299,11 +1299,11 @@ class SaveAkshareDailyData:
         # # 7. 下载大盘高低统计数据               可用  日跑
         # self.download_stock_a_high_low_statistics()
         #
-        # # 8. 下载个股行情数据（实时数据）     目前只能返回100条  不可用
-        self.download_stock_zh_a_spot_em()
+        # # 8. 下载个股行情数据（实时数据）     目前只能返回100条  IP封堵严重 不可用
+        # self.download_stock_zh_a_spot_em()
 
         # # 9. 下载板块行情数据               封堵IP   不可用
-        # self.download_stock_board_concept_name_em()
+        self.download_stock_board_concept_name_em()
 
         # # 10. 下载板块内个股行情数据       封堵IP   不可用
         # self.download_stock_board_concept_cons_em()
