@@ -1122,6 +1122,11 @@ class SaveAkshareDailyData:
                 logging.warning("同花顺概念板块数据处理后为空")
                 return False
 
+            # 在数据处理后清理board_name列的空格
+            if 'board_name' in processed_df.columns:
+                # 移除所有空格
+                processed_df['board_name'] = processed_df['board_name'].str.replace(' ', '')
+
             # 删除重复记录
             if 'ymd' in processed_df.columns and 'board_code' in processed_df.columns:
                 processed_df = processed_df.drop_duplicates(subset=['ymd', 'board_code'], keep='first')
@@ -1253,6 +1258,10 @@ class SaveAkshareDailyData:
                 numeric_columns=numeric_columns,
                 table_name='ods_akshare_stock_board_concept_index_ths'
             )
+
+            # 在数据处理后清理board_name列的空格
+            if not processed_df.empty and 'board_name' in processed_df.columns:
+                processed_df['board_name'] = processed_df['board_name'].str.replace(' ', '')
 
             # 使用downloader的保存方法
             success = self.downloader._save_to_mysql(

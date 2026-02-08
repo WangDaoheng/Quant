@@ -348,19 +348,19 @@ class THSConceptCrawler:
                 print("    备份失败")
 
 
-def test_single_concept():
-    """测试单个概念的分页爬取"""
+def demo_single_concept():
+    """演示单个概念的分页爬取 - 重命名避免pytest检测"""
     crawler = THSConceptCrawler()
 
-    # 测试几个热门概念
-    test_concepts = [
+    # 演示几个热门概念
+    demo_concepts = [
         ("300008", "新能源汽车"),  # 应该有几百只
         ("301558", "阿里巴巴概念"),  # 应该有几百只
         ("301459", "华为概念"),  # 应该有几百只
     ]
 
-    for code, name in test_concepts:
-        print(f"\n测试概念: {name} ({code})")
+    for code, name in demo_concepts:
+        print(f"\n演示概念: {name} ({code})")
         try:
             stocks = crawler._crawl_concept_all_pages(code, name)
             print(f"  实际获取: {len(stocks)} 只股票")
@@ -374,13 +374,13 @@ def test_single_concept():
             print(f"  错误: {e}")
 
 
-def main():
-    """主函数 - 完整爬取"""
+def full_crawler():
+    """完整爬取函数 - 重命名避免冲突"""
     crawler = THSConceptCrawler()
     crawler.run(batch_size=10, test_mode=False)
 
 
-def safe_mode():
+def safe_crawler():
     """安全模式 - 更保守的配置"""
     crawler = THSConceptCrawler()
 
@@ -393,20 +393,85 @@ def safe_mode():
     crawler.run(batch_size=8, test_mode=False)
 
 
-if __name__ == "__main__":
+# ===== 主程序入口 =====
+def main():
+    """主入口函数"""
+    print("=" * 60)
+    print("同花顺概念板块爬虫 - 专业版")
+    print("=" * 60)
     print("请选择运行模式:")
-    print("1. 测试单个概念的分页")
+    print("1. 演示单个概念的分页爬取")
     print("2. 完整爬取（正常模式）")
-    print("3. 安全模式（更保守）")
+    print("3. 安全模式（更保守配置）")
+    print("4. 自定义参数运行")
+    print("q. 退出")
+    print("=" * 60)
 
-    choice = input("请输入选择 (1/2/3): ").strip()
+    try:
+        choice = input("请输入选择 (1/2/3/4/q): ").strip().lower()
 
-    if choice == '1':
-        test_single_concept()
-    elif choice == '2':
+        if choice == '1':
+            demo_single_concept()
+        elif choice == '2':
+            full_crawler()
+        elif choice == '3':
+            safe_crawler()
+        elif choice == '4':
+            custom_run()
+        elif choice == 'q':
+            print("退出程序")
+            return
+        else:
+            print("无效选择，使用演示模式")
+            demo_single_concept()
+    except KeyboardInterrupt:
+        print("\n⏹️ 用户中断程序")
+    except Exception as e:
+        print(f"❌ 程序执行出错: {e}")
+    finally:
+        input("\n📝 按 Enter 键退出程序...")
+
+
+def custom_run():
+    """自定义运行参数"""
+    print("\n自定义运行模式")
+    try:
+        print("📦 批次设置:")
+        batch_size = int(input("  批次大小 (默认10): ") or "10")
+
+        print("\n🔧 爬虫设置:")
+        use_test = input("  是否只爬取前3个概念进行测试? (y/n, 默认n): ").strip().lower() == 'y'
+
+        print("\n⏱️ 延迟设置:")
+        use_safe = input("  使用安全延迟配置? (y/n, 默认n): ").strip().lower() == 'y'
+
+        crawler = THSConceptCrawler()
+
+        if use_safe:
+            crawler.page_delay = 8.0
+            crawler.concept_delay = 12.0
+            crawler.batch_delay = 30.0
+            print("  🛡️ 启用安全延迟配置")
+
+        print(f"\n🚀 开始执行:")
+        print(f"  批次大小: {batch_size}")
+        print(f"  测试模式: {use_test}")
+        print(f"  安全延迟: {use_safe}")
+
+        crawler.run(batch_size=batch_size, test_mode=use_test)
+
+    except ValueError:
+        print("❌ 输入格式错误，使用默认配置")
+        full_crawler()
+    except KeyboardInterrupt:
+        print("\n⏹️ 用户中断")
+        return
+
+
+# ===== 直接执行入口 =====
+if __name__ == "__main__":
+    try:
         main()
-    elif choice == '3':
-        safe_mode()
-    else:
-        print("无效选择，使用测试模式")
-        test_single_concept()
+    except Exception as e:
+        print(f"程序启动失败: {e}")
+        input("按任意键退出...")

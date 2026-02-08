@@ -751,7 +751,7 @@ CREATE TABLE quant.ods_stock_kline_daily_ts (
 ------------------  ods_stock_plate_redbook
 CREATE TABLE quant.ods_stock_plate_redbook (
      ymd                      DATE        NOT NULL    COMMENT '日期'
-    ,plate_name               VARCHAR(50) NOT NULL    COMMENT '板块名称'
+    ,board_name               VARCHAR(50) NOT NULL    COMMENT '板块名称'
     ,stock_code               VARCHAR(50)             COMMENT '标的代码'
     ,stock_name               VARCHAR(50)             COMMENT '标的名称'
     ,remark                   VARCHAR(50)             COMMENT '备注'

@@ -43,66 +43,8 @@ class CalDWD:
             DELETE FROM quant.dwd_stock_a_total_plate WHERE ymd='{ymd}';
             """,
             """
-            INSERT INTO quant.dwd_stock_a_total_plate
-            SELECT 
-                ymd, 
-                concept_name AS plate_name,
-                stock_code,
-                stock_name,
-                'ods_tdx_stock_concept_plate' AS source_table,
-                '' AS remark
-            FROM quant.ods_tdx_stock_concept_plate
-            WHERE ymd='{ymd}'
-            UNION ALL
-            SELECT 
-                ymd,
-                style_name AS plate_name,
-                stock_code,
-                stock_name,
-                'ods_tdx_stock_style_plate' AS source_table,
-                '' AS remark
-            FROM quant.ods_tdx_stock_style_plate
-            WHERE ymd='{ymd}'
-            UNION ALL
-            SELECT 
-                ymd,
-                industry_name AS plate_name,
-                stock_code,
-                stock_name,
-                'ods_tdx_stock_industry_plate' AS source_table,
-                '' AS remark
-            FROM quant.ods_tdx_stock_industry_plate
-            WHERE ymd='{ymd}'
-            UNION ALL
-            SELECT 
-                ymd,
-                region_name AS plate_name,
-                stock_code,
-                stock_name,
-                'ods_tdx_stock_region_plate' AS source_table,
-                '' AS remark
-            FROM quant.ods_tdx_stock_region_plate
-            WHERE ymd='{ymd}'
-            UNION ALL
-            SELECT 
-                ymd,
-                index_name AS plate_name,
-                stock_code,
-                stock_name,
-                'ods_tdx_stock_index_plate' AS source_table,
-                '' AS remark
-            FROM quant.ods_tdx_stock_index_plate
-            WHERE ymd='{ymd}'
-            UNION ALL
-            SELECT 
-                ymd,
-                plate_name,
-                stock_code,
-                stock_name,
-                'ods_stock_plate_redbook' AS source_table,
-                remark
-            FROM quant.ods_stock_plate_redbook
-            WHERE ymd='{ymd}';
+
+
             """
         ]
 
