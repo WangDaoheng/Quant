@@ -338,7 +338,7 @@ CREATE TABLE quant.ods_tdx_stock_index_plate (
 
 
 --3.6        
-------------------  ods_tdx_stock_pepb_info   股票基本面数据_资产数据
+------------------  ods_tdx_stock_pepb_info   股票基本面数据_资产数据   需手动下载的
 CREATE TABLE quant.ods_tdx_stock_pepb_info (
      ymd                      DATE                    COMMENT '日期'
     ,stock_code               varchar(50)             COMMENT '代码'
