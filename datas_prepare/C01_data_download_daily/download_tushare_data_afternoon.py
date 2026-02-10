@@ -19,23 +19,21 @@ warnings.filterwarnings('ignore', category=FutureWarning)
 
 
 class SaveTushareDailyData:
-    def __init__(self, stock_code_df=None):
+    def __init__(self):
         """
         初始化Tushare
         :param tushare_token: 你的Tushare API Token
-        :param stock_code_df: 股票代码DataFrame，可选
         """
         # 设置Tushare Token
         ts.set_token(base_properties.ts_token)
         self.pro = ts.pro_api()
-        self.stock_code_df = stock_code_df
 
     def get_stock_kline_tushare(self):
         """
         使用Tushare获取全部股票的历史日K线数据，并存入数据库
         完全复用现有逻辑，仅替换数据源
         """
-        # 1. 获取日期范围（复用你的逻辑）
+        # 1. 获取日期范围
         today = DateUtility.today()
 
         if int(today[6:8]) > 15:
@@ -44,11 +42,11 @@ class SaveTushareDailyData:
             time_start_date = DateUtility.first_day_of_month()  # 当月1号
         time_end_date = today
 
-        # 2. 获取股票代码列表（复用你的函数）
-        stock_code_list = mysql_utils.get_stock_codes_latest(self.stock_code_df)
+        # 2. 获取股票代码列表
+        stock_code_list = mysql_utils.get_stock_codes_latest(None)  # 修改点1：传入None
 
-        # 3. 分批处理设置（完全复用）
-        batch_size = 100
+        # 3. 分批处理设置
+        batch_size = 80  # 修改点2：减小批量大小，从100改为80
 
         def get_batches(lst, batch_size):
             for start in range(0, len(lst), batch_size):
@@ -57,7 +55,7 @@ class SaveTushareDailyData:
         total_batches = (len(stock_code_list) + batch_size - 1) // batch_size
         kline_total_df = pd.DataFrame()
 
-        # 4. 核心变更：使用Tushare替代Insight
+        # 4. 下载tushare数据
         for i, batch_list in enumerate(get_batches(stock_code_list, batch_size), start=1):
             sys.stdout.write(f"\r当前执行get_stock_kline_tushare的第{i}次循环，总共{total_batches}个批次")
             sys.stdout.flush()
@@ -82,10 +80,11 @@ class SaveTushareDailyData:
                         kline_total_df = pd.concat([kline_total_df, df_batch], ignore_index=True)
 
                 # 控制请求频率，避免触发限制（非常重要！）
-                time.sleep(0.2)  # Tushare免费版限制5次/秒
+                time.sleep(0.5)  # 修改点3：增加等待时间，从0.2改为0.5秒
 
             except Exception as e:
-                logging.warning(f"批次{i}获取失败: {e}")
+                # 修改点4：记录详细错误
+                logging.warning(f"批次{i}获取失败: {str(e)[:100]}")  # 截取前100字符避免过长
                 time.sleep(2)  # 失败后等待更久
                 continue
 
@@ -93,28 +92,60 @@ class SaveTushareDailyData:
 
         # 5. 数据处理：对齐现有数据结构
         if not kline_total_df.empty:
-            # 重命名列以匹配你的数据库schema
-            kline_total_df.rename(columns={
-                'ts_code': 'stock_code',
-                'trade_date': 'ymd',
-                'open': 'open',
-                'close': 'close',
-                'high': 'high',
-                'low': 'low',
-                'pct_chg': 'change_pct',
-                'vol': 'volume',  # Tushare中成交量字段为vol
-                'amount': 'trading_amount'  # 成交额，可选
-            }, inplace=True)
+            # 检查实际返回的列名
+            logging.info(f"Tushare返回的列名: {kline_total_df.columns.tolist()}")
 
-            # 转换日期格式（Tushare返回YYYYMMDD格式字符串）
-            kline_total_df['ymd'] = pd.to_datetime(kline_total_df['ymd']).dt.strftime('%Y%m%d')
+            # 重命名列以匹配你的数据库schema
+            # 注意：Tushare返回的列名可能是'trade_date'或'date'，需要确认
+            column_mapping = {}
+
+            # 自动检测列名
+            if 'trade_date' in kline_total_df.columns:
+                column_mapping['trade_date'] = 'ymd'
+            elif 'date' in kline_total_df.columns:
+                column_mapping['date'] = 'ymd'
+
+            if 'ts_code' in kline_total_df.columns:
+                column_mapping['ts_code'] = 'stock_code'
+
+            # 应用重命名
+            kline_total_df.rename(columns=column_mapping, inplace=True)
+
+            # 如果没有重命名成功，尝试其他列名
+            if 'ymd' not in kline_total_df.columns:
+                # 查找可能的日期列
+                date_cols = [col for col in kline_total_df.columns if 'date' in col.lower()]
+                if date_cols:
+                    kline_total_df.rename(columns={date_cols[0]: 'ymd'}, inplace=True)
+
+            if 'stock_code' not in kline_total_df.columns:
+                # 查找可能的代码列
+                code_cols = [col for col in kline_total_df.columns if 'code' in col.lower()]
+                if code_cols:
+                    kline_total_df.rename(columns={code_cols[0]: 'stock_code'}, inplace=True)
+
+            # 转换日期格式
+            if 'ymd' in kline_total_df.columns:
+                kline_total_df['ymd'] = pd.to_datetime(kline_total_df['ymd']).dt.strftime('%Y%m%d')
+            else:
+                # 添加当天日期
+                kline_total_df['ymd'] = today
 
             # 选择需要的列（根据你的数据库表结构调整）
-            required_columns = ['stock_code', 'ymd', 'open', 'close', 'high', 'low', 'change_pct', 'volume', 'trading_amount']
-            kline_total_df = kline_total_df[required_columns]
+            required_columns = ['stock_code', 'ymd', 'open', 'close', 'high', 'low', 'change_pct', 'volume',
+                                'trading_amount']
+            # 只保留存在的列
+            available_columns = [col for col in required_columns if col in kline_total_df.columns]
+            kline_total_df = kline_total_df[available_columns]
 
             # 去除重复（复用你的逻辑）
             kline_total_df = kline_total_df.drop_duplicates(subset=['ymd', 'stock_code'], keep='first')
+
+            # 输出统计信息
+            date_counts = kline_total_df['ymd'].value_counts()
+            logging.info("各日期数据量统计:")
+            for date, count in date_counts.items():
+                logging.info(f"  {date}: {count}条")
 
             # 6. 存入数据库（完全复用你的函数）
             mysql_utils.data_from_dataframe_to_mysql(
@@ -139,16 +170,14 @@ class SaveTushareDailyData:
         # 下载每日收盘后的日K线行情数据
         self.get_stock_kline_tushare()
 
-
+        # df = self.pro.query('user', token=base_properties.ts_token)
+        # print(df)
 
 
 if __name__ == '__main__':
     # 1. 初始化（替换为你的真实Token）
-    fetcher = SaveTushareDailyData(base_properties.ts_token)
+    fetcher = SaveTushareDailyData()
 
     # 2. 获取数据
-    kline_data = fetcher.get_stock_kline_tushare()
+    kline_data = fetcher.setup()
 
-    # 3. 对比验证（检查更新速度）
-    print(f"数据日期范围: {kline_data['ymd'].min()} 至 {kline_data['ymd'].max()}")
-    print(f"是否包含今日数据: {DateUtility.today() in kline_data['ymd'].values}")

@@ -59,7 +59,7 @@ class SaveAkshareDailyData:
         # 初始化 Akshare下载器
         self.downloader = AkshareDownloader()
 
-    # @timing_decorator
+    @timing_decorator
     def get_stock_codes(self):
         """
         获取最新的股票代码列表
@@ -92,7 +92,7 @@ class SaveAkshareDailyData:
             self.stock_codes = []
 
 
-    # @timing_decorator
+    @timing_decorator
     def download_stock_value_em(self):
         """
         下载股票估值数据 - ods_akshare_stock_value_em
@@ -135,7 +135,7 @@ class SaveAkshareDailyData:
         )
 
 
-    # @timing_decorator
+    @timing_decorator
     def download_stock_zh_a_gdhs_detail_em(self):
         """
         下载股东户数数据 - ods_akshare_stock_zh_a_gdhs_detail_em
@@ -178,7 +178,7 @@ class SaveAkshareDailyData:
 
 
 
-    # @timing_decorator
+    @timing_decorator
     def download_stock_cyq_em(self):
         """
         下载筹码数据 - ods_akshare_stock_cyq_em
@@ -214,7 +214,7 @@ class SaveAkshareDailyData:
         )
 
 
-    # @timing_decorator
+    @timing_decorator
     def download_stock_yjkb_em(self):
         """
         下载业绩快报数据 - ods_akshare_stock_yjkb_em
@@ -300,7 +300,7 @@ class SaveAkshareDailyData:
 
 
 
-    # @timing_decorator
+    @timing_decorator
     def download_stock_yjyg_em(self):
         """
         下载业绩预告数据 - ods_akshare_stock_yjyg_em
@@ -377,7 +377,7 @@ class SaveAkshareDailyData:
             return False
 
 
-    # @timing_decorator
+    @timing_decorator
     def download_stock_a_high_low_statistics(self):
         """
         下载大盘高低统计数据 - ods_akshare_stock_a_high_low_statistics
@@ -441,7 +441,7 @@ class SaveAkshareDailyData:
 
 
 
-    # @timing_decorator
+    @timing_decorator
     def download_stock_zh_a_spot_em(self):
         """
         下载个股行情数据 - ods_akshare_stock_zh_a_spot_em
@@ -701,7 +701,7 @@ class SaveAkshareDailyData:
             logging.error(traceback.format_exc())
 
 
-    # @timing_decorator
+    @timing_decorator
     def download_stock_board_concept_name_em(self):
         """
         下载板块概念数据 - ods_akshare_board_concept_name_em
@@ -783,7 +783,7 @@ class SaveAkshareDailyData:
 
 
 
-    # @timing_decorator
+    @timing_decorator
     def download_stock_board_concept_cons_em(self):
         """
         下载板块内个股行情数据 - ods_akshare_stock_board_concept_cons_em
@@ -931,7 +931,7 @@ class SaveAkshareDailyData:
 
 
 
-    # @timing_decorator
+    @timing_decorator
     def download_stock_board_concept_hist_em(self, start_date=None, end_date=None):
         """
         下载板块历史行情数据 - ods_akshare_stock_board_concept_hist_em
@@ -1079,7 +1079,7 @@ class SaveAkshareDailyData:
             logging.error(traceback.format_exc())
             return False
 
-    # @timing_decorator
+    @timing_decorator
     def download_stock_board_concept_name_ths(self):
         """
         下载同花顺概念板块基本信息 - ods_akshare_board_concept_name_ths
@@ -1152,7 +1152,7 @@ class SaveAkshareDailyData:
             logging.error(traceback.format_exc())
             return False
 
-    # @timing_decorator
+    @timing_decorator
     def download_stock_board_concept_index_ths(self, start_date=None, end_date=None):
         """
         下载同花顺概念板块指数数据 - ods_akshare_stock_board_concept_index_ths
@@ -1279,7 +1279,6 @@ class SaveAkshareDailyData:
 
 
 
-    # @timing_decorator
     def setup(self):
         """
         主执行函数，按顺序下载所有akshare数据

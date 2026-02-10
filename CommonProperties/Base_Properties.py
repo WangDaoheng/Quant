@@ -43,8 +43,8 @@ origin_mysql_database = "quant"
 
 
 ######################  tushare   #############################
-# ts_token = "300919ac6f3f72efe445092de7643f7e40f8458096149c315c0e467a"
-ts_token = "ab0fc47587ec2b284dd7a604befdd4fecb5f324554545abe0dc1cdf8abd2"
+ts_token = "300919ac6f3f72efe445092de7643f7e40f8458096149c315c0e467a"
+# ts_token = "ab0fc47587ec2b284dd7a604befdd4fecb5f324554545abe0dc1cdf8abd2"
 
 
 ######################  京东云 日志文件 留存地址  #############################

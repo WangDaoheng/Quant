@@ -482,7 +482,7 @@ def full_replace_migrate(source_host, source_db_url, target_host, target_db_url,
 
 
 
-def get_stock_codes_latest(df):
+def get_stock_codes_latest(df=None):
     """
     这是为了取最新的 stock_code, 首先默认从类变量里面获取 stock_code(df), 如果df为空，就从mysql里面去取最新的
     Args:
