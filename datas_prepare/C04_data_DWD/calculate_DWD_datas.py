@@ -108,7 +108,7 @@ class CalDWD:
                ,'ods_stock_plate_redbook'      AS source_table
                ,remark
             FROM quant.ods_stock_plate_redbook
-            WHERE ymd='{ymd}';
+            WHERE ymd='{ymd}'
             UNION ALL
             SELECT
                 tboard_name.ymd
@@ -120,24 +120,24 @@ class CalDWD:
                ,tboard_stock.weight                       AS remark
             FROM 
             (SELECT
-                 ym          --数据日期（核心日期维度，适配量化数据统一归档）
-                ,board_name  --板块名称
-                ,board_code  --板块代码
+                 ymd         -- 数据日期（核心日期维度，适配量化数据统一归档）
+                ,board_name  -- 板块名称
+                ,board_code  -- 板块代码
              FROM  ods_akshare_board_concept_name_ths
              WHERE ymd ='{ymd}'
             ) tboard_name
             LEFT JOIN
             (SELECT 
-               ymd         --数据日期
-              ,board_name  --板块名称
-              ,board_code  --板块代码
-              ,stock_code  --股票代码
-              ,stock_name  --股票名称
-              ,weight      --权重
+               ymd         -- 数据日期
+              ,board_name  -- 板块名称
+              ,board_code  -- 板块代码
+              ,stock_code  -- 股票代码
+              ,stock_name  -- 股票名称
+              ,weight      -- 权重
              FROM  ods_tushare_stock_board_concept_maps_ths
              WHERE ymd=(SELECT MAX(ymd) FROM  ods_tushare_stock_board_concept_maps_ths)
             ) tboard_stock
-            ON tboard_name.board_name  = tboard_stock.board_name;
+            ON REPLACE(tboard_name.board_name, ' ', '') = REPLACE(tboard_stock.board_name, ' ', '');
             """
         ]
 
@@ -285,7 +285,7 @@ class CalDWD:
                  ,volume
                  ,trading_amount
               from  quant.ods_stock_kline_daily_ts
-              where  ymd={ymd}
+              where  ymd='{ymd}'
             ) tkline
             left join
             ( select
@@ -301,13 +301,13 @@ class CalDWD:
             ( select
                   ymd                  
                  ,stock_code           
-                 ,total_market         --总市值
-                 ,circulation_market   --流通市值
-                 ,total_shares         --总股本
-                 ,circulation_shares   --流通股本
-                 ,pe_ttm               --PE_TTM
-                 ,pb                   --市净率
-                 ,peg                  --PEG值
+                 ,total_market         -- 总市值
+                 ,circulation_market   -- 流通市值
+                 ,total_shares         -- 总股本
+                 ,circulation_shares   -- 流通股本
+                 ,pe_ttm               -- PE_TTM
+                 ,pb                   -- 市净率
+                 ,peg                  -- PEG值
               from  quant.ods_akshare_stock_value_em
             ) tpepb
             ON SUBSTRING_INDEX(tkline.stock_code, '.', 1) = tpepb.stock_code
@@ -339,7 +339,7 @@ class CalDWD:
                   ymd                                              
                  ,stock_code                                       
                  ,stock_name                                       
-                 ,GROUP_CONCAT(plate_name ORDER BY plate_name SEPARATOR ',') AS plate_names   
+                 ,GROUP_CONCAT(board_name ORDER BY board_name SEPARATOR ',') AS plate_names   
               from  quant.dwd_stock_a_total_plate  
               where ymd = (SELECT MAX(ymd) FROM quant.dwd_stock_a_total_plate)
               group by ymd, stock_code, stock_name 
@@ -400,9 +400,7 @@ class CalDWD:
             database=origin_database, table_name='dwd_ashare_stock_base_info')
 
         stock_base_info = stock_market_init[['stock_code', 'stock_name', 'market_value', 'total_value',
-                                           'total_asset', 'net_asset', 'total_capital', 'float_capital',
-                                           'shareholder_num', 'pb', 'pe', 'market', 'plate_names']]
-
+                                            'total_capital', 'float_capital', 'shareholder_num', 'pb', 'pe', 'market', 'plate_names']]
 
         # 合并市场信息到最新的15天数据
         latest_15_days['stock_code'] = latest_15_days['stock_code'].str.split('.').str[0]
@@ -454,16 +452,14 @@ class CalDWD:
         zt_records['rate'] = ((zt_records['close'] - zt_records['last_close']) / zt_records['last_close'] * 100).round(2)
         zt_df = zt_records[
             ['ymd', 'stock_code', 'stock_name', 'last_close', 'close', 'rate', 'market_value', 'total_value',
-             'total_asset', 'net_asset', 'total_capital', 'float_capital', 'shareholder_num', 'pb', 'pe',
-             'market', 'plate_names']]
+             'total_capital', 'float_capital', 'shareholder_num', 'pb', 'pe', 'market', 'plate_names']]
         zt_df = zt_df.sort_values(by=['ymd', 'stock_code'])
 
         dt_records = latest_15_days[latest_15_days['是否跌停'] == True].copy()
         dt_records['rate'] = ((dt_records['close'] - dt_records['last_close']) / dt_records['last_close'] * 100).round(2)
         dt_df = dt_records[
             ['ymd', 'stock_code', 'stock_name', 'last_close', 'close', 'rate', 'market_value', 'total_value',
-             'total_asset', 'net_asset', 'total_capital', 'float_capital', 'shareholder_num', 'pb', 'pe',
-             'market', 'plate_names']]
+             'total_capital', 'float_capital', 'shareholder_num', 'pb', 'pe', 'market', 'plate_names']]
         dt_df = dt_df.sort_values(by=['ymd', 'stock_code'])
 
         ############################   文件输出模块     ############################

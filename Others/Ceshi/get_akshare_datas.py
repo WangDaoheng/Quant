@@ -502,35 +502,11 @@ if __name__ == "__main__":
     #     input("\n按回车键退出...")
     # demo_stock_board_concept_cons_em()
 
-    # stock_board_concept_info_ths_df = ak.stock_board_concept_cons_ths(symbol="阿里巴巴概念")
-    # print(stock_board_concept_info_ths_df)
+    # df = ak.stock_board_concept_name_ths()
+    # df.to_csv('./concept_name.csv')
 
-    # dd = ak.stock_board_concept_hist_ths(symbol="阿里巴巴概念")
-    # ff = ak.stock_board_industry_index_ths(symbol='元件',start_date='20250101', end_date='20250201')
-    # print(ff)
-    # res = ak.stock_board_industry_name_ths()
-    # print(res)
-    # ak.stock_board_concept_cons_ths
-    # res2 = ak.stock_board_cons_ths()
-    # ak. stock_board_concept_hist_ths()
-    # ak.stock_board_concept_graph_ths
-    # ak.stock_board_industry_summary_ths()
-    # res = ak.stock_board_concept_info_ths(symbol='阿里巴巴概念')
-    # print(res)
-
-    # stock_individual_spot_xq_df = ak.stock_individual_spot_xq(symbol="SH600000")
-    # print(stock_individual_spot_xq_df)
-
-
-    # res = ak.stock_zh_a_spot_em()
-    # print(res)
-
-    r2 = ak.stock_sh_a_spot_em()
-    print(r2)
-
-
-
-
+    df = ak.stock_board_concept_index_ths(symbol='309121',start_date='20260101', end_date='20260201')
+    print(df)
 
 
 

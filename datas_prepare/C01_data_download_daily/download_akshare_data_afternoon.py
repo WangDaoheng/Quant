@@ -177,7 +177,6 @@ class SaveAkshareDailyData:
         )
 
 
-
     @timing_decorator
     def download_stock_cyq_em(self):
         """
@@ -297,7 +296,6 @@ class SaveAkshareDailyData:
         except Exception as e:
             logging.error(f"下载业绩快报数据失败: {str(e)}")
             return False
-
 
 
     @timing_decorator
@@ -438,7 +436,6 @@ class SaveAkshareDailyData:
             )
 
         return False
-
 
 
     @timing_decorator
@@ -782,7 +779,6 @@ class SaveAkshareDailyData:
             return False
 
 
-
     @timing_decorator
     def download_stock_board_concept_cons_em(self):
         """
@@ -927,8 +923,6 @@ class SaveAkshareDailyData:
             import traceback
             logging.error(traceback.format_exc())
             return False
-
-
 
 
     @timing_decorator
@@ -1079,6 +1073,7 @@ class SaveAkshareDailyData:
             logging.error(traceback.format_exc())
             return False
 
+
     @timing_decorator
     def download_stock_board_concept_name_ths(self):
         """
@@ -1122,10 +1117,10 @@ class SaveAkshareDailyData:
                 logging.warning("同花顺概念板块数据处理后为空")
                 return False
 
-            # 在数据处理后清理board_name列的空格
-            if 'board_name' in processed_df.columns:
-                # 移除所有空格
-                processed_df['board_name'] = processed_df['board_name'].str.replace(' ', '')
+            # # 在数据处理后清理board_name列的空格
+            # if 'board_name' in processed_df.columns:
+            #     # 移除所有空格
+            #     processed_df['board_name'] = processed_df['board_name'].str.replace(' ', '')
 
             # 删除重复记录
             if 'ymd' in processed_df.columns and 'board_code' in processed_df.columns:
@@ -1259,9 +1254,9 @@ class SaveAkshareDailyData:
                 table_name='ods_akshare_stock_board_concept_index_ths'
             )
 
-            # 在数据处理后清理board_name列的空格
-            if not processed_df.empty and 'board_name' in processed_df.columns:
-                processed_df['board_name'] = processed_df['board_name'].str.replace(' ', '')
+            # # 在数据处理后清理board_name列的空格
+            # if not processed_df.empty and 'board_name' in processed_df.columns:
+            #     processed_df['board_name'] = processed_df['board_name'].str.replace(' ', '')
 
             # 使用downloader的保存方法
             success = self.downloader._save_to_mysql(

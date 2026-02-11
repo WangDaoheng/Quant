@@ -85,7 +85,7 @@ def timing_decorator(func):
         file_name = os.path.basename(caller_frame[1].filename)
 
         # 在函数执行前打印开始日志
-        logging.info(f"文件: {file_name} 函数: {func.__name__} 开始执行...")
+        logging.info(f"======【START】  文件: {file_name} 函数: {func.__name__} 开始执行  ======")
 
         start_time = time.time()
         try:
@@ -98,7 +98,7 @@ def timing_decorator(func):
         execution_time = end_time - start_time
 
         # 在函数执行后打印执行时间日志
-        logging.info(f"文件: {file_name} 函数: {func.__name__} 执行时间: {execution_time:.2f} 秒")
+        logging.info(f"======【END】  文件: {file_name} 函数: {func.__name__} 执行时间: {execution_time:.2f} 秒   ======")
         return result
     return wrapper
 

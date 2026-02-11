@@ -215,7 +215,6 @@ class AkshareDownloader:
                 merge_on=merge_on
             )
 
-            logging.info(f"数据已保存到MySQL表 {table_name}")
             return True
 
         except Exception as e:

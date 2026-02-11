@@ -54,7 +54,7 @@ class SaveInsightData:
         common.login(market_service, user, password)
 
 
-    # @timing_decorator
+    @timing_decorator
     def get_stock_codes(self):
         """
         获取当日的stock代码合集
@@ -96,7 +96,7 @@ class SaveInsightData:
         )
 
 
-    # @timing_decorator
+    @timing_decorator
     def get_stock_kline(self):
         """
         根据当日上市的stock_codes，来获得全部(去除ST|退|B)股票的历史数据
@@ -182,7 +182,7 @@ class SaveInsightData:
             logging.info('    get_stock_kline 的返回值为空值')
 
 
-    # @timing_decorator
+    @timing_decorator
     def get_index_a_share(self):
         """
         000001.SH    上证指数
@@ -262,7 +262,7 @@ class SaveInsightData:
             logging.info('    get_index_a_share 的返回值为空值')
 
 
-    # @timing_decorator
+    @timing_decorator
     def get_limit_summary(self):
         """
         大盘涨跌停分析数据
@@ -340,7 +340,7 @@ class SaveInsightData:
             logging.info('    get_limit_summary 的返回值为空值')
 
 
-    # @timing_decorator
+    @timing_decorator
     def get_future_inside(self):
         """
         期货市场数据
@@ -418,7 +418,7 @@ class SaveInsightData:
             logging.info('    get_future_inside 的返回值为空值')
 
 
-    # @timing_decorator
+    @timing_decorator
     def get_chouma_datas(self):
         """
         1.获取每日的筹码分布数据
@@ -523,7 +523,7 @@ class SaveInsightData:
             logging.info('    get_chouma_datas 的返回值为空值')
 
 
-    # @timing_decorator
+    @timing_decorator
     def get_Ashare_industry_overview(self):
         """
         获取行业信息 申万三级 的行业信息
@@ -575,7 +575,7 @@ class SaveInsightData:
             logging.info('    get_Ashare_industry_overview 的返回值为空值')
 
 
-    # @timing_decorator
+    @timing_decorator
     def get_Ashare_industry_detail(self):
         """
         获取股票的行业信息 申万三级 的行业信息
@@ -648,7 +648,7 @@ class SaveInsightData:
             logging.info('    get_Ashare_industry_detail 的返回值为空值')
 
 
-    # @timing_decorator
+    @timing_decorator
     def get_shareholder_north_bound_num(self):
         """
         获取 股东数 & 北向资金情况
