@@ -249,7 +249,8 @@ class CalDWD:
         计算股票基础信息，汇总表，名称、编码、板块、股本、市值、净资产
         """
         #  1.获取日期
-        ymd = DateUtility.today()
+        # ymd = DateUtility.today()
+        ymd = DateUtility.next_day(-1)
 
         # 2.定义 SQL 模板
         sql_statements_template = [
@@ -487,20 +488,20 @@ class CalDWD:
 
     def setup(self):
 
-        # 聚合股票的板块，把各个板块数据聚合在一起   周末手动执行
-        self.cal_ashare_plate()
-
-        # 计算股票所归属的交易所，判断其是主办、创业板、科创板、北交所等等
-        self.cal_stock_exchange()
-
-        # 全量票的最新股东数数据
-        self.cal_shareholder_num_latest()
+        # # 聚合股票的板块，把各个板块数据聚合在一起   周末手动执行
+        # self.cal_ashare_plate()
+        #
+        # # 计算股票所归属的交易所，判断其是主办、创业板、科创板、北交所等等
+        # self.cal_stock_exchange()
+        #
+        # # 全量票的最新股东数数据
+        # self.cal_shareholder_num_latest()
 
         # 计算股票基础信息，汇总表，名称、编码、板块、股本、市值、净资产
         self.cal_stock_base_info()
 
-        # 计算一只股票是否 涨停 / 跌停
-        self.cal_ZT_DT()
+        # # 计算一只股票是否 涨停 / 跌停
+        # self.cal_ZT_DT()
 
 
 if __name__ == '__main__':
