@@ -108,7 +108,7 @@ class AkshareDownloader:
                         try:
                             params = {symbol_param: stock_code, **kwargs}
                             df = ak_function(**params)
-                            sleep_time = random.uniform(1.1, 1.6)
+                            sleep_time = random.uniform(2.1, 2.6)
                             time.sleep(sleep_time)
 
                             if df is not None:

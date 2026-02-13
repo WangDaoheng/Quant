@@ -47,7 +47,7 @@ class SaveInsightData24PM:
         common.login(market_service, user, password)
 
 
-    @timing_decorator
+    # @timing_decorator
     def get_index_a_share(self):
         """
         000001.SH    上证指数
@@ -67,12 +67,11 @@ class SaveInsightData24PM:
         #  1.当月数据的起止时间
         start_date = DateUtility.first_day_of_month()
         end_date = DateUtility.next_day(-1)
-
         # start_date = '20240901'
         # end_date = '20240930'
 
         start_date = datetime.strptime(start_date, '%Y%m%d')
-        end_date = datetime.strptime(end_date, '%Y%m%d')
+        end_date = datetime.strptime(end_date, '%Y%m%d').replace(hour=23, minute=59, second=59)
 
         #  2.查询标的
         index_dict = {"000001.SH": "上证指数"
@@ -127,7 +126,7 @@ class SaveInsightData24PM:
             logging.info('    get_index_a_share 的返回值为空值')
 
 
-    @timing_decorator
+    # @timing_decorator
     def get_future_inside(self):
         """
         期货市场数据
@@ -158,7 +157,7 @@ class SaveInsightData24PM:
         time_end_date = DateUtility.next_day(-1)
 
         time_start_date = datetime.strptime(time_start_date, '%Y%m%d')
-        time_end_date = datetime.strptime(time_end_date, '%Y%m%d')
+        time_end_date = datetime.strptime(time_end_date, '%Y%m%d').replace(hour=23, minute=59, second=59)
 
         #  2.查询标的
         index_list = ["AU{}.SHF", "AG{}.SHF", "CU{}.SHF", "EC{}.INE", "SC{}.INE", "V{}.DCE"]
@@ -205,7 +204,7 @@ class SaveInsightData24PM:
             logging.info('    get_future_inside 的返回值为空值')
 
 
-    @timing_decorator
+    # @timing_decorator
     def get_shareholder_num(self):
         """
         获取 股东数 & 北向资金情况
@@ -214,10 +213,10 @@ class SaveInsightData24PM:
         #  1.起止时间 查询起始时间写 2月前的月初
         time_start_date = DateUtility.first_day_of_month(-2)
         #  结束时间必须大于等于当日，这里取明天的日期，如果是凌晨执行，就可以取当日了
-        time_end_date = DateUtility.today()
+        time_end_date = DateUtility.next_day(-1)
 
         time_start_date = datetime.strptime(time_start_date, '%Y%m%d')
-        time_end_date = datetime.strptime(time_end_date, '%Y%m%d')
+        time_end_date = datetime.strptime(time_end_date, '%Y%m%d').replace(hour=23, minute=59, second=59)
 
         #  2.行业信息的总和dataframe
         shareholder_num_df = pd.DataFrame()

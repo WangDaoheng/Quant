@@ -35,7 +35,8 @@ class CalDWD:
         聚合股票的板块，把各个板块数据聚合在一起
         """
         #  1.获取日期
-        ymd = DateUtility.today()
+        # ymd = DateUtility.today()
+        ymd = DateUtility.next_day(-1)
 
         # 2.定义 SQL 模板
         sql_statements_template = [
@@ -159,7 +160,8 @@ class CalDWD:
         计算股票所归属的交易所，判断其是主办、创业板、科创板、北交所等等
         """
         #  1.获取日期
-        ymd = DateUtility.today()
+        # ymd = DateUtility.today()
+        ymd = DateUtility.next_day(-1)
 
         # 2.定义 SQL 模板
         sql_statements_template = [
@@ -202,7 +204,8 @@ class CalDWD:
         计算每个股票的最新股东数数据（按股票代码分组，更准确）
         """
         # 1.获取日期
-        ymd = DateUtility.today()
+        # ymd = DateUtility.today()
+        ymd = DateUtility.next_day(-1)
 
         # 2.定义 SQL 模板
         sql_statements_template = [
@@ -251,6 +254,7 @@ class CalDWD:
         #  1.获取日期
         # ymd = DateUtility.today()
         ymd = DateUtility.next_day(-1)
+        # ymd = '20260211'
 
         # 2.定义 SQL 模板
         sql_statements_template = [
@@ -267,16 +271,16 @@ class CalDWD:
                  ,tkline.change_pct
                  ,tkline.volume
                  ,tkline.trading_amount
-                 ,tpepb.circulation_market                 AS  market_value
-                 ,tpepb.total_market                       AS  total_value
-                 ,tpepb.total_shares                       AS  total_capital
-                 ,tpepb.circulation_shares                 AS  float_capital
-                 ,tshare.total_sh                          AS  shareholder_num
-                 ,tshare.pct_of_total_sh                   AS  pct_of_total_sh
-                 ,tpepb.pb                                 AS  pb
-                 ,tpepb.pe_ttm                             AS  pe
-                 ,texchange.market                         AS  market
-                 ,tplate.plate_names                       AS  plate_names
+                 ,IFNULL(tpepb.circulation_market, 0)                 AS  market_value
+                 ,IFNULL(tpepb.total_market, 0)                       AS  total_value
+                 ,IFNULL(tpepb.total_shares, 0)                       AS  total_capital
+                 ,IFNULL(tpepb.circulation_shares, 0)                 AS  float_capital
+                 ,tshare.total_sh                                     AS  shareholder_num
+                 ,tshare.pct_of_total_sh                              AS  pct_of_total_sh
+                 ,IFNULL(tpepb.pb, 0)                                 AS  pb
+                 ,IFNULL(tpepb.pe_ttm, 0)                             AS  pe
+                 ,texchange.market                                    AS  market
+                 ,tplate.plate_names                                  AS  plate_names
             from  
             ( select
                   stock_code
@@ -310,6 +314,7 @@ class CalDWD:
                  ,pb                   -- 市净率
                  ,peg                  -- PEG值
               from  quant.ods_akshare_stock_value_em
+              where ymd=(select max(ymd) from quant.ods_akshare_stock_value_em)
             ) tpepb
             ON SUBSTRING_INDEX(tkline.stock_code, '.', 1) = tpepb.stock_code
             left join 
@@ -321,7 +326,8 @@ class CalDWD:
                  ,avg_share      
                  ,pct_of_total_sh
                  ,pct_of_avg_sh  
-              from  quant.dwd_shareholder_num_latest 
+              from  quant.dwd_shareholder_num_latest
+              where ymd=(select max(ymd) from quant.dwd_shareholder_num_latest)
             ) tshare
             on tkline.stock_code = tshare.stock_code
             left join 
@@ -367,13 +373,13 @@ class CalDWD:
         Returns:
         """
         # 1.确定起止日期
-        time_start_date = DateUtility.next_day(-7)
-        time_end_date = DateUtility.next_day(0)
+        time_start_date = DateUtility.next_day(-10)
+        time_end_date = DateUtility.next_day(-1)
 
         # 2.获取起止日期范围内的日K线数据
         df = mysql_utils.data_from_mysql_to_dataframe(user=origin_user, password=origin_password, host=origin_host,
                                                       database=origin_database,
-                                                      table_name='ods_stock_kline_daily_insight',
+                                                      table_name='ods_stock_kline_daily_ts',
                                                       start_date=time_start_date, end_date=time_end_date)
 
         if df.empty:
@@ -488,20 +494,20 @@ class CalDWD:
 
     def setup(self):
 
-        # # 聚合股票的板块，把各个板块数据聚合在一起   周末手动执行
-        # self.cal_ashare_plate()
-        #
-        # # 计算股票所归属的交易所，判断其是主办、创业板、科创板、北交所等等
-        # self.cal_stock_exchange()
-        #
-        # # 全量票的最新股东数数据
-        # self.cal_shareholder_num_latest()
+        # 聚合股票的板块，把各个板块数据聚合在一起   周末手动执行
+        self.cal_ashare_plate()
+
+        # 计算股票所归属的交易所，判断其是主办、创业板、科创板、北交所等等
+        self.cal_stock_exchange()
+
+        # 全量票的最新股东数数据
+        self.cal_shareholder_num_latest()
 
         # 计算股票基础信息，汇总表，名称、编码、板块、股本、市值、净资产
         self.cal_stock_base_info()
 
-        # # 计算一只股票是否 涨停 / 跌停
-        # self.cal_ZT_DT()
+        # 计算一只股票是否 涨停 / 跌停
+        self.cal_ZT_DT()
 
 
 if __name__ == '__main__':

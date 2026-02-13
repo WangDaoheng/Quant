@@ -298,7 +298,6 @@ class SaveInsightData:
 
         #  2.请求insight数据   get_kline
         res = get_change_summary(market=["a_share"], trading_day=[start_date, end_date])
-        res.to_csv('./res.csv')
 
         #  3.limit_summary 的总和dataframe
         limit_summary_df = pd.DataFrame()

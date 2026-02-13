@@ -369,12 +369,12 @@ CREATE TABLE quant.ods_akshare_stock_value_em (
     ,circulation_market       double                  COMMENT '流通市值(元)'
     ,total_shares             double                  COMMENT '总股本(股)'
     ,circulation_shares       double                  COMMENT '流通股本(股)'
-    ,pe_ttm                   float                   COMMENT 'PE(TTM)'
-    ,pe_static                float                   COMMENT 'PE(静)'
-    ,pb                       float                   COMMENT '市净率'
-    ,peg                      float                   COMMENT 'PEG值'
-    ,pcf                      float                   COMMENT '市现率'
-    ,ps                       float                   COMMENT '市销率'
+    ,pe_ttm                   float(12,2)             COMMENT 'PE(TTM)'
+    ,pe_static                float(12,2)             COMMENT 'PE(静)'
+    ,pb                       float(12,2)             COMMENT '市净率'
+    ,peg                      float(12,2)             COMMENT 'PEG值'
+    ,pcf                      float(12,2)             COMMENT '市现率'
+    ,ps                       float(12,2)             COMMENT '市销率'
     ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
 ) COMMENT='股票基本面数据_估值数据';
 
