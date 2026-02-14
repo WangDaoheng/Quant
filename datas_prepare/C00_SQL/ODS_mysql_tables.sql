@@ -438,8 +438,6 @@ CREATE TABLE quant.ods_akshare_stock_yjkb_em (
     ,asset_per_share          float                   COMMENT '每股净资产'
     ,roe                      double                  COMMENT '净资产收益率'
     ,industry                 varchar(100)            COMMENT '所处行业'
-    ,market_board             varchar(50)             COMMENT '市场板块'
-    ,securities_type          varchar(50)             COMMENT '证券类型'
     ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
 ) COMMENT='股票基本面数据_业绩快报数据';
 
@@ -451,11 +449,11 @@ CREATE TABLE quant.ods_akshare_stock_yjyg_em (
     ,serial_num               varchar(50)             COMMENT '序号'
     ,stock_code               varchar(50)             COMMENT '股票代码'
     ,stock_name               varchar(50)             COMMENT '股票简称'
-    ,forecast_index           double                  COMMENT '预测指标'
-    ,performance_change       double                  COMMENT '业绩变动'
+    ,forecast_index           varchar(200)            COMMENT '预测指标'
+    ,performance_change       text                    COMMENT '业绩变动'
     ,forecast_value           double                  COMMENT '预测数值(元)'
     ,change_pct               double                  COMMENT '业绩变动幅度(%)'
-    ,change_reason            varchar(255)            COMMENT '业绩变动原因'
+    ,change_reason            text            COMMENT '业绩变动原因'
     ,forecast_type            varchar(50)             COMMENT '预告类型'
     ,last_year_value          double                  COMMENT '上年同期值(元)'
     ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)

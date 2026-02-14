@@ -1,22 +1,15 @@
 
-import pymysql
 from sqlalchemy import create_engine, text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import sessionmaker
 import gc
-from datetime import datetime, timedelta
-from typing import List, Optional
 import traceback  # 用于打印详细的错误堆栈
-
 import pandas as pd
 import numpy as np
 import logging
-import platform
+import time
 
 import CommonProperties.Base_Properties as base_properties
-import CommonProperties.Base_utils as base_utils
-from CommonProperties.set_config import setup_logging_config
-
 
 ###################  mysql 配置   ######################
 local_user = base_properties.local_mysql_user
@@ -61,52 +54,100 @@ def check_data_written(total_rows, table_name, engine):
         return False
 
 
-def data_from_dataframe_to_mysql(user, password, host, database='quant', df=pd.DataFrame(), table_name='', merge_on=[]):
+# def data_from_dataframe_to_mysql(user, password, host, database='quant', df=pd.DataFrame(), table_name='', merge_on=[]):
+#     """
+#     把 dataframe 类型数据写入 mysql 表里面, 同时调用了
+#     Args:
+#         df:
+#         table_name:
+#         database:
+#     Returns:
+#     """
+#     db_url = f'mysql+pymysql://{user}:{password}@{host}:3306/{database}'
+#     engine = create_engine(db_url)
+#
+#     # 对输入的df的空值做处理
+#     df = df.replace({np.nan: None})
+#
+#     # 确保 df 中的字段列顺序与表中的列顺序一致
+#     columns = df.columns.tolist()
+#
+#     # 检查是否存在重复数据，并将其去除
+#     if merge_on:
+#         df.drop_duplicates(subset=merge_on, keep='first', inplace=True)
+#
+#     total_rows = df.shape[0]
+#     if total_rows == 0:
+#         logging.info(f"所有数据已存在，无需插入新的数据到 {host} 的 {table_name} 表中。")
+#         return
+#
+#     # 使用 INSERT IGNORE 来去重
+#     insert_sql = f"""
+#     INSERT IGNORE INTO {table_name} ({', '.join(columns)})
+#     VALUES ({', '.join([f':{col}' for col in columns])});
+#     """
+#
+#     # 转换 df 为一个可以传递给 executemany 的字典列表
+#     values = df.to_dict('records')
+#
+#     with engine.connect() as connection:
+#         transaction = connection.begin()
+#         try:
+#             connection.execute(text(insert_sql), values)
+#             transaction.commit()
+#             logging.info(f"成功插入 {total_rows} 行数据到 {host} 的 {table_name} 表中。")
+#         except Exception as e:
+#             transaction.rollback()
+#             logging.error(f"写入 {host} 的表：{table_name} 时发生错误: {e}")
+#             raise
+
+
+def data_from_dataframe_to_mysql(user, password, host, database='quant', df=pd.DataFrame(), table_name='', merge_on=[],
+                                 batch_size=20000):
     """
-    把 dataframe 类型数据写入 mysql 表里面, 同时调用了
-    Args:
-        df:
-        table_name:
-        database:
-    Returns:
+    把 dataframe 类型数据分批写入 mysql 表里面，避免锁表
     """
+    if df.empty:
+        logging.info(f"DataFrame为空，跳过插入 {table_name}")
+        return 0
+
+    # 数据处理
+    df = df.replace({np.nan: None})
+    if merge_on:
+        df = df.drop_duplicates(subset=merge_on, keep='first')
+
+    total_rows = len(df)
+    if total_rows == 0:
+        return 0
+
+    # 分批插入
     db_url = f'mysql+pymysql://{user}:{password}@{host}:3306/{database}'
     engine = create_engine(db_url)
-
-    # 对输入的df的空值做处理
-    df = df.replace({np.nan: None})
-
-    # 确保 df 中的字段列顺序与表中的列顺序一致
     columns = df.columns.tolist()
 
-    # 检查是否存在重复数据，并将其去除
-    if merge_on:
-        df.drop_duplicates(subset=merge_on, keep='first', inplace=True)
-
-    total_rows = df.shape[0]
-    if total_rows == 0:
-        logging.info(f"所有数据已存在，无需插入新的数据到 {host} 的 {table_name} 表中。")
-        return
-
-    # 使用 INSERT IGNORE 来去重
+    # 修复1: 使用 :col_name 格式的占位符
+    placeholders = ', '.join([f':{col}' for col in columns])
     insert_sql = f"""
     INSERT IGNORE INTO {table_name} ({', '.join(columns)})
-    VALUES ({', '.join([f':{col}' for col in columns])});
+    VALUES ({placeholders})
     """
 
-    # 转换 df 为一个可以传递给 executemany 的字典列表
-    values = df.to_dict('records')
+    inserted = 0
+    for i in range(0, total_rows, batch_size):
+        batch = df.iloc[i:i + batch_size]
+        batch_dict = batch.to_dict('records')
 
-    with engine.connect() as connection:
-        transaction = connection.begin()
-        try:
-            connection.execute(text(insert_sql), values)
-            transaction.commit()
-            logging.info(f"成功插入 {total_rows} 行数据到 {host} 的 {table_name} 表中。")
-        except Exception as e:
-            transaction.rollback()
-            logging.error(f"写入 {host} 的表：{table_name} 时发生错误: {e}")
-            raise
+        # 修复2: 使用 engine.begin() 自动处理事务
+        with engine.begin() as conn:
+            result = conn.execute(text(insert_sql), batch_dict)
+            inserted += result.rowcount
+
+        logging.info(f"已插入 {inserted}/{total_rows} 条")
+        time.sleep(0.5)
+
+    engine.dispose()
+    logging.info(f"完成：共插入 {inserted} 条到 {table_name}")
+    return inserted
 
 
 def data_from_mysql_to_dataframe(user, password, host, database='quant', table_name='', start_date=None, end_date=None, cols=None):

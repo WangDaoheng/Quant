@@ -202,26 +202,68 @@ class AkshareDownloader:
             return pd.DataFrame()
 
 
+    # def _save_to_mysql(self, df, table_name, merge_on):
+    #     """保存数据到MySQL"""
+    #     try:
+    #         mysql_utils.data_from_dataframe_to_mysql(
+    #             user=self.origin_user,
+    #             password=self.origin_password,
+    #             host=self.origin_host,
+    #             database=self.origin_database,
+    #             df=df,
+    #             table_name=table_name,
+    #             merge_on=merge_on
+    #         )
+    #
+    #         return True
+    #
+    #     except Exception as e:
+    #         logging.error(f"保存到MySQL失败: {str(e)}")
+    #         import traceback
+    #         logging.error(traceback.format_exc())
+    #         return False
+
     def _save_to_mysql(self, df, table_name, merge_on):
-        """保存数据到MySQL"""
+        """保存数据到MySQL，失败时自动保存csv"""
         try:
-            mysql_utils.data_from_dataframe_to_mysql(
+            if df.empty:
+                logging.warning(f"{table_name} DataFrame为空，跳过插入")
+                return True
+
+            # 尝试插入数据
+            inserted_count = mysql_utils.data_from_dataframe_to_mysql(
                 user=self.origin_user,
                 password=self.origin_password,
                 host=self.origin_host,
                 database=self.origin_database,
                 df=df,
                 table_name=table_name,
-                merge_on=merge_on
+                merge_on=merge_on,
+                batch_size=20000
             )
 
+            logging.info(f"成功插入 {inserted_count} 行数据到 {table_name}")
             return True
 
         except Exception as e:
-            logging.error(f"保存到MySQL失败: {str(e)}")
+            # 保存失败的数据到csv
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            filename = f"failed_data_{table_name}_{timestamp}.csv"
+
+            try:
+                df.to_csv(filename, index=False, encoding='utf-8')
+                logging.error(f"数据插入失败，已保存到文件: {filename}")
+                logging.error(f"失败原因: {str(e)}")
+            except:
+                # 如果连保存csv都失败，至少记录行数
+                logging.error(f"数据插入失败，且无法保存csv，DataFrame行数: {len(df)}")
+
+            # 记录完整错误堆栈
             import traceback
-            logging.error(traceback.format_exc())
+            logging.error(f"完整错误信息:\n{traceback.format_exc()}")
+
             return False
+
 
     def download_single_to_mysql(self,
                                  ak_function_name,

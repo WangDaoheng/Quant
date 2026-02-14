@@ -213,7 +213,7 @@ class SaveAkshareDailyData:
         )
 
 
-    @timing_decorator
+    # @timing_decorator
     def download_stock_yjkb_em(self):
         """
         下载业绩快报数据 - ods_akshare_stock_yjkb_em
@@ -223,7 +223,7 @@ class SaveAkshareDailyData:
         try:
             # 获取当前年份和过去几年的数据
             current_year = int(DateUtility.today()[:4])
-            years = list(range(2020, current_year + 1))  # 从2020年开始
+            years = list(range(2024, current_year + 1))  # 从2024年开始，库里已有2020数据
 
             # 季度对应的日期后缀
             quarter_dates = ["0331", "0630", "0930", "1231"]
@@ -262,15 +262,12 @@ class SaveAkshareDailyData:
                 '每股净资产': 'asset_per_share',
                 '净资产收益率': 'roe',
                 '所处行业': 'industry',
-                '公告日期': 'ymd',
-                '市场板块': 'market_board',
-                '证券类型': 'securities_type'
+                '公告日期': 'ymd'
             }
 
             numeric_columns = [
                 'serial_num', 'eps', 'income', 'income_last_year', 'income_yoy', 'income_qoq',
-                'profit', 'profit_last_year', 'profit_yoy', 'profit_qoq',
-                'asset_per_share', 'roe'
+                'profit', 'profit_last_year', 'profit_yoy', 'profit_qoq', 'asset_per_share', 'roe'
             ]
 
             # 处理数据
@@ -298,7 +295,7 @@ class SaveAkshareDailyData:
             return False
 
 
-    @timing_decorator
+    # @timing_decorator
     def download_stock_yjyg_em(self):
         """
         下载业绩预告数据 - ods_akshare_stock_yjyg_em
@@ -308,7 +305,7 @@ class SaveAkshareDailyData:
         try:
             # 获取当前年份和过去几年的数据
             current_year = int(DateUtility.today()[:4])
-            years = list(range(2020, current_year + 1))  # 从2020年开始
+            years = list(range(2020, current_year + 1))  # 从2024年开始，库里已有2020数据
 
             # 季度对应的日期后缀
             quarter_dates = ["0331", "0630", "0930", "1231"]
@@ -345,10 +342,7 @@ class SaveAkshareDailyData:
                 '上年同期值': 'last_year_value'
             }
 
-            numeric_columns = [
-                'serial_num', 'forecast_index', 'performance_change', 'forecast_value',
-                'change_pct', 'last_year_value'
-            ]
+            numeric_columns = ['serial_num', 'forecast_value', 'change_pct', 'last_year_value']
 
             # 处理数据
             processed_df = self.downloader._process_data(
@@ -375,7 +369,7 @@ class SaveAkshareDailyData:
             return False
 
 
-    @timing_decorator
+    # @timing_decorator
     def download_stock_a_high_low_statistics(self):
         """
         下载大盘高低统计数据 - ods_akshare_stock_a_high_low_statistics
@@ -1284,22 +1278,22 @@ class SaveAkshareDailyData:
         # 1. 获取股票代码列表（用于需要股票代码的接口）
         self.get_stock_codes()
 
-        # # 2. 下载股票估值数据            封堵IP 办公IP可用 但下载800w+ 记录 放到周末跑
+        # # 2. 下载股票估值数据            封堵IP 办公IP可用 但下载800w+ 记录 【周末跑】
         # self.download_stock_value_em()
         #
-        # # 3. 下载股东户数数据（需要股票代码，分批次处理）   可用    周末跑
+        # # 3. 下载股东户数数据（需要股票代码，分批次处理）   可用              【周末跑】
         # self.download_stock_zh_a_gdhs_detail_em()
         #
         # # 4. 下载筹码数据（需要股票代码，分批次处理）    封堵IP   不可用
         # self.download_stock_cyq_em()
         #
-        # 5. 下载业绩快报数据（指定日期）         可用  日跑
-        self.download_stock_yjkb_em()
+        # 5. 下载业绩快报数据（指定日期）         【可用】  日跑
+        # self.download_stock_yjkb_em()
 
-        # 6. 下载业绩预告数据（指定日期）         可用  日跑
+        # 6. 下载业绩预告数据（指定日期）         【可用】  日跑
         self.download_stock_yjyg_em()
 
-        # 7. 下载大盘高低统计数据               可用  日跑
+        # 7. 下载大盘高低统计数据               【可用】  日跑
         self.download_stock_a_high_low_statistics()
         #
         # # 8. 下载个股行情数据（实时数据）     目前只能返回100条  IP封堵严重 不可用

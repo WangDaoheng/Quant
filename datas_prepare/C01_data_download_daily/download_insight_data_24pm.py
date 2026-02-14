@@ -208,7 +208,7 @@ class SaveInsightData24PM:
     def get_shareholder_num(self):
         """
         获取 股东数 & 北向资金情况
-        Returns:
+        Returns: 写入 ods_shareholder_num_now
         """
         #  1.起止时间 查询起始时间写 2月前的月初
         time_start_date = DateUtility.first_day_of_month(-2)

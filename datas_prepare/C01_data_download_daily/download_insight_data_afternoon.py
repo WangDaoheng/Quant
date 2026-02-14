@@ -58,7 +58,7 @@ class SaveInsightData:
     def get_stock_codes(self):
         """
         获取当日的stock代码合集
-        :return:
+        :return: 写入 ods_stock_code_daily_insight
          stock_code_df  [ymd	stock_code	stock_name	exchange]
         """
 
@@ -100,7 +100,7 @@ class SaveInsightData:
     def get_stock_kline(self):
         """
         根据当日上市的stock_codes，来获得全部(去除ST|退|B)股票的历史数据
-        :return:
+        :return: 【已废弃】
          stock_kline_df  [ymd	htsc_code	name	exchange]
         """
 
@@ -195,7 +195,7 @@ class SaveInsightData:
         399852.SZ    中证1000
         000688.SH    科创50
         当月至今的指数
-        Returns:
+        Returns:  写入 ods_index_a_share_insight_now
              index_a_share   [htsc_code 	time	frequency	open	close	high	low	volume	value]
         """
 
@@ -266,32 +266,14 @@ class SaveInsightData:
     def get_limit_summary(self):
         """
         大盘涨跌停分析数据
-        Args:
-            market:
-                1	sh_a_share	上海A股
-                2	sz_a_share	深圳A股
-                3	a_share	A股
-                4	a_share	B股
-                5	gem	创业
-                6	sme	中小板
-                7	star	科创板
-            trading_day: List<datetime>	交易日期范围，[start_date, end_date]
-
-        Returns: ups_downs_limit_count_up_limits
-                 ups_downs_limit_count_down_limits
-                 ups_downs_limit_count_pre_up_limits
-                 ups_downs_limit_count_pre_down_limits
-                 ups_downs_limit_count_pre_up_limits_average_change_percent
-
-                 [time	name	今日涨停	今日跌停	昨日涨停	昨日跌停	昨日涨停表现]
+        Returns: 写入 ods_stock_limit_summary_insight_now
+                 'today_ZT', 'today_DT', 'yesterday_ZT', 'yesterday_DT', 'yesterday_ZT_rate'
+                 [time	name	今日涨停	今日跌停	昨日涨停	昨日跌停	昨日涨停今日表现]
         """
 
         #  1.当月数据的起止时间
         start_date = DateUtility.first_day_of_month()
         end_date = DateUtility.today()
-
-        # start_date = '20240901'
-        # end_date = '20240930'
 
         start_date = datetime.strptime(start_date, '%Y%m%d')
         end_date = datetime.strptime(end_date, '%Y%m%d')
@@ -363,7 +345,7 @@ class SaveInsightData:
         MA2409.ZCE    甲醇         (找不到)
         目前主连找不到数据，只有月份的，暂时用 t+2 月去代替主连吧
 
-        Returns:
+        Returns: 写入 ods_future_inside_insight_now
         """
         #  1.起止时间 查询起始时间写2月前的月初第1天
         time_start_date = DateUtility.first_day_of_month(-2)
@@ -422,7 +404,7 @@ class SaveInsightData:
         """
         1.获取每日的筹码分布数据
         2.找到那些当日能够拿到筹码数据的codes
-        :return:
+        :return: 写入 ods_stock_chouma_insight
         """
         #  1.起止时间 查询起始时间写本月月初
         time_start_date = DateUtility.first_day_of_month()
@@ -499,9 +481,6 @@ class SaveInsightData:
                     .apply(lambda x: round(x * 10000, 2) if x < 1 else x)
                 )
 
-            # ========== 核心修改2：修复applymap已弃用警告 ==========
-            # 原代码：chouma_total_df[cols_to_clean] = chouma_total_df[cols_to_clean].applymap(lambda x: f"{x:.2f}")
-            # 修复方案1：如果是多列，用apply + map（兼容所有pandas版本）
             chouma_total_df[cols_to_clean] = chouma_total_df[cols_to_clean].apply(
                 lambda s: s.map(lambda x: f"{x:.2f}")
             )
@@ -526,14 +505,11 @@ class SaveInsightData:
     def get_Ashare_industry_overview(self):
         """
         获取行业信息 申万三级 的行业信息
-        :return:
+        :return: 写入 ods_astock_industry_overview
          industry_overview  ['ymd', 'classified', 'industry_name', 'industry_code', 'l1_code', 'l1_name', 'l2_code', 'l2_name', 'l3_code', 'l3_name']
         """
-
         #  1.当月数据的起止时间
         time_today = DateUtility.today()
-        # time_today = '20240930'
-
         time_today = datetime.strptime(time_today, '%Y%m%d')
 
         #  2.行业信息的总和dataframe
@@ -578,7 +554,7 @@ class SaveInsightData:
     def get_Ashare_industry_detail(self):
         """
         获取股票的行业信息 申万三级 的行业信息
-        :return:
+        :return: 写入 ods_astock_industry_detail
          industry_detail  ['ymd', 'htsc_code', 'name', 'industry_name', 'industry_code', 'l1_code', 'l1_name', 'l2_code', 'l2_name', 'l3_code', 'l3_name']
         """
 
@@ -651,7 +627,7 @@ class SaveInsightData:
     def get_shareholder_north_bound_num(self):
         """
         获取 股东数 & 北向资金情况
-        Returns:
+        Returns: 写入 ods_shareholder_num_now
         """
         #  1.起止时间 查询起始时间写 2月前的月初
         time_start_date = DateUtility.first_day_of_month(-2)
@@ -769,16 +745,16 @@ class SaveInsightData:
         #  除去 ST |  退  | B 的股票集合
         self.get_stock_codes()
 
-        # #  获取上述股票的当月日K  使用tushare 数据以便于 17点获取，不使用该接口了
+        # #  获取上述股票的当月日K  【已废弃，现使用 get_stock_kline_tushare() 】
         # self.get_stock_kline()
 
-        # #  获取主要股指    放到凌晨执行
+        # #  获取主要股指     【放到凌晨执行】
         # self.get_index_a_share()
 
         #  大盘涨跌概览
         self.get_limit_summary()
 
-        # #  期货__内盘      放到凌晨执行
+        # #  期货__内盘      【放到凌晨执行】
         # self.get_future_inside()
 
         # 筹码概览
@@ -790,7 +766,7 @@ class SaveInsightData:
         # 获取A股的行业分类数据, 是stock_code & industry 关联后的大表数据
         self.get_Ashare_industry_detail()
 
-        # #  个股股东数        放到凌晨执行
+        # #  个股股东数      【放到凌晨执行】
         # self.get_shareholder_north_bound_num()
 
 
