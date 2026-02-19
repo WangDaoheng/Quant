@@ -33,10 +33,12 @@ class CalDWD:
     def cal_ashare_plate(self):
         """
         聚合股票的板块，把各个板块数据聚合在一起
+        写入  dwd_stock_a_total_plate
         """
         #  1.获取日期
         # ymd = DateUtility.today()
-        ymd = DateUtility.next_day(-1)
+        # ymd = DateUtility.next_day(-1)
+        ymd = '20260213'
 
         # 2.定义 SQL 模板
         sql_statements_template = [
@@ -127,7 +129,7 @@ class CalDWD:
              FROM  ods_akshare_board_concept_name_ths
              WHERE ymd ='{ymd}'
             ) tboard_name
-            LEFT JOIN
+            inner JOIN
             (SELECT 
                ymd         -- 数据日期
               ,board_name  -- 板块名称
@@ -154,16 +156,18 @@ class CalDWD:
             sql_statements=sql_statements)
 
 
-    @timing_decorator
+    # @timing_decorator
     def cal_stock_exchange(self):
         """
         计算股票所归属的交易所，判断其是主办、创业板、科创板、北交所等等
+        写入  ods_stock_exchange_market
         """
         #  1.获取日期
         # ymd = DateUtility.today()
-        ymd = DateUtility.next_day(-1)
+        # ymd = DateUtility.next_day(-1)
+        ymd = '20260213'
 
-        # 2.定义 SQL 模板
+        #  2.定义 SQL 模板
         sql_statements_template = [
             """
             DELETE  FROM quant.ods_stock_exchange_market WHERE  ymd = '{ymd}';
@@ -175,17 +179,43 @@ class CalDWD:
                ,t1.stock_code
                ,t1.stock_name
                ,CASE
-               WHEN t1.stock_code LIKE '300%' OR t1.stock_code LIKE '301%' THEN '创业板' 
-               WHEN t1.stock_code LIKE '8%'   OR t1.stock_code LIKE '4%'   THEN '北交所'  
-               WHEN t1.stock_code LIKE '000%' OR t1.stock_code LIKE '001%' OR t1.stock_code LIKE '002%' OR t1.stock_code LIKE '003%' THEN '深圳主板' 
-               WHEN t1.stock_code LIKE '688%' OR t1.stock_code LIKE '689%' THEN '科创板'  
-               WHEN t1.stock_code LIKE '600%' OR t1.stock_code LIKE '601%' OR t1.stock_code LIKE '603%' OR t1.stock_code LIKE '605%' THEN '上海主板' 
-               ELSE '未知类型' 
+                 -- 北交所 (30%涨跌停)
+                 WHEN t1.stock_code LIKE '%.BJ' 
+                      OR t1.stock_code LIKE '8%'   
+                      OR t1.stock_code LIKE '4%'   
+                      OR t1.stock_code LIKE '9%' THEN '北交所'
+
+                 -- 创业板 (20%涨跌停，深交所)
+                 WHEN t1.stock_code LIKE '300%' 
+                      OR t1.stock_code LIKE '301%' 
+                      OR t1.stock_code LIKE '302%' THEN '创业板'
+
+                 -- 科创板 (20%涨跌停，上交所)
+                 WHEN t1.stock_code LIKE '688%' 
+                      OR t1.stock_code LIKE '689%' THEN '科创板'
+
+                 -- 深交所主板 (10%涨跌停)
+                 WHEN t1.stock_code LIKE '%.SZ' 
+                      OR t1.stock_code LIKE '000%' 
+                      OR t1.stock_code LIKE '001%' 
+                      OR t1.stock_code LIKE '002%' 
+                      OR t1.stock_code LIKE '003%' 
+                      OR t1.stock_code LIKE '200%' THEN '深圳主板'
+
+                 -- 上交所主板 (10%涨跌停)
+                 WHEN t1.stock_code LIKE '%.SH' 
+                      OR t1.stock_code LIKE '600%' 
+                      OR t1.stock_code LIKE '601%' 
+                      OR t1.stock_code LIKE '603%' 
+                      OR t1.stock_code LIKE '605%' THEN '上海主板'
+
+                 ELSE '未知类型' 
                END AS market
             FROM quant.ods_stock_code_daily_insight     t1
             WHERE  t1.ymd = '{ymd}';
             """
         ]
+
 
         # 3.主程序替换 {ymd} 占位符
         sql_statements = [stmt.format(ymd=ymd) for stmt in sql_statements_template]
@@ -198,14 +228,16 @@ class CalDWD:
             database=origin_database,
             sql_statements=sql_statements)
 
-    @timing_decorator
+    # @timing_decorator
     def cal_shareholder_num_latest(self):
         """
         计算每个股票的最新股东数数据（按股票代码分组，更准确）
+        写入  dwd_shareholder_num_latest
         """
         # 1.获取日期
         # ymd = DateUtility.today()
-        ymd = DateUtility.next_day(-1)
+        ymd = '20260214'
+        # ymd = DateUtility.next_day(-1)
 
         # 2.定义 SQL 模板
         sql_statements_template = [
@@ -230,7 +262,9 @@ class CalDWD:
                     MAX(ymd) as latest_ymd
                 FROM quant.ods_shareholder_num
                 GROUP BY stock_code
-            ) t2 ON t1.stock_code = t2.stock_code AND t1.ymd = t2.latest_ymd;
+            ) t2 
+            ON t1.stock_code = t2.stock_code 
+            AND t1.ymd = t2.latest_ymd;
             """
         ]
 
@@ -253,8 +287,8 @@ class CalDWD:
         """
         #  1.获取日期
         # ymd = DateUtility.today()
-        ymd = DateUtility.next_day(-1)
-        # ymd = '20260211'
+        # ymd = DateUtility.next_day(-1)
+        ymd = '20260213'
 
         # 2.定义 SQL 模板
         sql_statements_template = [
@@ -494,11 +528,11 @@ class CalDWD:
 
     def setup(self):
 
-        # 聚合股票的板块，把各个板块数据聚合在一起   周末手动执行
-        self.cal_ashare_plate()
+        # # 聚合股票的板块，把各个板块数据聚合在一起   周末手动执行
+        # self.cal_ashare_plate()
 
         # 计算股票所归属的交易所，判断其是主办、创业板、科创板、北交所等等
-        self.cal_stock_exchange()
+        # self.cal_stock_exchange()
 
         # 全量票的最新股东数数据
         self.cal_shareholder_num_latest()

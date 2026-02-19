@@ -213,7 +213,7 @@ class SaveAkshareDailyData:
         )
 
 
-    # @timing_decorator
+    @timing_decorator
     def download_stock_yjkb_em(self):
         """
         下载业绩快报数据 - ods_akshare_stock_yjkb_em
@@ -295,7 +295,7 @@ class SaveAkshareDailyData:
             return False
 
 
-    # @timing_decorator
+    @timing_decorator
     def download_stock_yjyg_em(self):
         """
         下载业绩预告数据 - ods_akshare_stock_yjyg_em
@@ -369,7 +369,7 @@ class SaveAkshareDailyData:
             return False
 
 
-    # @timing_decorator
+    @timing_decorator
     def download_stock_a_high_low_statistics(self):
         """
         下载大盘高低统计数据 - ods_akshare_stock_a_high_low_statistics
@@ -1288,7 +1288,7 @@ class SaveAkshareDailyData:
         # self.download_stock_cyq_em()
         #
         # 5. 下载业绩快报数据（指定日期）         【可用】  日跑
-        # self.download_stock_yjkb_em()
+        self.download_stock_yjkb_em()
 
         # 6. 下载业绩预告数据（指定日期）         【可用】  日跑
         self.download_stock_yjyg_em()

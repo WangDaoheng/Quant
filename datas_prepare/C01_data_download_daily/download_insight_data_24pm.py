@@ -38,7 +38,7 @@ origin_host = base_properties.origin_mysql_host
 
 class SaveInsightData24PM:
 
-    @timing_decorator
+    # @timing_decorator
     def login(self):
         # 登陆前 初始化，没有密码可以访问进行自动化注册
         # https://findata-insight.htsc.com:9151/terminalWeb/#/signup
@@ -47,7 +47,7 @@ class SaveInsightData24PM:
         common.login(market_service, user, password)
 
 
-    # @timing_decorator
+    @timing_decorator
     def get_index_a_share(self):
         """
         000001.SH    上证指数
@@ -60,7 +60,7 @@ class SaveInsightData24PM:
         399852.SZ    中证1000
         000688.SH    科创50
         当月至今的指数
-        Returns:
+        Returns:  写入 ods_index_a_share_insight_now
              index_a_share   [htsc_code 	time	frequency	open	close	high	low	volume	value]
         """
 
@@ -126,7 +126,7 @@ class SaveInsightData24PM:
             logging.info('    get_index_a_share 的返回值为空值')
 
 
-    # @timing_decorator
+    @timing_decorator
     def get_future_inside(self):
         """
         期货市场数据
@@ -204,7 +204,7 @@ class SaveInsightData24PM:
             logging.info('    get_future_inside 的返回值为空值')
 
 
-    # @timing_decorator
+    @timing_decorator
     def get_shareholder_num(self):
         """
         获取 股东数 & 北向资金情况

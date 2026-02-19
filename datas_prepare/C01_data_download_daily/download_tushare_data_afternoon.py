@@ -30,6 +30,7 @@ class SaveTushareDailyData:
         """
         使用Tushare获取全部股票的历史日K线数据，并存入数据库
         简单优化：每5个批次（500次请求）后等待60秒
+        写入 ods_stock_kline_daily_ts
         """
         # 1. 获取日期范围
         today = DateUtility.today()
