@@ -397,13 +397,13 @@ def main():
     # selected_dirs = ["monitor", "dashboard", "review"]
 
     # 组合4：所有目录（默认）
-    selected_dirs = ['CommonProperties']  # 修改这一行即可
+    # selected_dirs = ['CommonProperties']  # 修改这一行即可
 
     # 示例1：只处理 backtest 和 CommonProperties（但仍会包含 C00_SQL）
     # selected_dirs = ["backtest", "CommonProperties"]
 
     # 示例2：完全不包含 datas_prepare（但仍会包含 C00_SQL）
-    # selected_dirs = ["backtest", "strategy", "monitor"]
+    selected_dirs = ["backtest", "CommonProperties", "dashboard", "monitor", "review", "strategy"]
     # ===============================================================
 
     # 检查项目目录是否存在

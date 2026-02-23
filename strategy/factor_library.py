@@ -8,25 +8,21 @@ logger = logging.getLogger(__name__)
 
 
 class FactorLibrary:
-    """因子计算库：基于现有MySQL数据计算PB/涨停/筹码等因子（支持多日回测）"""
+    """因子计算库：改为百分制输出"""
 
     def __init__(self):
-        # 复用MySQL配置
         self.user = Mysql_Utils.origin_user
         self.password = Mysql_Utils.origin_password
         self.host = Mysql_Utils.origin_host
         self.database = Mysql_Utils.origin_database
 
-    # @timing_decorator
-    def pb_factor(self, start_date, end_date, pb_percentile=0.3):
+    def pb_factor_score(self, start_date, end_date, reverse=True):
         """
-        计算PB因子：为日期范围内的每一天计算PB信号
-
-        返回:
-            DataFrame: ymd, stock_code, pb, pb_signal
+        计算PB因子百分制评分（0-100分）
+        简化版：有数据的计算排名，无数据的给0分
         """
         try:
-            # 从DWD层读取PB数据
+            # 获取PB数据
             pb_df = Mysql_Utils.data_from_mysql_to_dataframe(
                 user=self.user,
                 password=self.password,
@@ -39,383 +35,736 @@ class FactorLibrary:
             )
 
             if pb_df.empty:
-                logger.warning(f"PB因子数据为空: {start_date}~{end_date}")
-                return pd.DataFrame(columns=['ymd', 'stock_code', 'pb', 'pb_signal'])
+                return pd.DataFrame(columns=['ymd', 'stock_code', 'pb_score'])
 
-            # 数据预处理
-            pb_df = convert_ymd_format(pb_df, 'ymd')
-            pb_df = pb_df.dropna(subset=['pb'])
+            # 转换数值，无效值变为NaN
+            pb_df['pb'] = pd.to_numeric(pb_df['pb'], errors='coerce')
 
-            # 转换pb列为数值类型
-            try:
-                pb_df['pb'] = pd.to_numeric(pb_df['pb'], errors='coerce')
-            except:
-                pb_df['pb'] = pb_df['pb'].astype(str).str.extract(r'([\d\.]+)')[0].astype(float)
-
-            pb_df = pb_df.dropna(subset=['pb'])
-
-            # 按日计算分位数，标记低PB股票
+            # 按日期分组计算排名
             result_dfs = []
 
-            # 按日期分组处理
-            pb_df['ymd_dt'] = pd.to_datetime(pb_df['ymd'])
-            unique_dates = pb_df['ymd_dt'].unique()
+            for date, date_df in pb_df.groupby('ymd'):
+                date_df = date_df.copy()
 
-            for date in unique_dates:
-                date_str = date.strftime('%Y%m%d')
-                date_df = pb_df[pb_df['ymd_dt'] == date].copy()
+                # 获取有效数据的数量: valid_count
+                valid_mask = date_df['pb'].notna()
+                valid_count = valid_mask.sum()
 
-                if len(date_df) > 0:
-                    pb_threshold = date_df['pb'].quantile(pb_percentile)
-                    date_df['pb_signal'] = date_df['pb'] < pb_threshold
-                    date_df['ymd'] = date_str
+                if valid_count > 0:
+                    # 对有效数据计算百分制得分
+                    valid_data = date_df.loc[valid_mask].copy()
 
-                    result_dfs.append(date_df[['ymd', 'stock_code', 'pb', 'pb_signal']])
+                    if reverse:
+                        # PB越低分越高（价值因子）
+                        valid_data['pb_rank'] = valid_data['pb'].rank(method='min', ascending=True)
+                    else:
+                        valid_data['pb_rank'] = valid_data['pb'].rank(method='min', ascending=False)
 
-            if result_dfs:
-                result_df = pd.concat(result_dfs, ignore_index=True)
-                logger.info(f"PB因子计算完成：共{len(result_df)}条记录，日期范围{start_date}~{end_date}")
-                return result_df
-            else:
-                return pd.DataFrame(columns=['ymd', 'stock_code', 'pb', 'pb_signal'])
+                    max_rank = valid_data['pb_rank'].max()
+                    valid_data['pb_score'] = ((max_rank - valid_data['pb_rank']) / max_rank * 100).round(2)
+
+                    # 将得分合并回原数据框
+                    for idx in valid_data.index:
+                        date_df.loc[idx, 'pb_score'] = valid_data.loc[idx, 'pb_score']
+
+                # 无效数据给0分（简单处理）
+                date_df.loc[~valid_mask, 'pb_score'] = 0.0
+
+                result_dfs.append(date_df[['ymd', 'stock_code', 'pb_score']])
+
+            result_df = pd.concat(result_dfs, ignore_index=True)
+            logger.info(f"PB因子百分制计算完成：共{len(result_df)}条记录")
+            return result_df
 
         except Exception as e:
             logger.error(f"计算PB因子失败：{str(e)}")
-            return pd.DataFrame(columns=['ymd', 'stock_code', 'pb', 'pb_signal'])
+            return pd.DataFrame(columns=['ymd', 'stock_code', 'pb_score'])
 
-
-    # @timing_decorator
-    def zt_factor(self, start_date, end_date, lookback_days=5):
+    def zt_factor_score(self, start_date, end_date, lookback_days=5, scoring_method='linear'):
         """
-        计算涨停因子：为全量股票计算过去lookback_days个交易日内是否有涨停
-        返回:
-            DataFrame: ymd, stock_code, zt_signal
+        计算涨停因子百分制评分（0-100分）
+
+        Args:
+            start_date: 开始日期，格式'YYYYMMDD'
+            end_date: 结束日期，格式'YYYYMMDD'
+            lookback_days: 回溯交易日数量，默认5天
+            scoring_method: 评分方法
+                - 'linear': 线性得分，每涨停一次得 100/lookback_days 分
+                - 'log': 对数得分，涨停越多边际效应递减
+                - 'binary': 二元得分，有涨停就得100分
+
+        Returns:
+            DataFrame: 包含 ymd, stock_code, zt_score 三列
         """
         try:
-            # 1. 获取实际交易日列表
-            trading_days = self.get_trading_days(start_date, end_date)
-            if not trading_days:
-                logger.warning(f"交易日列表为空: {start_date}~{end_date}")
-                return pd.DataFrame(columns=['ymd', 'stock_code', 'zt_signal'])
-
-            logger.info(f"获取到 {len(trading_days)} 个交易日: {trading_days[0]} ~ {trading_days[-1]}")
-
-            # 2. 获取涨停记录（扩展到更早的日期以覆盖lookback_days窗口）
-            # 计算需要查询的起始日期：开始日期的前lookback_days天
-            start_dt = pd.to_datetime(start_date, format='%Y%m%d')
-            query_start_dt = start_dt - pd.Timedelta(days=lookback_days + 10)  # 加10天作为缓冲
+            # 1. 获取完整的交易日列表（包含历史数据）
+            # 计算合理的起始查询日期：往前推 lookback_days * 2 + 5 天
+            start_dt = pd.to_datetime(start_date)
+            query_start_dt = start_dt - pd.Timedelta(days=lookback_days * 2 + 5)
             query_start_date = query_start_dt.strftime('%Y%m%d')
 
-            logger.info(f"查询涨停记录：{query_start_date} ~ {end_date}（包含缓冲期）")
+            # 获取从查询起始日期到 end_date 的所有交易日
+            full_trading_days = self.get_trading_days(query_start_date, end_date)
+            if not full_trading_days:
+                logger.warning(f"未获取到交易日数据，范围: {query_start_date} - {end_date}")
+                return pd.DataFrame(columns=['ymd', 'stock_code', 'zt_score'])
 
+            logger.info(
+                f"完整交易日范围: {full_trading_days[0]} 到 {full_trading_days[-1]}, 共{len(full_trading_days)}个交易日")
+
+            # 2. 找到 start_date 在完整交易日列表中的位置
+            try:
+                start_idx = full_trading_days.index(start_date)
+            except ValueError:
+                # 如果 start_date 不是交易日，找第一个大于等于 start_date 的交易日
+                start_idx = None
+                for i, d in enumerate(full_trading_days):
+                    if d >= start_date:
+                        start_idx = i
+                        break
+                if start_idx is None:
+                    logger.warning(f"在交易日列表中找不到 {start_date} 及之后的日期")
+                    return pd.DataFrame(columns=['ymd', 'stock_code', 'zt_score'])
+
+            # 3. 找到 end_date 在完整交易日列表中的位置
+            try:
+                end_idx = full_trading_days.index(end_date)
+            except ValueError:
+                # 如果 end_date 不是交易日，找最后一个小于等于 end_date 的交易日
+                end_idx = len(full_trading_days) - 1
+                for i in range(len(full_trading_days) - 1, -1, -1):
+                    if full_trading_days[i] <= end_date:
+                        end_idx = i
+                        break
+
+            # 4. 截取需要计算的交易日范围（从 start_date 到 end_date）
+            target_trading_days = full_trading_days[start_idx:end_idx + 1]
+            logger.info(
+                f"目标计算区间: {target_trading_days[0]} 到 {target_trading_days[-1]}, 共{len(target_trading_days)}个交易日")
+
+            # 5. 计算需要查询涨停记录的起始日期（精确计算回溯期）
+            # 最早需要回溯的交易日索引
+            earliest_needed_idx = max(0, start_idx - lookback_days)
+            actual_query_start = full_trading_days[earliest_needed_idx]
+            logger.info(f"实际查询涨停记录范围: {actual_query_start} 到 {end_date} (回溯{lookback_days}个交易日)")
+
+            # 6. 获取涨停记录
             zt_df = Mysql_Utils.data_from_mysql_to_dataframe(
                 user=self.user,
                 password=self.password,
                 host=self.host,
                 database=self.database,
                 table_name='dwd_stock_zt_list',
-                start_date=query_start_date,
+                start_date=actual_query_start,
                 end_date=end_date,
                 cols=['ymd', 'stock_code']
             )
 
             if zt_df.empty:
-                logger.warning(f"涨停因子数据为空: {query_start_date}~{end_date}")
-                # 返回全量股票的False信号
-                return self._get_all_false_signals(trading_days, start_date, end_date)
+                logger.info(f"在范围 {actual_query_start} - {end_date} 内无涨停记录，全部返回0分")
+                return self._get_zero_scores(target_trading_days, start_date, end_date, 'zt_score')
 
-            # 3. 数据预处理
-            zt_df = convert_ymd_format(zt_df, 'ymd')
-            zt_df['ymd_dt'] = pd.to_datetime(zt_df['ymd'])
+            # 7. 确保日期列是字符串格式
+            if not pd.api.types.is_string_dtype(zt_df['ymd']):
+                zt_df['ymd'] = zt_df['ymd'].astype(str)
 
-            # 4. 为每只股票构建涨停日期列表
-            stock_zt_dates = {}
-            for stock in zt_df['stock_code'].unique():
-                stock_dates = zt_df[zt_df['stock_code'] == stock]['ymd_dt'].tolist()
-                stock_zt_dates[stock] = sorted(stock_dates)
-
-            # 5. 获取全量股票基本信息（参考pb_factor的实现）
-            # 使用最新的交易日获取股票池
-            latest_trading_day = trading_days[-1]
+            # 8. 获取全量股票列表
             stock_base_df = Mysql_Utils.data_from_mysql_to_dataframe(
                 user=self.user,
                 password=self.password,
                 host=self.host,
                 database=self.database,
                 table_name='dwd_ashare_stock_base_info',
-                start_date=latest_trading_day,
-                end_date=latest_trading_day,
-                cols=['ymd', 'stock_code', 'stock_name']
+                start_date=target_trading_days[-1],
+                end_date=target_trading_days[-1],
+                cols=['stock_code']
             )
 
             if stock_base_df.empty:
-                logger.warning(f"股票基本信息数据为空: {latest_trading_day}")
-                return pd.DataFrame(columns=['ymd', 'stock_code', 'zt_signal'])
+                logger.warning("未获取到股票基础信息")
+                return pd.DataFrame(columns=['ymd', 'stock_code', 'zt_score'])
 
-            # 获取全量股票列表
             all_stocks = stock_base_df['stock_code'].unique()
-            logger.info(f"获取到 {len(all_stocks)} 只全量股票")
+            logger.info(f"全量股票数量: {len(all_stocks)}")
 
-            # 6. 将交易日转换为datetime对象
-            trading_days_dt = [pd.to_datetime(d, format='%Y%m%d') for d in trading_days]
+            # 9. 为每只股票构建涨停字典
+            stock_zt_dict = {}
+            for _, row in zt_df.iterrows():
+                stock = row['stock_code']
+                date = row['ymd']
+                if stock not in stock_zt_dict:
+                    stock_zt_dict[stock] = []
+                stock_zt_dict[stock].append(date)
 
-            # 7. 为每只股票的每个交易日计算涨停信号
+            logger.info(f"有涨停记录的股票数量: {len(stock_zt_dict)}")
+
+            # 10. 为每个目标交易日预先计算回溯起始日期（使用完整交易日列表）
+            lookback_start_dates = {}
+            date_to_idx = {date: idx for idx, date in enumerate(full_trading_days)}
+
+            for current_date in target_trading_days:
+                current_idx = date_to_idx[current_date]
+                # 计算回溯起始索引：取前 lookback_days 个交易日
+                start_idx = max(0, current_idx - lookback_days + 1)  # +1 是因为要包含当前日
+                lookback_start_dates[current_date] = full_trading_days[start_idx]
+
+            # 11. 根据评分方法计算得分函数
+            if scoring_method == 'linear':
+                # 线性得分：每涨停一次得 100/lookback_days 分
+                max_possible_zts = lookback_days
+                score_per_zt = 100 / max_possible_zts if max_possible_zts > 0 else 20
+                logger.info(f"线性评分: 每涨停一次得 {score_per_zt:.2f} 分")
+
+                def calculate_score(zt_count):
+                    return min(zt_count * score_per_zt, 100)
+
+            elif scoring_method == 'log':
+                # 对数得分：涨停越多边际效应递减
+                # 公式：log2(涨停次数+1) * (100/log2(lookback_days+1))
+                import math
+                max_score_factor = 100 / math.log2(lookback_days + 1) if lookback_days > 0 else 20
+
+                def calculate_score(zt_count):
+                    if zt_count == 0:
+                        return 0
+                    score = math.log2(zt_count + 1) * max_score_factor
+                    return min(round(score, 2), 100)
+
+                logger.info(f"对数评分: 最大得分因子 {max_score_factor:.2f}")
+
+            elif scoring_method == 'binary':
+                # 二元得分：有涨停就得100分
+                def calculate_score(zt_count):
+                    return 100 if zt_count > 0 else 0
+
+                logger.info("二元评分: 有涨停得100分，无涨停得0分")
+            else:
+                # 默认线性
+                score_per_zt = 100 / lookback_days if lookback_days > 0 else 20
+
+                def calculate_score(zt_count):
+                    return min(zt_count * score_per_zt, 100)
+
+                logger.info(f"默认线性评分: 每涨停一次得 {score_per_zt:.2f} 分")
+
+            # 12. 计算每个交易日的得分
             result_data = []
+            total_days = len(target_trading_days)
 
-            # 创建交易日索引映射，用于快速查找前N个交易日
-            date_to_index = {date: i for i, date in enumerate(trading_days_dt)}
+            for i, current_date in enumerate(target_trading_days):
+                if i % 100 == 0 and i > 0:  # 每100个交易日打印一次进度
+                    logger.info(f"处理进度: {i}/{total_days}")
 
-            for i, current_date in enumerate(trading_days_dt):
-                date_str = trading_days[i]  # 使用原始字符串格式
+                lookback_start = lookback_start_dates[current_date]
 
                 for stock in all_stocks:
-                    zt_signal = False
+                    zt_score = 0
 
-                    if stock in stock_zt_dates:
-                        # 获取这只股票的所有涨停日期
-                        stock_all_zt_dates = stock_zt_dates[stock]
+                    if stock in stock_zt_dict:
+                        # 统计回溯期内涨停次数（使用字符串比较，精确到日）
+                        recent_zts = [d for d in stock_zt_dict[stock]
+                                      if lookback_start <= d <= current_date]
 
-                        # 找到小于等于当前日期的所有涨停
-                        zt_dates_before = [d for d in stock_all_zt_dates if d <= current_date]
-
-                        if zt_dates_before:
-                            # 我们需要检查过去lookback_days个交易日内是否有涨停
-                            # 首先找到当前日期在交易日列表中的位置
-                            current_idx = date_to_index[current_date]
-
-                            # 计算窗口起始索引（不能小于0）
-                            window_start_idx = max(0, current_idx - lookback_days + 1)
-
-                            # 获取窗口内的交易日
-                            window_dates = trading_days_dt[window_start_idx:current_idx + 1]
-
-                            # 检查窗口内是否有涨停
-                            for zt_date in zt_dates_before:
-                                if zt_date in window_dates:
-                                    zt_signal = True
-                                    break
+                        zt_score = calculate_score(len(recent_zts))
+                        # 四舍五入保留2位小数
+                        zt_score = round(zt_score, 2)
 
                     result_data.append({
-                        'ymd': date_str,
+                        'ymd': current_date,
                         'stock_code': stock,
-                        'zt_signal': zt_signal
+                        'zt_score': zt_score
                     })
 
-                # 进度日志
-                if (i + 1) % 5 == 0 or i == len(trading_days_dt) - 1:
-                    logger.info(f"进度：已处理 {i + 1}/{len(trading_days_dt)} 个交易日")
-
-            # 8. 转换为DataFrame
             result_df = pd.DataFrame(result_data)
 
-            # 9. 统计信息
-            total_records = len(result_df)
-            signal_true_count = result_df['zt_signal'].sum()
-            signal_true_pct = (signal_true_count / total_records * 100) if total_records > 0 else 0
-
+            # 13. 统计得分分布
+            score_distribution = result_df['zt_score'].value_counts().sort_index()
+            logger.info(f"得分分布(前10): {dict(list(score_distribution.head(10).items()))}")
             logger.info(
-                f"涨停因子计算完成：日期范围 {start_date}~{end_date}，"
-                f"共{len(trading_days)}个交易日，{len(all_stocks)}只股票，"
-                f"总记录数：{total_records}，"
-                f"涨停信号True数量：{signal_true_count}，"
-                f"占比：{signal_true_pct:.2f}%"
-            )
+                f"涨停因子计算完成：共{len(result_df)}条记录，使用{lookback_days}个交易日回溯，评分方法:{scoring_method}")
 
-            return result_df[['ymd', 'stock_code', 'zt_signal']]
+            return result_df[['ymd', 'stock_code', 'zt_score']]
 
         except Exception as e:
             logger.error(f"计算涨停因子失败：{str(e)}")
             import traceback
             logger.error(traceback.format_exc())
-            return pd.DataFrame(columns=['ymd', 'stock_code', 'zt_signal'])
+            return pd.DataFrame(columns=['ymd', 'stock_code', 'zt_score'])
 
-    def _get_all_false_signals(self, trading_days, start_date, end_date):
+
+    def shareholder_factor_score(self, start_date, end_date):
         """
-        当没有涨停记录时，为所有股票生成False信号
+        计算筹码因子百分制评分（0-100分）
+        使用 dwd_shareholder_num_latest 表
+
+        评分逻辑：股东人数减少得高分，增加得低分
+        使用平滑的 sigmoid 函数
         """
         try:
-            # 获取全量股票列表
-            latest_trading_day = trading_days[-1] if trading_days else end_date
+            import math
+
+            # 获取股东数据
+            shareholder_df = Mysql_Utils.data_from_mysql_to_dataframe(
+                user=self.user,
+                password=self.password,
+                host=self.host,
+                database=self.database,
+                table_name='dwd_shareholder_num_latest',
+                start_date=start_date,
+                end_date=end_date,
+                cols=['ymd', 'stock_code', 'stock_name', 'pct_of_total_sh']
+            )
+
+            if shareholder_df.empty:
+                return pd.DataFrame(columns=['ymd', 'stock_code', 'stock_name', 'shareholder_score'])
+
+            # 转换数值
+            shareholder_df['pct_of_total_sh'] = pd.to_numeric(shareholder_df['pct_of_total_sh'], errors='coerce')
+
+            # 定义平滑得分函数
+            def smooth_score(pct):
+                if pd.isna(pct):
+                    return 0.0
+                # sigmoid 变换: 股东减少(-) → 高分，股东增加(+) → 低分
+                x = pct * 0.15  # 0.15 控制曲线陡峭程度
+                sigmoid = 1 / (1 + math.exp(-x))
+                return round(100 * (1 - sigmoid), 2)
+
+            # 计算得分
+            shareholder_df['shareholder_score'] = shareholder_df['pct_of_total_sh'].apply(smooth_score)
+
+            logger.info(f"股东人数因子计算完成：共{len(shareholder_df)}条记录")
+
+            return shareholder_df[['ymd', 'stock_code', 'stock_name', 'shareholder_score']]
+
+        except Exception as e:
+            logger.error(f"计算筹码因子失败：{str(e)}")
+            return pd.DataFrame(columns=['ymd', 'stock_code', 'stock_name', 'shareholder_score'])
+
+
+
+    def _get_zero_scores(self, trading_days, start_date, end_date, score_col):
+        """生成全0分数据"""
+        try:
+            # 获取股票列表
             stock_base_df = Mysql_Utils.data_from_mysql_to_dataframe(
                 user=self.user,
                 password=self.password,
                 host=self.host,
                 database=self.database,
                 table_name='dwd_ashare_stock_base_info',
-                start_date=latest_trading_day,
-                end_date=latest_trading_day,
+                start_date=trading_days[-1] if trading_days else end_date,
+                end_date=trading_days[-1] if trading_days else end_date,
                 cols=['stock_code']
             )
 
             if stock_base_df.empty:
-                return pd.DataFrame(columns=['ymd', 'stock_code', 'zt_signal'])
+                return pd.DataFrame(columns=['ymd', 'stock_code', score_col])
 
             all_stocks = stock_base_df['stock_code'].unique()
 
-            # 生成所有False信号
             result_data = []
             for date_str in trading_days:
                 for stock in all_stocks:
                     result_data.append({
                         'ymd': date_str,
                         'stock_code': stock,
-                        'zt_signal': False
+                        score_col: 0.0
                     })
 
-            result_df = pd.DataFrame(result_data)
-            logger.info(f"无涨停记录，为{len(all_stocks)}只股票生成False信号，共{len(result_df)}条记录")
-
-            return result_df
+            return pd.DataFrame(result_data)
 
         except Exception as e:
-            logger.error(f"生成False信号失败：{str(e)}")
-            return pd.DataFrame(columns=['ymd', 'stock_code', 'zt_signal'])
+            logger.error(f"生成零分数据失败：{str(e)}")
+            return pd.DataFrame(columns=['ymd', 'stock_code', score_col])
 
-    # @timing_decorator
-    def shareholder_factor(self, start_date, end_date):
-        """
-        计算筹码因子：为日期范围内的每一天计算股东数信号
-
-        返回:
-            DataFrame: ymd, stock_code, shareholder_signal, total_sh, pct_of_total_sh
-        """
-        try:
-            # 从ODS层读取股东数据
-            shareholder_df = Mysql_Utils.data_from_mysql_to_dataframe(
-                user=self.user,
-                password=self.password,
-                host=self.host,
-                database=self.database,
-                table_name='ods_shareholder_num',
-                start_date=start_date,
-                end_date=end_date,
-                cols=['htsc_code', 'ymd', 'total_sh', 'pct_of_total_sh']
-            )
-
-            if shareholder_df.empty:
-                logger.warning(f"股东因子数据为空: {start_date}~{end_date}")
-                return pd.DataFrame(columns=['ymd', 'stock_code', 'shareholder_signal'])
-
-            # 数据预处理
-            shareholder_df = convert_ymd_format(shareholder_df, 'ymd')
-            shareholder_df.rename(columns={'htsc_code': 'stock_code'}, inplace=True)
-
-            # 清理股票代码格式（移除后缀）
-            shareholder_df['stock_code'] = shareholder_df['stock_code'].astype(str)
-            shareholder_df['stock_code'] = shareholder_df['stock_code'].str.split('.').str[0]
-
-            # 转换数据为数值类型
-            shareholder_df['total_sh'] = pd.to_numeric(shareholder_df['total_sh'], errors='coerce')
-            shareholder_df['pct_of_total_sh'] = pd.to_numeric(shareholder_df['pct_of_total_sh'], errors='coerce')
-            shareholder_df = shareholder_df.dropna(subset=['total_sh', 'pct_of_total_sh'])
-
-            # 股东数环比下降标记为True
-            shareholder_df['shareholder_signal'] = shareholder_df['pct_of_total_sh'] < 0
-
-            # 按日期排序
-            shareholder_df = shareholder_df.sort_values(['ymd', 'stock_code'])
-
-            logger.info(
-                f"筹码因子计算完成：共{len(shareholder_df)}条记录，"
-                f"股东数下降占比：{shareholder_df['shareholder_signal'].mean() * 100:.2f}%"
-            )
-
-            return shareholder_df[['ymd', 'stock_code', 'shareholder_signal', 'total_sh', 'pct_of_total_sh']]
-
-        except Exception as e:
-            logger.error(f"计算筹码因子失败：{str(e)}")
-            return pd.DataFrame(columns=['ymd', 'stock_code', 'shareholder_signal'])
-
-    # @timing_decorator
-    def get_stock_kline_data(self, stock_code, start_date, end_date):
-        """
-        获取股票K线数据（用于回测）
-        使用 ods_stock_kline_daily_insight 表
-        """
-        try:
-            # 处理股票代码格式
-            stock_code_clean = stock_code.split('.')[0] if '.' in stock_code else stock_code
-
-            # 读取K线数据
-            kline_df = Mysql_Utils.data_from_mysql_to_dataframe(
-                user=self.user,
-                password=self.password,
-                host=self.host,
-                database=self.database,
-                table_name='ods_stock_kline_daily_insight',
-                start_date=start_date,
-                end_date=end_date,
-                cols=['stock_code', 'ymd', 'open', 'high', 'low', 'close', 'volume']
-            )
-
-            if kline_df.empty:
-                return pd.DataFrame()
-
-            # 过滤指定股票代码
-            kline_df = kline_df[kline_df['stock_code'].str.contains(stock_code_clean)]
-
-            # 数据预处理
-            kline_df = convert_ymd_format(kline_df, 'ymd')
-
-            return kline_df
-
-        except Exception as e:
-            logger.error(f"获取K线数据失败 {stock_code}: {str(e)}")
-            return pd.DataFrame()
-
-
-    # @timing_decorator
     def get_trading_days(self, start_date, end_date):
-        """
-        获取交易日列表 - 从 ods_trading_days_insight 表获取
-        简化版：假设ymd是MySQL date类型
-        """
+        """获取交易日列表"""
         try:
-            # 从交易日历表获取交易日
             trading_days_df = Mysql_Utils.data_from_mysql_to_dataframe(
                 user=self.user,
                 password=self.password,
                 host=self.host,
                 database=self.database,
                 table_name='ods_trading_days_insight',
-                start_date=start_date,  # MySQL WHERE已筛选
-                end_date=end_date,  # MySQL WHERE已筛选
-                cols=['exchange', 'ymd']
+                start_date=start_date,
+                end_date=end_date,
+                cols=['ymd']
             )
 
             if trading_days_df.empty:
-                logger.warning(f"交易日历表为空: {start_date}~{end_date}")
                 return []
 
-            # 筛选 XSHG（上海交易所）的交易日
-            sh_days = trading_days_df[trading_days_df['exchange'] == 'XSHG']
-
-            if sh_days.empty:
-                logger.warning(f"XSHG交易日为空: {start_date}~{end_date}")
-                return []
-
-            # 直接转换为YYYYMMDD格式并排序
-            trading_days = sorted([
-                date_obj.strftime('%Y%m%d')
-                for date_obj in sh_days['ymd'].tolist()
-            ])
-
-            logger.info(
-                f"获取交易日：{len(trading_days)}天，"
-                f"从{trading_days[0] if trading_days else '无'}到{trading_days[-1] if trading_days else '无'}"
-            )
-            return trading_days
+            # 直接返回排序后的日期列表
+            trading_days = sorted(trading_days_df['ymd'].unique())
+            return [d.strftime('%Y%m%d') for d in trading_days]
 
         except Exception as e:
             logger.error(f"获取交易日失败：{str(e)}")
             return []
+
+    def volume_shrinkage_factor(self, start_date, end_date):
+        """
+        计算缩量下跌因子（0-100分）
+        使用预计算的均线表，固定使用60日均量作为长期基准
+
+        评分逻辑：
+        1. 成交量条件（60分）：
+           - 近5日均量低于60日均量（30分）
+           - 近1-3天连续缩量（30分）
+        2. 价格条件（40分）：
+           - 连续阴线天数越多，得分越高
+           - 连续3天阴线得满分40分
+        """
+        try:
+            # 1. 从技术指标表获取数据
+            tech_df = Mysql_Utils.data_from_mysql_to_dataframe(
+                user=self.user,
+                password=self.password,
+                host=self.host,
+                database=self.database,
+                table_name='dwd_stock_technical_indicators',
+                start_date=start_date,
+                end_date=end_date,
+                cols=['ymd', 'stock_code', 'close', 'volume',
+                      'vol_ma5', 'vol_ma60', 'volume_vs_ma5']
+            )
+
+            if tech_df.empty:
+                logger.warning(f"技术指标数据为空: {start_date}~{end_date}")
+                return pd.DataFrame(columns=['ymd', 'stock_code', 'volume_score',
+                                             'price_score', 'composite_score'])
+
+            # 2. 获取阴线数据
+            down_df = self.get_down_days(start_date, end_date)
+
+            if down_df.empty:
+                return pd.DataFrame(columns=['ymd', 'stock_code', 'volume_score',
+                                             'price_score', 'composite_score'])
+
+            # 3. 合并数据
+            merged_df = pd.merge(
+                tech_df,
+                down_df[['ymd', 'stock_code', 'is_down']],
+                on=['ymd', 'stock_code'],
+                how='inner'
+            )
+
+            # 4. 按股票分组计算连续指标
+            result_dfs = []
+
+            for stock, stock_df in merged_df.groupby('stock_code'):
+                stock_df = stock_df.copy()
+                stock_df = stock_df.sort_values('ymd')
+
+                # 计算连续缩量（volume_vs_ma5 < 0 表示当日成交量低于5日均量）
+                stock_df['is_shrink_today'] = stock_df['volume_vs_ma5'] < 0
+
+                # 计算连续缩量天数
+                def count_consecutive(series):
+                    """计算连续True的天数（从最新往旧统计）"""
+                    count = 0
+                    for val in series[::-1]:
+                        if val:
+                            count += 1
+                        else:
+                            break
+                    return count
+
+                # 连续缩量天数（最近5天内）
+                stock_df['consecutive_shrink_days'] = 0
+                for i in range(len(stock_df)):
+                    start_idx = max(0, i - 4)  # 最近5天
+                    window = stock_df['is_shrink_today'].iloc[start_idx:i + 1]
+                    stock_df.iloc[i, stock_df.columns.get_loc('consecutive_shrink_days')] = \
+                        count_consecutive(window.values)
+
+                # 连续阴线天数（最近5天内）
+                stock_df['consecutive_down_days'] = 0
+                for i in range(len(stock_df)):
+                    start_idx = max(0, i - 4)  # 最近5天
+                    window = stock_df['is_down'].iloc[start_idx:i + 1]
+                    stock_df.iloc[i, stock_df.columns.get_loc('consecutive_down_days')] = \
+                        count_consecutive(window.values)
+
+                result_dfs.append(stock_df)
+
+            final_df = pd.concat(result_dfs, ignore_index=True)
+
+            # 5. 计算成交量得分（0-60分）
+            def calculate_volume_score(row):
+                score = 0
+
+                # 条件1：5日均量 < 60日均量（30分）
+                if not pd.isna(row['vol_ma5']) and not pd.isna(row['vol_ma60']):
+                    if row['vol_ma5'] < row['vol_ma60'] * 0.8:  # 低于80%
+                        score += 30
+                    elif row['vol_ma5'] < row['vol_ma60']:  # 低于100%
+                        score += 20
+                    elif row['vol_ma5'] < row['vol_ma60'] * 1.2:  # 低于120%
+                        score += 10
+
+                # 条件2：连续缩量天数（30分）
+                if row['consecutive_shrink_days'] >= 3:
+                    score += 30
+                elif row['consecutive_shrink_days'] == 2:
+                    score += 20
+                elif row['consecutive_shrink_days'] == 1:
+                    score += 10
+
+                return min(score, 60)
+
+            # 6. 计算价格得分（0-40分）
+            def calculate_price_score(row):
+                if row['consecutive_down_days'] >= 3:
+                    return 40
+                elif row['consecutive_down_days'] == 2:
+                    return 30
+                elif row['consecutive_down_days'] == 1:
+                    return 20
+                else:
+                    return 0
+
+            final_df['volume_score'] = final_df.apply(calculate_volume_score, axis=1)
+            final_df['price_score'] = final_df.apply(calculate_price_score, axis=1)
+            final_df['composite_score'] = (final_df['volume_score'] + final_df['price_score']).round(2)
+
+            # 7. 添加评分等级
+            def get_score_level(score):
+                if score >= 80:
+                    return 'A'  # 强烈信号
+                elif score >= 60:
+                    return 'B'  # 明显信号
+                elif score >= 40:
+                    return 'C'  # 一般信号
+                elif score >= 20:
+                    return 'D'  # 弱信号
+                else:
+                    return 'E'  # 无信号
+
+            final_df['signal_level'] = final_df['composite_score'].apply(get_score_level)
+
+            logger.info(f"缩量下跌因子计算完成：共{len(final_df)}条记录")
+
+            return final_df[['ymd', 'stock_code', 'volume_score', 'price_score',
+                             'composite_score', 'signal_level']]
+
+        except Exception as e:
+            logger.error(f"计算缩量下跌因子失败：{str(e)}")
+            import traceback
+            logger.error(traceback.format_exc())
+            return pd.DataFrame(columns=['ymd', 'stock_code', 'volume_score',
+                                         'price_score', 'composite_score'])
+
+
+    def explain_volume_shrinkage(self, stock_code, date):
+        """
+        详细解释某只股票某天的缩量下跌因子
+        使用 ods_stock_kline_daily_ts 表
+        """
+        try:
+            # 获取该股票的历史数据
+            target_date = pd.to_datetime(date)
+            start_dt = target_date - pd.Timedelta(days=100)
+
+            df = Mysql_Utils.data_from_mysql_to_dataframe(
+                user=self.user,
+                password=self.password,
+                host=self.host,
+                database=self.database,
+                table_name='ods_stock_kline_daily_ts',
+                start_date=start_dt.strftime('%Y%m%d'),
+                end_date=date,
+                cols=['stock_code', 'ymd', 'close', 'volume', 'change_pct']
+            )
+
+            if df.empty:
+                print(f"没有找到 {stock_code} 的数据")
+                return
+
+            df = df[df['stock_code'] == stock_code].sort_values('ymd')
+            df['ymd'] = pd.to_datetime(df['ymd'])
+
+            # 计算指标
+            df['is_down'] = df['change_pct'] < 0
+            df['volume_ma90'] = df['volume'].rolling(90).mean()
+            df['volume_ma5'] = df['volume'].rolling(5).mean()
+            df['volume_decrease'] = df['volume'].diff() < 0
+
+            # 计算连续天数
+            def count_consecutive(series):
+                count = 0
+                for val in series[::-1]:
+                    if val:
+                        count += 1
+                    else:
+                        break
+                return count
+
+            # 获取目标日期的数据
+            target_idx = df[df['ymd'] == target_date].index
+            if len(target_idx) == 0:
+                print(f"没有找到 {stock_code} 在 {date} 的数据")
+                return
+
+            target_idx = target_idx[0]
+            start_idx = max(0, target_idx - 4)
+
+            recent_down = df.loc[start_idx:target_idx, 'is_down']
+            recent_volume = df.loc[start_idx:target_idx, 'volume_decrease']
+
+            consecutive_down = count_consecutive(recent_down.values)
+            consecutive_volume = count_consecutive(recent_volume.values)
+
+            target = df.loc[target_idx]
+
+            print("=" * 70)
+            print(f"缩量下跌因子详解 - {stock_code} @ {date}")
+            print("=" * 70)
+
+            # 显示最近5天的K线
+            print("\n【最近5天走势】")
+            print(f"{'日期':<10} {'涨跌幅':>8} {'收盘':>8} {'成交量':>12} {'状态':>6}")
+            print("-" * 50)
+
+            recent = df.loc[max(0, target_idx - 4):target_idx]
+            for _, row in recent.iterrows():
+                status = "阴线" if row['is_down'] else "阳线"
+                print(f"{row['ymd'].strftime('%m-%d'):<10} "
+                      f"{row['change_pct']:>7.2f}% "
+                      f"{row['close']:>8.2f} "
+                      f"{row['volume']:>12.0f} "
+                      f"{status:>6}")
+
+            # 成交量分析
+            print("\n【成交量分析】")
+            if not pd.isna(target['volume_ma5']) and not pd.isna(target['volume_ma90']):
+                ratio = target['volume_ma5'] / target['volume_ma90']
+                print(f"  当前成交量: {target['volume']:.0f}")
+                print(f"  5日均量: {target['volume_ma5']:.0f}")
+                print(f"  90日均量: {target['volume_ma90']:.0f}")
+                print(f"  短期/长期均量比: {ratio:.2f}")
+
+                vol_score = 0
+                if target['volume_ma5'] < target['volume_ma90'] * 0.8:
+                    vol_score += 30
+                    print("  ✓ 条件1: 5日均量 < 90日均量80% (+30分)")
+                elif target['volume_ma5'] < target['volume_ma90']:
+                    vol_score += 20
+                    print("  ✓ 条件1: 5日均量 < 90日均量 (+20分)")
+                elif target['volume_ma5'] < target['volume_ma90'] * 1.2:
+                    vol_score += 10
+                    print("  ✓ 条件1: 5日均量 < 90日均量120% (+10分)")
+                else:
+                    print("  ✗ 条件1: 成交量未达标")
+
+                print(f"\n【连续缩量】")
+                print(f"  连续缩量天数: {consecutive_volume}")
+                if consecutive_volume >= 3:
+                    vol_score += 30
+                    print(f"  ✓ 条件2: 连续{consecutive_volume}天缩量 (+30分)")
+                elif consecutive_volume == 2:
+                    vol_score += 20
+                    print(f"  ✓ 条件2: 连续2天缩量 (+20分)")
+                elif consecutive_volume == 1:
+                    vol_score += 10
+                    print(f"  ✓ 条件2: 连续1天缩量 (+10分)")
+                else:
+                    print("  ✗ 条件2: 无连续缩量")
+
+                print(f"\n【成交量得分】: {min(vol_score, 60)}/60")
+
+                # 价格分析
+                print("\n【价格分析 - 连续阴线】")
+                print(f"  连续阴线天数: {consecutive_down}")
+
+                price_score = 0
+                if consecutive_down >= 3:
+                    price_score = 40
+                    print(f"  ✓ 连续{consecutive_down}天阴线 (+40分)")
+                elif consecutive_down == 2:
+                    price_score = 30
+                    print(f"  ✓ 连续2天阴线 (+30分)")
+                elif consecutive_down == 1:
+                    price_score = 20
+                    print(f"  ✓ 连续1天阴线 (+20分)")
+                else:
+                    print("  ✗ 无连续阴线")
+
+                print(f"\n【价格得分】: {price_score}/40")
+
+                # 综合得分
+                composite = vol_score + price_score
+                print(f"\n【综合得分】: {composite:.0f}/100")
+
+                if composite >= 80:
+                    print("【信号等级】: A - 强烈信号")
+                elif composite >= 60:
+                    print("【信号等级】: B - 明显信号")
+                elif composite >= 40:
+                    print("【信号等级】: C - 一般信号")
+                elif composite >= 20:
+                    print("【信号等级】: D - 弱信号")
+                else:
+                    print("【信号等级】: E - 无信号")
+
+            print("=" * 70)
+
+        except Exception as e:
+            print(f"分析失败: {str(e)}")
+            import traceback
+            traceback.print_exc()
+
 
 
 
 if __name__ == '__main__':
     factorlib = FactorLibrary()
     # 测试修复后的交易日获取
-    res = factorlib.get_trading_days(start_date='20260101', end_date='20260109')
-    print(f"交易日: {res}")
+    # res = factorlib.get_trading_days(start_date='20260101', end_date='20260109')
+    # print(f"交易日: {res}")
+    #
+    # pb_score = factorlib.pb_factor_score(start_date='20260101', end_date='20260109')
+    # print(pb_score)
+
+    # share_score = factorlib.shareholder_factor_score(start_date='20260101', end_date='20260109')
+    # print(share_score)
+
+    # 1. 计算因子
+    factor_df = factorlib.volume_shrinkage_factor(
+        start_date='2026-02-01',
+        end_date='2026-02-22'
+    )
+
+    # 2. 查看高分股票（连续阴线+缩量）
+    high_score = factor_df[factor_df['signal_level'].isin(['A', 'B'])].sort_values(
+        'composite_score', ascending=False
+    )
+    print("强烈信号股票：")
+    print(high_score[['ymd', 'stock_code', 'consecutive_down_days',
+                      'composite_score', 'signal_level']].head(10))
+
+    # 3. 分析单只股票
+    factorlib.explain_volume_shrinkage('000001', '2026-02-22')
+
+    # 4. 统计连续3天阴线的股票
+    three_days_down = factor_df[factor_df['consecutive_down_days'] >= 3]
+    print(f"\n连续3天阴线的股票数量: {len(three_days_down)}")
+    print(three_days_down[['ymd', 'stock_code', 'consecutive_down_days',
+                           'volume_score', 'composite_score']].head())
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

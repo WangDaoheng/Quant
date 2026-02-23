@@ -734,6 +734,8 @@ CREATE TABLE quant.ods_stock_kline_daily_ts (
     ,change_pct               FLOAT                   COMMENT '当日涨跌幅(%)'
     ,volume                   BIGINT                  COMMENT '成交量'
     ,trading_amount           double                  COMMENT '成交额'
+    ,today_pct                decimal(10,2)           COMMENT '日内涨跌幅'
+    ,is_down                  tinyint                 COMMENT '是否阴线'
     ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
 ) COMMENT='行情数据_A股历史日K线的tushare数据';
 

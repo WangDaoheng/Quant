@@ -4,6 +4,7 @@ import sys
 import time
 import logging
 import warnings
+import numpy as np
 
 import CommonProperties.Base_Properties as base_properties
 import CommonProperties.Mysql_Utils as mysql_utils
@@ -29,16 +30,12 @@ class SaveTushareDailyData:
     def get_stock_kline_tushare(self):
         """
         使用Tushare获取全部股票的历史日K线数据，并存入数据库
-        简单优化：每5个批次（500次请求）后等待60秒
+        添加阴线判断字段 today_pct 和 is_down
         写入 ods_stock_kline_daily_ts
         """
         # 1. 获取日期范围
         today = DateUtility.today()
-
-        if int(today[6:8]) > 15:
-            time_start_date = DateUtility.next_day(-15)  # 15天前
-        else:
-            time_start_date = DateUtility.first_day_of_month()  # 当月1号
+        time_start_date = today
         time_end_date = today
 
         # 2. 获取股票代码列表
@@ -129,9 +126,25 @@ class SaveTushareDailyData:
                 # 添加当天日期
                 kline_total_df['ymd'] = today
 
-            # 选择需要的列（根据你的数据库表结构调整）
-            required_columns = ['stock_code', 'ymd', 'open', 'close', 'high', 'low', 'change_pct', 'volume',
-                                'trading_amount']
+            # 计算阴线相关字段
+            logging.info("开始计算阴线相关字段...")
+
+            # 计算当日涨跌幅 today_pct = (close - open) / open * 100
+            kline_total_df['today_pct'] = ((kline_total_df['close'] - kline_total_df['open']) /
+                                           kline_total_df['open'] * 100).round(2)
+
+            # 判断是否阴线 is_down = 1 如果 close < open，否则 0
+            kline_total_df['is_down'] = (kline_total_df['close'] < kline_total_df['open']).astype(int)
+
+            # 统计阴线比例
+            down_count = kline_total_df['is_down'].sum()
+            total_count = len(kline_total_df)
+            logging.info(f"阴线统计: 阴线 {down_count} 条, 阳线 {total_count - down_count} 条, "
+                         f"阴线比例 {down_count / total_count * 100:.2f}%")
+
+            # 选择需要的列（包括新增的阴线字段）
+            required_columns = ['stock_code', 'ymd', 'open', 'close', 'high', 'low',
+                                'change_pct', 'today_pct', 'is_down', 'volume', 'trading_amount']
 
             # 确保列存在
             existing_columns = [col for col in required_columns if col in kline_total_df.columns]

@@ -223,7 +223,7 @@ class SaveAkshareDailyData:
         try:
             # 获取当前年份和过去几年的数据
             current_year = int(DateUtility.today()[:4])
-            years = list(range(2024, current_year + 1))  # 从2024年开始，库里已有2020数据
+            years = list(range(2026, current_year + 1))  # 从2026年开始，库里已有2020数据
 
             # 季度对应的日期后缀
             quarter_dates = ["0331", "0630", "0930", "1231"]
@@ -305,7 +305,7 @@ class SaveAkshareDailyData:
         try:
             # 获取当前年份和过去几年的数据
             current_year = int(DateUtility.today()[:4])
-            years = list(range(2020, current_year + 1))  # 从2024年开始，库里已有2020数据
+            years = list(range(2026, current_year + 1))  # 从2026年开始，库里已有2020数据
 
             # 季度对应的日期后缀
             quarter_dates = ["0331", "0630", "0930", "1231"]
@@ -428,7 +428,6 @@ class SaveAkshareDailyData:
                 table_name='ods_akshare_stock_a_high_low_statistics',
                 merge_on=['ymd', 'market']
             )
-
         return False
 
 
@@ -1151,7 +1150,7 @@ class SaveAkshareDailyData:
         try:
             # 如果没有指定日期，使用默认范围
             if start_date is None:
-                start_date = DateUtility.first_day_of_year(-2)  # 去年第一天
+                start_date = DateUtility.first_day_of_month()  # 本月第一天
             if end_date is None:
                 end_date = DateUtility.today()
 

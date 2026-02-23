@@ -1,9 +1,11 @@
+# backtest/backtest_engine.py
+
 import backtrader as bt
 import pandas as pd
 import logging
 from CommonProperties import Mysql_Utils
 from CommonProperties.Base_utils import timing_decorator
-from Others.strategy.factor_library import FactorLibrary
+from strategy.factor_library import FactorLibrary
 from backtest.simple_strategy import SimpleStrategy
 from backtest.factor_driven_strategy import FactorDrivenStrategy
 
@@ -69,7 +71,7 @@ class StockBacktestEngine:
     @timing_decorator
     def get_factor_value(self, stock_code, date, factor_type='pb'):
         """
-        查询指定股票/日期的因子信号
+        查询指定股票/日期的因子信号（兼容旧版二元信号）
         """
         try:
             date_str = date.strftime('%Y%m%d')
@@ -111,6 +113,76 @@ class StockBacktestEngine:
         except Exception as e:
             logger.error(f"查询{stock_code}@{date_str}的{factor_type}因子失败：{str(e)}")
             return False
+
+    @timing_decorator
+    def get_factor_score(self, stock_code, date, factor_type='pb'):
+        """
+        获取因子百分制得分（新版）
+
+        Args:
+            stock_code: 股票代码
+            date: 日期
+            factor_type: 因子类型 (pb/zt/shareholder)
+
+        Returns:
+            float: 0-100的得分
+        """
+        try:
+            date_str = date.strftime('%Y%m%d')
+            stock_code_clean = stock_code.split('.')[0] if '.' in stock_code else stock_code
+
+            if factor_type == 'pb':
+                # PB因子百分制
+                pb_df = self.factor_lib.pb_factor_score(start_date=date_str, end_date=date_str)
+                if not pb_df.empty:
+                    filtered = pb_df[pb_df['stock_code'] == stock_code_clean]
+                    if not filtered.empty:
+                        return float(filtered['pb_score'].iloc[0])
+                return 0.0
+
+            elif factor_type == 'zt':
+                # 涨停因子百分制
+                zt_df = self.factor_lib.zt_factor_score(start_date=date_str, end_date=date_str)
+                if not zt_df.empty:
+                    filtered = zt_df[zt_df['stock_code'] == stock_code_clean]
+                    if not filtered.empty:
+                        return float(filtered['zt_score'].iloc[0])
+                return 0.0
+
+            elif factor_type == 'shareholder':
+                # 筹码因子百分制
+                sh_df = self.factor_lib.shareholder_factor_score(start_date=date_str, end_date=date_str)
+                if not sh_df.empty:
+                    filtered = sh_df[sh_df['stock_code'] == stock_code_clean]
+                    if not filtered.empty:
+                        return float(filtered['shareholder_score'].iloc[0])
+                return 0.0
+
+            else:
+                logger.warning(f"不支持的因子类型：{factor_type}")
+                return 0.0
+
+        except Exception as e:
+            logger.error(f"获取{stock_code}@{date_str}的{factor_type}因子得分失败：{str(e)}")
+            return 0.0
+
+    @timing_decorator
+    def get_factor_scores(self, stock_code, date):
+        """
+        一次性获取所有因子的百分制得分
+
+        Args:
+            stock_code: 股票代码
+            date: 日期
+
+        Returns:
+            dict: {'pb': score, 'zt': score, 'shareholder': score}
+        """
+        return {
+            'pb': self.get_factor_score(stock_code, date, 'pb'),
+            'zt': self.get_factor_score(stock_code, date, 'zt'),
+            'shareholder': self.get_factor_score(stock_code, date, 'shareholder')
+        }
 
     @timing_decorator
     def update_datas(self, cerebro, new_stock_codes, start_date, end_date, current_date):
@@ -170,7 +242,7 @@ class StockBacktestEngine:
             logger.error("无有效股票数据，终止回测")
             return None
 
-        # 3. 加载策略（核心：传递参数）
+        # 3. 加载策略
         if strategy_type == 'simple':
             self.cerebro.addstrategy(SimpleStrategy)
             logger.info("加载简易调仓策略")
@@ -187,7 +259,7 @@ class StockBacktestEngine:
             logger.error(f"不支持的策略类型：{strategy_type}")
             return None
 
-        # 4. 添加绩效分析器（含胜率/夏普比率/最大回撤）
+        # 4. 添加绩效分析器
         self.cerebro.addanalyzer(bt.analyzers.SharpeRatio, _name='sharpe', riskfreerate=0.03)
         self.cerebro.addanalyzer(bt.analyzers.Returns, _name='returns', tann=252)
         self.cerebro.addanalyzer(bt.analyzers.DrawDown, _name='drawdown')
@@ -404,4 +476,20 @@ if __name__ == "__main__":
         if 'pb' in stock_data['factors']:
             print(f"获取到 {len(stock_data['factors']['pb'])} 条PB因子数据")
 
+    # 测试百分制因子获取
+    print("\n测试百分制因子获取...")
+    from datetime import datetime
 
+    test_date = datetime.now().date()
+
+    pb_score = engine.get_factor_score('600000', test_date, 'pb')
+    zt_score = engine.get_factor_score('600000', test_date, 'zt')
+    sh_score = engine.get_factor_score('600000', test_date, 'shareholder')
+
+    print(f"PB得分: {pb_score}")
+    print(f"涨停得分: {zt_score}")
+    print(f"筹码得分: {sh_score}")
+
+    # 测试批量获取
+    scores = engine.get_factor_scores('600000', test_date)
+    print(f"所有因子得分: {scores}")

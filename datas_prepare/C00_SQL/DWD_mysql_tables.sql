@@ -89,6 +89,45 @@ CREATE TABLE quant.dwd_shareholder_num_latest (
 
 
 
+--1.5
+------------------  dwd_stock_technical_indicators   股票技术指标预计算表（均线等）
+CREATE TABLE quant.dwd_stock_technical_indicators (
+     ymd                      DATE        NOT NULL    COMMENT '交易日期'
+    ,stock_code               VARCHAR(50) NOT NULL    COMMENT '股票代码'
+    ,close                    FLOAT                   COMMENT '收盘价'
+    ,volume                   BIGINT                  COMMENT '成交量'
+    -- 成交量均线
+    ,ma5                      FLOAT                   COMMENT '5日均线'
+    ,ma10                     FLOAT                   COMMENT '10日均线'
+    ,ma20                     FLOAT                   COMMENT '20日均线'
+    ,ma60                     FLOAT                   COMMENT '60日均线'
+    ,ma120                    FLOAT                   COMMENT '120日均线（半年线）'
+    ,ma250                    FLOAT                   COMMENT '250日均线（年线）'
+    -- 成交量均线
+    ,vol_ma5                  FLOAT                   COMMENT '5日均量'
+    ,vol_ma10                 FLOAT                   COMMENT '10日均量'
+    ,vol_ma20                 FLOAT                   COMMENT '20日均量'
+    ,vol_ma60                 FLOAT                   COMMENT '60日均量'
+    ,vol_ma120                FLOAT                   COMMENT '120日均量'
+    ,vol_ma250                FLOAT                   COMMENT '250日均量'
+    -- 价格偏离度
+    ,price_vs_ma5             DECIMAL(10,2)           COMMENT '价格/5日均线-1, 单位%'
+    ,price_vs_ma20            DECIMAL(10,2)           COMMENT '价格/20日均线-1, 单位%'
+    ,price_vs_ma60            DECIMAL(10,2)           COMMENT '价格/60日均线-1, 单位%'
+    -- 成交量偏离度
+    ,volume_vs_ma5            DECIMAL(10,2)           COMMENT '成交量/5日均量-1, 单位%'
+    ,volume_vs_ma20           DECIMAL(10,2)           COMMENT '成交量/20日均量-1, 单位%'
+    ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
+    ,INDEX idx_stock_code (stock_code)
+    ,INDEX idx_ma5 (ma5)
+    ,INDEX idx_vol_ma5 (vol_ma5)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+COMMENT='股票技术指标预计算表（均线等）';
+
+
+
+
+
 --4.2        多渠道板块数据 -- 多渠道汇总
 ------------------  dwd_stock_a_total_plate
 CREATE TABLE quant.dwd_stock_a_total_plate (
