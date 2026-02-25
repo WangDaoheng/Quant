@@ -39,7 +39,7 @@ class SaveTushareDailyData:
         time_end_date = today
 
         # 2. 获取股票代码列表
-        stock_code_list = mysql_utils.get_stock_codes_latest(None)
+        stock_code_list = mysql_utils.get_stock_codes_latest()['stock_code'].tolist()
         logging.info(f"获取到 {len(stock_code_list)} 支股票")
 
         # 3. 分批处理设置

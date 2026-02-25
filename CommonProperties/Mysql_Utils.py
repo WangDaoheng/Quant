@@ -523,40 +523,28 @@ def full_replace_migrate(source_host, source_db_url, target_host, target_db_url,
 
 
 
-def get_stock_codes_latest(df=None):
+def get_stock_codes_latest():
     """
     这是为了取最新的 stock_code, 首先默认从类变量里面获取 stock_code(df), 如果df为空，就从mysql里面去取最新的
     Args:
         df:
     Returns:
     """
+    user = origin_user
+    password = origin_password
+    host = origin_host
+    database = origin_database
 
-    if df is None or df.empty:
+    stock_code_df = data_from_mysql_to_dataframe_latest(user=user,
+                                                        password=password,
+                                                        host=host,
+                                                        database=database,
+                                                        table_name='ods_stock_code_daily_insight')
 
-        user = origin_user
-        password = origin_password
-        host = origin_host
-        database = origin_database
+    latest_stocks_df = stock_code_df[['stock_code', 'stock_name']]
+    logging.info("    获取最新的<股票代码, 股票名称>")
 
-        # if platform.system() == "Windows":
-        #     user = local_user
-        #     password = local_password
-        #     host = local_host
-        #     database = local_database
-
-        stock_code_df = data_from_mysql_to_dataframe_latest(user=user,
-                                                            password=password,
-                                                            host=host,
-                                                            database=database,
-                                                            table_name='ods_stock_code_daily_insight')
-
-        mysql_stock_code_list = stock_code_df['stock_code'].tolist()
-        logging.info("    从 本地Mysql库 里读取最新的股票代码")
-    else:
-        mysql_stock_code_list = df['stock_code'].tolist()
-        logging.info("    从 self.stock_code 里读取最新的股票代码")
-
-    return mysql_stock_code_list
+    return latest_stocks_df
 
 
 def execute_sql_statements(user, password, host, database, sql_statements):

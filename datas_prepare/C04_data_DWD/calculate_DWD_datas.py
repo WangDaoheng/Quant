@@ -2,6 +2,7 @@
 
 import pandas as pd
 import logging
+import numpy as np
 
 from CommonProperties import Base_Properties
 from CommonProperties.DateUtility import DateUtility
@@ -27,7 +28,7 @@ origin_host = Base_Properties.origin_mysql_host
 class CalDWD:
 
     def __init__(self):
-        pass
+        self.stocks_df = mysql_utils.get_stock_codes_latest()
 
     @timing_decorator
     def cal_ashare_plate(self):
@@ -658,10 +659,8 @@ class CalDWD:
             end_date: 结束日期 (YYYYMMDD)
         """
         try:
-            import numpy as np
-
-            # start_date = '20260101'
-            # end_date = '20260224'
+            # start_date = '20210101'
+            # end_date = '20260225'
             start_date = DateUtility.first_day_of_month()
             end_date = DateUtility.today()
             # 1. 获取原始K线数据（需要多取一些历史数据用于计算均线）
@@ -684,16 +683,22 @@ class CalDWD:
                 logging.warning(f"K线数据为空: {query_start}~{end_date}")
                 return pd.DataFrame()
 
-            # 2. 数据预处理
+            # 2. 获取股票名称映射
+            stock_name_map = self.stocks_df.set_index('stock_code')['stock_name'].to_dict()
+
+            # 3. 数据预处理
             kline_df = kline_df.sort_values(['stock_code', 'ymd'])
             kline_df['ymd'] = pd.to_datetime(kline_df['ymd'])
 
-            # 3. 按股票分组计算均线
+            # 4. 按股票分组计算均线
             result_dfs = []
 
             for stock, stock_df in kline_df.groupby('stock_code'):
                 stock_df = stock_df.copy()
                 stock_df = stock_df.sort_values('ymd')
+
+                # 添加股票名称
+                stock_df['stock_name'] = stock_name_map.get(stock, '')
 
                 # 计算价格均线（FLOAT类型）
                 stock_df['ma5'] = stock_df['close'].rolling(window=5, min_periods=5).mean()
@@ -721,7 +726,7 @@ class CalDWD:
                 stock_df['volume_vs_ma20'] = ((stock_df['volume'] / stock_df['vol_ma20'] - 1) * 100).round(2)
 
                 # 只保留需要的列
-                keep_cols = ['ymd', 'stock_code', 'close', 'volume',
+                keep_cols = ['ymd', 'stock_code', 'stock_name', 'close', 'volume',
                              'ma5', 'ma10', 'ma20', 'ma60', 'ma120', 'ma250',
                              'vol_ma5', 'vol_ma10', 'vol_ma20', 'vol_ma60', 'vol_ma120', 'vol_ma250',
                              'price_vs_ma5', 'price_vs_ma20', 'price_vs_ma60',
@@ -729,10 +734,10 @@ class CalDWD:
 
                 result_dfs.append(stock_df[keep_cols])
 
-            # 合并所有股票
+            # 5. 合并所有股票
             all_df = pd.concat(result_dfs, ignore_index=True)
 
-            # 4. 只保留需要的日期范围（过滤掉用于计算的历史数据）
+            # 6. 只保留需要的日期范围（过滤掉用于计算的历史数据）
             all_df = all_df[all_df['ymd'].between(pd.to_datetime(start_date),
                                                   pd.to_datetime(end_date))]
 
@@ -740,7 +745,7 @@ class CalDWD:
                 logging.warning(f"没有需要的数据: {start_date}~{end_date}")
                 return pd.DataFrame()
 
-            # 5. 存入数据库
+            # 7. 存入数据库
             mysql_utils.data_from_dataframe_to_mysql(
                 user=origin_user,
                 password=origin_password,

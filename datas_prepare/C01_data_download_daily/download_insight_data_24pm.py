@@ -222,7 +222,7 @@ class SaveInsightData24PM:
         shareholder_num_df = pd.DataFrame()
 
         #  3.获取最新的stock_codes 数据
-        code_list = mysql_utils.get_stock_codes_latest()
+        code_list = mysql_utils.get_stock_codes_latest()['stock_code'].tolist()
 
         #  4.请求insight  个股股东数   数据
         total_xunhuan = len(code_list)

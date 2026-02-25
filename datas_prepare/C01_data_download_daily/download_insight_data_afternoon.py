@@ -131,7 +131,7 @@ class SaveInsightData:
                 yield lst[start:start + batch_size]
 
         #  4.获取最新的stock_code 的list
-        stock_code_list = mysql_utils.get_stock_codes_latest(self.stock_code_df)
+        stock_code_list = mysql_utils.get_stock_codes_latest()['stock_code'].tolist()
 
         #  5.计算总批次数
         total_batches = (len(stock_code_list) + batch_size - 1) // batch_size
@@ -423,7 +423,7 @@ class SaveInsightData:
                 yield lst[start:start + batch_size]
 
         #  4.获取最新的stock_code_list
-        stock_code_list = mysql_utils.get_stock_codes_latest(self.stock_code_df)
+        stock_code_list = mysql_utils.get_stock_codes_latest()['stock_code'].tolist()
 
         #  5.计算总批次数
         total_batches = (len(stock_code_list) + batch_size - 1) // batch_size
@@ -571,7 +571,7 @@ class SaveInsightData:
         stock_in_industry_df = pd.DataFrame()
 
         #  3.获取最新的 stock_code 数据
-        index_list = mysql_utils.get_stock_codes_latest(self.stock_code_df)
+        index_list = mysql_utils.get_stock_codes_latest()['stock_code'].tolist()
 
         #  4.请求insight 上的申万三级行业 数据
         i = 1                                     # 总第 i个 循环标记
@@ -643,7 +643,7 @@ class SaveInsightData:
         # north_bound_df = pd.DataFrame()
 
         #  3.获取最新的stock_codes 数据
-        code_list = mysql_utils.get_stock_codes_latest(self.stock_code_df)
+        code_list = mysql_utils.get_stock_codes_latest()['stock_code'].tolist()
 
         #  4.请求insight  个股股东数   数据
         #    请求insight  北向资金持仓  数据

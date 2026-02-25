@@ -74,7 +74,7 @@ class TushareDataFetcher:
         time_end_date = today
 
         # 2. 获取股票代码列表
-        stock_code_list = mysql_utils.get_stock_codes_latest(self.stock_code_df)
+        stock_code_list = mysql_utils.get_stock_codes_latest()['stock_code'].tolist()
         if not stock_code_list:
             self.logger.warning("股票代码列表为空")
             return pd.DataFrame()
