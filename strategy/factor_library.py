@@ -16,7 +16,10 @@ class FactorLibrary:
         self.host = Mysql_Utils.origin_host
         self.database = Mysql_Utils.origin_database
 
-    def pb_factor_score(self, start_date, end_date, reverse=True):
+        # 简单缓存，不强制依赖
+        self.cached_factors = {}
+
+    def pb_factor_score(self, start_date, end_date, reverse=True, save_to_cache=True):
         """
         计算PB因子百分制评分（0-100分）
         简化版：有数据的计算排名，无数据的给0分
@@ -74,13 +77,18 @@ class FactorLibrary:
 
             result_df = pd.concat(result_dfs, ignore_index=True)
             logger.info(f"PB因子百分制计算完成：共{len(result_df)}条记录")
+
+            # 保存到缓存
+            if save_to_cache:
+                self.cached_factors['pb'] = result_df.copy()
+
             return result_df
 
         except Exception as e:
             logger.error(f"计算PB因子失败：{str(e)}")
             return pd.DataFrame(columns=['ymd', 'stock_code', 'pb_score'])
 
-    def zt_factor_score(self, start_date, end_date, lookback_days=5, scoring_method='linear'):
+    def zt_factor_score(self, start_date, end_date, lookback_days=5, scoring_method='linear', save_to_cache=True):
         """
         计算涨停因子百分制评分（0-100分）
 
@@ -435,7 +443,7 @@ class FactorLibrary:
                 return pd.DataFrame(columns=['ymd', 'stock_code', 'volume_score',
                                              'price_score', 'composite_score'])
 
-            # 2. 获取阴线数据
+            # 2. 获取阴线数据   关于引线 todo  最好是连阴但累计跌幅却有限的
             down_df = self.get_down_days(start_date, end_date)
 
             if down_df.empty:
@@ -715,6 +723,131 @@ class FactorLibrary:
             import traceback
             traceback.print_exc()
 
+    def get_down_days(self, start_date, end_date):
+        """
+        获取每日的阴线标记
+        阴线定义：基于 ods_stock_kline_daily_ts 表中的 is_down 字段
+        is_down = 1 表示阴线（收盘价 < 开盘价）
+        Args:
+            start_date: 开始日期 (YYYYMMDD)
+            end_date: 结束日期 (YYYYMMDD)
+        Returns:
+            DataFrame: ymd, stock_code, is_down (True/False)
+        """
+        try:
+            # 从 ods_stock_kline_daily_ts 表获取阴线数据
+            down_df = Mysql_Utils.data_from_mysql_to_dataframe(
+                user=self.user,
+                password=self.password,
+                host=self.host,
+                database=self.database,
+                table_name='ods_stock_kline_daily_ts',
+                start_date=start_date,
+                end_date=end_date,
+                cols=['ymd', 'stock_code', 'is_down']
+            )
+
+            if down_df.empty:
+                logger.warning(f"阴线数据为空: {start_date}~{end_date}")
+                return pd.DataFrame(columns=['ymd', 'stock_code', 'is_down'])
+
+            # 将 is_down 从 0/1 转换为 False/True
+            down_df['is_down'] = down_df['is_down'].astype(bool)
+
+            logger.info(f"获取阴线数据完成：共{len(down_df)}条记录")
+
+            return down_df[['ymd', 'stock_code', 'is_down']]
+
+        except Exception as e:
+            logger.error(f"获取阴线数据失败：{str(e)}")
+            return pd.DataFrame(columns=['ymd', 'stock_code', 'is_down'])
+
+    def aggregate_factors(self, start_date, end_date, factors=None, save_to_db=True):
+        """
+        简单的因子汇总 - 有什么算什么
+        Args:
+            start_date: 开始日期
+            end_date: 结束日期
+            factors: 要汇总的因子列表，如 ['pb', 'zt', 'shareholder', 'volume']
+                     如果不传，则汇总所有已缓存的因子
+            save_to_db: 是否保存到数据库
+        Returns:
+            DataFrame: 汇总后的因子得分
+        """
+        # 如果没有指定因子，用缓存中有的
+        if factors is None:
+            factors = list(self.cached_factors.keys())
+
+        if not factors:
+            logger.warning("没有指定因子，且缓存为空")
+            return pd.DataFrame(columns=['ymd', 'stock_code'])
+
+        # 定义因子得分列的映射（硬编码，简单直接）
+        score_col_map = {
+            'pb': 'pb_score',
+            'zt': 'zt_score',
+            'shareholder': 'shareholder_score',
+            'volume': 'composite_score'  # volume因子返回的就是 composite_score
+        }
+
+        # 逐个处理因子
+        summary_df = None
+
+        for factor_name in factors:
+            # 检查是否在缓存中
+            if factor_name not in self.cached_factors:
+                logger.warning(f"因子 {factor_name} 不在缓存中，跳过")
+                continue
+
+            df = self.cached_factors[factor_name]
+            score_col = score_col_map.get(factor_name)
+
+            if score_col not in df.columns:
+                logger.warning(f"因子 {factor_name} 的DataFrame中没有 {score_col} 列")
+                continue
+
+            # 只取需要的列
+            factor_df = df[['ymd', 'stock_code', score_col]].copy()
+            factor_df = factor_df.rename(columns={score_col: f'{factor_name}_score'})
+
+            # 合并
+            if summary_df is None:
+                summary_df = factor_df
+            else:
+                summary_df = pd.merge(
+                    summary_df, factor_df,
+                    on=['ymd', 'stock_code'],
+                    how='outer'
+                )
+
+        if summary_df is None:
+            logger.warning("没有成功合并任何因子")
+            return pd.DataFrame(columns=['ymd', 'stock_code'])
+
+        # 填充空值为0
+        score_cols = [col for col in summary_df.columns if col.endswith('_score')]
+        for col in score_cols:
+            summary_df[col] = summary_df[col].fillna(0)
+
+        # 保存到数据库
+        if save_to_db:
+            try:
+                Mysql_Utils.data_from_dataframe_to_mysql(
+                    user=self.user,
+                    password=self.password,
+                    host=self.host,
+                    database=self.database,
+                    df=summary_df,
+                    table_name="dwb_factor_summary",
+                    merge_on=['ymd', 'stock_code']
+                )
+                logger.info(f"因子汇总已保存到 dwb_factor_summary，共{len(summary_df)}条")
+            except Exception as e:
+                logger.error(f"保存因子汇总失败：{str(e)}")
+
+        logger.info(f"因子汇总完成，共{len(summary_df)}条，包含因子: {factors}")
+
+        return summary_df
 
 
 
