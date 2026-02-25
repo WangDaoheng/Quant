@@ -61,8 +61,8 @@ class RunDataDaily:
         #  执行 DWD层逻辑
         self.dwd_cal.setup()
 
-        #  执行 MART层逻辑
-        self.dmart_cal.setup()
+        # #  执行 MART层逻辑
+        # self.dmart_cal.setup()
 
         #  发送邮件
         self.send_logfile_email()

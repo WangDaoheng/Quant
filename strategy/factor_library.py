@@ -733,7 +733,7 @@ if __name__ == '__main__':
     # 1. 计算因子
     factor_df = factorlib.volume_shrinkage_factor(
         start_date='2026-02-01',
-        end_date='2026-02-22'
+        end_date='2026-02-24'
     )
 
     # 2. 查看高分股票（连续阴线+缩量）

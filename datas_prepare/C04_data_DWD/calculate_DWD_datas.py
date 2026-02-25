@@ -660,14 +660,14 @@ class CalDWD:
         try:
             import numpy as np
 
-            # start_date = '20210101'
-            # end_date = '20260213'
+            # start_date = '20260101'
+            # end_date = '20260224'
             start_date = DateUtility.first_day_of_month()
             end_date = DateUtility.today()
             # 1. 获取原始K线数据（需要多取一些历史数据用于计算均线）
             start_dt = pd.to_datetime(start_date)
             # 往前多取300天用于计算年线（确保足够的数据）
-            query_start = (start_dt - pd.Timedelta(days=300)).strftime('%Y%m%d')
+            query_start = (start_dt - pd.Timedelta(days=400)).strftime('%Y%m%d')
 
             kline_df = mysql_utils.data_from_mysql_to_dataframe(
                 user=origin_user,
@@ -760,7 +760,6 @@ class CalDWD:
             import traceback
             logging.error(traceback.format_exc())
             return pd.DataFrame()
-
 
 
     def setup(self):
