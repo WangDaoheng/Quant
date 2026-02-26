@@ -429,7 +429,7 @@ class FactorLibrary:
             logger.error(f"获取交易日失败：{str(e)}")
             return []
 
-    def volume_shrinkage_factor(self, start_date, end_date):
+    def volume_shrinkage_factor(self, start_date, end_date,  save_to_cache=True):
         """
         计算缩量下跌因子（0-100分）
         使用预计算的均线表，固定使用60日均量作为长期基准
@@ -452,21 +452,30 @@ class FactorLibrary:
                 table_name='dwd_stock_technical_indicators',
                 start_date=start_date,
                 end_date=end_date,
-                cols=['ymd', 'stock_code', 'close', 'volume',
+                cols=['ymd', 'stock_code', 'stock_name', 'close', 'volume',
                       'vol_ma5', 'vol_ma60', 'volume_vs_ma5']
             )
 
+            # 定义固定的列顺序（与表结构完全一致）
+            fixed_columns = [
+                'ymd', 'stock_code', 'stock_name',
+                'close', 'volume',
+                'vol_ma5', 'vol_ma60', 'volume_vs_ma5',
+                'is_shrink_today', 'consecutive_shrink_days',
+                'is_down', 'consecutive_down_days',
+                'volume_score', 'price_score', 'composite_score', 'signal_level'
+            ]
+
             if tech_df.empty:
                 logger.warning(f"技术指标数据为空: {start_date}~{end_date}")
-                return pd.DataFrame(columns=['ymd', 'stock_code', 'volume_score',
-                                             'price_score', 'composite_score'])
+                return pd.DataFrame(columns=fixed_columns)
 
             # 2. 获取阴线数据   关于引线 todo  最好是连阴但累计跌幅却有限的
             down_df = self.get_down_days(start_date, end_date)
 
             if down_df.empty:
-                return pd.DataFrame(columns=['ymd', 'stock_code', 'volume_score',
-                                             'price_score', 'composite_score'])
+                logger.warning(f"阴线数据为空: {start_date}~{end_date}")
+                return pd.DataFrame(columns=fixed_columns)
 
             # 3. 合并数据
             merged_df = pd.merge(
@@ -570,17 +579,37 @@ class FactorLibrary:
 
             final_df['signal_level'] = final_df['composite_score'].apply(get_score_level)
 
-            logger.info(f"缩量下跌因子计算完成：共{len(final_df)}条记录")
+            # 6. 按固定列顺序选择数据
+            result_df = final_df[fixed_columns].copy()
+            logger.info(f"缩量下跌因子计算完成：共{len(result_df)}条记录")
 
-            return final_df[['ymd', 'stock_code', 'volume_score', 'price_score',
-                             'composite_score', 'signal_level']]
+            # 7. 保存到缓存
+            if save_to_cache:
+                self.cached_factors['volume'] = result_df.copy()
+
+            # 8. 保存到数据库
+            if save_to_cache:
+                try:
+                    Mysql_Utils.data_from_dataframe_to_mysql(
+                        user=self.user,
+                        password=self.password,
+                        host=self.host,
+                        database=self.database,
+                        df=result_df,
+                        table_name="dwb_factor_volume_shrinkage",
+                        merge_on=['ymd', 'stock_code']
+                    )
+                    logger.info(f"缩量下跌因子已保存到 dwb_factor_volume_shrinkage，共{len(result_df)}条")
+                except Exception as e:
+                    logger.error(f"保存缩量下跌因子失败：{str(e)}")
+
+            return result_df
 
         except Exception as e:
             logger.error(f"计算缩量下跌因子失败：{str(e)}")
             import traceback
             logger.error(traceback.format_exc())
-            return pd.DataFrame(columns=['ymd', 'stock_code', 'volume_score',
-                                         'price_score', 'composite_score'])
+            return pd.DataFrame(columns=fixed_columns)
 
 
     def explain_volume_shrinkage(self, stock_code, date):
@@ -850,7 +879,7 @@ class FactorLibrary:
         # 保存到数据库
         if save_to_db:
             try:
-                mysql_utils.data_from_dataframe_to_mysql(
+                Mysql_Utils.data_from_dataframe_to_mysql(
                     user=self.user,
                     password=self.password,
                     host=self.host,
@@ -871,25 +900,25 @@ class FactorLibrary:
     def setup(self):
 
         #  pb 因子计算
-        self.pb_factor_score()
+        self.pb_factor_score(start_date='20250101', end_date='20260215')
 
         #  涨停 因子计算
-        self.zt_factor_score()
+        self.zt_factor_score(start_date='20250101', end_date='20260215')
 
         #  股东数 因子计算
-        self.shareholder_factor_score()
+        self.shareholder_factor_score(start_date='20250101', end_date='20260215')
 
         #  缩量因子计算
-        self.volume_shrinkage_factor()
+        self.volume_shrinkage_factor(start_date='20250101', end_date='20260215')
 
         #  因子汇总
-        self.aggregate_factors()
+        self.aggregate_factors(start_date='20250101', end_date='20260215')
 
 
 
 if __name__ == '__main__':
     factorlib = FactorLibrary()
-    factorlib.setup()
+    # factorlib.setup()
 
     # 测试修复后的交易日获取
     # res = factorlib.get_trading_days(start_date='20260101', end_date='20260109')
@@ -912,7 +941,7 @@ if __name__ == '__main__':
         'composite_score', ascending=False
     )
     print("强烈信号股票：")
-    print(high_score[['ymd', 'stock_code', 'consecutive_down_days',
+    print(high_score[['ymd', 'stock_code', 'stock_name', 'consecutive_down_days',
                       'composite_score', 'signal_level']].head(10))
 
     # 3. 分析单只股票

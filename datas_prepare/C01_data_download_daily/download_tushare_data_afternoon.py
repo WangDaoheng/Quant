@@ -142,7 +142,7 @@ class SaveTushareDailyData:
             logging.info(f"阴线统计: 阴线 {down_count} 条, 阳线 {total_count - down_count} 条, "
                          f"阴线比例 {down_count / total_count * 100:.2f}%")
 
-            # 选择需要的列（包括新增的阴线字段）
+            # 选择需要的列（包括新增的阴线字段） todo 调整ymd的字段顺序，添加 stock_name
             required_columns = ['stock_code', 'ymd', 'open', 'close', 'high', 'low',
                                 'change_pct', 'today_pct', 'is_down', 'volume', 'trading_amount']
 

@@ -659,10 +659,10 @@ class CalDWD:
             end_date: 结束日期 (YYYYMMDD)
         """
         try:
-            # start_date = '20210101'
-            # end_date = '20260225'
-            start_date = DateUtility.first_day_of_month()
-            end_date = DateUtility.today()
+            start_date = '20210101'
+            end_date = '20260225'
+            # start_date = DateUtility.first_day_of_month()
+            # end_date = DateUtility.today()
             # 1. 获取原始K线数据（需要多取一些历史数据用于计算均线）
             start_dt = pd.to_datetime(start_date)
             # 往前多取300天用于计算年线（确保足够的数据）
@@ -769,20 +769,20 @@ class CalDWD:
 
     def setup(self):
 
-        # 聚合股票的板块，把各个板块数据聚合在一起   周末手动执行
-        self.cal_ashare_plate()
-
-        # 计算股票所归属的交易所，判断其是主办、创业板、科创板、北交所等等
-        self.cal_stock_exchange()
-
-        # 全量票的最新股东数数据
-        self.cal_shareholder_num_latest()
-
-        # 计算股票基础信息，汇总表，名称、编码、板块、股本、市值、净资产
-        self.cal_stock_base_info()
-
-        # 计算一只股票是否 涨停 / 跌停
-        self.cal_ZT_DT()
+        # # 聚合股票的板块，把各个板块数据聚合在一起   周末手动执行
+        # self.cal_ashare_plate()
+        #
+        # # 计算股票所归属的交易所，判断其是主办、创业板、科创板、北交所等等
+        # self.cal_stock_exchange()
+        #
+        # # 全量票的最新股东数数据
+        # self.cal_shareholder_num_latest()
+        #
+        # # 计算股票基础信息，汇总表，名称、编码、板块、股本、市值、净资产
+        # self.cal_stock_base_info()
+        #
+        # # 计算一只股票是否 涨停 / 跌停
+        # self.cal_ZT_DT()
 
         # 计算行情衍生指标  均线等
         self.cal_technical_indicators()

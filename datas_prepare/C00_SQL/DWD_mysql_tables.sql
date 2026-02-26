@@ -94,6 +94,7 @@ CREATE TABLE quant.dwd_shareholder_num_latest (
 CREATE TABLE quant.dwd_stock_technical_indicators (
      ymd                      DATE        NOT NULL    COMMENT '交易日期'
     ,stock_code               VARCHAR(50) NOT NULL    COMMENT '股票代码'
+    ,stock_name               varchar(50)             COMMENT '股票名称'
     ,close                    FLOAT                   COMMENT '收盘价'
     ,volume                   BIGINT                  COMMENT '成交量'
     -- 成交量均线
@@ -123,6 +124,70 @@ CREATE TABLE quant.dwd_stock_technical_indicators (
     ,INDEX idx_vol_ma5 (vol_ma5)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
 COMMENT='股票技术指标预计算表（均线等）';
+
+
+
+
+
+
+
+--2.1
+------------------  dwb_factor_volume_shrinkage  缩量下跌因子明细表
+CREATE TABLE IF NOT EXISTS quant.dwb_factor_volume_shrinkage (
+    ymd                     DATE        NOT NULL COMMENT '交易日期',
+    stock_code              VARCHAR(50) NOT NULL COMMENT '股票代码',
+    stock_name              VARCHAR(50)          COMMENT '股票名称',
+    -- 原始数据             
+    close                   FLOAT                COMMENT '收盘价',
+    volume                  BIGINT               COMMENT '成交量',
+    -- 成交量指标           
+    vol_ma5                 FLOAT                COMMENT '5日均量',
+    vol_ma60                FLOAT                COMMENT '60日均量',
+    volume_vs_ma5           DECIMAL(10,2)        COMMENT '成交量/5日均量-1, 单位%',
+    -- 缩量判断             
+    is_shrink_today         TINYINT(1)           COMMENT '当日是否缩量(1:是,0:否)',
+    consecutive_shrink_days INT                  COMMENT '连续缩量天数',
+    -- 阴线判断
+    is_down                 TINYINT(1)           COMMENT '当日是否阴线(1:是,0:否)',
+    consecutive_down_days   INT                  COMMENT '连续阴线天数',
+    -- 因子得分
+    volume_score            DECIMAL(5,2)         COMMENT '缩量因子得分(0-60)',
+    price_score             DECIMAL(5,2)         COMMENT '下跌因子得分(0-40)',
+    composite_score         DECIMAL(5,2)         COMMENT '缩量下跌综合得分(0-100)',
+    signal_level            CHAR(1)              COMMENT '信号等级(A/B/C/D/E)',
+    UNIQUE KEY unique_ymd_stock (ymd, stock_code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+COMMENT='缩量下跌因子明细表';
+
+
+
+
+--2.2
+------------------  dwb_factor_summary  因子汇总表（所有因子得分）
+CREATE TABLE IF NOT EXISTS quant.dwb_factor_summary (
+    ymd               DATE         NOT NULL  COMMENT '交易日期',
+    stock_code        VARCHAR(50)  NOT NULL  COMMENT '股票代码',
+    stock_name        VARCHAR(50)            COMMENT '股票名称',
+    -- 各因子得分
+    pb_score          DECIMAL(5,2) DEFAULT 0 COMMENT 'PB因子得分(0-100)',
+    zt_score          DECIMAL(5,2) DEFAULT 0 COMMENT '涨停因子得分(0-100)',
+    shareholder_score DECIMAL(5,2) DEFAULT 0 COMMENT '股东数因子得分(0-100)',
+    -- 缩量下跌因子相关得分
+    volume_score      DECIMAL(5,2) DEFAULT 0 COMMENT '缩量因子得分(0-60)',
+    price_score       DECIMAL(5,2) DEFAULT 0 COMMENT '下跌因子得分(0-40)',
+    composite_score   DECIMAL(5,2) DEFAULT 0 COMMENT '缩量下跌综合得分(0-100)',
+    signal_level      CHAR(1)                COMMENT '缩量下跌信号等级(A/B/C/D/E)',
+    -- 其他因子可继续添加
+    UNIQUE KEY unique_ymd_stock (ymd, stock_code),
+    INDEX idx_composite (composite_score),
+    INDEX idx_pb (pb_score),
+    INDEX idx_zt (zt_score)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+COMMENT='因子汇总表（所有因子得分）';
+
+
+
+
 
 
 
