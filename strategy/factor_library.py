@@ -588,20 +588,19 @@ class FactorLibrary:
                 self.cached_factors['volume'] = result_df.copy()
 
             # 8. 保存到数据库
-            if save_to_cache:
-                try:
-                    Mysql_Utils.data_from_dataframe_to_mysql(
-                        user=self.user,
-                        password=self.password,
-                        host=self.host,
-                        database=self.database,
-                        df=result_df,
-                        table_name="dwb_factor_volume_shrinkage",
-                        merge_on=['ymd', 'stock_code']
-                    )
-                    logger.info(f"缩量下跌因子已保存到 dwb_factor_volume_shrinkage，共{len(result_df)}条")
-                except Exception as e:
-                    logger.error(f"保存缩量下跌因子失败：{str(e)}")
+            try:
+                Mysql_Utils.data_from_dataframe_to_mysql(
+                    user=self.user,
+                    password=self.password,
+                    host=self.host,
+                    database=self.database,
+                    df=result_df,
+                    table_name="dwb_factor_volume_shrinkage",
+                    merge_on=['ymd', 'stock_code']
+                )
+                logger.info(f"缩量下跌因子已保存到 dwb_factor_volume_shrinkage，共{len(result_df)}条")
+            except Exception as e:
+                logger.error(f"保存缩量下跌因子失败：{str(e)}")
 
             return result_df
 
@@ -634,7 +633,7 @@ class FactorLibrary:
             )
 
             if df.empty:
-                print(f"没有找到 {stock_code} 的数据")
+                print(f"没有找到 {start_dt} ~ {date} 之间的数据")
                 return
 
             df = df[df['stock_code'] == stock_code].sort_values('ymd')
@@ -918,7 +917,7 @@ class FactorLibrary:
 
 if __name__ == '__main__':
     factorlib = FactorLibrary()
-    # factorlib.setup()
+    factorlib.setup()
 
     # 测试修复后的交易日获取
     # res = factorlib.get_trading_days(start_date='20260101', end_date='20260109')
@@ -931,27 +930,27 @@ if __name__ == '__main__':
     # print(share_score)
 
     # 1. 计算因子
-    factor_df = factorlib.volume_shrinkage_factor(
-        start_date='2026-02-01',
-        end_date='2026-02-24'
-    )
-
-    # 2. 查看高分股票（连续阴线+缩量）
-    high_score = factor_df[factor_df['signal_level'].isin(['A', 'B'])].sort_values(
-        'composite_score', ascending=False
-    )
-    print("强烈信号股票：")
-    print(high_score[['ymd', 'stock_code', 'stock_name', 'consecutive_down_days',
-                      'composite_score', 'signal_level']].head(10))
+    # factor_df = factorlib.volume_shrinkage_factor(
+    #     start_date='2026-02-01',
+    #     end_date='2026-02-24'
+    # )
+    #
+    # # 2. 查看高分股票（连续阴线+缩量）
+    # high_score = factor_df[factor_df['signal_level'].isin(['A', 'B'])].sort_values(
+    #     'composite_score', ascending=False
+    # )
+    # print("强烈信号股票：")
+    # print(high_score[['ymd', 'stock_code', 'stock_name', 'consecutive_down_days',
+    #                   'composite_score', 'signal_level']].head(10))
 
     # 3. 分析单只股票
-    factorlib.explain_volume_shrinkage('000001', '2026-02-22')
+    # factorlib.explain_volume_shrinkage('000001.SZ', '2026-02-24')
 
-    # 4. 统计连续3天阴线的股票
-    three_days_down = factor_df[factor_df['consecutive_down_days'] >= 3]
-    print(f"\n连续3天阴线的股票数量: {len(three_days_down)}")
-    print(three_days_down[['ymd', 'stock_code', 'consecutive_down_days',
-                           'volume_score', 'composite_score']].head())
+    # # 4. 统计连续3天阴线的股票
+    # three_days_down = factor_df[factor_df['consecutive_down_days'] >= 3]
+    # print(f"\n连续3天阴线的股票数量: {len(three_days_down)}")
+    # print(three_days_down[['ymd', 'stock_code', 'consecutive_down_days',
+    #                        'volume_score', 'composite_score']].head())
 
 
 
