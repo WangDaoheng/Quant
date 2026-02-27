@@ -19,6 +19,9 @@ class FactorLibrary:
         # 简单缓存，不强制依赖
         self.cached_factors = {}
 
+        # 获取全量股票列表（stock_code, stock_name）
+        self.stocks_df = Mysql_Utils.get_stock_codes_latest()
+
     def pb_factor_score(self, start_date, end_date, reverse=True, save_to_cache=True):
         """
         计算PB因子百分制评分（0-100分）
@@ -808,17 +811,9 @@ class FactorLibrary:
             logger.error(f"获取阴线数据失败：{str(e)}")
             return pd.DataFrame(columns=['ymd', 'stock_code', 'is_down'])
 
-    def aggregate_factors(self, start_date, end_date, factors=None, save_to_db=True):
+    def aggregate_factors(self, start_date, end_date, factors=None):
         """
-        简单的因子汇总 - 有什么算什么
-        Args:
-            start_date: 开始日期
-            end_date: 结束日期
-            factors: 要汇总的因子列表，如 ['pb', 'zt', 'shareholder', 'volume']
-                     如果不传，则汇总所有已缓存的因子
-            save_to_db: 是否保存到数据库
-        Returns:
-            DataFrame: 汇总后的因子得分
+        因子汇总 - 直接写入MySQL，严格按照表结构
         """
         # 如果没有指定因子，用缓存中有的
         if factors is None:
@@ -826,92 +821,105 @@ class FactorLibrary:
 
         if not factors:
             logger.warning("没有指定因子，且缓存为空")
-            return pd.DataFrame(columns=['ymd', 'stock_code'])
+            return
 
-        # 定义因子得分列的映射（硬编码，简单直接）
-        score_col_map = {
-            'pb': 'pb_score',
-            'zt': 'zt_score',
-            'shareholder': 'shareholder_score',
-            'volume': 'composite_score'  # volume因子返回的就是 composite_score
+        # 获取交易日列表
+        trading_days = self.get_trading_days(start_date, end_date)
+        if not trading_days:
+            logger.warning(f"没有交易日数据: {start_date}~{end_date}")
+            return
+
+        # 构建基础DataFrame：所有股票 * 所有交易日
+        base_data = []
+        for date in trading_days:
+            for _, row in self.stocks_df.iterrows():
+                base_data.append({
+                    'ymd': date,
+                    'stock_code': row['stock_code'],
+                    'stock_name': row['stock_name']
+                })
+
+        summary_df = pd.DataFrame(base_data)
+
+        # 初始化所有得分为0
+        summary_df['pb_score'] = 0
+        summary_df['zt_score'] = 0
+        summary_df['shareholder_score'] = 0
+        summary_df['volume_score'] = 0
+        summary_df['price_score'] = 0
+        summary_df['composite_score'] = 0
+        summary_df['signal_level'] = ''
+
+        # 定义因子列映射
+        factor_cols = {
+            'pb': ['pb_score'],
+            'zt': ['zt_score'],
+            'shareholder': ['shareholder_score'],
+            'volume': ['volume_score', 'price_score', 'composite_score', 'signal_level']
         }
 
-        # 逐个处理因子
-        summary_df = None
-
+        # 逐个因子合并更新
         for factor_name in factors:
-            # 检查是否在缓存中
             if factor_name not in self.cached_factors:
                 logger.warning(f"因子 {factor_name} 不在缓存中，跳过")
                 continue
 
             df = self.cached_factors[factor_name]
-            score_col = score_col_map.get(factor_name)
+            cols_to_merge = factor_cols.get(factor_name, [])
 
-            if score_col not in df.columns:
-                logger.warning(f"因子 {factor_name} 的DataFrame中没有 {score_col} 列")
-                continue
+            # 左连接合并因子得分
+            merged = pd.merge(
+                summary_df[['ymd', 'stock_code']],
+                df[['ymd', 'stock_code'] + cols_to_merge],
+                on=['ymd', 'stock_code'],
+                how='left'
+            )
 
-            # 只取需要的列
-            factor_df = df[['ymd', 'stock_code', score_col]].copy()
-            factor_df = factor_df.rename(columns={score_col: f'{factor_name}_score'})
+            # 更新对应的列
+            for col in cols_to_merge:
+                if col in merged.columns:
+                    # 用合并后的值更新summary_df中对应的列
+                    update_dict = dict(zip(zip(merged['ymd'], merged['stock_code']), merged[col]))
+                    mask = summary_df.set_index(['ymd', 'stock_code']).index.isin(
+                        merged.set_index(['ymd', 'stock_code']).index)
+                    summary_df.loc[mask, col] = summary_df.set_index(['ymd', 'stock_code']).index.map(
+                        update_dict).values
 
-            # 合并
-            if summary_df is None:
-                summary_df = factor_df
-            else:
-                summary_df = pd.merge(
-                    summary_df, factor_df,
-                    on=['ymd', 'stock_code'],
-                    how='outer'
-                )
-
-        if summary_df is None:
-            logger.warning("没有成功合并任何因子")
-            return pd.DataFrame(columns=['ymd', 'stock_code'])
-
-        # 填充空值为0
-        score_cols = [col for col in summary_df.columns if col.endswith('_score')]
-        for col in score_cols:
-            summary_df[col] = summary_df[col].fillna(0)
-
-        # 保存到数据库
-        if save_to_db:
-            try:
-                Mysql_Utils.data_from_dataframe_to_mysql(
-                    user=self.user,
-                    password=self.password,
-                    host=self.host,
-                    database=self.database,
-                    df=summary_df,
-                    table_name="dwb_factor_summary",
-                    merge_on=['ymd', 'stock_code']
-                )
-                logger.info(f"因子汇总已保存到 dwb_factor_summary，共{len(summary_df)}条")
-            except Exception as e:
-                logger.error(f"保存因子汇总失败：{str(e)}")
+        summary_df.to_csv('./summary.csv')
+        # 写入MySQL
+        try:
+            Mysql_Utils.data_from_dataframe_to_mysql(
+                user=self.user,
+                password=self.password,
+                host=self.host,
+                database=self.database,
+                df=summary_df,
+                table_name="dwb_factor_summary",
+                merge_on=['ymd', 'stock_code']
+            )
+            logger.info(f"因子汇总已保存到 dwb_factor_summary，共{len(summary_df)}条")
+        except Exception as e:
+            logger.error(f"保存因子汇总失败：{str(e)}")
 
         logger.info(f"因子汇总完成，共{len(summary_df)}条，包含因子: {factors}")
-
-        return summary_df
 
 
     def setup(self):
 
         #  pb 因子计算
-        self.pb_factor_score(start_date='20250101', end_date='20260215')
+        self.pb_factor_score(start_date='20260101', end_date='20260215')
 
         #  涨停 因子计算
-        self.zt_factor_score(start_date='20250101', end_date='20260215')
+        self.zt_factor_score(start_date='20260101', end_date='20260215')
 
         #  股东数 因子计算
-        self.shareholder_factor_score(start_date='20250101', end_date='20260215')
+        self.shareholder_factor_score(start_date='20260101', end_date='20260215')
 
         #  缩量因子计算
-        self.volume_shrinkage_factor(start_date='20250101', end_date='20260215')
+        self.volume_shrinkage_factor(start_date='20260101', end_date='20260215')
 
         #  因子汇总
-        self.aggregate_factors(start_date='20250101', end_date='20260215')
+        self.aggregate_factors(start_date='20260101', end_date='20260215')
 
 
 
