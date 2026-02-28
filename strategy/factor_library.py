@@ -811,10 +811,13 @@ class FactorLibrary:
             logger.error(f"获取阴线数据失败：{str(e)}")
             return pd.DataFrame(columns=['ymd', 'stock_code', 'is_down'])
 
+
     def aggregate_factors(self, start_date, end_date, factors=None):
         """
         因子汇总 - 直接写入MySQL，严格按照表结构
         """
+        import pandas as pd
+
         # 如果没有指定因子，用缓存中有的
         if factors is None:
             factors = list(self.cached_factors.keys())
@@ -832,9 +835,15 @@ class FactorLibrary:
         # 构建基础DataFrame：所有股票 * 所有交易日
         base_data = []
         for date in trading_days:
+            # 统一日期格式为 YYYY-MM-DD
+            if isinstance(date, str) and len(date) == 8 and date.isdigit():
+                date_str = f"{date[:4]}-{date[4:6]}-{date[6:8]}"
+            else:
+                date_str = str(date)
+
             for _, row in self.stocks_df.iterrows():
                 base_data.append({
-                    'ymd': date,
+                    'ymd': date_str,
                     'stock_code': row['stock_code'],
                     'stock_name': row['stock_name']
                 })
@@ -864,10 +873,20 @@ class FactorLibrary:
                 logger.warning(f"因子 {factor_name} 不在缓存中，跳过")
                 continue
 
-            df = self.cached_factors[factor_name]
+            df = self.cached_factors[factor_name].copy()
+
+            # 统一因子数据的日期格式为 YYYY-MM-DD
+            if 'ymd' in df.columns:
+                if pd.api.types.is_datetime64_any_dtype(df['ymd']):
+                    df['ymd'] = df['ymd'].dt.strftime('%Y-%m-%d')
+                elif df['ymd'].dtype == 'object' and df['ymd'].astype(str).str.match(r'^\d{8}$').any():
+                    df['ymd'] = pd.to_datetime(df['ymd'], format='%Y%m%d').dt.strftime('%Y-%m-%d')
+                else:
+                    df['ymd'] = df['ymd'].astype(str)
+
             cols_to_merge = factor_cols.get(factor_name, [])
 
-            # 左连接合并因子得分
+            # 左连接合并
             merged = pd.merge(
                 summary_df[['ymd', 'stock_code']],
                 df[['ymd', 'stock_code'] + cols_to_merge],
@@ -878,14 +897,22 @@ class FactorLibrary:
             # 更新对应的列
             for col in cols_to_merge:
                 if col in merged.columns:
-                    # 用合并后的值更新summary_df中对应的列
-                    update_dict = dict(zip(zip(merged['ymd'], merged['stock_code']), merged[col]))
-                    mask = summary_df.set_index(['ymd', 'stock_code']).index.isin(
-                        merged.set_index(['ymd', 'stock_code']).index)
-                    summary_df.loc[mask, col] = summary_df.set_index(['ymd', 'stock_code']).index.map(
-                        update_dict).values
+                    # 创建合并数据的副本用于更新
+                    update_data = merged[['ymd', 'stock_code', col]].copy()
+                    update_data = update_data[update_data[col].notna()]
 
-        summary_df.to_csv('./summary.csv')
+                    if not update_data.empty:
+                        # 将update_data设为索引以便快速更新
+                        update_data = update_data.set_index(['ymd', 'stock_code'])
+                        summary_df = summary_df.set_index(['ymd', 'stock_code'])
+
+                        # 更新值
+                        for idx, value in update_data[col].items():
+                            summary_df.loc[idx, col] = value
+
+                        # 重置索引
+                        summary_df = summary_df.reset_index()
+
         # 写入MySQL
         try:
             Mysql_Utils.data_from_dataframe_to_mysql(
@@ -893,7 +920,9 @@ class FactorLibrary:
                 password=self.password,
                 host=self.host,
                 database=self.database,
-                df=summary_df,
+                df=summary_df[['ymd', 'stock_code', 'stock_name', 'pb_score', 'zt_score',
+                               'shareholder_score', 'volume_score', 'price_score',
+                               'composite_score', 'signal_level']],
                 table_name="dwb_factor_summary",
                 merge_on=['ymd', 'stock_code']
             )
