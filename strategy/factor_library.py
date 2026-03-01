@@ -811,7 +811,6 @@ class FactorLibrary:
             logger.error(f"获取阴线数据失败：{str(e)}")
             return pd.DataFrame(columns=['ymd', 'stock_code', 'is_down'])
 
-
     def aggregate_factors(self, start_date, end_date, factors=None):
         """
         因子汇总 - 直接写入MySQL，严格按照表结构
@@ -894,7 +893,7 @@ class FactorLibrary:
                 how='left'
             )
 
-            # 更新对应的列
+            # 更新对应的列 - 修复版本
             for col in cols_to_merge:
                 if col in merged.columns:
                     # 创建合并数据的副本用于更新
@@ -902,16 +901,10 @@ class FactorLibrary:
                     update_data = update_data[update_data[col].notna()]
 
                     if not update_data.empty:
-                        # 将update_data设为索引以便快速更新
-                        update_data = update_data.set_index(['ymd', 'stock_code'])
-                        summary_df = summary_df.set_index(['ymd', 'stock_code'])
-
-                        # 更新值
-                        for idx, value in update_data[col].items():
-                            summary_df.loc[idx, col] = value
-
-                        # 重置索引
-                        summary_df = summary_df.reset_index()
+                        # 直接使用布尔索引更新，避免索引问题
+                        for _, row in update_data.iterrows():
+                            mask = (summary_df['ymd'] == row['ymd']) & (summary_df['stock_code'] == row['stock_code'])
+                            summary_df.loc[mask, col] = row[col]
 
         # 写入MySQL
         try:
@@ -936,19 +929,19 @@ class FactorLibrary:
     def setup(self):
 
         #  pb 因子计算
-        self.pb_factor_score(start_date='20260101', end_date='20260215')
+        self.pb_factor_score(start_date='20240101', end_date='20260227')
 
         #  涨停 因子计算
-        self.zt_factor_score(start_date='20260101', end_date='20260215')
+        self.zt_factor_score(start_date='20240101', end_date='20260227')
 
         #  股东数 因子计算
-        self.shareholder_factor_score(start_date='20260101', end_date='20260215')
+        self.shareholder_factor_score(start_date='20240101', end_date='20260227')
 
         #  缩量因子计算
-        self.volume_shrinkage_factor(start_date='20260101', end_date='20260215')
+        self.volume_shrinkage_factor(start_date='20240101', end_date='20260227')
 
         #  因子汇总
-        self.aggregate_factors(start_date='20260101', end_date='20260215')
+        self.aggregate_factors(start_date='20240101', end_date='20260227')
 
 
 
