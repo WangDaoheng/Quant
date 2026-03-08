@@ -223,7 +223,7 @@ class SaveAkshareDailyData:
         try:
             # 获取当前年份和过去几年的数据
             current_year = int(DateUtility.today()[:4])
-            years = list(range(2026, current_year + 1))  # 从2026年开始，库里已有2020数据
+            years = list(range(2025, current_year + 1))  # 从2025年开始，库里已有2020数据
 
             # 季度对应的日期后缀
             quarter_dates = ["0331", "0630", "0930", "1231"]

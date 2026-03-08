@@ -598,10 +598,10 @@ class FactorLibrary:
                     host=self.host,
                     database=self.database,
                     df=result_df,
-                    table_name="dwb_factor_volume_shrinkage",
+                    table_name="dwd_factor_volume_shrinkage",
                     merge_on=['ymd', 'stock_code']
                 )
-                logger.info(f"缩量下跌因子已保存到 dwb_factor_volume_shrinkage，共{len(result_df)}条")
+                logger.info(f"缩量下跌因子已保存到 dwd_factor_volume_shrinkage，共{len(result_df)}条")
             except Exception as e:
                 logger.error(f"保存缩量下跌因子失败：{str(e)}")
 
@@ -916,10 +916,10 @@ class FactorLibrary:
                 df=summary_df[['ymd', 'stock_code', 'stock_name', 'pb_score', 'zt_score',
                                'shareholder_score', 'volume_score', 'price_score',
                                'composite_score', 'signal_level']],
-                table_name="dwb_factor_summary",
+                table_name="dwd_factor_summary",
                 merge_on=['ymd', 'stock_code']
             )
-            logger.info(f"因子汇总已保存到 dwb_factor_summary，共{len(summary_df)}条")
+            logger.info(f"因子汇总已保存到 dwd_factor_summary，共{len(summary_df)}条")
         except Exception as e:
             logger.error(f"保存因子汇总失败：{str(e)}")
 

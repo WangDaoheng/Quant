@@ -96,11 +96,7 @@ class SaveAkshareWeekendData:
     def download_stock_value_em(self):
         """
         下载股票估值数据 - ods_akshare_stock_value_em
-        接口: stock_value_em
-        说明: 个股的全量历史数据，需要逐个股票获取    封堵IP  不可用
         """
-
-        # 根据实际列名进行映射
         column_mapping = {
             '数据日期': 'ymd',
             '当日收盘价': 'close',
@@ -117,14 +113,14 @@ class SaveAkshareWeekendData:
             '市销率': 'ps'
         }
 
-        # 需要转化为数字类型的列
         numeric_columns = [
             'close', 'change_pct', 'total_market', 'circulation_market',
             'total_shares', 'circulation_shares', 'pe_ttm', 'pe_static',
             'pb', 'peg', 'pcf', 'ps'
         ]
 
-        return self.downloader.download_to_mysql(
+        # 下载数据
+        result = self.downloader.download_to_mysql(
             ak_function_name='stock_value_em',
             table_name='ods_akshare_stock_value_em',
             column_mapping=column_mapping,
@@ -134,6 +130,17 @@ class SaveAkshareWeekendData:
             auto_add_stock_code=True
         )
 
+        # ========== 新增：手动保存 ==========
+        if isinstance(result, pd.DataFrame) and not result.empty:
+            print(f"准备保存 {len(result)} 条数据...")
+            self.downloader._save_to_mysql(
+                df=result,
+                table_name='ods_akshare_stock_value_em',
+                merge_on=['ymd', 'stock_code']
+            )
+        # ==================================
+
+        return result
 
     @timing_decorator
     def download_stock_zh_a_gdhs_detail_em(self):

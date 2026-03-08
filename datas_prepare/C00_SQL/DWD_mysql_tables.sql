@@ -132,8 +132,8 @@ COMMENT='股票技术指标预计算表（均线等）';
 
 
 --2.1
-------------------  dwb_factor_volume_shrinkage  缩量下跌因子明细表
-CREATE TABLE IF NOT EXISTS quant.dwb_factor_volume_shrinkage (
+------------------  dwd_factor_volume_shrinkage  缩量下跌因子明细表
+CREATE TABLE IF NOT EXISTS quant.dwd_factor_volume_shrinkage (
     ymd                     DATE        NOT NULL COMMENT '交易日期',
     stock_code              VARCHAR(50) NOT NULL COMMENT '股票代码',
     stock_name              VARCHAR(50)          COMMENT '股票名称',
@@ -163,8 +163,8 @@ COMMENT='缩量下跌因子明细表';
 
 
 --2.2
-------------------  dwb_factor_summary  因子汇总表（所有因子得分）
-CREATE TABLE IF NOT EXISTS quant.dwb_factor_summary (
+------------------  dwd_factor_summary  因子汇总表（所有因子得分）
+CREATE TABLE IF NOT EXISTS quant.dwd_factor_summary (
     ymd               DATE         NOT NULL  COMMENT '交易日期',
     stock_code        VARCHAR(50)  NOT NULL  COMMENT '股票代码',
     stock_name        VARCHAR(50)            COMMENT '股票名称',

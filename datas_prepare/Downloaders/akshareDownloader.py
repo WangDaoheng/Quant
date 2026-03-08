@@ -225,6 +225,9 @@ class AkshareDownloader:
 
     def _save_to_mysql(self, df, table_name, merge_on):
         """保存数据到MySQL，失败时自动保存csv"""
+        print(f"【强制输出】_save_to_mysql 被调用: {table_name}", file=sys.stderr)
+        logging.error(f"【强制日志】_save_to_mysql 被调用: {table_name}, df大小: {len(df)}")
+
         try:
             if df.empty:
                 logging.warning(f"{table_name} DataFrame为空，跳过插入")
