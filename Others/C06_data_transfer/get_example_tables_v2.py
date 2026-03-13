@@ -240,7 +240,7 @@ class TableDataExporterFull:
 
         table_name = table_info['table_name']
 
-        f.write(f"\n【表 {table_num}/{total_tables}】{table_name}\n")
+        f.write(f"\n【表 {table_num}/{total_tables}】 {table_name}\n")
         f.write("=" * 100 + "\n")
 
         # 1. 基本信息
@@ -294,13 +294,6 @@ class TableDataExporterFull:
                 f.write(f"数据样例（前{len(df)}行，完整列）:\n")
 
             f.write("-" * 80 + "\n")
-
-            # 显示所有列名
-            columns = df.columns.tolist()
-            f.write(f"所有列({len(columns)}个):\n")
-            for i, col in enumerate(columns, 1):
-                f.write(f"  {i:2d}. {col}\n")
-            f.write("\n")
 
             # 显示数据（表格格式）
             # 设置pandas显示选项
