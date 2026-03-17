@@ -172,6 +172,114 @@ class AkshareDownloader:
             logging.error(traceback.format_exc())
             return False
 
+    def download_to_mysql_stream(self,
+                                 ak_function_name,
+                                 table_name,
+                                 column_mapping,
+                                 merge_on=None,
+                                 stock_batch_size=100,  # 每批处理的股票数
+                                 save_batch_size=20000,  # 每批保存的数据条数
+                                 symbol_param='symbol',
+                                 date_column='ymd',
+                                 date_format='%Y-%m-%d',
+                                 numeric_columns=None,
+                                 auto_add_stock_code=True,
+                                 **kwargs):
+        """
+        流式下载：边下载边处理边保存，内存友好
+        """
+        if not self.stock_codes:
+            logging.warning(f"无股票代码，跳过{table_name}数据下载")
+            return False
+
+        # 获取akshare函数
+        try:
+            ak_function = getattr(ak, ak_function_name)
+        except AttributeError:
+            logging.error(f"akshare函数 {ak_function_name} 不存在")
+            return False
+
+        total_stocks = len(self.stock_codes)
+        total_inserted = 0
+        MAX_RETRY = 2
+
+        logging.info(f"开始下载{table_name}，共{total_stocks}只股票")
+
+        # 按股票批次处理
+        for batch_idx in range(0, total_stocks, stock_batch_size):
+            batch_codes = self.stock_codes[batch_idx:batch_idx + stock_batch_size]
+            batch_data = []
+
+            # 下载当前批次所有股票的数据
+            for stock_code in batch_codes:
+                for retry in range(MAX_RETRY + 1):
+                    try:
+                        params = {symbol_param: stock_code, **kwargs}
+                        df = ak_function(**params)
+
+                        if df is not None and not df.empty:
+                            if auto_add_stock_code and 'stock_code' not in df.columns:
+                                df['stock_code'] = stock_code
+                            batch_data.append(df)
+                        break
+
+                    except Exception as e:
+                        if retry == MAX_RETRY:
+                            logging.warning(f"股票{stock_code}下载失败: {str(e)[:50]}")
+                        else:
+                            time.sleep(0.5 * (retry + 1))
+
+                time.sleep(0.1)  # 控制请求频率
+
+            if not batch_data:
+                continue
+
+            # 合并当前批次数据
+            batch_df = pd.concat(batch_data, ignore_index=True)
+
+            # 数据处理
+            if date_column in batch_df.columns:
+                batch_df[date_column] = pd.to_datetime(batch_df[date_column]).dt.strftime('%Y%m%d')
+
+            # 重命名列
+            batch_df = batch_df.rename(columns=column_mapping)
+
+            # 数值转换
+            if numeric_columns:
+                for col in numeric_columns:
+                    if col in batch_df.columns:
+                        batch_df[col] = pd.to_numeric(batch_df[col], errors='coerce')
+
+            # 去重
+            id_cols = [c for c in ['stock_code', 'board_code', 'concept_code'] if c in batch_df.columns]
+            if date_column in batch_df.columns and id_cols:
+                batch_df = batch_df.drop_duplicates(subset=[date_column] + id_cols[:1])
+
+            if batch_df.empty:
+                continue
+
+            # 直接保存当前批次
+            inserted = mysql_utils.data_from_dataframe_to_mysql(
+                user=self.origin_user,
+                password=self.origin_password,
+                host=self.origin_host,
+                database=self.origin_database,
+                df=batch_df,
+                table_name=table_name,
+                merge_on=merge_on or [date_column, 'stock_code'],
+                batch_size=save_batch_size
+            )
+
+            total_inserted += inserted
+            logging.info(f"批次{batch_idx // stock_batch_size + 1}完成，本次插入{inserted}条，累计{total_inserted}条")
+
+            # 释放内存
+            del batch_df
+            del batch_data
+
+        logging.info(f"{table_name}下载完成，共插入{total_inserted}条")
+        return True
+
 
     def _process_data(self, all_data, column_mapping, date_column,
                       date_format, numeric_columns, table_name):
@@ -201,39 +309,12 @@ class AkshareDownloader:
             logging.error(f"{table_name} 处理失败: {e}")
             return pd.DataFrame()
 
-
-    # def _save_to_mysql(self, df, table_name, merge_on):
-    #     """保存数据到MySQL"""
-    #     try:
-    #         mysql_utils.data_from_dataframe_to_mysql(
-    #             user=self.origin_user,
-    #             password=self.origin_password,
-    #             host=self.origin_host,
-    #             database=self.origin_database,
-    #             df=df,
-    #             table_name=table_name,
-    #             merge_on=merge_on
-    #         )
-    #
-    #         return True
-    #
-    #     except Exception as e:
-    #         logging.error(f"保存到MySQL失败: {str(e)}")
-    #         import traceback
-    #         logging.error(traceback.format_exc())
-    #         return False
-
     def _save_to_mysql(self, df, table_name, merge_on):
-        """保存数据到MySQL，失败时自动保存csv"""
-        print(f"【强制输出】_save_to_mysql 被调用: {table_name}", file=sys.stderr)
-        logging.error(f"【强制日志】_save_to_mysql 被调用: {table_name}, df大小: {len(df)}")
+        """保存数据到MySQL（简化版，无多余日志）"""
+        if df.empty:
+            return True
 
         try:
-            if df.empty:
-                logging.warning(f"{table_name} DataFrame为空，跳过插入")
-                return True
-
-            # 尝试插入数据
             inserted_count = mysql_utils.data_from_dataframe_to_mysql(
                 user=self.origin_user,
                 password=self.origin_password,
@@ -244,27 +325,11 @@ class AkshareDownloader:
                 merge_on=merge_on,
                 batch_size=20000
             )
-
-            logging.info(f"成功插入 {inserted_count} 行数据到 {table_name}")
+            logging.info(f"插入{inserted_count}条到{table_name}")
             return True
 
         except Exception as e:
-            # 保存失败的数据到csv
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            filename = f"failed_data_{table_name}_{timestamp}.csv"
-
-            try:
-                df.to_csv(filename, index=False, encoding='utf-8')
-                logging.error(f"数据插入失败，已保存到文件: {filename}")
-                logging.error(f"失败原因: {str(e)}")
-            except:
-                # 如果连保存csv都失败，至少记录行数
-                logging.error(f"数据插入失败，且无法保存csv，DataFrame行数: {len(df)}")
-
-            # 记录完整错误堆栈
-            import traceback
-            logging.error(f"完整错误信息:\n{traceback.format_exc()}")
-
+            logging.error(f"保存{table_name}失败: {str(e)[:200]}")
             return False
 
 

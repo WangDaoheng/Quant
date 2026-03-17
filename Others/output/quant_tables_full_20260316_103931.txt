@@ -1,0 +1,2624 @@
+QUANT数据库表结构及数据样例报告（完整版）
+====================================================================================================
+生成时间: 2026-03-16 10:39:35
+数据库: quant @ 117.72.162.13
+总表数: 59
+本次导出表数: 59
+====================================================================================================
+
+导出表目录:
+  1. dmart_stock_zt_details
+  2. dmart_stock_zt_details_expanded
+  3. dwd_ashare_stock_base_info
+  4. dwd_factor_summary
+  5. dwd_factor_volume_shrinkage
+  6. dwd_shareholder_num_latest
+  7. dwd_stock_a_total_plate
+  8. dwd_stock_dt_list
+  9. dwd_stock_technical_indicators
+ 10. dwd_stock_zt_list
+ 11. ods_akshare_board_concept_name_ths
+ 12. ods_akshare_shareholder_em_history
+ 13. ods_akshare_stock_a_high_low_statistics
+ 14. ods_akshare_stock_board_concept_cons_em
+ 15. ods_akshare_stock_board_concept_hist_em
+ 16. ods_akshare_stock_board_concept_index_ths
+ 17. ods_akshare_stock_board_concept_maps_ths
+ 18. ods_akshare_stock_board_concept_name_em
+ 19. ods_akshare_stock_cyq_em
+ 20. ods_akshare_stock_value_em
+ 21. ods_akshare_stock_yjkb_em
+ 22. ods_akshare_stock_yjyg_em
+ 23. ods_akshare_stock_zh_a_gdhs_detail_em
+ 24. ods_akshare_stock_zh_a_spot_em
+ 25. ods_astock_industry_detail
+ 26. ods_astock_industry_overview
+ 27. ods_exchange_dxy_vantage
+ 28. ods_exchange_rate_vantage_detail
+ 29. ods_future_inside_insight
+ 30. ods_future_inside_insight_now
+ 31. ods_index_a_share_insight
+ 32. ods_index_a_share_insight_now
+ 33. ods_north_bound_daily
+ 34. ods_north_bound_daily_now
+ 35. ods_shareholder_num
+ 36. ods_shareholder_num_now
+ 37. ods_stock_chouma_insight
+ 38. ods_stock_code_daily_insight
+ 39. ods_stock_exchange_market
+ 40. ods_stock_kline_daily_insight
+ 41. ods_stock_kline_daily_insight_now
+ 42. ods_stock_kline_daily_ts
+ 43. ods_stock_limit_summary_insight
+ 44. ods_stock_limit_summary_insight_now
+ 45. ods_stock_plate_redbook
+ 46. ods_tdx_stock_concept_plate
+ 47. ods_tdx_stock_index_plate
+ 48. ods_tdx_stock_industry_plate
+ 49. ods_tdx_stock_pepb_info
+ 50. ods_tdx_stock_region_plate
+ 51. ods_tdx_stock_style_plate
+ 52. ods_trading_days_insight
+ 53. ods_tushare_board_concept_name_ths
+ 54. ods_tushare_stock_board_concept_hist_em
+ 55. ods_tushare_stock_board_concept_hist_ths
+ 56. ods_tushare_stock_board_concept_maps_em
+ 57. ods_tushare_stock_board_concept_maps_ths
+ 58. ods_tushare_stock_board_concept_name_em
+ 59. ods_us_stock_daily_vantage
+
+====================================================================================================
+
+
+【DMART层】(2张表)
+================================================================================
+
+
+【表 1/59】 dmart_stock_zt_details
+====================================================================================================
+基本信息:
+  行数: 5,227
+  列数: 8
+
+ymd日期信息:
+  存在ymd列: ✓
+  日期总数: 10
+  最早日期: 2025-03-07
+  最晚日期: 2025-03-19
+  最近10个日期(倒序):
+     1. 2025-03-19
+     2. 2025-03-18
+     3. 2025-03-17
+     4. 2025-03-15
+     5. 2025-03-14
+     6. 2025-03-13
+     7. 2025-03-12
+     8. 2025-03-11
+     9. 2025-03-10
+    10. 2025-03-07
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 YES   MUL   NULL                      
+stock_code           varchar(50)          YES         NULL                      
+stock_name           varchar(50)          YES         NULL                      
+concept_plate        varchar(500)         YES         NULL                      
+index_plate          varchar(500)         YES         NULL                      
+industry_plate       varchar(500)         YES         NULL                      
+style_plate          varchar(500)         YES         NULL                      
+out_plate            varchar(500)         YES         NULL                      
+
+数据样例（按ymd倒序，前5行，完整列）:
+--------------------------------------------------------------------------------
+       ymd stock_code stock_name concept_plate index_plate industry_plate style_plate out_plate
+2025-03-19     688259       创耀科技          None        None           None        None      None
+2025-03-19     603968       醋化股份          None        None           None        None      None
+2025-03-19     603949       雪龙集团          None        None           None        None      None
+2025-03-19     603900       莱绅通灵          None        None           None        None      None
+2025-03-19     603843       正平股份          None        None           None        None      None
+
+
+【表 2/59】 dmart_stock_zt_details_expanded
+====================================================================================================
+基本信息:
+  行数: 2,890,974
+  列数: 8
+
+ymd日期信息:
+  存在ymd列: ✓
+  日期总数: 10
+  最早日期: 2025-03-06
+  最晚日期: 2025-03-18
+  最近10个日期(倒序):
+     1. 2025-03-18
+     2. 2025-03-17
+     3. 2025-03-15
+     4. 2025-03-14
+     5. 2025-03-13
+     6. 2025-03-12
+     7. 2025-03-11
+     8. 2025-03-10
+     9. 2025-03-07
+    10. 2025-03-06
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 YES         NULL                      
+stock_code           varchar(20)          YES         NULL                      
+stock_name           varchar(50)          YES         NULL                      
+concept_plate        varchar(500)         YES         NULL                      
+index_plate          varchar(500)         YES         NULL                      
+industry_plate       varchar(500)         YES         NULL                      
+style_plate          varchar(500)         YES         NULL                      
+out_plate            varchar(500)         YES         NULL                      
+
+数据样例（按ymd倒序，前5行，完整列）:
+--------------------------------------------------------------------------------
+       ymd stock_code stock_name concept_plate index_plate industry_plate style_plate out_plate
+2025-03-18     000409       云鼎科技     ChatGPT概念        None           None      活跃小盘国企      None
+2025-03-18     000409       云鼎科技          5G概念      国证2000           软件服务        久不分红      None
+2025-03-18     000409       云鼎科技          信息安全        None           None        None      None
+2025-03-18     000409       云鼎科技          军民融合        None           None        None      None
+2025-03-18     000409       云鼎科技          人工智能        None           None        None      None
+
+
+【DWD层】(8张表)
+================================================================================
+
+
+【表 3/59】 dwd_ashare_stock_base_info
+====================================================================================================
+基本信息:
+  行数: 4,768,857
+  列数: 17
+
+ymd日期信息:
+  存在ymd列: ✓
+  日期总数: 10
+  最早日期: 2026-03-02
+  最晚日期: 2026-03-13
+  最近10个日期(倒序):
+     1. 2026-03-13
+     2. 2026-03-12
+     3. 2026-03-11
+     4. 2026-03-10
+     5. 2026-03-09
+     6. 2026-03-06
+     7. 2026-03-05
+     8. 2026-03-04
+     9. 2026-03-03
+    10. 2026-03-02
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 YES   MUL   NULL                      
+stock_code           varchar(50)          YES         NULL                      
+stock_name           varchar(50)          YES         NULL                      
+close                double(12,2)         YES         NULL                      
+change_pct           float                YES         NULL                      
+volume               bigint               YES         NULL                      
+trading_amount       double               YES         NULL                      
+market_value         double               YES         NULL                      
+total_value          double               YES         NULL                      
+total_capital        double               YES         NULL                      
+float_capital        double               YES         NULL                      
+shareholder_num      bigint               YES         NULL                      
+pct_of_total_sh      double(12,4)         YES         NULL                      
+pb                   float(12,2)          YES         NULL                      
+pe                   float(12,2)          YES         NULL                      
+market               varchar(50)          YES         NULL                      
+plate_names          varchar(500)         YES         NULL                      
+
+数据样例（按ymd倒序，前5行，完整列）:
+--------------------------------------------------------------------------------
+       ymd stock_code stock_name  close  change_pct  volume  trading_amount  market_value  total_value  total_capital  float_capital shareholder_num pct_of_total_sh    pb     pe market                                               plate_names
+2026-03-13  920992.BJ       中科美菱  15.64       -0.13   10355       16348.877  7.773301e+08 1.586387e+09     96730934.0     47398177.0            None            None  2.57  83.26    北交所                            专精特新,医疗器械概念,国企改革,智能医疗,物联网,融资融券
+2026-03-13  920985.BJ       海泰新能   8.27        1.72   84825       70421.869  1.870781e+09 2.639832e+09    309476200.0    219317859.0            None            None  2.42 -11.52    北交所                       TOPCON电池,储能,光伏概念,换电概念,氢能源,石墨电极,融资融券
+2026-03-13  920982.BJ       锦波生物 186.31       -0.53    3774       70678.657  1.194295e+10 2.502901e+10    115065340.0     54905088.0            None            None 13.59  32.06    北交所             AI应用,专精特新,创新药,医疗器械概念,医美概念,医药电商,合成生物,融资融券,重组蛋白
+2026-03-13  920981.BJ       晶赛科技  30.06       -2.24    5997       18316.393  1.191669e+09 2.442388e+09     76468000.0     37309618.0            None            None  4.82 453.96    北交所             专精特新,共封装光学(CPO),华为海思概念股,汽车电子,消费电子概念,芯片概念,融资融券
+2026-03-13  920978.BJ       开特股份  26.68       -0.26   15502       41485.465  3.032086e+09 5.408055e+09    180028468.0    100934948.0            None            None  7.20  31.22    北交所 专精特新,传感器,储能,小米汽车,新能源汽车,机器人概念,比亚迪概念,汽车热管理,汽车电子,融资融券,长安汽车概念
+
+
+【表 4/59】 dwd_factor_summary
+====================================================================================================
+基本信息:
+  行数: 2,754,333
+  列数: 10
+
+ymd日期信息:
+  存在ymd列: ✓
+  日期总数: 10
+  最早日期: 2026-02-06
+  最晚日期: 2026-02-27
+  最近10个日期(倒序):
+     1. 2026-02-27
+     2. 2026-02-26
+     3. 2026-02-25
+     4. 2026-02-24
+     5. 2026-02-13
+     6. 2026-02-12
+     7. 2026-02-11
+     8. 2026-02-10
+     9. 2026-02-09
+    10. 2026-02-06
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 NO    PRI   NULL                      
+stock_code           varchar(50)          NO    PRI   NULL                      
+stock_name           varchar(50)          YES         NULL                      
+pb_score             decimal(5,2)         YES   MUL   0.00                      
+zt_score             decimal(5,2)         YES   MUL   0.00                      
+shareholder_score    decimal(5,2)         YES         0.00                      
+volume_score         decimal(5,2)         YES         0.00                      
+price_score          decimal(5,2)         YES         0.00                      
+composite_score      decimal(5,2)         YES   MUL   0.00                      
+signal_level         char(1)              YES         NULL                      
+
+数据样例（按ymd倒序，前5行，完整列）:
+--------------------------------------------------------------------------------
+       ymd stock_code stock_name  pb_score  zt_score  shareholder_score  volume_score  price_score  composite_score signal_level
+2026-02-27  920992.BJ       中科美菱     62.43       0.0                0.0          60.0          0.0             60.0            B
+2026-02-27  920985.BJ       海泰新能     66.13       0.0                0.0          60.0         40.0            100.0            A
+2026-02-27  920982.BJ       锦波生物      4.81       0.0                0.0          30.0         30.0             60.0            B
+2026-02-27  920981.BJ       晶赛科技     28.97       0.0                0.0          20.0          0.0             20.0            D
+2026-02-27  920978.BJ       开特股份     15.15       0.0                0.0          60.0          0.0             60.0            B
+
+
+【表 5/59】 dwd_factor_volume_shrinkage
+====================================================================================================
+基本信息:
+  行数: 2,687,130
+  列数: 16
+
+ymd日期信息:
+  存在ymd列: ✓
+  日期总数: 10
+  最早日期: 2026-02-06
+  最晚日期: 2026-02-27
+  最近10个日期(倒序):
+     1. 2026-02-27
+     2. 2026-02-26
+     3. 2026-02-25
+     4. 2026-02-24
+     5. 2026-02-13
+     6. 2026-02-12
+     7. 2026-02-11
+     8. 2026-02-10
+     9. 2026-02-09
+    10. 2026-02-06
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 NO    PRI   NULL                      
+stock_code           varchar(50)          NO    PRI   NULL                      
+stock_name           varchar(50)          YES         NULL                      
+close                float                YES         NULL                      
+volume               bigint               YES         NULL                      
+vol_ma5              float                YES         NULL                      
+vol_ma60             float                YES         NULL                      
+volume_vs_ma5        decimal(10,2)        YES         NULL                      
+is_shrink_today      tinyint(1)           YES         NULL                      
+consecutive_shrink_days int                  YES         NULL                      
+is_down              tinyint(1)           YES         NULL                      
+consecutive_down_days int                  YES         NULL                      
+volume_score         decimal(5,2)         YES         NULL                      
+price_score          decimal(5,2)         YES         NULL                      
+composite_score      decimal(5,2)         YES         NULL                      
+signal_level         char(1)              YES         NULL                      
+
+数据样例（按ymd倒序，前5行，完整列）:
+--------------------------------------------------------------------------------
+       ymd stock_code stock_name  close  volume  vol_ma5  vol_ma60  volume_vs_ma5  is_shrink_today  consecutive_shrink_days  is_down  consecutive_down_days  volume_score  price_score  composite_score signal_level
+2026-02-27  920992.BJ       中科美菱  16.78    4898   7417.8  13590.00         -33.97                1                        5        0                      0          60.0          0.0             60.0            B
+2026-02-27  920985.BJ       海泰新能   8.16   46243  53122.8  67049.00         -12.95                1                        5        1                      3          60.0         40.0            100.0            A
+2026-02-27  920982.BJ       锦波生物 213.82    8244   4458.8   9668.43          84.89                0                        0        1                      2          30.0         30.0             60.0            B
+2026-02-27  920981.BJ       晶赛科技  33.88   12396  10226.4  12383.80          21.22                0                        0        0                      0          20.0          0.0             20.0            D
+2026-02-27  920978.BJ       开特股份  30.52   18727  22784.0  33106.40         -17.81                1                        3        0                      0          60.0          0.0             60.0            B
+
+
+【表 6/59】 dwd_shareholder_num_latest
+====================================================================================================
+基本信息:
+  行数: 6,682,599
+  列数: 7
+
+ymd日期信息:
+  存在ymd列: ✓
+  日期总数: 10
+  最早日期: 2026-03-02
+  最晚日期: 2026-03-13
+  最近10个日期(倒序):
+     1. 2026-03-13
+     2. 2026-03-12
+     3. 2026-03-11
+     4. 2026-03-10
+     5. 2026-03-09
+     6. 2026-03-06
+     7. 2026-03-05
+     8. 2026-03-04
+     9. 2026-03-03
+    10. 2026-03-02
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 NO    MUL   NULL                      
+stock_code           varchar(100)         NO          NULL                      
+stock_name           varchar(50)          YES         NULL                      
+total_sh             bigint               YES         NULL                      
+avg_share            float                YES         NULL                      
+pct_of_total_sh      float                YES         NULL                      
+pct_of_avg_sh        float                YES         NULL                      
+
+数据样例（按ymd倒序，前5行，完整列）:
+--------------------------------------------------------------------------------
+       ymd stock_code stock_name  total_sh  avg_share  pct_of_total_sh  pct_of_avg_sh
+2026-03-13     920992       中科美菱      5496    5076.09          -7.0837         7.6237
+2026-03-13     920985       海泰新能     11017   19907.20          -8.2223         8.9589
+2026-03-13     920982       锦波生物      9807    6185.21          14.7957       -11.4287
+2026-03-13     920981       晶赛科技      7887    4730.52          -3.1081         3.2078
+2026-03-13     920978       开特股份      5420   18606.60          -7.2077         8.3785
+
+
+【表 7/59】 dwd_stock_a_total_plate
+====================================================================================================
+基本信息:
+  行数: 1,365,673
+  列数: 7
+
+ymd日期信息:
+  存在ymd列: ✓
+  日期总数: 10
+  最早日期: 2026-03-02
+  最晚日期: 2026-03-13
+  最近10个日期(倒序):
+     1. 2026-03-13
+     2. 2026-03-12
+     3. 2026-03-11
+     4. 2026-03-10
+     5. 2026-03-09
+     6. 2026-03-06
+     7. 2026-03-05
+     8. 2026-03-04
+     9. 2026-03-03
+    10. 2026-03-02
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 NO    MUL   NULL                      
+board_code           varchar(50)          YES         NULL                      
+board_name           varchar(50)          NO          NULL                      
+stock_code           varchar(50)          YES         NULL                      
+stock_name           varchar(50)          YES         NULL                      
+source_table         varchar(50)          YES         NULL                      
+remark               varchar(50)          YES         NULL                      
+
+数据样例（按ymd倒序，前5行，完整列）:
+--------------------------------------------------------------------------------
+       ymd board_code board_name stock_code stock_name                       source_table remark
+2026-03-13     308547     黑龙江自贸区  688459.SH       哈铁科技 ods_akshare_board_concept_name_ths      0
+2026-03-13     308547     黑龙江自贸区  688011.SH       新光光电 ods_akshare_board_concept_name_ths      0
+2026-03-13     308547     黑龙江自贸区  605577.SH       龙版传媒 ods_akshare_board_concept_name_ths      0
+2026-03-13     308547     黑龙江自贸区  603567.SH        珍宝岛 ods_akshare_board_concept_name_ths      0
+2026-03-13     308547     黑龙江自贸区  603023.SH       威帝股份 ods_akshare_board_concept_name_ths      0
+
+
+【表 8/59】 dwd_stock_dt_list
+====================================================================================================
+基本信息:
+  行数: 15,910
+  列数: 15
+
+ymd日期信息:
+  存在ymd列: ✓
+  日期总数: 10
+  最早日期: 2026-02-26
+  最晚日期: 2026-03-13
+  最近10个日期(倒序):
+     1. 2026-03-13
+     2. 2026-03-12
+     3. 2026-03-11
+     4. 2026-03-10
+     5. 2026-03-09
+     6. 2026-03-05
+     7. 2026-03-04
+     8. 2026-03-03
+     9. 2026-03-02
+    10. 2026-02-26
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 NO    PRI   NULL                      
+stock_code           varchar(50)          NO    PRI   NULL                      
+stock_name           varchar(50)          YES         NULL                      
+last_close           float                YES         NULL                      
+close                float                YES         NULL                      
+rate                 float                YES         NULL                      
+market_value         double               YES         NULL                      
+total_value          double               YES         NULL                      
+total_capital        double               YES         NULL                      
+float_capital        double               YES         NULL                      
+shareholder_num      bigint               YES         NULL                      
+pb                   varchar(50)          YES         NULL                      
+pe                   varchar(50)          YES         NULL                      
+market               varchar(50)          YES         NULL                      
+plate_names          varchar(500)         YES         NULL                      
+
+数据样例（按ymd倒序，前5行，完整列）:
+--------------------------------------------------------------------------------
+       ymd stock_code stock_name  last_close  close   rate  market_value  total_value  total_capital  float_capital  shareholder_num    pb     pe market                                                                                                                                                                plate_names
+2026-03-13  603681.SH       永冠新材       21.58  19.42 -10.01  3.950683e+09 3.950683e+09    191131274.0    191131274.0            15876  1.52  26.72   上海主板                                                                                                                 AI智能体,一带一路,专精特新,人工智能,储能,医疗器械概念,可降解塑料,固态电池,融资融券,跨境电商,长三角一体化
+2026-03-13  600410.SH       华胜天成       31.77  28.59 -10.01  2.698473e+10 2.698473e+10   1096494683.0   1096494683.0           354000  5.69  45.24   上海主板 AI应用,AI智能体,DeepSeek概念,一带一路,东数西算(算力),云计算,京津冀一体化,人工智能,信创,元宇宙,军工,创投,区块链,华为概念,华为鲲鹏,在线教育,安防,工业互联网,抖音概念(字节概念),数据中心,数据要素,无线耳机,时空大数据,智慧城市,智慧政务,沪股通,百度概念,网络安全,腾讯概念,芯片概念,融资融券,阿里巴巴概念
+2026-03-13  600397.SH       江钨装备       17.73  15.96  -9.98  1.533448e+10 1.533448e+10    989959882.0    989959882.0            49695 98.63 -36.74   上海主板                                                                                                                                                   国企改革,沪股通,煤炭概念,股权转让(并购重组)
+2026-03-13  600108.SH       亚盛集团        6.96   6.26 -10.06  6.580573e+09 6.580573e+09   1946915121.0   1946915121.0           106925  1.53  69.34   上海主板                                                                                                乡村振兴,代糖概念,农业种植,参股券商,啤酒概念,回购增持再贷款概念,国企改革,土地流转,水利,沪股通,玉米,粮食概念,融资融券,西部大开发,跨境电商
+2026-03-13  002667.SZ       威领股份       33.45  30.11  -9.99  4.718023e+09 5.196195e+09    260591500.0    236611000.0            23932 14.79 -24.96   深圳主板                                                                                                                                       储能,垃圾分类,小金属概念,磷化工,融资融券,金属铅,金属锌,锂电池概念
+
+
+【表 9/59】 dwd_stock_technical_indicators
+====================================================================================================
+基本信息:
+  行数: 6,037,168
+  列数: 22
+
+ymd日期信息:
+  存在ymd列: ✓
+  日期总数: 10
+  最早日期: 2026-03-02
+  最晚日期: 2026-03-13
+  最近10个日期(倒序):
+     1. 2026-03-13
+     2. 2026-03-12
+     3. 2026-03-11
+     4. 2026-03-10
+     5. 2026-03-09
+     6. 2026-03-06
+     7. 2026-03-05
+     8. 2026-03-04
+     9. 2026-03-03
+    10. 2026-03-02
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 NO    PRI   NULL                      
+stock_code           varchar(50)          NO    PRI   NULL                      
+stock_name           varchar(50)          YES         NULL                      
+close                float                YES         NULL                      
+volume               bigint               YES         NULL                      
+ma5                  float                YES   MUL   NULL                      
+ma10                 float                YES         NULL                      
+ma20                 float                YES         NULL                      
+ma60                 float                YES         NULL                      
+ma120                float                YES         NULL                      
+ma250                float                YES         NULL                      
+vol_ma5              float                YES   MUL   NULL                      
+vol_ma10             float                YES         NULL                      
+vol_ma20             float                YES         NULL                      
+vol_ma60             float                YES         NULL                      
+vol_ma120            float                YES         NULL                      
+vol_ma250            float                YES         NULL                      
+price_vs_ma5         decimal(10,2)        YES         NULL                      
+price_vs_ma20        decimal(10,2)        YES         NULL                      
+price_vs_ma60        decimal(10,2)        YES         NULL                      
+volume_vs_ma5        decimal(10,2)        YES         NULL                      
+volume_vs_ma20       decimal(10,2)        YES         NULL                      
+
+数据样例（按ymd倒序，前5行，完整列）:
+--------------------------------------------------------------------------------
+       ymd stock_code stock_name  close  volume     ma5    ma10     ma20      ma60     ma120    ma250  vol_ma5  vol_ma10  vol_ma20  vol_ma60  vol_ma120  vol_ma250  price_vs_ma5  price_vs_ma20  price_vs_ma60  volume_vs_ma5  volume_vs_ma20
+2026-03-13  920992.BJ       中科美菱  15.64   10355  15.892  15.966  16.3780  17.57320  19.10000  19.9262   8574.2    9460.4   9837.75   13601.2   15363.70    30263.7         -1.59          -4.51         -11.00          20.77            5.26
+2026-03-13  920985.BJ       海泰新能   8.27   84825   8.166   7.990   8.2870   7.97067   8.58275   9.6112  75119.8   63771.1  75609.40   73868.2   59393.20    64026.2          1.27          -0.21           3.76          12.92           12.19
+2026-03-13  920982.BJ       锦波生物 186.31    3774 186.214 186.159 202.7420 226.89500 242.06200 277.3360   6231.4    8045.2   6583.60    9565.0    9913.05    10269.5          0.05          -8.11         -17.89         -39.44          -42.68
+2026-03-13  920981.BJ       晶赛科技  30.06    5997  30.896  31.670  32.0905  33.04020  34.49910  35.9936   8932.4   10448.5   9329.95   12355.7   13694.30    23517.8         -2.71          -6.33          -9.02         -32.86          -35.72
+2026-03-13  920978.BJ       开特股份  26.68   15502  27.202  27.619  29.2880  33.03420  35.72330  29.8267  19884.8   22319.8  24185.30   31171.8   40502.60    42439.3         -1.92          -8.90         -19.24         -22.04          -35.90
+
+
+【表 10/59】 dwd_stock_zt_list
+====================================================================================================
+基本信息:
+  行数: 58,136
+  列数: 15
+
+ymd日期信息:
+  存在ymd列: ✓
+  日期总数: 10
+  最早日期: 2026-03-02
+  最晚日期: 2026-03-13
+  最近10个日期(倒序):
+     1. 2026-03-13
+     2. 2026-03-12
+     3. 2026-03-11
+     4. 2026-03-10
+     5. 2026-03-09
+     6. 2026-03-06
+     7. 2026-03-05
+     8. 2026-03-04
+     9. 2026-03-03
+    10. 2026-03-02
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 NO    PRI   NULL                      
+stock_code           varchar(50)          NO    PRI   NULL                      
+stock_name           varchar(50)          YES         NULL                      
+last_close           float                YES         NULL                      
+close                float                YES         NULL                      
+rate                 float                YES         NULL                      
+market_value         double               YES         NULL                      
+total_value          double               YES         NULL                      
+total_capital        double               YES         NULL                      
+float_capital        double               YES         NULL                      
+shareholder_num      bigint               YES         NULL                      
+pb                   varchar(50)          YES         NULL                      
+pe                   varchar(50)          YES         NULL                      
+market               varchar(50)          YES         NULL                      
+plate_names          varchar(500)         YES         NULL                      
+
+数据样例（按ymd倒序，前5行，完整列）:
+--------------------------------------------------------------------------------
+       ymd stock_code stock_name  last_close  close  rate  market_value  total_value  total_capital  float_capital  shareholder_num    pb     pe market                                                                                                           plate_names
+2026-03-13  605222.SH       起帆电缆       20.96  23.06 10.02  8.592513e+09 8.592513e+09    412903098.0    412903098.0            15461  1.84  57.77   上海主板                                                              充电桩,光伏概念,军工,商业航天,大飞机,数据中心,机器人概念,核电,沪股通,海工装备,特斯拉概念,特高压,风电
+2026-03-13  603929.SH       亚翔集成      128.03 140.83 10.00  3.131698e+10 3.131698e+10    213360000.0    213360000.0            21610 16.78  48.98   上海主板                                                                  OLED,中芯国际概念,华为概念,富士康概念,柔性屏(折叠屏),沪股通,海峡两岸,芯片概念,长三角一体化
+2026-03-13  603803.SH       瑞斯康达       12.50  13.75 10.00  4.376301e+09 4.376301e+09    424883557.0    424883557.0            33828  2.79 -41.87   上海主板 5G,6G概念,F5G概念,WiFi 6,东数西算(算力),共封装光学(CPO),工业互联网,数据中心,数据安全,新型城镇化,新型工业化,无人驾驶,智慧城市,智能电网,物联网,网络安全,芯片概念,融资融券,车联网(车路协同),量子科技
+2026-03-13  603659.SH        璞泰来       29.46  32.41 10.01  6.041737e+10 6.041737e+10   2136399076.0   2136399076.0           102752  3.06  36.57   上海主板                                       2025年报预增,PET铜箔,储能,固态电池,宁德时代概念,新能源汽车,沪股通,消费电子概念,特斯拉概念,石墨电极,芯片概念,融资融券,钠离子电池,锂电池概念
+2026-03-13  603607.SH       京华激光       22.32  24.55  9.99  4.559319e+09 4.559319e+09    178516800.0    178516800.0            26637  4.51  42.22   上海主板                                                                                 IP经济(谷子经济),专精特新,小米概念,消费电子概念,烟草,知识产权保护
+
+
+【ODS层】(49张表)
+================================================================================
+
+
+【表 11/59】 ods_akshare_board_concept_name_ths
+====================================================================================================
+基本信息:
+  行数: 9,340
+  列数: 3
+
+ymd日期信息:
+  存在ymd列: ✓
+  日期总数: 10
+  最早日期: 2026-03-02
+  最晚日期: 2026-03-13
+  最近10个日期(倒序):
+     1. 2026-03-13
+     2. 2026-03-12
+     3. 2026-03-11
+     4. 2026-03-10
+     5. 2026-03-09
+     6. 2026-03-06
+     7. 2026-03-05
+     8. 2026-03-04
+     9. 2026-03-03
+    10. 2026-03-02
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 YES   MUL   NULL                      
+board_name           varchar(100)         YES         NULL                      
+board_code           varchar(50)          YES         NULL                      
+
+数据样例（按ymd倒序，前5行，完整列）:
+--------------------------------------------------------------------------------
+       ymd board_name board_code
+2026-03-13       AI应用     309264
+2026-03-13   2025年报预增     309263
+2026-03-13  2025三季报预增     309262
+2026-03-13     雅下水电概念     309261
+2026-03-13    中国AI 50     309187
+
+
+【表 12/59】 ods_akshare_shareholder_em_history
+====================================================================================================
+基本信息:
+  行数: 7,879,410
+  列数: 8
+
+ymd日期信息:
+  存在ymd列: ✓
+  日期总数: 10
+  最早日期: 2026-02-02
+  最晚日期: 2026-02-13
+  最近10个日期(倒序):
+     1. 2026-02-13
+     2. 2026-02-12
+     3. 2026-02-11
+     4. 2026-02-10
+     5. 2026-02-09
+     6. 2026-02-06
+     7. 2026-02-05
+     8. 2026-02-04
+     9. 2026-02-03
+    10. 2026-02-02
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+id                   bigint               NO    PRI   NULL            auto_increment
+ymd                  date                 NO    MUL   NULL                      
+stock_code           varchar(100)         NO    MUL   NULL                      
+stock_name           varchar(50)          YES         NULL                      
+total_sh             bigint               YES         NULL                      
+avg_share            float                YES         NULL                      
+pct_of_total_sh      float                YES         NULL                      
+pct_of_avg_sh        float                YES         NULL                      
+
+数据样例（按ymd倒序，前5行，完整列）:
+--------------------------------------------------------------------------------
+     id        ymd stock_code stock_name  total_sh avg_share  pct_of_total_sh pct_of_avg_sh
+9004070 2026-02-13  920992.BJ       中科美菱      5496      None         -7.08369          None
+9002373 2026-02-13  920985.BJ       海泰新能     11017      None         -8.22226          None
+9000676 2026-02-13  920982.BJ       锦波生物      9807      None         14.79570          None
+8998979 2026-02-13  920981.BJ       晶赛科技      7887      None         -3.10811          None
+8997282 2026-02-13  920978.BJ       开特股份      5420      None         -7.20767          None
+
+
+【表 13/59】 ods_akshare_stock_a_high_low_statistics
+====================================================================================================
+基本信息:
+  行数: 2,116
+  列数: 9
+
+ymd日期信息:
+  存在ymd列: ✓
+  日期总数: 10
+  最早日期: 2026-03-01
+  最晚日期: 2026-03-12
+  最近10个日期(倒序):
+     1. 2026-03-12
+     2. 2026-03-11
+     3. 2026-03-10
+     4. 2026-03-09
+     5. 2026-03-08
+     6. 2026-03-05
+     7. 2026-03-04
+     8. 2026-03-03
+     9. 2026-03-02
+    10. 2026-03-01
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 YES   MUL   NULL                      
+market               varchar(50)          YES         NULL                      
+close                float                YES         NULL                      
+high20               int                  YES         NULL                      
+low20                int                  YES         NULL                      
+high60               int                  YES         NULL                      
+low60                int                  YES         NULL                      
+high120              int                  YES         NULL                      
+low120               int                  YES         NULL                      
+
+数据样例（按ymd倒序，前5行，完整列）:
+--------------------------------------------------------------------------------
+       ymd market   close  high20  low20  high60  low60  high120  low120
+2026-03-12  zz500 8239.80      31    107      23     34       17      24
+2026-03-12   sz50 2956.85       9     16       2      8        1       5
+2026-03-12  hs300 4669.14      38     47      18     21       10      10
+2026-03-12    all 4095.45     349    831     237    296      169     169
+2026-03-11  zz500 8359.47      78     66      59     20       48      16
+
+
+【表 14/59】 ods_akshare_stock_board_concept_cons_em
+====================================================================================================
+基本信息:
+  行数: 0
+  列数: 19
+
+ymd日期信息:
+  存在ymd列: ✓
+  日期总数: 0
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 YES   MUL   NULL                      
+board_name           varchar(100)         YES         NULL                      
+board_code           varchar(50)          YES         NULL                      
+serial_num           int                  YES         NULL                      
+stock_code           varchar(50)          YES         NULL                      
+stock_name           varchar(50)          YES         NULL                      
+close                float                YES         NULL                      
+change_pct           float                YES         NULL                      
+change_amt           float                YES         NULL                      
+trading_volume       float                YES         NULL                      
+trading_amount       float                YES         NULL                      
+amplitude            float                YES         NULL                      
+high                 float                YES         NULL                      
+low                  float                YES         NULL                      
+open                 float                YES         NULL                      
+prev_close           float                YES         NULL                      
+turnover_rate        float                YES         NULL                      
+pe_dynamic           float                YES         NULL                      
+pb                   float                YES         NULL                      
+
+数据样例: 表为空或无法读取数据
+
+
+
+【表 15/59】 ods_akshare_stock_board_concept_hist_em
+====================================================================================================
+基本信息:
+  行数: 0
+  列数: 12
+
+ymd日期信息:
+  存在ymd列: ✓
+  日期总数: 0
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 YES   MUL   NULL                      
+board_code           varchar(50)          YES         NULL                      
+open                 float                YES         NULL                      
+close                float                YES         NULL                      
+high                 float                YES         NULL                      
+low                  float                YES         NULL                      
+change_pct           float                YES         NULL                      
+change_amt           float                YES         NULL                      
+trading_volume       bigint               YES         NULL                      
+trading_amount       double               YES         NULL                      
+amplitude            float                YES         NULL                      
+turnover_rate        float                YES         NULL                      
+
+数据样例: 表为空或无法读取数据
+
+
+
+【表 16/59】 ods_akshare_stock_board_concept_index_ths
+====================================================================================================
+基本信息:
+  行数: 192,619
+  列数: 9
+
+ymd日期信息:
+  存在ymd列: ✓
+  日期总数: 10
+  最早日期: 2026-03-02
+  最晚日期: 2026-03-13
+  最近10个日期(倒序):
+     1. 2026-03-13
+     2. 2026-03-12
+     3. 2026-03-11
+     4. 2026-03-10
+     5. 2026-03-09
+     6. 2026-03-06
+     7. 2026-03-05
+     8. 2026-03-04
+     9. 2026-03-03
+    10. 2026-03-02
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 YES   MUL   NULL                      
+board_name           varchar(100)         YES         NULL                      
+board_code           varchar(50)          YES         NULL                      
+open                 float                YES         NULL                      
+high                 float                YES         NULL                      
+low                  float                YES         NULL                      
+close                float                YES         NULL                      
+trading_volume       float                YES         NULL                      
+trading_amount       float                YES         NULL                      
+
+数据样例（按ymd倒序，前5行，完整列）:
+--------------------------------------------------------------------------------
+       ymd board_name board_code    open    high     low    close  trading_volume  trading_amount
+2026-03-13       AI应用     309264     NaN     NaN     NaN  995.739    0.000000e+00             NaN
+2026-03-13   2025年报预增     309263 1198.50 1208.87 1189.05 1191.610    1.335130e+10    3.621410e+11
+2026-03-13  2025三季报预增     309262 1205.36 1218.16 1202.49 1209.060    1.726540e+09    3.936710e+10
+2026-03-13     雅下水电概念     309261 1526.54 1540.11 1520.88 1539.720    5.502400e+09    3.978170e+10
+2026-03-13     兵装重组概念     309185 1357.13 1363.43 1349.12 1353.030    8.307880e+07    1.457370e+09
+
+
+【表 17/59】 ods_akshare_stock_board_concept_maps_ths
+====================================================================================================
+基本信息:
+  行数: 738
+  列数: 5
+
+ymd日期信息:
+  存在ymd列: ✓
+  日期总数: 3
+  最早日期: 2026-02-08
+  最晚日期: 2026-03-09
+  最近10个日期(倒序):
+     1. 2026-03-09
+     2. 2026-03-08
+     3. 2026-02-08
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 YES   MUL   NULL                      
+board_name           varchar(100)         YES         NULL                      
+board_code           varchar(50)          YES         NULL                      
+stock_code           varchar(50)          YES         NULL                      
+stock_name           varchar(50)          YES         NULL                      
+
+数据样例（按ymd倒序，前5行，完整列）:
+--------------------------------------------------------------------------------
+       ymd board_name board_code stock_code stock_name
+2026-03-09       AI应用     309264     301218       华是科技
+2026-03-09   2025年报预增     309263     301220       亚香股份
+2026-03-09  2025三季报预增     309262     001696       宗申动力
+2026-03-09     雅下水电概念     309261     002809       红墙股份
+2026-03-09    中国AI 50     309187     688787       海天瑞声
+
+
+【表 18/59】 ods_akshare_stock_board_concept_name_em
+====================================================================================================
+基本信息:
+  行数: 0
+  列数: 13
+
+ymd日期信息:
+  存在ymd列: ✓
+  日期总数: 0
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 YES   MUL   NULL                      
+ranking              int                  YES         NULL                      
+board_name           varchar(100)         YES         NULL                      
+board_code           varchar(50)          YES         NULL                      
+close                float                YES         NULL                      
+change_amt           float                YES         NULL                      
+change_pct           float                YES         NULL                      
+total_market         double               YES         NULL                      
+turnover_rate        float                YES         NULL                      
+rising_stocks_num    int                  YES         NULL                      
+falling_stocks_num   int                  YES         NULL                      
+leading_stock        varchar(100)         YES         NULL                      
+leading_stock_pct    float                YES         NULL                      
+
+数据样例: 表为空或无法读取数据
+
+
+
+【表 19/59】 ods_akshare_stock_cyq_em
+====================================================================================================
+基本信息:
+  行数: 0
+  列数: 11
+
+ymd日期信息:
+  存在ymd列: ✓
+  日期总数: 0
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 YES   MUL   NULL                      
+stock_code           varchar(50)          YES         NULL                      
+stock_name           varchar(50)          YES         NULL                      
+profit_ratio         float                YES         NULL                      
+avg_cost             float                YES         NULL                      
+cost_low_90          float                YES         NULL                      
+cost_high_90         float                YES         NULL                      
+concentration_90     float                YES         NULL                      
+cost_low_70          float                YES         NULL                      
+cost_high_70         float                YES         NULL                      
+concentration_70     float                YES         NULL                      
+
+数据样例: 表为空或无法读取数据
+
+
+
+【表 20/59】 ods_akshare_stock_value_em
+====================================================================================================
+基本信息:
+  行数: 8,382,573
+  列数: 14
+
+ymd日期信息:
+  存在ymd列: ✓
+  日期总数: 10
+  最早日期: 2026-02-02
+  最晚日期: 2026-02-13
+  最近10个日期(倒序):
+     1. 2026-02-13
+     2. 2026-02-12
+     3. 2026-02-11
+     4. 2026-02-10
+     5. 2026-02-09
+     6. 2026-02-06
+     7. 2026-02-05
+     8. 2026-02-04
+     9. 2026-02-03
+    10. 2026-02-02
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 YES   MUL   NULL                      
+stock_code           varchar(50)          YES         NULL                      
+close                float                YES         NULL                      
+change_pct           float                YES         NULL                      
+total_market         double               YES         NULL                      
+circulation_market   double               YES         NULL                      
+total_shares         double               YES         NULL                      
+circulation_shares   double               YES         NULL                      
+pe_ttm               float(12,2)          YES         NULL                      
+pe_static            float(12,2)          YES         NULL                      
+pb                   float(12,2)          YES         NULL                      
+peg                  float(12,2)          YES         NULL                      
+pcf                  float(12,2)          YES         NULL                      
+ps                   float(12,2)          YES         NULL                      
+
+数据样例（按ymd倒序，前5行，完整列）:
+--------------------------------------------------------------------------------
+       ymd stock_code  close  change_pct  total_market  circulation_market  total_shares  circulation_shares  pe_ttm  pe_static    pb   peg   pcf    ps
+2026-02-13     920992  16.40   -2.089550  1.586387e+09        7.773301e+08    96730934.0          47398177.0   83.26      87.71  2.57  5.91 62.19  5.19
+2026-02-13     920985   8.53   -2.290950  2.639832e+09        1.870781e+09   309476200.0         219317859.0  -11.52      14.49  2.42 -0.42 31.41  0.96
+2026-02-13     920982 217.52   -0.453068  2.502901e+10        1.194295e+10   115065340.0          54905088.0   32.06      34.18 13.59  0.19 32.16 14.30
+2026-02-13     920981  31.94   -0.218682  2.442388e+09        1.191669e+09    76468000.0          37309618.0  453.96     412.30  4.82  3.57 34.08  4.34
+2026-02-13     920978  30.04   -0.099767  5.408055e+09        3.032086e+09   180028468.0         100934948.0   31.22      39.23  7.20  1.38 46.01  5.06
+
+
+【表 21/59】 ods_akshare_stock_yjkb_em
+====================================================================================================
+基本信息:
+  行数: 8,827
+  列数: 16
+
+ymd日期信息:
+  存在ymd列: ✓
+  日期总数: 10
+  最早日期: 2026-03-03
+  最晚日期: 2026-03-14
+  最近10个日期(倒序):
+     1. 2026-03-14
+     2. 2026-03-13
+     3. 2026-03-12
+     4. 2026-03-11
+     5. 2026-03-10
+     6. 2026-03-07
+     7. 2026-03-06
+     8. 2026-03-05
+     9. 2026-03-04
+    10. 2026-03-03
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 YES   MUL   NULL                      
+serial_num           varchar(50)          YES         NULL                      
+stock_code           varchar(50)          YES         NULL                      
+stock_name           varchar(50)          YES         NULL                      
+eps                  double               YES         NULL                      
+income               double               YES         NULL                      
+income_last_year     double               YES         NULL                      
+income_yoy           varchar(50)          YES         NULL                      
+income_qoq           double               YES         NULL                      
+profit               double               YES         NULL                      
+profit_last_year     double               YES         NULL                      
+profit_yoy           varchar(50)          YES         NULL                      
+profit_qoq           double               YES         NULL                      
+asset_per_share      float                YES         NULL                      
+roe                  double               YES         NULL                      
+industry             varchar(100)         YES         NULL                      
+
+数据样例（按ymd倒序，前5行，完整列）:
+--------------------------------------------------------------------------------
+       ymd serial_num stock_code stock_name    eps       income  income_last_year       income_yoy  income_qoq       profit  profit_last_year       profit_yoy  profit_qoq  asset_per_share   roe industry
+2026-03-14          1     600648        外高桥 0.6900 5.969651e+09      7.239717e+09 -17.543036557921    0.458553 9.393684e+08      9.514344e+08  -1.268190429104 1126.275944          11.7400  6.37    房地产开发
+2026-03-13          1     600895       张江高科 0.6100 4.189190e+09      1.983301e+09 111.223107928132  628.842052 9.853441e+08      9.824216e+08   0.297485857008   49.042175              NaN  7.02    房地产开发
+2026-03-13          2     600663        陆家嘴 0.2430 1.816536e+10      1.465098e+10  23.987371901474   12.634333 1.223393e+09      1.508475e+09 -18.898689073402  -34.238476           4.9900  4.89    房地产开发
+2026-03-13          4     600639       浦东金桥 0.9646 5.964911e+09      2.724786e+09 118.912993920197  903.907369 1.073513e+09      1.001950e+09   7.142406275967  350.719164          13.5228  7.30    房地产开发
+2026-03-13          5     300770       新媒股份 2.8900 1.628088e+09      1.578761e+09   3.124386188083   -6.516258 6.593917e+08      6.578589e+08   0.232998291883  -11.136401          15.6600 17.44    电视广播Ⅱ
+
+
+【表 22/59】 ods_akshare_stock_yjyg_em
+====================================================================================================
+基本信息:
+  行数: 37,175
+  列数: 11
+
+ymd日期信息:
+  存在ymd列: ✓
+  日期总数: 10
+  最早日期: 2026-02-26
+  最晚日期: 2026-03-12
+  最近10个日期(倒序):
+     1. 2026-03-12
+     2. 2026-03-09
+     3. 2026-03-07
+     4. 2026-03-06
+     5. 2026-03-05
+     6. 2026-03-04
+     7. 2026-03-03
+     8. 2026-02-28
+     9. 2026-02-27
+    10. 2026-02-26
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 YES   MUL   NULL                      
+serial_num           varchar(50)          YES         NULL                      
+stock_code           varchar(50)          YES         NULL                      
+stock_name           varchar(50)          YES         NULL                      
+forecast_index       varchar(200)         YES         NULL                      
+performance_change   text                 YES         NULL                      
+forecast_value       double               YES         NULL                      
+change_pct           double               YES         NULL                      
+change_reason        text                 YES         NULL                      
+forecast_type        varchar(50)          YES         NULL                      
+last_year_value      double               YES         NULL                      
+
+数据样例（按ymd倒序，前5行，完整列）:
+--------------------------------------------------------------------------------
+数据预览（前5000字符）:
+       ymd serial_num stock_code stock_name forecast_index                                                                             performance_change  forecast_value  change_pct                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          change_reason forecast_type  last_year_value
+2026-03-12          1     688813       泰金新能  归属于上市公司股东的净利润                               预计2026年1-3月归属于上市公司股东的净利润盈利:3,500万元至4,500万元,同比上年下降:45.38%至57.52%。      40000000.0     -51.450 预计公司2026年营业收入为201,481.62万元。2026年第一季度公司预计可实现营业收入40,000.00-50,000.00万元,占2026年全年预计收入的比例为19.85%-24.81%,对比而言,2022-2025年第一季度公司主营业务收入占全年主营业务收入比例分别为23.57%、24.43%、20.96%及29.34%(2025年第一季度收入占比较高主要是太原惠科A1项目验收金额较大所致),扣除该项目影响,2025年第一季度收入金额为3.50亿元,低于2026年第一季度收入金额,而2026年第一季度收入金额高于或基本等于2022年至2024年第一季度收入金额,2026年第一季度收入规模占比情况基本符合预期。2026年拟验收项目整体进度符合预期,随着订单持续签订,公司当前在手订单充足,2026年上半年发货情况较预期有较大提升,发货及项目验收情况持续向好,2026年第二至第四季度乃至全年收入利润降幅较2026年第一季度降幅会有所收窄,整体预期能够完成2026年业绩目标。当前,公司下游铜箔行业持续复苏回暖,不存在重大不利变化,公司的核心业务、经营环境、重要客户或供应商、工艺技术、研发活动等未发生重大不利变化,整体财务状况良好,2026年第一季度业绩下滑不会对公司持续经营能力构成重大不利影响。2026年第一季度公司预计可实现营业收入与上年同期相比降幅为28.08%-42.46%,主要系2025年第一季度太原惠科A1项目等验收导致收入较高,而与2024年第一季度实现的46,962.19万元收入较为接近。当前,随着市场复苏加快,各家铜箔厂订单量饱满,公司陆续新签大额订单,主要包括2025年11-12月与四川铜博(64台阴极辊、64台生箔一体机)、江西铜博(32台阴极辊、32台生箔一体机)、赣州逸豪新材(24台生箔一体机)等客户签订新合同,2026年1月完成甘肃海亮9台阴极辊及64台生箔一体机合同签订。另嘉元时代在2025年11月及12月就原延缓执行合同新下18台及38台提货需求,太原惠科已全面启动A2项目,原剩余合同预计将在2026年上半年全部执行。根据最新发货计划,公司拟在2026年上半年完成发货439台设备,超过之前303台原定目标,未来随着客户新的提货要求增加,发货量还有望进一步增长。2026年第一季度公司预计可实现扣除非经常性损益后归属于母公司所有者的净利润为3,300.00-4,300.00万元,同比降幅为47.33%-59.58%,主要系2026年第一季度收入同比有所下降及期间费用增加及信用减值损失金额增加等因素综合影响,2025年第一季度公司扣非后归母净利润占2025年全年扣非后归母净利润(经审阅)的40.12%。当前,国内AI、5G高速通信、云计算、新能源汽车等行业正经历着技术创新与快速发展,对高端电解铜箔、芯片封装用极薄载体铜箔、复合铜箔等领域的市场需求空间较大,公司积极开展高端电解铜箔成套装备技术创新,持续拓展国内优质客户市场份额,并大力推动铜箔装备海外业务,同时充分发挥公司钛电极的技术优势,不断提升市场份额;另一方面,公司坚持科技创新,不断开发新产品、拓展新市场,就PET复合铜箔装备、光伏镀铜装备及阳极、碱性/PEM电解水制氢装备及其关键材料、军用电连接器及其他高性能密封连接产品等行业需求开展研发布局,持续开展产品创新并拓展新市场,不断挖掘业绩新增长点。            预减       82384000.0
+2026-03-12          1     688678        福立旺  归属于上市公司股东的净利润 预计2026年1-3月归属于上市公司股东的净利润盈利:4,000万元至5,000万元,同比上年增长:183.84%至254.81%,同比上年增长2,590.78万元至3,590.78万元。      45000000.0     219.325                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       公司本期业绩增长主要系3C消费电子业务营业收入增长,带动净利润提升。同时,子公司南通福立旺随着运营效率提升及产能持续释放,目前已实现盈亏平衡,经营情况逐步改善。            预增       14092200.0
+2026-03-12          7     301683       慧谷新材  归属于上市公司股东的净利润                                预计2026年1-3月归属于上市公司股东的净利润盈利
+... (数据过长，已截断，原始9767字符)
+
+
+
+【表 23/59】 ods_akshare_stock_zh_a_gdhs_detail_em
+====================================================================================================
+基本信息:
+  行数: 390,885
+  列数: 15
+
+ymd日期信息:
+  存在ymd列: ✓
+  日期总数: 10
+  最早日期: 2026-01-29
+  最晚日期: 2026-02-13
+  最近10个日期(倒序):
+     1. 2026-02-13
+     2. 2026-02-11
+     3. 2026-02-10
+     4. 2026-02-05
+     5. 2026-02-03
+     6. 2026-02-02
+     7. 2026-02-01
+     8. 2026-01-31
+     9. 2026-01-30
+    10. 2026-01-29
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 YES   MUL   NULL                      
+stock_code           varchar(50)          YES         NULL                      
+stock_name           varchar(50)          YES         NULL                      
+range_change_pct     float                YES         NULL                      
+holder_num_current   bigint               YES         NULL                      
+holder_num_last      bigint               YES         NULL                      
+holder_num_change    bigint               YES         NULL                      
+holder_num_change_pct float(10,2)          YES         NULL                      
+avg_holder_market    double               YES         NULL                      
+avg_holder_share_num float                YES         NULL                      
+total_market         double               YES         NULL                      
+total_shares         bigint               YES         NULL                      
+share_change         bigint               YES         NULL                      
+share_change_reason  varchar(255)         YES         NULL                      
+holder_num_announce_date date                 YES         NULL                      
+
+数据样例（按ymd倒序，前5行，完整列）:
+--------------------------------------------------------------------------------
+       ymd stock_code stock_name  range_change_pct  holder_num_current  holder_num_last  holder_num_change  holder_num_change_pct  avg_holder_market  avg_holder_share_num  total_market  total_shares  share_change share_change_reason holder_num_announce_date
+2026-02-13     300699       光威复材          0.025641               73223            72900                323                   0.44       4.429079e+05              11353.70  3.243104e+10   831352000.0             0                None               2026-02-13
+2026-02-11     688816        易思维         58.927600               21891               31              21860               70516.13       4.061943e+05               4568.09  8.892000e+09   100000000.0      25000000                发行融资               2026-02-10
+2026-02-11     600785       新华百货         53.578500               21674            21674                  0                   0.00       2.209050e+05              10410.20  4.787896e+09   225631280.0             0                None               2026-02-12
+2026-02-11     300987       川网传媒          0.883310               22305            19865               2440                  12.28       1.686656e+05               7772.61  3.762086e+09   173368000.0             0                None               2026-02-12
+2026-02-10     920015       锦华新材         -3.712970                6455             6422                 33                   0.51       1.051140e+06                   NaN  6.785112e+09           NaN             0                None               2026-02-11
+
+
+【表 24/59】 ods_akshare_stock_zh_a_spot_em
+====================================================================================================
+基本信息:
+  行数: 492
+  列数: 24
+
+ymd日期信息:
+  存在ymd列: ✓
+  日期总数: 1
+  最早日期: 2026-02-05
+  最晚日期: 2026-02-05
+  最近10个日期(倒序):
+     1. 2026-02-05
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 YES   MUL   NULL                      
+serial_num           bigint               YES         NULL                      
+stock_code           varchar(50)          YES         NULL                      
+stock_name           varchar(50)          YES         NULL                      
+close                float                YES         NULL                      
+change_pct           float                YES         NULL                      
+change_amt           float                YES         NULL                      
+trading_volume       float                YES         NULL                      
+trading_amount       double               YES         NULL                      
+amplitude            float                YES         NULL                      
+high                 float                YES         NULL                      
+low                  float                YES         NULL                      
+open                 float                YES         NULL                      
+prev_close           float                YES         NULL                      
+volume_ratio         float                YES         NULL                      
+turnover_rate        float                YES         NULL                      
+pe_dynamic           float                YES         NULL                      
+pb                   float                YES         NULL                      
+total_market         double               YES         NULL                      
+circulation_market   double               YES         NULL                      
+price_rise_speed     float                YES         NULL                      
+five_min_price_change float                YES         NULL                      
+sixty_day_price_change float                YES         NULL                      
+ytd_price_change     float                YES         NULL                      
+
+数据样例（按ymd倒序，前5行，完整列）:
+--------------------------------------------------------------------------------
+       ymd  serial_num stock_code stock_name  close  change_pct  change_amt  trading_volume  trading_amount  amplitude   high    low   open  prev_close  volume_ratio  turnover_rate  pe_dynamic    pb  total_market  circulation_market  price_rise_speed  five_min_price_change  sixty_day_price_change  ytd_price_change
+2026-02-05          69     920982       锦波生物 230.33        3.45        7.69         13087.0    301301015.44       4.94 233.99 223.00 223.10      222.64          4.41           2.38       34.98 14.39  2.650300e+10        1.264629e+10             -0.07                  -0.38                   -0.38             -1.44
+2026-02-05          53     920978       开特股份  33.13        3.82        1.22         38676.0    125720896.38       7.90  33.55  31.03  31.70       31.91          2.56           3.83       34.33  8.26  5.964343e+09        3.343975e+09             -0.21                   0.00                  -13.00            -10.22
+2026-02-05          11     920924       广脉科技  24.80        4.82        1.14         29739.0     72860696.86       9.26  25.55  23.36  23.73       23.66          2.21           4.62      139.61  8.45  2.660953e+09        1.598026e+09             -0.36                  -1.39                    9.25             18.49
+2026-02-05          81     920826       盖世食品  13.70        2.32        0.31         47726.0     65673257.04       5.08  13.98  13.30  13.34       13.39          2.78           7.64       40.39  5.12  1.925067e+09        8.559003e+08             -0.58                  -0.07                  -13.62              2.78
+2026-02-05          41     920786       骑士乳业  10.85        1.59        0.17        121730.0    132952002.67       6.46  11.18  10.49  10.58       10.68          1.99           8.56       43.51  3.03  2.268225e+09        1.542832e+09             -0.18                   0.09                   -1.09             10.26
+
+
+【表 25/59】 ods_astock_industry_detail
+====================================================================================================
+基本信息:
+  行数: 583,288
+  列数: 11
+
+ymd日期信息:
+  存在ymd列: ✓
+  日期总数: 10
+  最早日期: 2026-01-09
+  最晚日期: 2026-03-13
+  最近10个日期(倒序):
+     1. 2026-03-13
+     2. 2026-03-06
+     3. 2026-02-27
+     4. 2026-02-20
+     5. 2026-02-13
+     6. 2026-02-12
+     7. 2026-02-06
+     8. 2026-01-30
+     9. 2026-01-16
+    10. 2026-01-09
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 YES   MUL   NULL                      
+stock_code           varchar(100)         YES         NULL                      
+stock_name           varchar(50)          YES         NULL                      
+industry_name        varchar(100)         YES         NULL                      
+industry_code        varchar(100)         YES         NULL                      
+l1_code              varchar(100)         YES         NULL                      
+l1_name              varchar(100)         YES         NULL                      
+l2_code              varchar(100)         YES         NULL                      
+l2_name              varchar(100)         YES         NULL                      
+l3_code              varchar(100)         YES         NULL                      
+l3_name              varchar(100)         YES         NULL                      
+
+数据样例（按ymd倒序，前5行，完整列）:
+--------------------------------------------------------------------------------
+       ymd stock_code stock_name industry_name industry_code l1_code l1_name l2_code l2_name l3_code  l3_name
+2026-03-13  920992.BJ       中科美菱          医疗设备        370502  370000    医药生物  370500    医疗器械  370502     医疗设备
+2026-03-13  920985.BJ       海泰新能        光伏电池组件        630502  630000    电力设备  630500    光伏设备  630502   光伏电池组件
+2026-03-13  920982.BJ       锦波生物          医美耗材        770301  770000    美容护理  770300    医疗美容  770301     医美耗材
+2026-03-13  920981.BJ       晶赛科技          被动元件        270203  270000      电子  270200      元件  270203     被动元件
+2026-03-13  920978.BJ       开特股份      底盘与发动机系统        280203  280000      汽车  280200   汽车零部件  280203 底盘与发动机系统
+
+
+【表 26/59】 ods_astock_industry_overview
+====================================================================================================
+基本信息:
+  行数: 114,872
+  列数: 10
+
+ymd日期信息:
+  存在ymd列: ✓
+  日期总数: 10
+  最早日期: 2026-03-02
+  最晚日期: 2026-03-13
+  最近10个日期(倒序):
+     1. 2026-03-13
+     2. 2026-03-12
+     3. 2026-03-11
+     4. 2026-03-10
+     5. 2026-03-09
+     6. 2026-03-06
+     7. 2026-03-05
+     8. 2026-03-04
+     9. 2026-03-03
+    10. 2026-03-02
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 YES   MUL   NULL                      
+classified           varchar(100)         YES         NULL                      
+industry_name        varchar(100)         YES         NULL                      
+industry_code        varchar(100)         YES         NULL                      
+l1_code              varchar(100)         YES         NULL                      
+l1_name              varchar(100)         YES         NULL                      
+l2_code              varchar(100)         YES         NULL                      
+l2_name              varchar(100)         YES         NULL                      
+l3_code              varchar(100)         YES         NULL                      
+l3_name              varchar(100)         YES         NULL                      
+
+数据样例（按ymd倒序，前5行，完整列）:
+--------------------------------------------------------------------------------
+       ymd classified industry_name industry_code l1_code l1_name l2_code l2_name l3_code  l3_name
+2026-03-13      sw_l3          医美服务        770302  770000    美容护理  770300    医疗美容  770302     医美服务
+2026-03-13      sw_l3          医美耗材        770301  770000    美容护理  770300    医疗美容  770301     医美耗材
+2026-03-13      sw_l3         品牌化妆品        770202  770000    美容护理  770200     化妆品  770202    品牌化妆品
+2026-03-13      sw_l3      化妆品制造及其他        770201  770000    美容护理  770200     化妆品  770201 化妆品制造及其他
+2026-03-13      sw_l3          洗护用品        770102  770000    美容护理  770100    个护用品  770102     洗护用品
+
+
+【表 27/59】 ods_exchange_dxy_vantage
+====================================================================================================
+基本信息:
+  行数: 0
+  列数: 2
+
+ymd日期信息:
+  存在ymd列: ✓
+  日期总数: 0
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 NO    PRI   NULL                      
+stock_name           varchar(50)          NO    PRI   NULL                      
+
+数据样例: 表为空或无法读取数据
+
+
+
+【表 28/59】 ods_exchange_rate_vantage_detail
+====================================================================================================
+基本信息:
+  行数: 880
+  列数: 6
+
+ymd日期信息:
+  存在ymd列: ✓
+  日期总数: 10
+  最早日期: 2024-09-24
+  最晚日期: 2024-10-04
+  最近10个日期(倒序):
+     1. 2024-10-04
+     2. 2024-10-03
+     3. 2024-10-02
+     4. 2024-10-01
+     5. 2024-09-30
+     6. 2024-09-29
+     7. 2024-09-27
+     8. 2024-09-26
+     9. 2024-09-25
+    10. 2024-09-24
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+stock_name           varchar(50)          NO    PRI   NULL                      
+ymd                  date                 NO    PRI   NULL                      
+open                 float                YES         NULL                      
+high                 float                YES         NULL                      
+low                  float                YES         NULL                      
+close                float                YES         NULL                      
+
+数据样例（按ymd倒序，前5行，完整列）:
+--------------------------------------------------------------------------------
+stock_name        ymd      open      high       low     close
+   USD_JPY 2024-10-04 146.78500 149.00500 145.91200 148.67900
+   USD_CHF 2024-10-04   0.85177   0.86077   0.84996   0.85788
+   GBP_USD 2024-10-04   1.31299   1.31750   1.30694   1.31160
+   USD_CAD 2024-10-04   1.35490   1.35910   1.35400   1.35710
+   USD_SEK 2024-10-04  10.29900  10.39770  10.26860  10.36250
+
+
+【表 29/59】 ods_future_inside_insight
+====================================================================================================
+基本信息:
+  行数: 5,772
+  列数: 9
+
+ymd日期信息:
+  存在ymd列: ✓
+  日期总数: 10
+  最早日期: 2026-02-27
+  最晚日期: 2026-03-12
+  最近10个日期(倒序):
+     1. 2026-03-12
+     2. 2026-03-11
+     3. 2026-03-10
+     4. 2026-03-09
+     5. 2026-03-06
+     6. 2026-03-05
+     7. 2026-03-04
+     8. 2026-03-03
+     9. 2026-03-02
+    10. 2026-02-27
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+stock_code           varchar(50)          NO    PRI   NULL                      
+ymd                  date                 NO    PRI   NULL                      
+open                 float                YES         NULL                      
+close                float                YES         NULL                      
+high                 float                YES         NULL                      
+low                  float                YES         NULL                      
+volume               bigint               YES         NULL                      
+open_interest        bigint               YES         NULL                      
+settle               bigint               YES         NULL                      
+
+数据样例（按ymd倒序，前5行，完整列）:
+--------------------------------------------------------------------------------
+stock_code        ymd     open     close      high      low  volume  open_interest  settle
+ V2605.DCE 2026-03-12   5635.0   5620.00   5867.00   5532.0 3372882         881747    5748
+SC2605.INE 2026-03-12    687.0    722.40    773.80    663.3  111177          34391     715
+EC2605.INE 2026-03-12   2158.1   2206.40   2375.50   2158.1    2824           2247    2242
+CU2605.SHF 2026-03-12 100590.0 101160.00 101630.00 100490.0   62188         174953  101040
+AU2605.SHF 2026-03-12   1150.0   1149.84   1154.38   1145.0     991           1533    1150
+
+
+【表 30/59】 ods_future_inside_insight_now
+====================================================================================================
+基本信息:
+  行数: 644
+  列数: 9
+
+ymd日期信息:
+  存在ymd列: ✓
+  日期总数: 10
+  最早日期: 2026-03-02
+  最晚日期: 2026-03-13
+  最近10个日期(倒序):
+     1. 2026-03-13
+     2. 2026-03-12
+     3. 2026-03-11
+     4. 2026-03-10
+     5. 2026-03-09
+     6. 2026-03-06
+     7. 2026-03-05
+     8. 2026-03-04
+     9. 2026-03-03
+    10. 2026-03-02
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+stock_code           varchar(50)          NO    PRI   NULL                      
+ymd                  date                 NO    PRI   NULL                      
+open                 float                YES         NULL                      
+close                float                YES         NULL                      
+high                 float                YES         NULL                      
+low                  float                YES         NULL                      
+volume               bigint               YES         NULL                      
+open_interest        bigint               YES         NULL                      
+settle               bigint               YES         NULL                      
+
+数据样例（按ymd倒序，前5行，完整列）:
+--------------------------------------------------------------------------------
+stock_code        ymd      open     close      high       low  volume  open_interest  settle
+SC2605.INE 2026-03-13    728.00    753.60    778.90    724.60  116017          39809     754
+AU2605.SHF 2026-03-13   1151.64   1134.18   1153.26   1133.78     554           1600    1143
+CU2605.SHF 2026-03-13 101210.00 100450.00 101400.00 100200.00   52042         175944  100750
+ V2605.DCE 2026-03-13   5690.00   5724.00   5826.00   5601.00 2574032         864228    5729
+EC2605.INE 2026-03-13   2230.10   2215.50   2373.50   2160.00    2668           2160    2254
+
+
+【表 31/59】 ods_index_a_share_insight
+====================================================================================================
+基本信息:
+  行数: 10,821
+  列数: 8
+
+ymd日期信息:
+  存在ymd列: ✓
+  日期总数: 10
+  最早日期: 2026-02-27
+  最晚日期: 2026-03-12
+  最近10个日期(倒序):
+     1. 2026-03-12
+     2. 2026-03-11
+     3. 2026-03-10
+     4. 2026-03-09
+     5. 2026-03-06
+     6. 2026-03-05
+     7. 2026-03-04
+     8. 2026-03-03
+     9. 2026-03-02
+    10. 2026-02-27
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+index_code           varchar(50)          NO    PRI   NULL                      
+index_name           varchar(50)          NO          NULL                      
+ymd                  date                 NO    PRI   NULL                      
+open                 float                YES         NULL                      
+close                float                YES         NULL                      
+high                 float                YES         NULL                      
+low                  float                YES         NULL                      
+volume               bigint               YES         NULL                      
+
+数据样例（按ymd倒序，前5行，完整列）:
+--------------------------------------------------------------------------------
+index_code index_name        ymd     open    close     high      low      volume
+ 399852.SZ     中证1000 2026-03-12  8357.35  8335.91  8388.63  8267.39 32821274700
+ 399006.SZ       创业板指 2026-03-12  3357.03  3317.52  3358.77  3286.77 23092635432
+ 399002.SZ        深成指 2026-03-12 19420.20 19309.00 19447.60 19135.60 26984493082
+ 000905.SH      中证500 2026-03-12  8396.72  8359.47  8433.04  8290.59 28243650400
+ 000849.SH      300非银 2026-03-12 10192.50 10164.10 10235.10 10114.20  1100870800
+
+
+【表 32/59】 ods_index_a_share_insight_now
+====================================================================================================
+基本信息:
+  行数: 387
+  列数: 8
+
+ymd日期信息:
+  存在ymd列: ✓
+  日期总数: 10
+  最早日期: 2026-03-02
+  最晚日期: 2026-03-13
+  最近10个日期(倒序):
+     1. 2026-03-13
+     2. 2026-03-12
+     3. 2026-03-11
+     4. 2026-03-10
+     5. 2026-03-09
+     6. 2026-03-06
+     7. 2026-03-05
+     8. 2026-03-04
+     9. 2026-03-03
+    10. 2026-03-02
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+index_code           varchar(50)          NO    PRI   NULL                      
+index_name           varchar(50)          NO          NULL                      
+ymd                  date                 NO    PRI   NULL                      
+open                 float                YES         NULL                      
+close                float                YES         NULL                      
+high                 float                YES         NULL                      
+low                  float                YES         NULL                      
+volume               bigint               YES         NULL                      
+
+数据样例（按ymd倒序，前5行，完整列）:
+--------------------------------------------------------------------------------
+index_code index_name        ymd    open   close    high     low      volume
+ 000001.SH       上证指数 2026-03-13 4117.57 4095.45 4134.08 4086.85 79205476400
+ 000688.SH       科创50 2026-03-13 1374.65 1373.64 1392.43 1365.62  1200226300
+ 399852.SZ     中证1000 2026-03-13 8297.91 8214.29 8350.92 8196.37 33312302000
+ 000016.SH       上证50 2026-03-13 2961.73 2956.85 2977.84 2951.70  6863301300
+ 000300.SH      沪深300 2026-03-13 4669.06 4669.14 4707.42 4659.50 31077200900
+
+
+【表 33/59】 ods_north_bound_daily
+====================================================================================================
+基本信息:
+  行数: 35,505
+  列数: 4
+
+ymd日期信息:
+  存在ymd列: ✓
+  日期总数: 10
+  最早日期: 2025-10-30
+  最晚日期: 2025-11-13
+  最近10个日期(倒序):
+     1. 2025-11-13
+     2. 2025-11-11
+     3. 2025-11-10
+     4. 2025-11-08
+     5. 2025-11-07
+     6. 2025-11-06
+     7. 2025-11-05
+     8. 2025-11-03
+     9. 2025-10-31
+    10. 2025-10-30
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+stock_code           varchar(100)         YES         NULL                      
+ymd                  date                 YES   MUL   NULL                      
+sh_hkshare_hold      bigint               YES         NULL                      
+pct_total_share      float                YES         NULL                      
+
+数据样例（按ymd倒序，前5行，完整列）:
+--------------------------------------------------------------------------------
+stock_code        ymd  sh_hkshare_hold  pct_total_share
+ 600389.SH 2025-11-13          4028958             0.93
+ 600509.SH 2025-11-11          2683541             0.23
+ 600961.SH 2025-11-10         11328696             2.14
+ 600885.SH 2025-11-10        234391723            22.47
+ 600873.SH 2025-11-10         44532097             1.51
+
+
+【表 34/59】 ods_north_bound_daily_now
+====================================================================================================
+基本信息:
+  行数: 0
+  列数: 4
+
+ymd日期信息:
+  存在ymd列: ✓
+  日期总数: 0
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+stock_code           varchar(100)         YES         NULL                      
+ymd                  date                 YES   MUL   NULL                      
+sh_hkshare_hold      bigint               YES         NULL                      
+pct_total_share      float                YES         NULL                      
+
+数据样例: 表为空或无法读取数据
+
+
+
+【表 35/59】 ods_shareholder_num
+====================================================================================================
+基本信息:
+  行数: 200,537
+  列数: 7
+
+ymd日期信息:
+  存在ymd列: ✓
+  日期总数: 10
+  最早日期: 2026-02-23
+  最晚日期: 2026-03-10
+  最近10个日期(倒序):
+     1. 2026-03-10
+     2. 2026-03-06
+     3. 2026-03-05
+     4. 2026-03-04
+     5. 2026-02-28
+     6. 2026-02-27
+     7. 2026-02-26
+     8. 2026-02-25
+     9. 2026-02-24
+    10. 2026-02-23
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+stock_code           varchar(100)         YES         NULL                      
+stock_name           varchar(50)          YES         NULL                      
+ymd                  date                 YES   MUL   NULL                      
+total_sh             double               YES         NULL                      
+avg_share            double(10,4)         YES         NULL                      
+pct_of_total_sh      double(10,4)         YES         NULL                      
+pct_of_avg_sh        double(10,4)         YES         NULL                      
+
+数据样例（按ymd倒序，前5行，完整列）:
+--------------------------------------------------------------------------------
+stock_code stock_name        ymd  total_sh  avg_share  pct_of_total_sh  pct_of_avg_sh
+ 301633.SZ       港迪技术 2026-03-10    8415.0  3031.5677          -1.6250         1.6518
+ 301587.SZ       中瑞股份 2026-03-10   11444.0  6418.4761          -2.9594         3.0496
+ 301566.SZ       达利凯普 2026-03-10   23159.0  9114.6757         -10.4897        11.7190
+ 301536.SZ       星宸科技 2026-03-10   28119.0  6657.1806           9.3316        -8.5352
+ 301535.SZ       浙江华远 2026-03-10    8902.0  7166.2680           3.1160        -3.0218
+
+
+【表 36/59】 ods_shareholder_num_now
+====================================================================================================
+基本信息:
+  行数: 9,662
+  列数: 7
+
+ymd日期信息:
+  存在ymd列: ✓
+  日期总数: 10
+  最早日期: 2026-02-24
+  最晚日期: 2026-03-10
+  最近10个日期(倒序):
+     1. 2026-03-10
+     2. 2026-03-07
+     3. 2026-03-06
+     4. 2026-03-05
+     5. 2026-03-04
+     6. 2026-02-28
+     7. 2026-02-27
+     8. 2026-02-26
+     9. 2026-02-25
+    10. 2026-02-24
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+stock_code           varchar(100)         YES         NULL                      
+stock_name           varchar(50)          YES         NULL                      
+ymd                  date                 YES   MUL   NULL                      
+total_sh             double               YES         NULL                      
+avg_share            double(10,4)         YES         NULL                      
+pct_of_total_sh      double(10,4)         YES         NULL                      
+pct_of_avg_sh        double(10,4)         YES         NULL                      
+
+数据样例（按ymd倒序，前5行，完整列）:
+--------------------------------------------------------------------------------
+stock_code stock_name        ymd  total_sh  avg_share  pct_of_total_sh  pct_of_avg_sh
+    920015       锦华新材 2026-03-10    6214.0  6074.2377          -1.2711         1.2874
+ 689009.SH       九号公司 2026-03-10   34411.0  1614.7676           1.5613        -1.5373
+ 688759.SH        必贝特 2026-03-10   12781.0  3635.2383           0.4638        -0.4616
+ 688687.SH       凯因科技 2026-03-10   14477.0 11808.0004          -1.8042         1.8374
+ 688678.SH        福立旺 2026-03-10   13238.0 21750.5073          -3.3017         3.4144
+
+
+【表 37/59】 ods_stock_chouma_insight
+====================================================================================================
+基本信息:
+  行数: 1,187,121
+  列数: 27
+
+ymd日期信息:
+  存在ymd列: ✓
+  日期总数: 10
+  最早日期: 2026-03-02
+  最晚日期: 2026-03-13
+  最近10个日期(倒序):
+     1. 2026-03-13
+     2. 2026-03-12
+     3. 2026-03-11
+     4. 2026-03-10
+     5. 2026-03-09
+     6. 2026-03-06
+     7. 2026-03-05
+     8. 2026-03-04
+     9. 2026-03-03
+    10. 2026-03-02
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+stock_code           varchar(50)          NO    PRI   NULL                      
+ymd                  date                 NO    PRI   NULL                      
+exchange             varchar(50)          YES         NULL                      
+close                float                YES         NULL                      
+prev_close           float                YES         NULL                      
+total_shares         bigint               YES         NULL                      
+a_total_share        bigint               YES         NULL                      
+a_listed_share       bigint               YES         NULL                      
+listed_share         bigint               YES         NULL                      
+restricted_share     bigint               YES         NULL                      
+cost_5pct            float                YES         NULL                      
+cost_15pct           float                YES         NULL                      
+cost_50pct           float                YES         NULL                      
+cost_85pct           float                YES         NULL                      
+cost_95pct           float                YES         NULL                      
+avg_cost             float                YES         NULL                      
+max_cost             float                YES         NULL                      
+min_cost             float                YES         NULL                      
+winner_rate          float                YES         NULL                      
+diversity            float                YES         NULL                      
+pre_winner_rate      float                YES         NULL                      
+restricted_avg_cost  float                YES         NULL                      
+restricted_max_cost  float                YES         NULL                      
+restricted_min_cost  float                YES         NULL                      
+large_shareholders_avg_cost float                YES         NULL                      
+large_shareholders_total_share float                YES         NULL                      
+large_shareholders_total_share_pct float                YES         NULL                      
+
+数据样例（按ymd倒序，前5行，完整列）:
+--------------------------------------------------------------------------------
+stock_code        ymd exchange  close  prev_close  total_shares  a_total_share  a_listed_share  listed_share  restricted_share  cost_5pct  cost_15pct  cost_50pct  cost_85pct  cost_95pct  avg_cost  max_cost  min_cost  winner_rate  diversity  pre_winner_rate  restricted_avg_cost  restricted_max_cost  restricted_min_cost  large_shareholders_avg_cost  large_shareholders_total_share  large_shareholders_total_share_pct
+ 000001.SZ 2026-03-13     XSHE  10.93       10.94   19405918198    19405918198     19405600653   19405600653            317545    7.41648     8.17068     9.69969    11.08590    12.01360     12.51      22.7       6.1        43.88      79.58            43.39                14.70                 14.7                 14.7                        11.72                    1.289500e+10                               66.45
+ 000002.SZ 2026-03-13     XSHE   4.66        4.65   11930709471     9724196533      9716399629    9716399629           7796904    4.59963     4.71958     7.41555    12.74480    14.40890     15.27      36.0       4.5         6.30     142.17             5.89                 7.07                 21.9                  0.4                         8.80                    4.227290e+09                               43.47
+ 000007.SZ 2026-03-13     XSHE  13.69       13.98     346448044      346448044       346448044     346448044                 0    6.41178     6.92733     8.37773    10.01170    10.53320     10.89      20.8       4.2        80.79      64.79            87.48                 0.00                  0.0                  0.0                         7.34                    1.580050e+08                               45.61
+ 000008.SZ 2026-03-13     XSHE   2.99        2.91    2716377683     2716377683      2716296952    2716296952             80731    1.93559     2.39322     2.89442     4.95237     5.46103      5.78      13.7       1.8        24.98     110.40            25.56                 2.30                  2.3                  2.3                         4.60                    1.226090e+09                               45.14
+ 000006.SZ 2026-03-13     XSHE   9.03        9.09    1349995046     1349995046      1349987396    1349987396                 0    6.35915     6.95715     7.90871     8.82118     9.29251      9.56      15.5       4.7        47.59      58.25            47.87                 0.00                  0.0                  0.0                         3.52                    5.757170e+08                               42.65
+
+
+【表 38/59】 ods_stock_code_daily_insight
+====================================================================================================
+基本信息:
+  行数: 1,763,837
+  列数: 4
+
+ymd日期信息:
+  存在ymd列: ✓
+  日期总数: 10
+  最早日期: 2026-03-02
+  最晚日期: 2026-03-13
+  最近10个日期(倒序):
+     1. 2026-03-13
+     2. 2026-03-12
+     3. 2026-03-11
+     4. 2026-03-10
+     5. 2026-03-09
+     6. 2026-03-06
+     7. 2026-03-05
+     8. 2026-03-04
+     9. 2026-03-03
+    10. 2026-03-02
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 NO    PRI   NULL                      
+stock_code           varchar(50)          NO    PRI   NULL                      
+stock_name           varchar(50)          YES         NULL                      
+exchange             varchar(50)          YES         NULL                      
+
+数据样例（按ymd倒序，前5行，完整列）:
+--------------------------------------------------------------------------------
+       ymd stock_code stock_name exchange
+2026-03-13  920992.BJ       中科美菱     XBSE
+2026-03-13  920985.BJ       海泰新能     XBSE
+2026-03-13  920982.BJ       锦波生物     XBSE
+2026-03-13  920981.BJ       晶赛科技     XBSE
+2026-03-13  920978.BJ       开特股份     XBSE
+
+
+【表 39/59】 ods_stock_exchange_market
+====================================================================================================
+基本信息:
+  行数: 227,942
+  列数: 4
+
+ymd日期信息:
+  存在ymd列: ✓
+  日期总数: 10
+  最早日期: 2026-03-02
+  最晚日期: 2026-03-13
+  最近10个日期(倒序):
+     1. 2026-03-13
+     2. 2026-03-12
+     3. 2026-03-11
+     4. 2026-03-10
+     5. 2026-03-09
+     6. 2026-03-06
+     7. 2026-03-05
+     8. 2026-03-04
+     9. 2026-03-03
+    10. 2026-03-02
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 NO    MUL   NULL                      
+stock_code           varchar(50)          YES         NULL                      
+stock_name           varchar(50)          YES         NULL                      
+market               varchar(50)          YES         NULL                      
+
+数据样例（按ymd倒序，前5行，完整列）:
+--------------------------------------------------------------------------------
+       ymd stock_code stock_name market
+2026-03-13  920992.BJ       中科美菱    北交所
+2026-03-13  920985.BJ       海泰新能    北交所
+2026-03-13  920982.BJ       锦波生物    北交所
+2026-03-13  920981.BJ       晶赛科技    北交所
+2026-03-13  920978.BJ       开特股份    北交所
+
+
+【表 40/59】 ods_stock_kline_daily_insight
+====================================================================================================
+基本信息:
+  行数: 5,803,307
+  列数: 8
+
+ymd日期信息:
+  存在ymd列: ✓
+  日期总数: 10
+  最早日期: 2026-01-22
+  最晚日期: 2026-02-05
+  最近10个日期(倒序):
+     1. 2026-02-05
+     2. 2026-02-04
+     3. 2026-02-03
+     4. 2026-02-02
+     5. 2026-01-29
+     6. 2026-01-28
+     7. 2026-01-27
+     8. 2026-01-26
+     9. 2026-01-23
+    10. 2026-01-22
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+stock_code           varchar(50)          NO    PRI   NULL                      
+ymd                  date                 NO    PRI   NULL                      
+open                 float                YES         NULL                      
+close                float                YES         NULL                      
+high                 float                YES         NULL                      
+low                  float                YES         NULL                      
+num_trades           bigint               YES         NULL                      
+volume               bigint               YES         NULL                      
+
+数据样例（按ymd倒序，前5行，完整列）:
+--------------------------------------------------------------------------------
+stock_code        ymd   open  close   high    low  num_trades   volume
+ 920992.BJ 2026-02-05  17.33  17.17  17.33  16.76           0  1944096
+ 920985.BJ 2026-02-05   8.90   8.75   9.09   8.60           0 16928503
+ 920982.BJ 2026-02-05 223.10 229.72 233.99 223.00           0  1644037
+ 920981.BJ 2026-02-05  32.31  32.03  32.71  32.01           0   597591
+ 920978.BJ 2026-02-05  31.70  32.00  33.55  31.03           0  5818932
+
+
+【表 41/59】 ods_stock_kline_daily_insight_now
+====================================================================================================
+基本信息:
+  行数: 121,581
+  列数: 8
+
+ymd日期信息:
+  存在ymd列: ✓
+  日期总数: 10
+  最早日期: 2026-01-22
+  最晚日期: 2026-02-05
+  最近10个日期(倒序):
+     1. 2026-02-05
+     2. 2026-02-04
+     3. 2026-02-03
+     4. 2026-02-02
+     5. 2026-01-29
+     6. 2026-01-28
+     7. 2026-01-27
+     8. 2026-01-26
+     9. 2026-01-23
+    10. 2026-01-22
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+stock_code           varchar(50)          NO    PRI   NULL                      
+ymd                  date                 NO    PRI   NULL                      
+open                 float                YES         NULL                      
+close                float                YES         NULL                      
+high                 float                YES         NULL                      
+low                  float                YES         NULL                      
+num_trades           bigint               YES         NULL                      
+volume               bigint               YES         NULL                      
+
+数据样例（按ymd倒序，前5行，完整列）:
+--------------------------------------------------------------------------------
+stock_code        ymd  open  close  high   low  num_trades    volume
+ 920992.BJ 2026-02-05 17.33  17.17 17.33 16.76           0   1944096
+ 000002.SZ 2026-02-05  4.86   4.88  4.92  4.84       78057 214093420
+ 000006.SZ 2026-02-05  8.96   9.00  9.13  8.94       17407  17148516
+ 000008.SZ 2026-02-05  3.00   2.95  3.00  2.95       16086  34603609
+ 000001.SZ 2026-02-05 10.98  11.09 11.11 10.96       56950 117759109
+
+
+【表 42/59】 ods_stock_kline_daily_ts
+====================================================================================================
+基本信息:
+  行数: 6,037,168
+  列数: 11
+
+ymd日期信息:
+  存在ymd列: ✓
+  日期总数: 10
+  最早日期: 2026-03-02
+  最晚日期: 2026-03-13
+  最近10个日期(倒序):
+     1. 2026-03-13
+     2. 2026-03-12
+     3. 2026-03-11
+     4. 2026-03-10
+     5. 2026-03-09
+     6. 2026-03-06
+     7. 2026-03-05
+     8. 2026-03-04
+     9. 2026-03-03
+    10. 2026-03-02
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+stock_code           varchar(50)          NO    PRI   NULL                      
+ymd                  date                 NO    PRI   NULL                      
+open                 float                YES         NULL                      
+close                float                YES         NULL                      
+high                 float                YES         NULL                      
+low                  float                YES         NULL                      
+change_pct           float                YES         NULL                      
+volume               bigint               YES         NULL                      
+trading_amount       double               YES         NULL                      
+today_pct            decimal(10,2)        YES         NULL                      
+is_down              tinyint(1)           YES         NULL                      
+
+数据样例（按ymd倒序，前5行，完整列）:
+--------------------------------------------------------------------------------
+stock_code        ymd   open  close   high    low  change_pct  volume  trading_amount  today_pct  is_down
+ 920992.BJ 2026-03-13  15.69  15.64  16.07  15.56       -0.13   10355       16348.877      -0.32        1
+ 920985.BJ 2026-03-13   8.11   8.27   8.46   8.07        1.72   84825       70421.869       1.97        0
+ 920982.BJ 2026-03-13 186.58 186.31 190.00 185.11       -0.53    3774       70678.657      -0.14        1
+ 920981.BJ 2026-03-13  30.59  30.06  31.04  30.06       -2.24    5997       18316.393      -1.73        1
+ 920978.BJ 2026-03-13  26.68  26.68  27.05  26.41       -0.26   15502       41485.465       0.00        0
+
+
+【表 43/59】 ods_stock_limit_summary_insight
+====================================================================================================
+基本信息:
+  行数: 1,243
+  列数: 7
+
+ymd日期信息:
+  存在ymd列: ✓
+  日期总数: 10
+  最早日期: 2026-03-02
+  最晚日期: 2026-03-13
+  最近10个日期(倒序):
+     1. 2026-03-13
+     2. 2026-03-12
+     3. 2026-03-11
+     4. 2026-03-10
+     5. 2026-03-09
+     6. 2026-03-06
+     7. 2026-03-05
+     8. 2026-03-04
+     9. 2026-03-03
+    10. 2026-03-02
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 NO    PRI   NULL                      
+name                 varchar(50)          NO    PRI   NULL                      
+today_ZT             int                  YES         NULL                      
+today_DT             int                  YES         NULL                      
+yesterday_ZT         int                  YES         NULL                      
+yesterday_DT         int                  YES         NULL                      
+yesterday_ZT_rate    float                YES         NULL                      
+
+数据样例（按ymd倒序，前5行，完整列）:
+--------------------------------------------------------------------------------
+       ymd name  today_ZT  today_DT  yesterday_ZT  yesterday_DT  yesterday_ZT_rate
+2026-03-13   全A        69        24            63             7               0.84
+2026-03-12   全A        63         7            67             2               2.19
+2026-03-11   全A        67         2            68             7               2.61
+2026-03-10   全A        68         7            47            10               3.04
+2026-03-09   全A        46        10            87             5               1.39
+
+
+【表 44/59】 ods_stock_limit_summary_insight_now
+====================================================================================================
+基本信息:
+  行数: 44
+  列数: 7
+
+ymd日期信息:
+  存在ymd列: ✓
+  日期总数: 10
+  最早日期: 2026-03-02
+  最晚日期: 2026-03-13
+  最近10个日期(倒序):
+     1. 2026-03-13
+     2. 2026-03-12
+     3. 2026-03-11
+     4. 2026-03-10
+     5. 2026-03-09
+     6. 2026-03-06
+     7. 2026-03-05
+     8. 2026-03-04
+     9. 2026-03-03
+    10. 2026-03-02
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 NO    PRI   NULL                      
+name                 varchar(50)          NO    PRI   NULL                      
+today_ZT             int                  YES         NULL                      
+today_DT             int                  YES         NULL                      
+yesterday_ZT         int                  YES         NULL                      
+yesterday_DT         int                  YES         NULL                      
+yesterday_ZT_rate    float                YES         NULL                      
+
+数据样例（按ymd倒序，前5行，完整列）:
+--------------------------------------------------------------------------------
+       ymd name  today_ZT  today_DT  yesterday_ZT  yesterday_DT  yesterday_ZT_rate
+2026-03-13   全A        69        24            63             7               0.84
+2026-03-12   全A        63         7            67             2               2.19
+2026-03-11   全A        67         2            68             7               2.61
+2026-03-10   全A        68         7            47            10               3.04
+2026-03-09   全A        46        10            87             5               1.39
+
+
+【表 45/59】 ods_stock_plate_redbook
+====================================================================================================
+基本信息:
+  行数: 0
+  列数: 5
+
+ymd日期信息:
+  存在ymd列: ✓
+  日期总数: 0
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 NO          NULL                      
+plate_name           varchar(50)          NO          NULL                      
+stock_code           varchar(50)          YES         NULL                      
+stock_name           varchar(50)          YES         NULL                      
+remark               varchar(50)          YES         NULL                      
+
+数据样例: 表为空或无法读取数据
+
+
+
+【表 46/59】 ods_tdx_stock_concept_plate
+====================================================================================================
+基本信息:
+  行数: 63,525
+  列数: 5
+
+ymd日期信息:
+  存在ymd列: ✓
+  日期总数: 2
+  最早日期: 2024-10-24
+  最晚日期: 2025-01-30
+  最近10个日期(倒序):
+     1. 2025-01-30
+     2. 2024-10-24
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 NO          NULL                      
+concept_code         varchar(50)          NO          NULL                      
+concept_name         varchar(50)          YES         NULL                      
+stock_code           varchar(50)          YES         NULL                      
+stock_name           varchar(50)          YES         NULL                      
+
+数据样例（按ymd倒序，前5行，完整列）:
+--------------------------------------------------------------------------------
+       ymd concept_code concept_name stock_code stock_name
+2025-01-30       880515        通达信88     000625       长安汽车
+2025-01-30       880732        AI智能体     688327       云从科技
+2025-01-30       880515        通达信88     000631       顺发恒业
+2025-01-30       880515        通达信88     000568       泸州老窖
+2025-01-30       880515        通达信88     000708       中信特钢
+
+
+【表 47/59】 ods_tdx_stock_index_plate
+====================================================================================================
+基本信息:
+  行数: 23,778
+  列数: 5
+
+ymd日期信息:
+  存在ymd列: ✓
+  日期总数: 2
+  最早日期: 2024-10-04
+  最晚日期: 2025-01-30
+  最近10个日期(倒序):
+     1. 2025-01-30
+     2. 2024-10-04
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 NO          NULL                      
+index_code           varchar(50)          NO          NULL                      
+index_name           varchar(50)          YES         NULL                      
+stock_code           varchar(50)          YES         NULL                      
+stock_name           varchar(50)          YES         NULL                      
+
+数据样例（按ymd倒序，前5行，完整列）:
+--------------------------------------------------------------------------------
+       ymd index_code index_name stock_code stock_name
+2025-01-30     000300      沪深300     000063       中兴通讯
+2025-01-30     399357        环渤海     688111       金山办公
+2025-01-30     000300      沪深300     000100      TCL科技
+2025-01-30     000300      沪深300     000002       万 科Ａ
+2025-01-30     000300      沪深300     000157       中联重科
+
+
+【表 48/59】 ods_tdx_stock_industry_plate
+====================================================================================================
+基本信息:
+  行数: 10,756
+  列数: 5
+
+ymd日期信息:
+  存在ymd列: ✓
+  日期总数: 2
+  最早日期: 2024-10-04
+  最晚日期: 2025-01-30
+  最近10个日期(倒序):
+     1. 2025-01-30
+     2. 2024-10-04
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 NO          NULL                      
+industry_code        varchar(50)          NO          NULL                      
+industry_name        varchar(50)          YES         NULL                      
+stock_code           varchar(50)          YES         NULL                      
+stock_name           varchar(50)          YES         NULL                      
+
+数据样例（按ymd倒序，前5行，完整列）:
+--------------------------------------------------------------------------------
+       ymd industry_code industry_name stock_code stock_name
+2025-01-30        880301            煤炭     000723       美锦能源
+2025-01-30        880497           综合类     873122        中纺标
+2025-01-30        880301            煤炭     000937       冀中能源
+2025-01-30        880301            煤炭     000571       新大洲A
+2025-01-30        880301            煤炭     000983       山西焦煤
+
+
+【表 49/59】 ods_tdx_stock_pepb_info
+====================================================================================================
+基本信息:
+  行数: 0
+  列数: 12
+
+ymd日期信息:
+  存在ymd列: ✓
+  日期总数: 0
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 YES   MUL   NULL                      
+stock_code           varchar(50)          YES         NULL                      
+stock_name           varchar(50)          YES         NULL                      
+market_value         double               YES         NULL                      
+total_asset          double               YES         NULL                      
+net_asset            double               YES         NULL                      
+total_capital        double               YES         NULL                      
+float_capital        double               YES         NULL                      
+shareholder_num      bigint               YES         NULL                      
+pb                   double               YES         NULL                      
+pe                   double               YES         NULL                      
+industry             varchar(50)          YES         NULL                      
+
+数据样例: 表为空或无法读取数据
+
+
+
+【表 50/59】 ods_tdx_stock_region_plate
+====================================================================================================
+基本信息:
+  行数: 10,756
+  列数: 5
+
+ymd日期信息:
+  存在ymd列: ✓
+  日期总数: 2
+  最早日期: 2024-10-04
+  最晚日期: 2025-01-30
+  最近10个日期(倒序):
+     1. 2025-01-30
+     2. 2024-10-04
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 NO          NULL                      
+region_code          varchar(50)          NO          NULL                      
+region_name          varchar(50)          YES         NULL                      
+stock_code           varchar(50)          YES         NULL                      
+stock_name           varchar(50)          YES         NULL                      
+
+数据样例（按ymd倒序，前5行，完整列）:
+--------------------------------------------------------------------------------
+       ymd region_code region_name stock_code stock_name
+2025-01-30      880201         黑龙江     000922       佳电股份
+2025-01-30      880232        内蒙板块     836433       大唐药业
+2025-01-30      880201         黑龙江     000985       大庆华科
+2025-01-30      880201         黑龙江     000901       航天科技
+2025-01-30      880201         黑龙江     002437       誉衡药业
+
+
+【表 51/59】 ods_tdx_stock_style_plate
+====================================================================================================
+基本信息:
+  行数: 40,549
+  列数: 5
+
+ymd日期信息:
+  存在ymd列: ✓
+  日期总数: 2
+  最早日期: 2024-10-04
+  最晚日期: 2025-01-30
+  最近10个日期(倒序):
+     1. 2025-01-30
+     2. 2024-10-04
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 NO          NULL                      
+style_code           varchar(50)          NO          NULL                      
+style_name           varchar(50)          YES         NULL                      
+stock_code           varchar(50)          YES         NULL                      
+stock_name           varchar(50)          YES         NULL                      
+
+数据样例（按ymd倒序，前5行，完整列）:
+--------------------------------------------------------------------------------
+       ymd style_code style_name stock_code stock_name
+2025-01-30     880735       专精特新     000586       汇源通信
+2025-01-30     880818      通达信热股     688981       中芯国际
+2025-01-30     880735       专精特新     000795        英洛华
+2025-01-30     880735       专精特新     000584      *ST工智
+2025-01-30     880735       专精特新     000801       四川九洲
+
+
+【表 52/59】 ods_trading_days_insight
+====================================================================================================
+基本信息:
+  行数: 2,184
+  列数: 2
+
+ymd日期信息:
+  存在ymd列: ✓
+  日期总数: 10
+  最早日期: 2026-12-18
+  最晚日期: 2026-12-31
+  最近10个日期(倒序):
+     1. 2026-12-31
+     2. 2026-12-30
+     3. 2026-12-29
+     4. 2026-12-28
+     5. 2026-12-25
+     6. 2026-12-24
+     7. 2026-12-23
+     8. 2026-12-22
+     9. 2026-12-21
+    10. 2026-12-18
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+exchange             varchar(50)          YES   MUL   NULL                      
+ymd                  date                 NO          NULL                      
+
+数据样例（按ymd倒序，前5行，完整列）:
+--------------------------------------------------------------------------------
+exchange        ymd
+    XSHG 2026-12-31
+    XSHG 2026-12-30
+    XSHG 2026-12-29
+    XSHG 2026-12-28
+    XSHG 2026-12-25
+
+
+【表 53/59】 ods_tushare_board_concept_name_ths
+====================================================================================================
+基本信息:
+  行数: 1,236
+  列数: 7
+
+ymd日期信息:
+  存在ymd列: ✓
+  日期总数: 1
+  最早日期: 2026-02-05
+  最晚日期: 2026-02-05
+  最近10个日期(倒序):
+     1. 2026-02-05
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 YES   MUL   NULL                      
+board_name           varchar(100)         YES         NULL                      
+board_code           varchar(50)          YES         NULL                      
+component_count      int                  YES         NULL                      
+market               varchar(10)          YES         NULL                      
+list_date            varchar(8)           YES         NULL                      
+index_type           varchar(10)          YES         NULL                      
+
+数据样例（按ymd倒序，前5行，完整列）:
+--------------------------------------------------------------------------------
+       ymd board_name board_code  component_count market list_date index_type
+2026-02-05    上证指数(旧)  991001.TI             2009      A  19910715          S
+2026-02-05       AI应用  886108.TI              355      A  20260113          N
+2026-02-05   2025年报预增  886107.TI               43      A  20260104          N
+2026-02-05  2025三季报预增  886106.TI               81      A  20251010          N
+2026-02-05     雅下水电概念  886105.TI               88      A  20250721          N
+
+
+【表 54/59】 ods_tushare_stock_board_concept_hist_em
+====================================================================================================
+基本信息:
+  行数: 1,101
+  列数: 14
+
+ymd日期信息:
+  存在ymd列: ✓
+  日期总数: 2
+  最早日期: 2025-02-10
+  最晚日期: 2025-03-07
+  最近10个日期(倒序):
+     1. 2025-03-07
+     2. 2025-02-10
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 YES   MUL   NULL                      
+board_name           varchar(100)         YES         NULL                      
+board_code           varchar(50)          YES         NULL                      
+open                 float                YES         NULL                      
+high                 float                YES         NULL                      
+low                  float                YES         NULL                      
+close                float                YES         NULL                      
+change_amt           float                YES         NULL                      
+change_pct           float                YES         NULL                      
+trading_volume       float                YES         NULL                      
+trading_amount       float                YES         NULL                      
+amplitude            float                YES         NULL                      
+turnover_rate        float                YES         NULL                      
+category             varchar(20)          YES         NULL                      
+
+数据样例（按ymd倒序，前5行，完整列）:
+--------------------------------------------------------------------------------
+       ymd board_name board_code    open    high     low   close  change_amt  change_pct  trading_volume  trading_amount  amplitude  turnover_rate category
+2025-03-07        腾讯云  BK1189.DC 1060.89 1079.24 1045.11 1057.97       -8.09       -0.76      19504500.0    5.412470e+10       3.20          11.22     概念板块
+2025-03-07 DeepSeek概念  BK1188.DC 1361.61 1379.66 1334.67 1347.34      -15.11       -1.11     157406000.0    2.680370e+11       3.30           7.69     概念板块
+2025-03-07      小红书概念  BK1187.DC 1143.72 1153.54 1125.99 1133.16      -12.06       -1.05      57874600.0    5.372680e+10       2.41          10.76     概念板块
+2025-03-07       首发经济  BK1186.DC  977.54  981.23  960.67  965.92      -11.94       -1.22      35902300.0    2.823030e+10       2.10           8.79     概念板块
+2025-03-07       冰雪经济  BK1185.DC  891.19  893.00  879.50  884.26       -8.50       -0.95      10055900.0    8.117220e+09       1.51           2.56     概念板块
+
+
+【表 55/59】 ods_tushare_stock_board_concept_hist_ths
+====================================================================================================
+基本信息:
+  行数: 3,000
+  列数: 15
+
+ymd日期信息:
+  存在ymd列: ✓
+  日期总数: 3
+  最早日期: 2026-02-03
+  最晚日期: 2026-02-05
+  最近10个日期(倒序):
+     1. 2026-02-05
+     2. 2026-02-04
+     3. 2026-02-03
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 YES   MUL   NULL                      
+board_name           varchar(100)         YES         NULL                      
+board_code           varchar(50)          YES         NULL                      
+open                 float                YES         NULL                      
+high                 float                YES         NULL                      
+low                  float                YES         NULL                      
+close                float                YES         NULL                      
+prev_close           float                YES         NULL                      
+avg_price            float                YES         NULL                      
+change_amt           float                YES         NULL                      
+change_pct           float                YES         NULL                      
+trading_volume       float                YES         NULL                      
+turnover_rate        float                YES         NULL                      
+total_market_value   float                YES         NULL                      
+float_market_value   float                YES         NULL                      
+
+数据样例（按ymd倒序，前5行，完整列）:
+--------------------------------------------------------------------------------
+       ymd board_name board_code    open    high     low   close  prev_close  avg_price  change_amt  change_pct  trading_volume  turnover_rate total_market_value float_market_value
+2026-02-05    上证指数(旧)  991001.TI 4533.03 4545.10 4502.85 4533.08     4554.60    15.8681     -21.520     -0.4725     596722000.0        1.30038               None               None
+2026-02-05       AI应用  886108.TI 1028.53 1040.02 1028.36 1032.65     1038.34    17.0128      -5.692     -0.5482     137506000.0        3.06037               None               None
+2026-02-05   2025年报预增  886107.TI 1181.99 1187.61 1171.72 1175.99     1192.10    26.6919     -16.110     -1.3514     127524000.0        2.54763               None               None
+2026-02-05  2025三季报预增  886106.TI 1176.97 1180.31 1161.46 1166.36     1185.93    24.1188     -19.572     -1.6503      20362700.0        2.04797               None               None
+2026-02-05     雅下水电概念  886105.TI 1501.07 1504.32 1478.50 1482.70     1509.71    13.0486     -27.009     -1.7890      37778700.0        1.62083               None               None
+
+
+【表 56/59】 ods_tushare_stock_board_concept_maps_em
+====================================================================================================
+基本信息:
+  行数: 0
+  列数: 5
+
+ymd日期信息:
+  存在ymd列: ✓
+  日期总数: 0
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 YES   MUL   NULL                      
+board_name           varchar(100)         YES         NULL                      
+board_code           varchar(50)          YES         NULL                      
+stock_code           varchar(50)          YES         NULL                      
+stock_name           varchar(100)         YES         NULL                      
+
+数据样例: 表为空或无法读取数据
+
+
+
+【表 57/59】 ods_tushare_stock_board_concept_maps_ths
+====================================================================================================
+基本信息:
+  行数: 250,509
+  列数: 9
+
+ymd日期信息:
+  存在ymd列: ✓
+  日期总数: 1
+  最早日期: 2026-02-05
+  最晚日期: 2026-02-05
+  最近10个日期(倒序):
+     1. 2026-02-05
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 YES   MUL   NULL                      
+board_name           varchar(100)         YES         NULL                      
+board_code           varchar(50)          YES         NULL                      
+stock_code           varchar(50)          YES         NULL                      
+stock_name           varchar(100)         YES         NULL                      
+weight               float                YES         NULL                      
+in_date              varchar(8)           YES         NULL                      
+out_date             varchar(8)           YES         NULL                      
+is_new               varchar(1)           YES         NULL                      
+
+数据样例（按ymd倒序，前5行，完整列）:
+--------------------------------------------------------------------------------
+       ymd board_name board_code stock_code stock_name  weight in_date out_date is_new
+2026-02-05    上证指数(旧)  991001.TI  900948.SH       伊泰B股     0.0    None     None      Y
+2026-02-05    上证指数(旧)  991001.TI  900947.SH       振华B股     0.0    None     None      Y
+2026-02-05    上证指数(旧)  991001.TI  900946.SH       天雁B股     0.0    None     None      Y
+2026-02-05    上证指数(旧)  991001.TI  900945.SH       海控B股     0.0    None     None      Y
+2026-02-05    上证指数(旧)  991001.TI  900943.SH       开开B股     0.0    None     None      Y
+
+
+【表 58/59】 ods_tushare_stock_board_concept_name_em
+====================================================================================================
+基本信息:
+  行数: 571
+  列数: 11
+
+ymd日期信息:
+  存在ymd列: ✓
+  日期总数: 1
+  最早日期: 2026-02-05
+  最晚日期: 2026-02-05
+  最近10个日期(倒序):
+     1. 2026-02-05
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+ymd                  date                 YES   MUL   NULL                      
+board_name           varchar(100)         YES         NULL                      
+board_code           varchar(50)          YES         NULL                      
+leading_stock        varchar(100)         YES         NULL                      
+leading_stock_code   varchar(50)          YES         NULL                      
+change_pct           float                YES         NULL                      
+leading_stock_pct    float                YES         NULL                      
+total_market_value   float                YES         NULL                      
+turnover_rate        float                YES         NULL                      
+rising_stocks_num    int                  YES         NULL                      
+falling_stocks_num   int                  YES         NULL                      
+
+数据样例（按ymd倒序，前5行，完整列）:
+--------------------------------------------------------------------------------
+       ymd board_name board_code leading_stock leading_stock_code  change_pct  leading_stock_pct  total_market_value  turnover_rate  rising_stocks_num  falling_stocks_num
+2026-02-05        微利股  BK1642.DC          中信尼雅          600084.SH       -1.22               9.97         122294000.0           2.59                 19                  80
+2026-02-05        红利股  BK1641.DC          百隆东方          601339.SH       -0.08               6.00        1907080000.0           0.39                 58                  41
+2026-02-05        价值股  BK1640.DC          菜百股份          605599.SH       -0.29               5.67        1004060000.0           0.86                 46                  54
+2026-02-05        周期股  BK1639.DC          华利集团          300979.SZ       -1.21               1.73        2477110000.0           0.96                 37                  62
+2026-02-05       最近多板  BK1638.DC          凯龙高科          300912.SZ       -0.71              19.98         261848000.0          11.52                 57                  91
+
+
+【表 59/59】 ods_us_stock_daily_vantage
+====================================================================================================
+基本信息:
+  行数: 25,523
+  列数: 7
+
+ymd日期信息:
+  存在ymd列: ✓
+  日期总数: 10
+  最早日期: 2024-09-23
+  最晚日期: 2024-10-04
+  最近10个日期(倒序):
+     1. 2024-10-04
+     2. 2024-10-03
+     3. 2024-10-02
+     4. 2024-10-01
+     5. 2024-09-30
+     6. 2024-09-27
+     7. 2024-09-26
+     8. 2024-09-25
+     9. 2024-09-24
+    10. 2024-09-23
+
+表结构（完整）:
+--------------------------------------------------------------------------------
+字段名                  类型                   可空    键     默认值             额外        
+--------------------------------------------------------------------------------
+stock_name           varchar(50)          NO    PRI   NULL                      
+ymd                  date                 NO    PRI   NULL                      
+open                 float                YES         NULL                      
+high                 float                YES         NULL                      
+low                  float                YES         NULL                      
+close                float                YES         NULL                      
+volume               bigint               YES         NULL                      
+
+数据样例（按ymd倒序，前5行，完整列）:
+--------------------------------------------------------------------------------
+stock_name        ymd   open   high    low  close    volume
+      TSLA 2024-10-04 246.69 250.96 244.58 250.08  86726285
+      NVDA 2024-10-04 124.94 125.04 121.83 124.92 244465552
+      MSFT 2024-10-04 418.24 419.75 414.97 416.06  19190913
+      META 2024-10-04 583.73 596.85 581.43 595.94  14199788
+      AAPL 2024-10-04 227.90 228.00 224.13 226.80  37345098
+
