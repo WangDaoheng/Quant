@@ -9,7 +9,7 @@ import CommonProperties.Base_utils as base_utils
 
 
 #  vantage  测试环境文件保存目录
-vantage_test_dir = os.path.join(base_properties.dir_vantage_base, 'test')
+vantage_test_dir = r'.'
 
 
 api_key = 'ICTN 9 P9 ES 00 EADUF'

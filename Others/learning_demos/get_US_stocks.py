@@ -1,59 +1,36 @@
 
-
 import numpy as np
 import pandas as pd
 import io
 import os
 import requests
-import time
 import datetime
+from alpha_vantage.foreignexchange import ForeignExchange
 
 from CommonProperties import Base_utils
 
-from alpha_vantage.foreignexchange import ForeignExchange
-from alpha_vantage.timeseries import TimeSeries
-
 # Alpha Vantage API 密钥
 Vantage_key = 'ICTN 9 P9 ES 00 EADUF'
-vantage_base_dir = r'F:\Quant\Vantage\Internation'
-vantage_FX_dir = os.path.join(vantage_base_dir, 'Foreign_exchange')
-vantage_VC_dir = os.path.join(vantage_base_dir, 'Virtual_coin')
-vantage_US_dir = os.path.join(vantage_base_dir, 'US_stocks')
 
 
 def get_US_stocks_by_Vantage_csv(symbol='TSLA', function='TIME_SERIES_DAILY', start_date='', end_date=''):
     # 构建 API 请求 URL
     base_url = 'https://www.alphavantage.co/query'
 
-
     outputsize = 'full'  # 获取完整历史数据
     url = f'{base_url}?function={function}&symbol={symbol}&apikey={Vantage_key}&outputsize={outputsize}&datatype=csv'
 
-
     # 发送 GET 请求
     response = requests.get(url)
-
     ## 把返回的csv字符串做IO处理，转换为csv文件
     csv_file = io.StringIO(response.text)
 
-    # 将文件对象读取为 DataFrame
-    df = pd.read_csv(csv_file)
-
-    ##  输出文件名
-    file_head = r"US_{}".format(symbol)
-    US_filename = Base_utils.save_out_filename(filehead=file_head, file_type='csv')
-    ##  文件保存路径
-    US_filedir = os.path.join(vantage_US_dir, US_filename)
-    df.to_csv(US_filedir)
-
-    return df
-
+    return csv_file
 
 
 def get_US_stocks_by_Vantage_json(symbol = 'TSLA', function = 'TIME_SERIES_DAILY'):
     # 构建 API 请求 URL
     base_url = 'https://www.alphavantage.co/query'
-
 
     url = f'{base_url}?function={function}&symbol={symbol}&apikey={Vantage_key}&outputsize=full&datatype=json'
 
@@ -81,23 +58,18 @@ def get_US_stocks_by_Vantage_json(symbol = 'TSLA', function = 'TIME_SERIES_DAILY
     else:
         print(f'Error fetching  data: {response.status_code} - {response.text}')
 
-    print(df)
     return df
-
 
 
 def get_US_Forex_by_Vantage_csv(function='FX_DAILY', from_symbol='EUR', to_symbol='CNY', start_date='', end_date=''):
     """
-
     Args:
         function:
         from_symbol:
         to_symbol:
         start_date: YYYYmmdd
         end_date:   YYYYmmdd
-
     Returns:
-
     """
 
     ## 时间格式处理
@@ -108,7 +80,6 @@ def get_US_Forex_by_Vantage_csv(function='FX_DAILY', from_symbol='EUR', to_symbo
 
     outputsize = 'full'  # 获取完整历史数据
     url = f'{base_url}?function={function}&from_symbol={from_symbol}&to_symbol={to_symbol}&apikey={Vantage_key}&outputsize={outputsize}&datatype=json'
-
 
     # 发送 GET 请求
     response = requests.get(url)
@@ -136,43 +107,12 @@ def get_US_Forex_by_Vantage_csv(function='FX_DAILY', from_symbol='EUR', to_symbo
         print(f'Error fetching USD Index data: {response.status_code} - {response.text}')
 
 
-
-def vantage_test2(start_date='20230714', end_date='20240714'):
-
-    api_key = Vantage_key
-
-    # 初始化ForeignExchange对象
-    cc = ForeignExchange(key=api_key)
-
-    # 获取全量数据
-    data, _ = cc.get_currency_exchange_daily(from_symbol='EUR', to_symbol='CNY', outputsize='full')
-
-    # 将数据转换为DataFrame
-    df = pd.DataFrame.from_dict(data, orient='index')
-    df.index = pd.to_datetime(df.index)
-    df = df.astype(float)
-    # 重命名列名
-    df.columns = ['Open', 'High', 'Low', 'Close']
-
-    # 设置开始日期和结束日期，格式为YYYYmmdd
-    start_date = datetime.datetime.strptime(start_date, '%Y%m%d').strftime('%Y-%m-%d %H:%M:%S')
-    end_date = datetime.datetime.strptime(end_date, '%Y%m%d').strftime('%Y-%m-%d %H:%M:%S')
-
-    # 过滤出指定时间段的数据
-    df_filtered = df.loc[start_date:end_date]
-
-    # 返回结果
-    return df_filtered
-
-
 def get_vantage_DXY(outputsize='compact'):
     """
     Args:
         outputsize: full      全量历史数据
                     compact   近100个数据点
-
     Returns:
-
     """
 
     api_key = Vantage_key
@@ -213,15 +153,7 @@ def get_vantage_DXY(outputsize='compact'):
     start_date = datetime.datetime.now() - datetime.timedelta(days=365)
     end_date = datetime.datetime.now()
     df_filtered = df_combined.loc[start_date:end_date]
-
-    ##  输出文件名
-    FX_filename = Base_utils.save_out_filename(filehead='FX_DXY', file_type='csv')
-    ##  文件保存路径
-    FX_filedir = os.path.join(vantage_FX_dir, FX_filename)
-
-    df_filtered.to_csv(FX_filedir)
-
-
+    return df_filtered
 
 
 if __name__ == "__main__":
@@ -231,6 +163,4 @@ if __name__ == "__main__":
     # print(df)
     # vantage_test2()
     get_vantage_DXY()
-
-
 

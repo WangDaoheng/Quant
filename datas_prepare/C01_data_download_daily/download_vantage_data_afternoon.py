@@ -21,10 +21,6 @@ from CommonProperties.set_config import setup_logging_config
 # 调用日志配置
 setup_logging_config()
 
-#  vantage  测试环境文件保存目录
-vantage_test_dir = os.path.join(base_properties.dir_vantage_base, 'test')
-
-
 api_key = 'ICTN 9 P9 ES 00 EADUF'
 # api_key = 'BI8JFEOOP3C563PO'
 key_US_stock = ['TSLA', 'AAPL', 'NVDA', 'MSFT', 'META']
@@ -52,25 +48,7 @@ origin_host = base_properties.origin_mysql_host
 
 class SaveVantageData:
     def __init__(self):
-        self.init_dirs()
         self.init_variant()
-
-    def init_dirs(self):
-        """
-        关键路径初始化
-        """
-        #  文件路径_____vantage 文件基础路径
-        self.dir_vantage_base = base_properties.dir_vantage_base
-
-        #  文件路径_____US 的 stock
-        self.dir_US_stock_base = os.path.join(self.dir_vantage_base, 'US_stock')
-
-        #  文件路径_____USD 的 汇率明细
-        self.dir_USD_FX_detail_base = os.path.join(self.dir_vantage_base, 'USD_FX_detail')
-
-        #  文件路径_____USD 的 美元指数
-        self.dir_USD_FX_base = os.path.join(self.dir_vantage_base, 'USD_FX')
-
 
     def init_variant(self):
         """

@@ -9,7 +9,7 @@ import CommonProperties.Base_utils as base_utils
 from CommonProperties.DateUtility import DateUtility
 
 #  insight  测试环境文件保存目录
-insight_test_dir = os.path.join(base_properties.dir_insight_base, 'test')
+insight_test_dir = r''
 
 
 def login():
@@ -69,12 +69,7 @@ def get_stock_code_demo():
     result = get_stock_info(htsc_code="873169.BJ",
                                   listing_date=[listing_start_date, listing_end_date])
 
-
     stock_all_df = get_all_stocks_info(exchange='XSHG', listing_state="上市交易")
-    # stock_all_df.to_csv(r'F:\QDatas\tttt.csv')
-    #
-    # df01 = get_all_stocks_info(exchange='XBJE')
-    # df01.to_csv(r'F:\QDatas\df01.csv')
 
     df011 = get_all_stocks_info(exchange='XBSE')
     df011.to_csv(r'F:\QDatas\df01.csv')
