@@ -93,19 +93,6 @@ class SaveVantageData:
         res_df['timestamp'] = pd.to_datetime(res_df['timestamp']).dt.strftime('%Y%m%d')
         res_df.rename(columns={'timestamp': 'ymd', 'name':'stock_name'}, inplace=True)
 
-        ############################   文件输出模块     ############################
-        # Windows下先保存到本地数据库
-        # if platform.system() == "Windows":
-        #     mysql_utils.data_from_dataframe_to_mysql(
-        #         user=local_user,
-        #         password=local_password,
-        #         host=local_host,
-        #         database=local_database,
-        #         df=res_df,
-        #         table_name="ods_us_stock_daily_vantage",
-        #         merge_on=['ymd', 'stock_name']
-        #     )
-
         # 总是保存到远端数据库
         mysql_utils.data_from_dataframe_to_mysql(
             user=origin_user,
@@ -206,18 +193,6 @@ class SaveVantageData:
         res_df['timestamp'] = pd.to_datetime(res_df['timestamp']).dt.strftime('%Y%m%d')
         res_df.rename(columns={'timestamp': 'ymd'}, inplace=True)
 
-        # Windows下先保存到本地数据库
-        # if platform.system() == "Windows":
-        #     mysql_utils.data_from_dataframe_to_mysql(
-        #         user=local_user,
-        #         password=local_password,
-        #         host=local_host,
-        #         database=local_database,
-        #         df=res_df,
-        #         table_name="ods_exchange_rate_vantage_detail",
-        #         merge_on=["ymd", "name"]
-        #     )
-
         # 总是保存到远端数据库
         mysql_utils.data_from_dataframe_to_mysql(
             user=origin_user,
@@ -253,17 +228,6 @@ class SaveVantageData:
 
         # 将结果转换为DataFrame
         dxy_df = pd.DataFrame(results, columns=['ymd', 'DXY'])
-        # Windows下先保存到本地数据库
-        # if platform.system() == "Windows":
-        #     mysql_utils.data_from_dataframe_to_mysql(
-        #         user=local_user,
-        #         password=local_password,
-        #         host=local_host,
-        #         database=local_database,
-        #         df=dxy_df,
-        #         table_name="ods_exchange_dxy_vantage",
-        #         merge_on=["ymd", "name"]
-        #     )
 
         # 总是保存到远端数据库
         mysql_utils.data_from_dataframe_to_mysql(

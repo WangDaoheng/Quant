@@ -702,15 +702,6 @@ class SaveInsightData:
                     merge_on=['ymd', 'stock_code']
                 )
 
-                # 注释掉的部分可以保留
-                # mysql_utils.data_from_dataframe_to_mysql(user=local_user,
-                #                                          password=local_password,
-                #                                          host=local_host,
-                #                                          database=local_database,
-                #                                          df=north_bound_df,
-                #                                          table_name="north_bound_daily_now",
-                #                                          merge_on=['ymd', 'stock_code'])
-
             # 总是保存到远端数据库
             mysql_utils.data_from_dataframe_to_mysql(
                 user=origin_user,
@@ -721,15 +712,6 @@ class SaveInsightData:
                 table_name="ods_shareholder_num_now",
                 merge_on=['ymd', 'stock_code']
             )
-
-            # 注释掉的部分可以保留
-            # mysql_utils.data_from_dataframe_to_mysql(user=origin_user,
-            #                                          password=origin_password,
-            #                                          host=origin_host,
-            #                                          database=origin_database,
-            #                                          df=north_bound_df,
-            #                                          table_name="north_bound_daily_now",
-            #                                          merge_on=['ymd', 'stock_code'])
 
         else:
             ## insight 返回为空值

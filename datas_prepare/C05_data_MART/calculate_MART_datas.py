@@ -193,22 +193,6 @@ class CalDMART:
         # 4. 调用 unpack_plates 函数处理数据
         output_df = unpack_plates(df)
 
-        # 5. 将处理后的数据保存到 MySQL
-        # Windows下先保存到本地数据库
-        # if platform.system() == "Windows":
-        #     mysql_utils.data_from_dataframe_to_mysql(
-        #         user=local_user,
-        #         password=local_password,
-        #         host=local_host,
-        #         database=local_database,
-        #         df=output_df,
-        #         table_name="dmart_stock_zt_details_expanded",
-        #         merge_on=['ymd', 'stock_code', 'concept_plate', 'index_plate', 'industry_plate', 'style_plate',
-        #                   'out_plate']
-        #     )
-        #     logging.info(
-        #         f"数据处理完成，已将结果保存到 {local_host} 的 {local_database}.dmart_stock_zt_details_expanded 表中。")
-
         # 总是保存到远端数据库
         mysql_utils.data_from_dataframe_to_mysql(
             user=origin_user,

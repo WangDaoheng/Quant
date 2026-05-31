@@ -14,19 +14,23 @@ from email.mime.base import MIMEBase
 from email import encoders
 
 import CommonProperties.Base_Properties as base_properties
-from CommonProperties.Base_Properties import log_file_linux_path, log_file_window_path, personal_linux_path, personal_window_path, personal_property_file
+from CommonProperties.Base_Properties import log_file_window_path, log_file_linux_path, log_file_mac_path, personal_window_path, personal_linux_path, personal_mac_path, personal_property_file
 
 
-def get_platform_is_window():
+def get_platform():
     """
     判断当前操作系统是window 还是 其他
     Returns: True  是window平台
              Flase 是其他平台
     """
     if platform.system() == "Windows":
-        return True
+        return 'Windows'
+    elif platform.system() == "Linux":
+        return 'Linux'
+    elif platform.system() == "Darwin":
+        return 'Mac'
     else:
-        return False
+        return None
 
 
 def read_json_file(filepath):
@@ -39,10 +43,8 @@ def read_json_file(filepath):
     # 读取文件
     with open(filepath, 'r', encoding='utf-8') as file:
         data = file.read()
-
     # 解析 JSON 数据
     json_data = json.loads(data)
-
     # 输出解析结果
     return json_data
 
@@ -52,14 +54,16 @@ def read_personal_property():
     读取私人配置文件
     Returns:
     """
-    if  get_platform_is_window():
+    personal_property_dict = ''
+    if get_platform() == 'Windows':
         personal_window_file = os.path.join(personal_window_path, personal_property_file)
         personal_property_dict = read_json_file(personal_window_file)
-
-    else:
+    elif get_platform() == 'Linux':
         personal_linux_file = os.path.join(personal_linux_path, personal_property_file)
         personal_property_dict = read_json_file(personal_linux_file)
-
+    elif get_platform() == 'Mac':
+        personal_mac_file = os.path.join(personal_mac_path, personal_property_file)
+        personal_property_dict = read_json_file(personal_mac_file)
     return personal_property_dict
 
 
@@ -70,15 +74,16 @@ def read_logfile():
     """
     # 获取当前日期并生成日志文件名
     current_date = datetime.now().strftime('%Y-%m-%d')
-
-    if get_platform_is_window():
+    log_filedir = ''
+    if get_platform() == 'Windows':
         log_file = f"log_windows_{current_date}.txt"
         log_filedir = os.path.join(log_file_window_path, log_file)
-
-    else:
+    elif get_platform() == 'Linux':
         log_file = f"log_linux_{current_date}.txt"
         log_filedir = os.path.join(log_file_linux_path, log_file)
-
+    elif get_platform() == 'Mac':
+        log_file = f"log_mac_{current_date}.txt"
+        log_filedir = os.path.join(log_file_mac_path, log_file)
     return log_filedir
 
 
@@ -93,19 +98,23 @@ def setup_logging_config():
     if not logger.hasHandlers():
         # 配置控制台日志处理器
         console_handler = colorlog.StreamHandler()
-
         # 获取当前日期并生成日志文件名
         current_date = datetime.now().strftime('%Y-%m-%d')
 
         # 根据操作系统类型设置日志文件路径
-        if platform.system() == "Windows":
+        log_file_path = ''
+        if get_platform() == 'Windows':
             log_file_window_filename = f'log_windows_{current_date}.txt'
             log_file_window = os.path.join(log_file_window_path, log_file_window_filename)
             log_file_path = log_file_window  # Windows 下的路径
-        else:
+        elif get_platform() == 'Linux':
             log_file_linux_filename = f'log_linux_{current_date}.txt'
             log_file_linux = os.path.join(log_file_linux_path, log_file_linux_filename)
             log_file_path = log_file_linux    # Linux 下的路径
+        elif get_platform() == 'Mac':
+            log_file_mac_filename = f'log_mac_{current_date}.txt'
+            log_file_mac = os.path.join(log_file_mac_path, log_file_mac_filename)
+            log_file_path = log_file_mac      # Mac 下的路径
 
         # 配置文件日志处理器（滚动日志）
         file_handler = RotatingFileHandler(log_file_path, maxBytes=1000000, backupCount=3, mode='a')

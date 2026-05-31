@@ -25,14 +25,17 @@ ts_token = "300919ac6f3f72efe445092de7643f7e40f8458096149c315c0e467a"
 
 
 ######################  京东云 日志文件 留存地址  #############################
-log_file_linux_path = r"/opt/Logs"
 log_file_window_path = r"F:\QDatas\logs"
+log_file_linux_path = r"/opt/Logs"
+log_file_mac_path = r"/Users/wanghuihui/QuantsProject/Logs"
 
 
 
 ######################  个人 配置 留存地址  #############################
-personal_linux_path = r"/opt/ss_property"
 personal_window_path = r"F:\QDatas\ss_property"
+personal_linux_path = r"/opt/ss_property"
+personal_mac_path = r"/Users/wanghuihui/QuantsProject/ss_property"
+
 personal_property_file = r"personal_property.txt"
 
 
