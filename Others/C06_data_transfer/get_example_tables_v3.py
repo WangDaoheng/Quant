@@ -105,7 +105,7 @@ class TableDataExporterFull:
             return False
 
     def get_trading_days(self, connection):
-        """从 ods_trading_days_insight 获取最近10个交易日"""
+        """从 ods_trading_days_insight 获取最近10个已发生的交易日（<=今天）"""
         if self.trading_days_cache is not None:
             return self.trading_days_cache
 
@@ -124,21 +124,28 @@ class TableDataExporterFull:
                 print("  ⚠️  ods_trading_days_insight 表没有ymd列")
                 return None
 
+            # ====================== 修复：只取今天及之前的交易日 ======================
+            today = datetime.now().strftime('%Y%m%d')
+
             query = text("""
                 SELECT DISTINCT ymd 
                 FROM ods_trading_days_insight 
                 WHERE ymd IS NOT NULL 
+                AND ymd <= :today          -- 只取今天及之前的日期
                 ORDER BY ymd DESC 
                 LIMIT 10
             """)
-            result = connection.execute(query)
+            result = connection.execute(query, {"today": today})
+            # ===================================================================
+
             trading_days = [str(row[0]) for row in result]
 
             if trading_days:
                 self.trading_days_cache = trading_days
-                print(f"  ✓ 获取交易日历成功: {trading_days[-1]} ~ {trading_days[0]}")
+                print(f"  ✓ 获取交易日历成功: {trading_days[-1]} ~ {trading_days[0]} (基准日期: {today})")
                 return trading_days
             else:
+                print(f"  ⚠️  ods_trading_days_insight 中无 {today} 及之前的交易日数据")
                 return None
 
         except Exception as e:
@@ -146,7 +153,7 @@ class TableDataExporterFull:
             return None
 
     def check_trading_day_coverage(self, connection, table_name):
-        """检查目标表最近10个交易日的数据覆盖情况"""
+        """检查目标表最近10个已发生交易日的数据覆盖情况"""
         try:
             trading_days = self.get_trading_days(connection)
             if not trading_days:
@@ -236,7 +243,6 @@ class TableDataExporterFull:
             if not self.check_column_exists(connection, table_name, 'ymd'):
                 return None
 
-            # ====================== 修复：单独查全表的真实最早/最晚日期 ======================
             # 1. 查全表的真实最早和最晚日期（不带LIMIT）
             min_max_query = text(f"""
                 SELECT MIN(ymd) as min_ymd, MAX(ymd) as max_ymd 
@@ -247,7 +253,6 @@ class TableDataExporterFull:
             min_max_row = min_max_result.fetchone()
             true_min = str(min_max_row[0]) if min_max_row[0] else None
             true_max = str(min_max_row[1]) if min_max_row[1] else None
-            # ===================================================================
 
             # 2. 查最近10个日期（用于展示列表，带LIMIT）
             query = text(f"""
@@ -266,8 +271,8 @@ class TableDataExporterFull:
                     'has_ymd': True,
                     'ymd_dates': dates,  # 最近10个日期（倒序）
                     'ymd_count': len(dates),  # 最近10天的数量
-                    'ymd_min': true_min,  # ✅ 真正的最早日期（全表）
-                    'ymd_max': true_max,  # ✅ 真正的最晚日期（全表）
+                    'ymd_min': true_min,  # 真正的最早日期（全表）
+                    'ymd_max': true_max,  # 真正的最晚日期（全表）
                     'recent_ymd_min': min(dates) if dates else None,  # 最近10天里的最早（辅助参考）
                     'recent_ymd_max': max(dates) if dates else None  # 最近10天里的最晚（辅助参考）
                 }
@@ -449,13 +454,11 @@ class TableDataExporterFull:
             html.append(f'      <tr><td>存在ymd列</td><td>✓</td></tr>')
             html.append(f'      <tr><td>日期总数</td><td>{ymd_info.get("ymd_count", 0)}</td></tr>')
 
-            # ✅ 修复：展示真正的全表最早/最晚日期
             if ymd_info.get('ymd_min'):
                 html.append(f'      <tr><td>全表最早日期</td><td>{ymd_info["ymd_min"]}</td></tr>')
             if ymd_info.get('ymd_max'):
                 html.append(f'      <tr><td>全表最晚日期</td><td>{ymd_info["ymd_max"]}</td></tr>')
 
-            # 最近10天的范围（辅助参考）
             if ymd_info.get('recent_ymd_min') and ymd_info.get('recent_ymd_max'):
                 html.append(
                     f'      <tr><td>最近10天范围</td><td>{ymd_info["recent_ymd_min"]} ~ {ymd_info["recent_ymd_max"]}</td></tr>')
@@ -876,7 +879,7 @@ class TableDataExporterFull:
             print("✅ 每个表详情右上角 🔝 返回目录")
             print("✅ 固定顺序: ODS → DWD → DMART → DWT → DIM → 其他")
             print("✅ 全表真实最早/最晚日期（非近10天）")
-            print("✅ 交易日覆盖检查 + 每日数据量统计")
+            print("✅ 交易日覆盖检查（只比对已发生的交易日）")
             print("✅ 响应式设计，支持手机查看")
 
             print(f"\n{'=' * 60}")
@@ -896,6 +899,7 @@ def main():
     print("输出格式: HTML（带目录导航和超链接）")
     print("展示顺序: ODS → DWD → DMART → DWT → DIM → 其他")
     print("日期修复: 全表真实最早/最晚日期（非近10天）")
+    print("交易日历: 只比对今天及之前的已发生交易日")
     print("=" * 60)
 
     try:
@@ -907,4 +911,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
+
