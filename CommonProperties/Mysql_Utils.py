@@ -142,8 +142,10 @@ def data_from_dataframe_to_mysql(user, password, host, database='quant', df=pd.D
             result = conn.execute(text(insert_sql), batch_dict)
             inserted += result.rowcount
 
-        logging.info(f"已插入 {inserted}/{total_rows} 条")
         time.sleep(0.5)
+        # 只在最后一批打印进度
+        if i + batch_size >= total_rows:
+            logging.info(f"该批次已处理 {total_rows} 条，累计插入 {inserted} 条")
 
     engine.dispose()
     logging.info(f"完成：共插入 {inserted} 条到 {table_name}")

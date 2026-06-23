@@ -190,7 +190,7 @@ class SaveAkshareWeekendData:
 
         # 3. 下载股东户数数据（需要股票代码，分批次处理）   可用   【周末跑】
         self.download_stock_zh_a_gdhs_detail_em()
-        #
+
 
 
 if __name__ == '__main__':

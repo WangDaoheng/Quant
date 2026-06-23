@@ -9,6 +9,7 @@ import akshare as ak
 from datetime import datetime
 import logging
 import random
+from sqlalchemy import create_engine  # 新增
 
 import CommonProperties.Base_Properties as base_properties
 import CommonProperties.Base_utils as base_utils
@@ -255,7 +256,64 @@ class AkshareDownloader:
             if date_column in batch_df.columns and id_cols:
                 batch_df = batch_df.drop_duplicates(subset=[date_column] + id_cols[:1])
 
+            # ==================== 新增：预过滤已有数据 ====================
+            # 只在 merge_on 包含 stock_code 和 ymd 时执行（即增量场景）
+            if merge_on and 'stock_code' in merge_on and date_column in merge_on:
+                try:
+                    # 查询该批次股票在表中的已有 (ymd, stock_code) 组合
+                    stock_codes_list = batch_df['stock_code'].unique().tolist()
+                    min_ymd = batch_df[date_column].min()
+
+                    # 构建 IN 条件（防止 SQL 注入，用参数化）
+                    placeholders = ','.join(['%s'] * len(stock_codes_list))
+                    query = f"""
+                        SELECT {date_column}, stock_code 
+                        FROM {table_name} 
+                        WHERE stock_code IN ({placeholders}) 
+                        AND {date_column} >= %s
+                    """
+
+                    db_url = f'mysql+pymysql://{self.origin_user}:{self.origin_password}@{self.origin_host}:3306/{self.origin_database}'
+                    engine = create_engine(db_url)
+
+                    existing = pd.read_sql(
+                        query,
+                        engine,
+                        params=stock_codes_list + [min_ymd]
+                    )
+                    engine.dispose()
+
+                    if not existing.empty:
+                        # 统一格式，确保 merge 时类型一致
+                        existing[date_column] = existing[date_column].astype(str)
+                        batch_df[date_column] = batch_df[date_column].astype(str)
+
+                        # 左连接，标记已有数据
+                        batch_df = batch_df.merge(
+                            existing,
+                            on=[date_column, 'stock_code'],
+                            how='left',
+                            indicator=True
+                        )
+
+                        # 只保留新数据
+                        before_filter = len(batch_df)
+                        batch_df = batch_df[batch_df['_merge'] == 'left_only'].drop('_merge', axis=1)
+                        after_filter = len(batch_df)
+
+                        logging.info(
+                            f"预过滤：去重前 {before_filter} 条，去重后 {after_filter} 条，跳过 {before_filter - after_filter} 条已有数据")
+
+                    else:
+                        logging.info(f"预过滤：表中无该批次股票数据，全部为新数据 ({len(batch_df)} 条)")
+
+                except Exception as e:
+                    logging.warning(f"预过滤查询失败，回退到 INSERT IGNORE: {str(e)[:100]}")
+                    # 失败时不阻断，继续用原来的 INSERT IGNORE 方式
+            # ==================== 新增结束 ====================
+
             if batch_df.empty:
+                logging.info(f"批次{batch_idx // stock_batch_size + 1}无新数据，跳过")
                 continue
 
             # 直接保存当前批次
