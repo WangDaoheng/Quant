@@ -12,7 +12,7 @@ from datas_prepare.Downloaders.akshareDownloader import AkshareDownloader
 import CommonProperties.Base_Properties as base_properties
 import CommonProperties.Mysql_Utils as mysql_utils
 from CommonProperties.DateUtility import DateUtility
-from CommonProperties.Base_utils import timing_decorator
+from CommonProperties.Base_utils import timing_decorator, script_run
 from CommonProperties.set_config import setup_logging_config
 
 # ************************************************************************
@@ -1314,10 +1314,12 @@ class SaveAkshareDailyData:
         self.download_stock_board_concept_index_ths()
 
 
+@script_run
+def main():
+    downloader = SaveAkshareDailyData()
+    downloader.setup()
+
+
 if __name__ == '__main__':
-
-    saver = SaveAkshareDailyData()
-    saver.setup()
-
-
+    main()
 

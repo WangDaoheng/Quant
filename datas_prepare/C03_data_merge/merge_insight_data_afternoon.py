@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from CommonProperties import Base_Properties
-from CommonProperties.Base_utils import timing_decorator
+from CommonProperties.Base_utils import timing_decorator, script_run
 import CommonProperties.Mysql_Utils as mysql_utils
 from CommonProperties import set_config
 # ************************************************************************
@@ -213,6 +213,12 @@ class MergeInsightData:
 
         #  北向
         #self.merge_north_bound()
+
+
+@script_run
+def main():
+    runner = MergeInsightData()
+    runner.setup()
 
 
 if __name__ == '__main__':

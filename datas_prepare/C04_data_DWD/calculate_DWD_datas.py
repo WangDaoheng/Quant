@@ -2,7 +2,6 @@
 
 import pandas as pd
 import logging
-import numpy as np
 
 from CommonProperties import Base_Properties
 from CommonProperties.DateUtility import DateUtility

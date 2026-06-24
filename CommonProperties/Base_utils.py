@@ -14,6 +14,15 @@ import json
 
 from CommonProperties.set_config import setup_logging_config
 
+# ========== 新增：终端颜色常量 ==========
+class Colors:
+    GREEN = '\033[92m'      # 亮绿
+    RED = '\033[91m'        # 亮红
+    YELLOW = '\033[93m'     # 亮黄
+    CYAN = '\033[96m'       # 青色
+    RESET = '\033[0m'       # 重置
+    BOLD = '\033[1m'        # 加粗
+
 
 def save_out_filename(filehead, file_type):
     """
@@ -74,8 +83,6 @@ def collect_stock_items(input_list):
     return result_dict
 
 
-
-
 def timing_decorator(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
@@ -100,6 +107,47 @@ def timing_decorator(func):
         # 在函数执行后打印执行时间日志
         logging.info(f"======【END】  文件: {file_name} 函数: {func.__name__} 执行时间: {execution_time:.2f} 秒   ======")
         return result
+    return wrapper
+
+
+def script_run(main_func):
+    """
+    脚本级执行包装器，自动打印带颜色的脚本开始/结束日志
+    """
+    @wraps(main_func)
+    def wrapper(*args, **kwargs):
+        script_name = os.path.basename(sys.argv[0])
+        pid = os.getpid()
+
+        separator = "=" * 60
+
+        # START：绿色 + 加粗
+        logging.info(f"{separator}")
+        logging.info(f"{Colors.BOLD}{Colors.GREEN}【SCRIPT START】脚本: {script_name} | PID: {pid}{Colors.RESET}")
+        logging.info(f"{separator}")
+
+        start_time = time.time()
+        status = "SUCCESS"
+
+        try:
+            result = main_func(*args, **kwargs)
+            return result
+        except Exception as e:
+            status = "FAILED"
+            logging.error(f"{Colors.BOLD}{Colors.RED}脚本执行异常: {e}{Colors.RESET}")
+            traceback.print_exc()
+            raise
+        finally:
+            elapsed = time.time() - start_time
+
+            # 根据状态选颜色：成功绿色，失败红色
+            status_color = Colors.GREEN if status == "SUCCESS" else Colors.RED
+
+            # END：加粗 + 状态对应颜色
+            logging.info(f"{separator}")
+            logging.info(f"{Colors.BOLD}{status_color}【SCRIPT END】脚本: {script_name} | 状态: {status} | 耗时: {elapsed:.2f}秒{Colors.RESET}")
+            logging.info(f"{separator}")
+
     return wrapper
 
 

@@ -2,18 +2,13 @@
 
 import pandas as pd
 import requests
-import platform
-# from yahoo_fin.stock_info import *
 from io import StringIO
-import os
 import logging
 
-
-from CommonProperties.DateUtility import DateUtility
 import CommonProperties.Base_Properties as base_properties
 import CommonProperties.Base_utils as base_utils
 import CommonProperties.Mysql_Utils as mysql_utils
-from CommonProperties.Base_utils import timing_decorator
+from CommonProperties.Base_utils import timing_decorator, script_run
 from CommonProperties.set_config import setup_logging_config
 
 
@@ -249,8 +244,12 @@ class SaveVantageData:
         self.get_USD_FX_from_vantage()
 
 
-if __name__ == '__main__':
-    save_vantage_data = SaveVantageData()
-    save_vantage_data.setup()
+@script_run
+def main():
+    downloader = SaveVantageData()
+    downloader.setup()
 
+
+if __name__ == '__main__':
+    main()
 

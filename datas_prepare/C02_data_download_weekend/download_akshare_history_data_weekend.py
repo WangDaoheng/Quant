@@ -1,18 +1,12 @@
 # -*- coding: utf-8 -*-
 
-import random
-import time
-import requests
 import pandas as pd
-import akshare as ak
 import logging
 
 from datas_prepare.Downloaders.akshareDownloader import AkshareDownloader
-
 import CommonProperties.Base_Properties as base_properties
 import CommonProperties.Mysql_Utils as mysql_utils
-from CommonProperties.DateUtility import DateUtility
-from CommonProperties.Base_utils import timing_decorator
+from CommonProperties.Base_utils import timing_decorator, script_run
 from CommonProperties.set_config import setup_logging_config
 
 # ************************************************************************
@@ -92,7 +86,7 @@ class SaveAkshareWeekendData:
             self.stock_codes = []
 
 
-    # @timing_decorator
+    @timing_decorator
     def download_stock_value_em(self):
         """
         下载股票估值数据 - ods_akshare_stock_value_em
@@ -132,7 +126,7 @@ class SaveAkshareWeekendData:
         )
 
 
-    # @timing_decorator
+    @timing_decorator
     def download_stock_zh_a_gdhs_detail_em(self):
         """
         下载股东户数数据 - ods_akshare_stock_zh_a_gdhs_detail_em
@@ -174,14 +168,11 @@ class SaveAkshareWeekendData:
         )
 
 
-    # @timing_decorator
     def setup(self):
         """
         主执行函数，按顺序下载所有akshare数据
         注意：由于akshare接口的限制，部分数据需要分批次或指定参数获取
         """
-        logging.info("======= 开始下载akshare历史数据 =======")
-
         # 1. 获取股票代码列表（用于需要股票代码的接口）
         self.get_stock_codes()
 
@@ -192,21 +183,12 @@ class SaveAkshareWeekendData:
         self.download_stock_zh_a_gdhs_detail_em()
 
 
+@script_run
+def main():
+    downloader = SaveAkshareWeekendData()
+    downloader.setup()
+
 
 if __name__ == '__main__':
-
-    # # 只在周末执行
-    # if DateUtility.is_weekend():
-    #     logging.info("今天是周末，开始执行akshare历史数据下载任务")
-    #     saver = SaveAkshareWeekendData()
-    #     saver.setup()
-    # else:
-    #     logging.info("今天不是周末，跳过akshare历史数据下载")
-
-    saver = SaveAkshareWeekendData()
-    saver.setup()
-
-
-
-
+    main()
 

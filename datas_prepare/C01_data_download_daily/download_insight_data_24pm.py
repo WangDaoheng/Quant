@@ -13,7 +13,7 @@ import logging
 import CommonProperties.Base_Properties as base_properties
 import CommonProperties.Mysql_Utils as mysql_utils
 from CommonProperties.DateUtility import DateUtility
-from CommonProperties.Base_utils import timing_decorator
+from CommonProperties.Base_utils import timing_decorator, script_run
 from CommonProperties import set_config
 
 # ************************************************************************
@@ -287,6 +287,11 @@ class SaveInsightData24PM:
         self.get_shareholder_num()
 
 
+@script_run
+def main():
+    downloader = SaveInsightData24PM()
+    downloader.setup()
+
+
 if __name__ == '__main__':
-    save_insight_data = SaveInsightData24PM()
-    save_insight_data.setup()
+    main()

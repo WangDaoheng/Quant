@@ -4,13 +4,11 @@ import sys
 import time
 import logging
 import warnings
-import numpy as np
 
 import CommonProperties.Base_Properties as base_properties
 import CommonProperties.Mysql_Utils as mysql_utils
 from CommonProperties.DateUtility import DateUtility
-from CommonProperties.Base_utils import timing_decorator
-from CommonProperties import set_config
+from CommonProperties.Base_utils import timing_decorator, script_run
 
 # 方法1：屏蔽所有 FutureWarning（最简单有效）
 warnings.filterwarnings('ignore', category=FutureWarning)
@@ -190,9 +188,12 @@ class SaveTushareDailyData:
         return result
 
 
-if __name__ == '__main__':
-    # 1. 初始化（替换为你的真实Token）
-    fetcher = SaveTushareDailyData()
+@script_run
+def main():
+    downloader = SaveTushareDailyData()
+    downloader.setup()
 
-    # 2. 获取数据
-    kline_data = fetcher.setup()
+
+if __name__ == '__main__':
+    main()
+
