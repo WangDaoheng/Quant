@@ -544,7 +544,6 @@ def get_stock_codes_latest():
                                                         table_name='ods_stock_code_daily_insight')
 
     latest_stocks_df = stock_code_df[['stock_code', 'stock_name']]
-    logging.info("    获取最新的<股票代码, 股票名称>")
 
     return latest_stocks_df
 

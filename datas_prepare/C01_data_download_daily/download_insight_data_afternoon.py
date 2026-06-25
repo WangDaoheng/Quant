@@ -95,6 +95,64 @@ class SaveInsightData:
             merge_on=['ymd', 'stock_code']
         )
 
+    @timing_decorator
+    def get_limit_summary(self):
+        """
+        大盘涨跌停分析数据
+        Returns: 写入 ods_stock_limit_summary_insight_now
+                 'today_ZT', 'today_DT', 'yesterday_ZT', 'yesterday_DT', 'yesterday_ZT_rate'
+                 [time	name	今日涨停	今日跌停	昨日涨停	昨日跌停	昨日涨停今日表现]
+        """
+
+        #  1.当月数据的起止时间
+        start_date = DateUtility.first_day_of_month()
+        end_date = DateUtility.today()
+
+        start_date = datetime.strptime(start_date, '%Y%m%d')
+        end_date = datetime.strptime(end_date, '%Y%m%d')
+
+        #  2.请求insight数据   get_kline
+        res = get_change_summary(market=["a_share"], trading_day=[start_date, end_date])
+
+        #  3.limit_summary 的总和dataframe
+        limit_summary_df = pd.DataFrame()
+        limit_summary_df = pd.concat([limit_summary_df, res], ignore_index=True)
+
+        ##  insight 返回值的非空判断
+        if not limit_summary_df.empty:
+            #  4.声明所有的列名，去除多余列
+            limit_summary_df = limit_summary_df[['time',
+                                                 'name',
+                                                 'ups_downs_limit_count_up_limits',
+                                                 'ups_downs_limit_count_down_limits',
+                                                 'ups_downs_limit_count_pre_up_limits',
+                                                 'ups_downs_limit_count_pre_down_limits',
+                                                 'ups_downs_limit_count_pre_up_limits_average_change_percent']]
+            limit_summary_df.columns = ['ymd', 'name', 'today_ZT', 'today_DT', 'yesterday_ZT', 'yesterday_DT',
+                                        'yesterday_ZT_rate']
+
+            #  5.日期格式转换
+            limit_summary_df['ymd'] = pd.to_datetime(limit_summary_df['ymd']).dt.strftime('%Y%m%d')
+
+            #  6.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
+            limit_summary_df = limit_summary_df.drop_duplicates(subset=['ymd', 'name'], keep='first')
+
+            ############################   文件输出模块     ############################
+            # 总是保存到远端数据库
+            mysql_utils.data_from_dataframe_to_mysql(
+                user=origin_user,
+                password=origin_password,
+                host=origin_host,
+                database=origin_database,
+                df=limit_summary_df,
+                table_name="ods_stock_limit_summary_insight_now",
+                merge_on=['ymd', 'name']
+            )
+
+        else:
+            ## insight 返回为空值
+            logging.info('    get_limit_summary 的返回值为空值')
+
 
     @timing_decorator
     def get_stock_kline(self):
@@ -183,223 +241,6 @@ class SaveInsightData:
 
 
     @timing_decorator
-    def get_index_a_share(self):
-        """
-        000001.SH    上证指数
-        399002.SZ    深成指
-        399006.SZ	 创业板指
-        000016.SH    上证50
-        000300.SH    沪深300
-        000849.SH    沪深300非银行金融指数
-        000905.SH	 中证500
-        399852.SZ    中证1000
-        000688.SH    科创50
-        当月至今的指数
-        Returns:  写入 ods_index_a_share_insight_now
-             index_a_share   [htsc_code 	time	frequency	open	close	high	low	volume	value]
-        """
-
-        #  1.当月数据的起止时间
-        start_date = DateUtility.first_day_of_month()
-        end_date = DateUtility.today()
-
-        # start_date = '20240901'
-        # end_date = '20240930'
-
-        start_date = datetime.strptime(start_date, '%Y%m%d')
-        end_date = datetime.strptime(end_date, '%Y%m%d')
-
-        #  2.查询标的
-        index_dict = {"000001.SH": "上证指数"
-            , "399002.SZ": "深成指"
-            , "399006.SZ": "创业板指"
-            , "000016.SH": "上证50"
-            , "000300.SH": "沪深300"
-            , "000849.SH": "300非银"
-            , "000905.SH": "中证500"
-            , "399852.SZ": "中证1000"
-            , "000688.SH": "科创50"}
-        index_list = list(index_dict.keys())
-
-        #  3.index_a_share 的总和dataframe
-        index_df = pd.DataFrame()
-
-        #  4.请求insight数据   get_kline
-        res = get_kline(htsc_code=index_list, time=[start_date, end_date],
-                        frequency="daily", fq="pre")
-        index_df = pd.concat([index_df, res], ignore_index=True)
-
-        ##  insight 返回值的非空判断
-        if not index_df.empty:
-
-            #  5.日期格式转换
-            index_df['time'] = pd.to_datetime(index_df['time']).dt.strftime('%Y%m%d')
-            index_df.rename(columns={'time': 'ymd', 'htsc_code': 'index_code', 'name': 'index_name'}, inplace=True)
-
-            #  6.根据映射关系，添加stock_name
-            index_df['index_name'] = index_df['index_code'].map(index_dict)
-
-            #  7.声明所有的列名，去除多余列
-            index_df = index_df[['index_code', 'index_name', 'ymd', 'open', 'close', 'high', 'low', 'volume']]
-
-            #  8.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
-            index_df = index_df.drop_duplicates(subset=['ymd', 'index_code'], keep='first')
-
-            ############################   文件输出模块     ############################
-            # 总是保存到远端数据库
-            mysql_utils.data_from_dataframe_to_mysql(
-                user=origin_user,
-                password=origin_password,
-                host=origin_host,
-                database=origin_database,
-                df=index_df,
-                table_name="ods_index_a_share_insight_now",
-                merge_on=['ymd', 'index_code']
-            )
-
-        else:
-            ## insight 返回为空值
-            logging.info('    get_index_a_share 的返回值为空值')
-
-
-    @timing_decorator
-    def get_limit_summary(self):
-        """
-        大盘涨跌停分析数据
-        Returns: 写入 ods_stock_limit_summary_insight_now
-                 'today_ZT', 'today_DT', 'yesterday_ZT', 'yesterday_DT', 'yesterday_ZT_rate'
-                 [time	name	今日涨停	今日跌停	昨日涨停	昨日跌停	昨日涨停今日表现]
-        """
-
-        #  1.当月数据的起止时间
-        start_date = DateUtility.first_day_of_month()
-        end_date = DateUtility.today()
-
-        start_date = datetime.strptime(start_date, '%Y%m%d')
-        end_date = datetime.strptime(end_date, '%Y%m%d')
-
-        #  2.请求insight数据   get_kline
-        res = get_change_summary(market=["a_share"], trading_day=[start_date, end_date])
-
-        #  3.limit_summary 的总和dataframe
-        limit_summary_df = pd.DataFrame()
-        limit_summary_df = pd.concat([limit_summary_df, res], ignore_index=True)
-
-        ##  insight 返回值的非空判断
-        if not limit_summary_df.empty:
-            #  4.声明所有的列名，去除多余列
-            limit_summary_df = limit_summary_df[['time',
-                                                 'name',
-                                                 'ups_downs_limit_count_up_limits',
-                                                 'ups_downs_limit_count_down_limits',
-                                                 'ups_downs_limit_count_pre_up_limits',
-                                                 'ups_downs_limit_count_pre_down_limits',
-                                                 'ups_downs_limit_count_pre_up_limits_average_change_percent']]
-            limit_summary_df.columns = ['ymd', 'name', 'today_ZT', 'today_DT', 'yesterday_ZT', 'yesterday_DT',
-                                        'yesterday_ZT_rate']
-
-            #  5.日期格式转换
-            limit_summary_df['ymd'] = pd.to_datetime(limit_summary_df['ymd']).dt.strftime('%Y%m%d')
-
-            #  6.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
-            limit_summary_df = limit_summary_df.drop_duplicates(subset=['ymd', 'name'], keep='first')
-
-            ############################   文件输出模块     ############################
-            # 总是保存到远端数据库
-            mysql_utils.data_from_dataframe_to_mysql(
-                user=origin_user,
-                password=origin_password,
-                host=origin_host,
-                database=origin_database,
-                df=limit_summary_df,
-                table_name="ods_stock_limit_summary_insight_now",
-                merge_on=['ymd', 'name']
-            )
-
-        else:
-            ## insight 返回为空值
-            logging.info('    get_limit_summary 的返回值为空值')
-
-
-    @timing_decorator
-    def get_future_inside(self):
-        """
-        期货市场数据
-        贵金属,  有色数据
-        国际市场  国内市场
-        AU9999.SHF    沪金主连
-        AU2409.SHF	  沪金
-        AG9999.SHF    沪银主连
-        AG2409.SHF    沪银
-        CU9999.SHF    沪铜主连
-        CU2409.SHF    沪铜
-
-        EC9999.INE    欧线集运主连
-        EC2410.INE    欧线集运
-        SC9999.INE    原油主连
-        SC2410.INE    原油
-
-        V9999.DCE     PVC主连
-        V2409.DCE     PVC
-        MA9999.ZCE    甲醇主连      (找不到)
-        MA2409.ZCE    甲醇         (找不到)
-        目前主连找不到数据，只有月份的，暂时用 t+2 月去代替主连吧
-
-        Returns: 写入 ods_future_inside_insight_now
-        """
-        #  1.起止时间 查询起始时间写2月前的月初第1天
-        time_start_date = DateUtility.first_day_of_month(-2)
-        time_end_date = DateUtility.today()
-
-        time_start_date = datetime.strptime(time_start_date, '%Y%m%d')
-        time_end_date = datetime.strptime(time_end_date, '%Y%m%d')
-
-        #  2.查询标的
-        index_list = ["AU{}.SHF", "AG{}.SHF", "CU{}.SHF", "EC{}.INE", "SC{}.INE", "V{}.DCE"]
-        replacement = DateUtility.first_day_of_month(2)[2:6]
-
-        future_index_list = [index.format(replacement) for index in index_list]
-
-        #  3.future_inside 的总和dataframe
-        future_inside_df = pd.DataFrame()
-
-        #  4.请求insight数据   get_kline
-        res = get_kline(htsc_code=future_index_list, time=[time_start_date, time_end_date],
-                        frequency="daily", fq="pre")
-        future_inside_df = pd.concat([future_inside_df, res], ignore_index=True)
-
-        ##  insight 返回值的非空判断
-        if not future_inside_df.empty:
-
-            #  5.日期格式转换
-            future_inside_df['time'] = pd.to_datetime(future_inside_df['time']).dt.strftime('%Y%m%d')
-            future_inside_df.rename(columns={'time': 'ymd', 'htsc_code': 'stock_code'}, inplace=True)
-
-            #  6.声明所有的列名，去除多余列
-            future_inside_df = future_inside_df[
-                ['stock_code', 'ymd', 'open', 'close', 'high', 'low', 'volume', 'open_interest', 'settle']]
-
-            #  7.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
-            future_inside_df = future_inside_df.drop_duplicates(subset=['ymd', 'stock_code'], keep='first')
-
-            ############################   文件输出模块     ############################
-            # 总是保存到远端数据库
-            mysql_utils.data_from_dataframe_to_mysql(
-                user=origin_user,
-                password=origin_password,
-                host=origin_host,
-                database=origin_database,
-                df=future_inside_df,
-                table_name="ods_future_inside_insight_now",
-                merge_on=['ymd', 'stock_code']
-            )
-
-        else:
-            ## insight 返回为空值
-            logging.info('    get_future_inside 的返回值为空值')
-
-
-    @timing_decorator
     def get_chouma_datas(self):
         """
         1.获取每日的筹码分布数据
@@ -431,23 +272,81 @@ class SaveInsightData:
         #  6.chouma 的总和dataframe
         chouma_total_df = pd.DataFrame()
 
+        # ========== 新增：统计变量 ==========
+        failed_codes = []      # 失败代码
+        failed_reasons = []    # 失败原因
+        empty_codes = []       # 返回空数据的代码
+        slow_codes = []        # 慢查询记录 (code, 耗时秒)
+
         #  7.调用insight数据  get_chip_distribution
         for i, code_list in enumerate(get_batches(stock_code_list, batch_size), start=1):
-            #  一种非常巧妙的循环打印日志的方式
-            valid_num = chouma_total_df.shape[0]
-            sys.stdout.write(
-                f"\r当前执行 get_chouma_datas  第 {i} 次循环，总共 {total_batches} 个批次, {valid_num}个有效筹码数据")
-            sys.stdout.flush()
-            time.sleep(0.01)
+            #  每100个打印一次进度（改用logging，确保写入日志文件）
+            if i % 100 == 0 or i == 1:
+                logging.info(f"【进度】第 {i}/{total_batches} 批次，当前成功: {chouma_total_df.shape[0]} 条，正在处理: {code_list}")
+
+            batch_start = time.time()
 
             try:
                 res = get_chip_distribution(htsc_code=code_list, trading_day=[time_start_date, time_end_date])
+
+                # 返回空数据的判断
+                if res is None or res.empty:
+                    empty_codes.extend(code_list)
+                    logging.warning(f"【空数据】代码 {code_list} 返回空数据")
+                    continue
+
                 chouma_total_df = pd.concat([chouma_total_df, res], ignore_index=True)
+
             except Exception as e:
+                failed_codes.extend(code_list)
+                failed_reasons.append(f"{code_list}: {str(e)}")
+                logging.error(f"【失败】代码 {code_list} 获取筹码数据失败: {e}")
                 continue
+
+            # 记录慢查询
+            batch_elapsed = time.time() - batch_start
+            if batch_elapsed > 10:  # 超过10秒算慢
+                slow_codes.append((code_list[0], batch_elapsed))  # code_list是列表，取第一个
+                logging.warning(f"【慢查询】代码 {code_list} 耗时 {batch_elapsed:.2f} 秒")
+
             time.sleep(0.01)
 
-        sys.stdout.write("\n")
+        # ========== 循环结束后：汇总日志 + 明细落文件 ==========
+        logging.info("=" * 60)
+        logging.info(f"【筹码数据获取完成】总代码数: {len(stock_code_list)}")
+        logging.info(f"【筹码数据获取完成】成功获取: {chouma_total_df.shape[0]} 条")
+        logging.info(f"【筹码数据获取完成】返回空数据: {len(empty_codes)} 个代码")
+        logging.info(f"【筹码数据获取完成】失败: {len(failed_codes)} 个代码")
+        if slow_codes:
+            logging.info(f"【筹码数据获取完成】慢查询: {len(slow_codes)} 个")
+
+        # 慢查询前10个
+        if slow_codes:
+            slow_sorted = sorted(slow_codes, key=lambda x: x[1], reverse=True)[:10]
+            logging.warning(f"【最慢10个】{slow_sorted}")
+
+        # ========== 明细落文件（固定目录 /opt/Logs） ==========
+        output_dir = "/opt/Logs"
+        os.makedirs(output_dir, exist_ok=True)
+
+        # 失败明细落文件
+        if failed_codes:
+            failed_file = os.path.join(output_dir, f"failed_chouma_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt")
+            with open(failed_file, 'w', encoding='utf-8') as f:
+                f.write("stock_code\treason\n")
+                for code, reason in zip(failed_codes, failed_reasons):
+                    f.write(f"{code}\t{reason}\n")
+            logging.info(f"【失败明细】已写入 {failed_file}，共 {len(failed_codes)} 条")
+
+        # 空数据明细落文件
+        if empty_codes:
+            empty_file = os.path.join(output_dir, f"empty_chouma_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt")
+            with open(empty_file, 'w', encoding='utf-8') as f:
+                for code in empty_codes:
+                    f.write(f"{code}\n")
+            logging.info(f"【空数据明细】已写入 {empty_file}，共 {len(empty_codes)} 条")
+
+        logging.info("=" * 60)
 
         ##  insight 返回值的非空判断
         if not chouma_total_df.empty:
@@ -464,20 +363,12 @@ class SaveInsightData:
                              'large_shareholders_avg_cost', 'large_shareholders_total_share_pct']
 
             for col in cols_to_clean:
-                # ========== 核心修改1：修复inplace=True警告，合并冗余步骤 ==========
-                # 原代码：先转字符串→replace(inplace)→to_numeric→fillna(inplace)→apply
-                # 优化后：链式调用，一次遍历完成所有操作，去掉inplace=True
                 chouma_total_df[col] = (
                     chouma_total_df[col]
-                    # 转为字符串（保留原逻辑）
                     .astype(str)
-                    # 替换空字符串和'nan'为NaN（去掉inplace，直接赋值）
                     .replace({'': np.nan, 'nan': np.nan})
-                    # 转换为float，错误返回NaN
                     .pipe(lambda s: pd.to_numeric(s, errors='coerce'))
-                    # 填充NaN为0（去掉inplace，直接赋值）
                     .fillna(0)
-                    # 价格转换逻辑（保留原逻辑）
                     .apply(lambda x: round(x * 10000, 2) if x < 1 else x)
                 )
 
@@ -499,6 +390,7 @@ class SaveInsightData:
         else:
             # insight 返回为空值
             logging.info('    get_chouma_datas 的返回值为空值')
+
 
 
     @timing_decorator
@@ -623,100 +515,6 @@ class SaveInsightData:
             logging.info('    get_Ashare_industry_detail 的返回值为空值')
 
 
-    @timing_decorator
-    def get_shareholder_north_bound_num(self):
-        """
-        获取 股东数 & 北向资金情况
-        Returns: 写入 ods_shareholder_num_now
-        """
-        #  1.起止时间 查询起始时间写 2月前的月初
-        time_start_date = DateUtility.first_day_of_month(-2)
-        #  结束时间必须大于等于当日，这里取明天的日期
-        time_end_date = DateUtility.next_day(1)
-
-        time_start_date = datetime.strptime(time_start_date, '%Y%m%d')
-        time_end_date = datetime.strptime(time_end_date, '%Y%m%d')
-
-        #  2.行业信息的总和dataframe
-        shareholder_num_df = pd.DataFrame()
-        #  北向资金的总和dataframe
-        # north_bound_df = pd.DataFrame()
-
-        #  3.获取最新的stock_codes 数据
-        code_list = mysql_utils.get_stock_codes_latest()['stock_code'].tolist()
-
-        #  4.请求insight  个股股东数   数据
-        #    请求insight  北向资金持仓  数据
-        total_xunhuan = len(code_list)
-        i = 1                       # 总循环标记
-
-        for stock_code in code_list:
-            # 屏蔽 stdout 和 stderr
-            with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
-                res_shareholder = get_shareholder_num(htsc_code=stock_code, end_date=[time_start_date, time_end_date])
-                # res_north_bound =get_north_bound(htsc_code=stock_code, trading_day=[time_start_date, time_end_date])
-
-                valid_shareholder = shareholder_num_df.shape[0]
-                # valid_north_bound = north_bound_df.shape[0]
-
-            if res_shareholder is not None:
-                shareholder_num_df = pd.concat([shareholder_num_df, res_shareholder], ignore_index=True)
-                sys.stdout.write(f"\r当前执行 get_shareholder_num  第 {i} 次循环，总共 {total_xunhuan} 个批次, {valid_shareholder}个有效股东数据")
-                sys.stdout.flush()
-
-            time.sleep(0.03)
-
-            i += 1
-
-        sys.stdout.write("\n")
-
-        ##  insight 返回值的非空判断
-        if not shareholder_num_df.empty:
-
-            #  5.日期格式转换
-            shareholder_num_df.rename(columns={'end_date': 'ymd', 'htsc_code': 'stock_code', 'name': 'stock_name'}, inplace=True)
-            shareholder_num_df['ymd'] = pd.to_datetime(shareholder_num_df['ymd']).dt.strftime('%Y%m%d')
-
-            # north_bound_df.rename(columns={'trading_day': 'ymd'}, inplace=True)
-            # north_bound_df['ymd'] = pd.to_datetime(shareholder_num_df['ymd']).dt.strftime('%Y%m%d')
-
-            #  6.声明所有的列名，去除多余列
-            shareholder_num_df = shareholder_num_df[
-                ['stock_code', 'stock_name', 'ymd', 'total_sh', 'avg_share', 'pct_of_total_sh', 'pct_of_avg_sh']]
-            # north_bound_df = north_bound_df[['htsc_code', 'ymd', 'sh_hkshare_hold', 'pct_total_share']]
-
-            #  7.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
-            shareholder_num_df = shareholder_num_df.drop_duplicates(subset=['ymd', 'stock_code'], keep='first')
-            # north_bound_df = north_bound_df.drop_duplicates(subset=['ymd', 'htsc_code'], keep='first')
-
-            ############################   文件输出模块     ############################
-            # Windows下先保存到本地数据库
-            if platform.system() == "Windows":
-                mysql_utils.data_from_dataframe_to_mysql(
-                    user=local_user,
-                    password=local_password,
-                    host=local_host,
-                    database=local_database,
-                    df=shareholder_num_df,
-                    table_name="ods_shareholder_num_now",
-                    merge_on=['ymd', 'stock_code']
-                )
-
-            # 总是保存到远端数据库
-            mysql_utils.data_from_dataframe_to_mysql(
-                user=origin_user,
-                password=origin_password,
-                host=origin_host,
-                database=origin_database,
-                df=shareholder_num_df,
-                table_name="ods_shareholder_num_now",
-                merge_on=['ymd', 'stock_code']
-            )
-
-        else:
-            ## insight 返回为空值
-            logging.info('    get_shareholder_north_bound_num 的返回值为空值')
-
 
     @script_run(script_name="download_insight_data_afternoon.py")
     def setup(self):
@@ -726,17 +524,11 @@ class SaveInsightData:
         #  除去 ST |  退  | B 的股票集合
         self.get_stock_codes()
 
-        # #  获取上述股票的当月日K  【已废弃，现使用 get_stock_kline_tushare() 】
-        # self.get_stock_kline()
-
-        # #  获取主要股指     【放到凌晨执行】
-        # self.get_index_a_share()
-
         #  大盘涨跌概览
         self.get_limit_summary()
 
-        # #  期货__内盘      【放到凌晨执行】
-        # self.get_future_inside()
+        # #  获取上述股票的当月日K  【已废弃，现使用 get_stock_kline_tushare() 】
+        # self.get_stock_kline()
 
         # 筹码概览
         self.get_chouma_datas()
@@ -747,8 +539,7 @@ class SaveInsightData:
         # 获取A股的行业分类数据, 是stock_code & industry 关联后的大表数据
         self.get_Ashare_industry_detail()
 
-        # #  个股股东数      【放到凌晨执行】
-        # self.get_shareholder_north_bound_num()
+
 
 
 
