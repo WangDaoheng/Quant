@@ -236,7 +236,7 @@ class SaveVantageData:
         )
 
 
-    @timing_decorator
+    @script_run(script_name="download_vantage_data_afternoon.py")
     def setup(self):
 
         #  获取 US 主要stock 的全部数据
@@ -244,12 +244,7 @@ class SaveVantageData:
         self.get_USD_FX_from_vantage()
 
 
-@script_run
-def main():
+if __name__ == '__main__':
     downloader = SaveVantageData()
     downloader.setup()
-
-
-if __name__ == '__main__':
-    main()
 

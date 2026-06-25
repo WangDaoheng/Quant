@@ -1,22 +1,15 @@
 # -*- coding: utf-8 -*-
 
-import os
-from datetime import datetime
+
 
 import pandas as pd
-from sqlalchemy import create_engine, text
-import time
-import platform
 import logging
 
 
-# import dataprepare_properties
-# import dataprepare_utils
-from CommonProperties import Base_Properties
-import CommonProperties.Base_utils as base_utils
-from CommonProperties.DateUtility import DateUtility
-from CommonProperties.Base_utils import timing_decorator
 
+from CommonProperties import Base_Properties
+from CommonProperties.DateUtility import DateUtility
+from CommonProperties.Base_utils import timing_decorator, script_run
 import CommonProperties.Mysql_Utils as mysql_utils
 
 from CommonProperties import set_config
@@ -50,7 +43,7 @@ class CalDMART:
         pass
 
 
-    # @timing_decorator
+    @timing_decorator
     def cal_zt_details(self):
         """
         涨停股票的明细
@@ -119,6 +112,8 @@ class CalDMART:
             database=origin_database,
             sql_statements=sql_statements)
 
+
+    @timing_decorator
     def cal_zt_details_explode(self):
         """
         涨停股票的明细的拆分
@@ -208,6 +203,7 @@ class CalDMART:
             f"数据处理完成，已将结果保存到 {origin_host} 的 {origin_database}.dmart_stock_zt_details_expanded 表中。")
 
 
+    @script_run(script_name="calculate_MART_datas.py")
     def setup(self):
 
         # 涨停股票的明细

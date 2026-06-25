@@ -718,8 +718,7 @@ class SaveInsightData:
             logging.info('    get_shareholder_north_bound_num 的返回值为空值')
 
 
-
-    # @timing_decorator
+    @script_run(script_name="download_insight_data_afternoon.py")
     def setup(self):
         #  登陆insight数据源
         self.login()
@@ -752,12 +751,9 @@ class SaveInsightData:
         # self.get_shareholder_north_bound_num()
 
 
-@script_run
-def main():
+
+if __name__ == '__main__':
     downloader = SaveInsightData()
     downloader.setup()
 
-
-if __name__ == '__main__':
-    main()
 

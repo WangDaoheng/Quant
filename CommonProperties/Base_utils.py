@@ -110,45 +110,50 @@ def timing_decorator(func):
     return wrapper
 
 
-def script_run(main_func):
+def script_run(main_func=None, *, script_name=None):
     """
-    脚本级执行包装器，自动打印带颜色的脚本开始/结束日志
+    脚本级执行包装器
+    用法1: @script_run          → 自动获取 sys.argv[0]
+    用法2: @script_run(script_name="xxx.py")  → 指定脚本名
     """
-    @wraps(main_func)
-    def wrapper(*args, **kwargs):
-        script_name = os.path.basename(sys.argv[0])
-        pid = os.getpid()
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            # 自动获取或显式指定
+            actual_script_name = script_name or os.path.basename(sys.argv[0])
+            pid = os.getpid()
+            separator = "=" * 60
 
-        separator = "=" * 60
-
-        # START：绿色 + 加粗
-        logging.info(f"{separator}")
-        logging.info(f"{Colors.BOLD}{Colors.GREEN}【SCRIPT START】脚本: {script_name} | PID: {pid}{Colors.RESET}")
-        logging.info(f"{separator}")
-
-        start_time = time.time()
-        status = "SUCCESS"
-
-        try:
-            result = main_func(*args, **kwargs)
-            return result
-        except Exception as e:
-            status = "FAILED"
-            logging.error(f"{Colors.BOLD}{Colors.RED}脚本执行异常: {e}{Colors.RESET}")
-            traceback.print_exc()
-            raise
-        finally:
-            elapsed = time.time() - start_time
-
-            # 根据状态选颜色：成功绿色，失败红色
-            status_color = Colors.GREEN if status == "SUCCESS" else Colors.RED
-
-            # END：加粗 + 状态对应颜色
             logging.info(f"{separator}")
-            logging.info(f"{Colors.BOLD}{status_color}【SCRIPT END】脚本: {script_name} | 状态: {status} | 耗时: {elapsed:.2f}秒{Colors.RESET}")
+            logging.info(f"{Colors.BOLD}{Colors.GREEN}【SCRIPT START】脚本: {actual_script_name} | PID: {pid}{Colors.RESET}")
             logging.info(f"{separator}")
 
-    return wrapper
+            start_time = time.time()
+            status = "SUCCESS"
+
+            try:
+                result = func(*args, **kwargs)
+                return result
+            except Exception as e:
+                status = "FAILED"
+                logging.error(f"{Colors.BOLD}{Colors.RED}脚本执行异常: {e}{Colors.RESET}")
+                traceback.print_exc()
+                raise
+            finally:
+                elapsed = time.time() - start_time
+                status_color = Colors.GREEN if status == "SUCCESS" else Colors.RED
+                logging.info(f"{separator}")
+                logging.info(f"{Colors.BOLD}{status_color}【SCRIPT END】脚本: {actual_script_name} | 状态: {status} | 耗时: {elapsed:.2f}秒{Colors.RESET}")
+                logging.info(f"{separator}")
+
+        return wrapper
+
+    # 支持 @script_run 或 @script_run(script_name="xxx.py") 两种用法
+    if main_func is None:
+        return decorator
+    else:
+        return decorator(main_func)
+
 
 
 def copy_and_rename_file(src_file_path, dest_dir, new_name):

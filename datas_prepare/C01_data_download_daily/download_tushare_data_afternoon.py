@@ -182,18 +182,16 @@ class SaveTushareDailyData:
             logging.warning('get_stock_kline_tushare的返回值为空')
             return pd.DataFrame()
 
+
+    @script_run(script_name="download_tushare_data_afternoon.py")
     def setup(self):
         # 下载每日收盘后的日K线行情数据
         result = self.get_stock_kline_tushare()
         return result
 
 
-@script_run
-def main():
+if __name__ == '__main__':
     downloader = SaveTushareDailyData()
     downloader.setup()
 
-
-if __name__ == '__main__':
-    main()
 

@@ -168,6 +168,7 @@ class SaveAkshareWeekendData:
         )
 
 
+    @script_run(script_name="download_akshare_history_data_weekend.py")
     def setup(self):
         """
         主执行函数，按顺序下载所有akshare数据
@@ -183,12 +184,9 @@ class SaveAkshareWeekendData:
         self.download_stock_zh_a_gdhs_detail_em()
 
 
-@script_run
-def main():
+
+if __name__ == '__main__':
     downloader = SaveAkshareWeekendData()
     downloader.setup()
 
-
-if __name__ == '__main__':
-    main()
 

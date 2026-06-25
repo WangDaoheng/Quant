@@ -1266,7 +1266,7 @@ class SaveAkshareDailyData:
             return False
 
 
-
+    @script_run(script_name="download_akshare_data_afternoon.py")
     def setup(self):
         """
         主执行函数，按顺序下载所有akshare数据
@@ -1314,12 +1314,9 @@ class SaveAkshareDailyData:
         self.download_stock_board_concept_index_ths()
 
 
-@script_run
-def main():
+
+if __name__ == '__main__':
     downloader = SaveAkshareDailyData()
     downloader.setup()
 
-
-if __name__ == '__main__':
-    main()
 

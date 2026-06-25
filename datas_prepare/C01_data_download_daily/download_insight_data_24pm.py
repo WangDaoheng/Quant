@@ -273,6 +273,7 @@ class SaveInsightData24PM:
             logging.info('    get_shareholder_num 的返回值为空值')
 
 
+    @script_run(script_name="download_insight_data_24pm.py")
     def setup(self):
         #  登陆insight数据源
         self.login()
@@ -287,11 +288,9 @@ class SaveInsightData24PM:
         self.get_shareholder_num()
 
 
-@script_run
-def main():
+
+if __name__ == '__main__':
     downloader = SaveInsightData24PM()
     downloader.setup()
 
 
-if __name__ == '__main__':
-    main()

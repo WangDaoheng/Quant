@@ -5,7 +5,7 @@ import logging
 
 from CommonProperties import Base_Properties
 from CommonProperties.DateUtility import DateUtility
-from CommonProperties.Base_utils import timing_decorator
+from CommonProperties.Base_utils import timing_decorator, script_run
 import CommonProperties.Mysql_Utils as mysql_utils
 from CommonProperties import set_config
 
@@ -766,6 +766,7 @@ class CalDWD:
             return pd.DataFrame()
 
 
+    @script_run(script_name="calculate_DWD_datas.py")
     def setup(self):
 
         # 聚合股票的板块，把各个板块数据聚合在一起   周末手动执行

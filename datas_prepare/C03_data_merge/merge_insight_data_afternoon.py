@@ -194,6 +194,7 @@ class MergeInsightData:
                                  columns=columns)
 
 
+    @script_run(script_name="merge_insight_data_afternoon.py")
     def setup(self):
 
         # #  获取当前已上市股票过去3年到今天的历史kline  目前接口暂时废弃，不再取insight 的日K，取的是tushare的日K
@@ -215,13 +216,8 @@ class MergeInsightData:
         #self.merge_north_bound()
 
 
-@script_run
-def main():
+if __name__ == '__main__':
     runner = MergeInsightData()
     runner.setup()
 
-
-if __name__ == '__main__':
-    save_insight_data = MergeInsightData()
-    save_insight_data.setup()
 
