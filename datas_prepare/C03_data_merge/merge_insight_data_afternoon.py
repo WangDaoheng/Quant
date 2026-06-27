@@ -6,6 +6,7 @@ import CommonProperties.Mysql_Utils as mysql_utils
 from CommonProperties import set_config
 # ************************************************************************
 # 本代码的作用是下午收盘后针对 insight 行情源的_now 表跟全量表进行合并
+# 该函数已废弃
 
 # ************************************************************************
 #  调用日志配置
@@ -27,152 +28,152 @@ class MergeInsightData:
     def __init__(self):
         pass
 
-    @timing_decorator
-    def merge_stock_kline(self):
-        """
-        将 stock_kline 的历史数据和当月数据做merge
-        :return:
-         stock_kline_df  [ymd	stock_code	stock_name	exchange]
-        """
-        source_table = 'ods_stock_kline_daily_insight_now'
-        target_table = 'ods_stock_kline_daily_insight'
-        columns = ['stock_code', 'ymd', 'open', 'close', 'high', 'low', 'num_trades', 'volume']
-        ############################   文件输出模块     ############################
-        # 总是对远端Mysql做数据聚合
-        mysql_utils.upsert_table(user=origin_user,
-                                 password=origin_password,
-                                 host=origin_host,
-                                 database=origin_database,
-                                 source_table=source_table,
-                                 target_table=target_table,
-                                 columns=columns)
+    # @timing_decorator
+    # def merge_stock_kline(self):
+    #     """
+    #     将 stock_kline 的历史数据和当月数据做merge
+    #     :return:
+    #      stock_kline_df  [ymd	stock_code	stock_name	exchange]
+    #     """
+    #     source_table = 'ods_stock_kline_daily_insight_now'
+    #     target_table = 'ods_stock_kline_daily_insight'
+    #     columns = ['stock_code', 'ymd', 'open', 'close', 'high', 'low', 'num_trades', 'volume']
+    #     ############################   文件输出模块     ############################
+    #     # 总是对远端Mysql做数据聚合
+    #     mysql_utils.upsert_table(user=origin_user,
+    #                              password=origin_password,
+    #                              host=origin_host,
+    #                              database=origin_database,
+    #                              source_table=source_table,
+    #                              target_table=target_table,
+    #                              columns=columns)
+
+    #
+    # @timing_decorator
+    # def merge_index_a_share(self):
+    #     """
+    #     000001.SH    上证指数
+    #     399006.SZ	 创业板指
+    #     000016.SH    上证50
+    #     000300.SH    沪深300
+    #     000849.SH    沪深300非银行金融指数
+    #     000905.SH	 中证500
+    #     399852.SZ    中证1000
+    #     000688.SH    科创50
+    #
+    #     Returns:
+    #          index_a_share   [stock_code 	time	frequency	open	close	high	low	volume	value]
+    #     """
+    #     source_table = 'ods_index_a_share_insight_now'
+    #     target_table = 'ods_index_a_share_insight'
+    #     columns = ['index_code', 'index_name', 'ymd', 'open', 'close', 'high', 'low', 'volume']
+    #     ############################   文件输出模块     ############################
+    #     # 总是对远端Mysql做数据聚合
+    #     mysql_utils.upsert_table(user=origin_user,
+    #                              password=origin_password,
+    #                              host=origin_host,
+    #                              database=origin_database,
+    #                              source_table=source_table,
+    #                              target_table=target_table,
+    #                              columns=columns)
 
 
-    @timing_decorator
-    def merge_index_a_share(self):
-        """
-        000001.SH    上证指数
-        399006.SZ	 创业板指
-        000016.SH    上证50
-        000300.SH    沪深300
-        000849.SH    沪深300非银行金融指数
-        000905.SH	 中证500
-        399852.SZ    中证1000
-        000688.SH    科创50
-
-        Returns:
-             index_a_share   [stock_code 	time	frequency	open	close	high	low	volume	value]
-        """
-        source_table = 'ods_index_a_share_insight_now'
-        target_table = 'ods_index_a_share_insight'
-        columns = ['index_code', 'index_name', 'ymd', 'open', 'close', 'high', 'low', 'volume']
-        ############################   文件输出模块     ############################
-        # 总是对远端Mysql做数据聚合
-        mysql_utils.upsert_table(user=origin_user,
-                                 password=origin_password,
-                                 host=origin_host,
-                                 database=origin_database,
-                                 source_table=source_table,
-                                 target_table=target_table,
-                                 columns=columns)
-
-
-    @timing_decorator
-    def merge_limit_summary(self):
-        """
-        大盘涨跌停分析数据
-        Args:
-            market:
-                1	sh_a_share	上海A股
-                2	sz_a_share	深圳A股
-                3	a_share	A股
-                4	a_share	B股
-                5	gem	创业
-                6	sme	中小板
-                7	star	科创板
-            trading_day: List<datetime>	交易日期范围，[start_date, end_date]
-
-        Returns: ups_downs_limit_count_up_limits
-                 ups_downs_limit_count_down_limits
-                 ups_downs_limit_count_pre_up_limits
-                 ups_downs_limit_count_pre_down_limits
-                 ups_downs_limit_count_pre_up_limits_average_change_percent
-
-                 [time	name	今日涨停	今日跌停	昨日涨停	昨日跌停	昨日涨停表现]
-        """
-        source_table = 'ods_stock_limit_summary_insight_now'
-        target_table = 'ods_stock_limit_summary_insight'
-        columns = ['ymd', 'name', 'today_ZT', 'today_DT', 'yesterday_ZT', 'yesterday_DT', 'yesterday_ZT_rate']
-        ############################   文件输出模块     ############################
-        # 总是对远端Mysql做数据聚合
-        mysql_utils.upsert_table(user=origin_user,
-                                 password=origin_password,
-                                 host=origin_host,
-                                 database=origin_database,
-                                 source_table=source_table,
-                                 target_table=target_table,
-                                 columns=columns)
+    # @timing_decorator
+    # def merge_limit_summary(self):
+    #     """
+    #     大盘涨跌停分析数据
+    #     Args:
+    #         market:
+    #             1	sh_a_share	上海A股
+    #             2	sz_a_share	深圳A股
+    #             3	a_share	A股
+    #             4	a_share	B股
+    #             5	gem	创业
+    #             6	sme	中小板
+    #             7	star	科创板
+    #         trading_day: List<datetime>	交易日期范围，[start_date, end_date]
+    #
+    #     Returns: ups_downs_limit_count_up_limits
+    #              ups_downs_limit_count_down_limits
+    #              ups_downs_limit_count_pre_up_limits
+    #              ups_downs_limit_count_pre_down_limits
+    #              ups_downs_limit_count_pre_up_limits_average_change_percent
+    #
+    #              [time	name	今日涨停	今日跌停	昨日涨停	昨日跌停	昨日涨停表现]
+    #     """
+    #     source_table = 'ods_stock_limit_summary_insight_now'
+    #     target_table = 'ods_stock_limit_summary_insight'
+    #     columns = ['ymd', 'name', 'today_ZT', 'today_DT', 'yesterday_ZT', 'yesterday_DT', 'yesterday_ZT_rate']
+    #     ############################   文件输出模块     ############################
+    #     # 总是对远端Mysql做数据聚合
+    #     mysql_utils.upsert_table(user=origin_user,
+    #                              password=origin_password,
+    #                              host=origin_host,
+    #                              database=origin_database,
+    #                              source_table=source_table,
+    #                              target_table=target_table,
+    #                              columns=columns)
 
 
-    @timing_decorator
-    def merge_future_inside(self):
-        """
-        期货市场数据
-        贵金属,  有色数据
-        国际市场  国内市场
-        AU9999.SHF    沪金主连
-        AU2409.SHF	  沪金
-        AG9999.SHF    沪银主连
-        AG2409.SHF    沪银
-        CU9999.SHF    沪铜主连
-        CU2409.SHF    沪铜
+    # @timing_decorator
+    # def merge_future_inside(self):
+    #     """
+    #     期货市场数据
+    #     贵金属,  有色数据
+    #     国际市场  国内市场
+    #     AU9999.SHF    沪金主连
+    #     AU2409.SHF	  沪金
+    #     AG9999.SHF    沪银主连
+    #     AG2409.SHF    沪银
+    #     CU9999.SHF    沪铜主连
+    #     CU2409.SHF    沪铜
+    #
+    #     EC9999.INE    欧线集运主连
+    #     EC2410.INE    欧线集运
+    #     SC9999.INE    原油主连
+    #     SC2410.INE    原油
+    #
+    #     V9999.DCE     PVC主连
+    #     V2409.DCE     PVC
+    #     MA9999.ZCE    甲醇主连      (找不到)
+    #     MA2409.ZCE    甲醇         (找不到)
+    #     目前主连找不到数据，只有月份的，暂时用 t+2 月去代替主连吧
+    #
+    #     Returns:
+    #     """
+    #     source_table = 'ods_future_inside_insight_now'
+    #     target_table = 'ods_future_inside_insight'
+    #     columns = ['stock_code', 'ymd', 'open', 'close', 'high', 'low', 'volume', 'open_interest', 'settle']
+    #     ############################   文件输出模块     ############################
+    #     # 总是对远端Mysql做数据聚合
+    #     mysql_utils.upsert_table(user=origin_user,
+    #                              password=origin_password,
+    #                              host=origin_host,
+    #                              database=origin_database,
+    #                              source_table=source_table,
+    #                              target_table=target_table,
+    #                              columns=columns)
 
-        EC9999.INE    欧线集运主连
-        EC2410.INE    欧线集运
-        SC9999.INE    原油主连
-        SC2410.INE    原油
 
-        V9999.DCE     PVC主连
-        V2409.DCE     PVC
-        MA9999.ZCE    甲醇主连      (找不到)
-        MA2409.ZCE    甲醇         (找不到)
-        目前主连找不到数据，只有月份的，暂时用 t+2 月去代替主连吧
-
-        Returns:
-        """
-        source_table = 'ods_future_inside_insight_now'
-        target_table = 'ods_future_inside_insight'
-        columns = ['stock_code', 'ymd', 'open', 'close', 'high', 'low', 'volume', 'open_interest', 'settle']
-        ############################   文件输出模块     ############################
-        # 总是对远端Mysql做数据聚合
-        mysql_utils.upsert_table(user=origin_user,
-                                 password=origin_password,
-                                 host=origin_host,
-                                 database=origin_database,
-                                 source_table=source_table,
-                                 target_table=target_table,
-                                 columns=columns)
-
-
-    @timing_decorator
-    def merge_shareholder_num(self):
-        """
-        A股市场的股东数
-        Returns:
-        """
-        source_table = 'ods_shareholder_num_now'
-        target_table = 'ods_shareholder_num'
-        columns = ['stock_code', 'stock_name', 'ymd', 'total_sh', 'avg_share', 'pct_of_total_sh', 'pct_of_avg_sh']
-        ############################   文件输出模块     ############################
-        # 总是对远端Mysql做数据聚合
-        mysql_utils.upsert_table(user=origin_user,
-                                 password=origin_password,
-                                 host=origin_host,
-                                 database=origin_database,
-                                 source_table=source_table,
-                                 target_table=target_table,
-                                 columns=columns)
-
+    # @timing_decorator
+    # def merge_shareholder_num(self):
+    #     """
+    #     A股市场的股东数
+    #     Returns:
+    #     """
+    #     source_table = 'ods_shareholder_num_now'
+    #     target_table = 'ods_shareholder_num'
+    #     columns = ['stock_code', 'stock_name', 'ymd', 'total_sh', 'avg_share', 'pct_of_total_sh', 'pct_of_avg_sh']
+    #     ############################   文件输出模块     ############################
+    #     # 总是对远端Mysql做数据聚合
+    #     mysql_utils.upsert_table(user=origin_user,
+    #                              password=origin_password,
+    #                              host=origin_host,
+    #                              database=origin_database,
+    #                              source_table=source_table,
+    #                              target_table=target_table,
+    #                              columns=columns)
+    #
 
     @timing_decorator
     def merge_north_bound(self):

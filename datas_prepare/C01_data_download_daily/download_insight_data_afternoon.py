@@ -1,17 +1,14 @@
 # -*- coding: utf-8 -*-
 
 import sys
-import io
+import os
 import numpy as np
 from insight_python.com.insight import common
 from insight_python.com.insight.query import *
 from insight_python.com.insight.market_service import market_service
 from datetime import datetime
-import contextlib
-
 import time
 import logging
-import platform
 
 import CommonProperties.Base_Properties as base_properties
 import CommonProperties.Mysql_Utils as mysql_utils
@@ -99,7 +96,7 @@ class SaveInsightData:
     def get_limit_summary(self):
         """
         大盘涨跌停分析数据
-        Returns: 写入 ods_stock_limit_summary_insight_now
+        Returns: 写入 ods_stock_limit_summary_insight
                  'today_ZT', 'today_DT', 'yesterday_ZT', 'yesterday_DT', 'yesterday_ZT_rate'
                  [time	name	今日涨停	今日跌停	昨日涨停	昨日跌停	昨日涨停今日表现]
         """
@@ -145,7 +142,7 @@ class SaveInsightData:
                 host=origin_host,
                 database=origin_database,
                 df=limit_summary_df,
-                table_name="ods_stock_limit_summary_insight_now",
+                table_name="ods_stock_limit_summary_insight",
                 merge_on=['ymd', 'name']
             )
 

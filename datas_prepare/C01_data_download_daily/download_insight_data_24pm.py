@@ -60,7 +60,7 @@ class SaveInsightData24PM:
         399852.SZ    中证1000
         000688.SH    科创50
         当月至今的指数
-        Returns:  写入 ods_index_a_share_insight_now
+        Returns:  写入 ods_index_a_share_insight
              index_a_share   [htsc_code 	time	frequency	open	close	high	low	volume	value]
         """
 
@@ -117,7 +117,7 @@ class SaveInsightData24PM:
                 host=origin_host,
                 database=origin_database,
                 df=index_df,
-                table_name="ods_index_a_share_insight_now",
+                table_name="ods_index_a_share_insight",
                 merge_on=['ymd', 'index_code']
             )
 
@@ -195,7 +195,7 @@ class SaveInsightData24PM:
                 host=origin_host,
                 database=origin_database,
                 df=future_inside_df,
-                table_name="ods_future_inside_insight_now",
+                table_name="ods_future_inside_insight",
                 merge_on=['ymd', 'stock_code']
             )
 
@@ -264,7 +264,7 @@ class SaveInsightData24PM:
                 host=origin_host,
                 database=origin_database,
                 df=shareholder_num_df,
-                table_name="ods_shareholder_num_now",
+                table_name="ods_shareholder_num",
                 merge_on=['ymd', 'stock_code']
             )
 

@@ -15,8 +15,6 @@ if project_root not in sys.path:
 from datas_prepare.C01_data_download_daily.download_insight_data_afternoon import SaveInsightData
 from datas_prepare.C01_data_download_daily.download_akshare_data_afternoon import SaveAkshareDailyData
 from datas_prepare.C01_data_download_daily.download_tushare_data_afternoon import SaveTushareDailyData
-
-from datas_prepare.C03_data_merge.merge_insight_data_afternoon import MergeInsightData
 from datas_prepare.C04_data_DWD.calculate_DWD_datas import CalDWD
 from datas_prepare.C05_data_MART.calculate_MART_datas import CalDMART
 
@@ -30,7 +28,6 @@ class RunDataDaily:
         self.save_tushare_data = SaveTushareDailyData()
         self.save_akshare_data = SaveAkshareDailyData()
         # self.save_vantage_now = SaveVantageData()
-        self.merge_insight = MergeInsightData()
         self.dwd_cal = CalDWD()
         self.dmart_cal = CalDMART()
 
@@ -54,9 +51,6 @@ class RunDataDaily:
 
         # #  下载 vantage 当日数据
         # self.save_vantage_now.setup()
-
-        #  合并 insight 当日跑批的数据至历史数据中
-        self.merge_insight.setup()
 
         #  执行 DWD层逻辑
         self.dwd_cal.setup()
