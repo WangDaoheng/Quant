@@ -124,9 +124,9 @@ def script_run(main_func=None, *, script_name=None):
             pid = os.getpid()
             separator = "=" * 60
 
-            logging.info(f"{separator}")
+            logging.info(f"{Colors.BOLD}{Colors.GREEN}{separator}{Colors.RESET}")
             logging.info(f"{Colors.BOLD}{Colors.GREEN}【SCRIPT START】脚本: {actual_script_name} | PID: {pid}{Colors.RESET}")
-            logging.info(f"{separator}")
+            logging.info(f"{Colors.BOLD}{Colors.GREEN}{separator}{Colors.RESET}")
 
             start_time = time.time()
             status = "SUCCESS"
@@ -142,9 +142,9 @@ def script_run(main_func=None, *, script_name=None):
             finally:
                 elapsed = time.time() - start_time
                 status_color = Colors.GREEN if status == "SUCCESS" else Colors.RED
-                logging.info(f"{separator}")
+                logging.info(f"{Colors.BOLD}{status_color}{separator}{Colors.RESET}")
                 logging.info(f"{Colors.BOLD}{status_color}【SCRIPT END】脚本: {actual_script_name} | 状态: {status} | 耗时: {elapsed:.2f}秒{Colors.RESET}")
-                logging.info(f"{separator}")
+                logging.info(f"{Colors.BOLD}{status_color}{separator}{Colors.RESET}")
 
         return wrapper
 

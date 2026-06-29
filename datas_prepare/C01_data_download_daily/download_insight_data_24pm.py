@@ -38,7 +38,6 @@ origin_host = base_properties.origin_mysql_host
 
 class SaveInsightData24PM:
 
-    # @timing_decorator
     def login(self):
         # 登陆前 初始化，没有密码可以访问进行自动化注册
         # https://findata-insight.htsc.com:9151/terminalWeb/#/signup
@@ -150,7 +149,7 @@ class SaveInsightData24PM:
         MA2409.ZCE    甲醇         (找不到)
         目前主连找不到数据，只有月份的，暂时用 t+2 月去代替主连吧
 
-        Returns:
+        Returns:写入 ods_future_inside_insight
         """
         #  1.起止时间 查询起始时间写2月前的月初第1天
         time_start_date = DateUtility.first_day_of_month(-2)
@@ -208,7 +207,7 @@ class SaveInsightData24PM:
     def get_shareholder_num(self):
         """
         获取 股东数 & 北向资金情况
-        Returns: 写入 ods_shareholder_num_now
+        Returns: 写入 ods_shareholder_num
         """
         #  1.起止时间 查询起始时间写 2月前的月初
         time_start_date = DateUtility.first_day_of_month(-2)

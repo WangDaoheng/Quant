@@ -431,6 +431,8 @@ class SaveAkshareDailyData:
         return False
 
 
+
+
     @timing_decorator
     def download_stock_zh_a_spot_em(self):
         """
@@ -1286,11 +1288,11 @@ class SaveAkshareDailyData:
         # # 4. 下载筹码数据（需要股票代码，分批次处理）    封堵IP   不可用
         # self.download_stock_cyq_em()
         #
-        # 5. 下载业绩快报数据（指定日期）         【可用】  日跑
-        self.download_stock_yjkb_em()
-
-        # 6. 下载业绩预告数据（指定日期）         【可用】  日跑
-        self.download_stock_yjyg_em()
+        # # 5. 下载业绩快报数据（指定日期）         【可用】  日跑
+        # self.download_stock_yjkb_em()
+        #
+        # # 6. 下载业绩预告数据（指定日期）         【可用】  日跑
+        # self.download_stock_yjyg_em()
 
         # 7. 下载大盘高低统计数据               【可用】  日跑
         self.download_stock_a_high_low_statistics()
