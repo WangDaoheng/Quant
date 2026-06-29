@@ -1142,6 +1142,7 @@ class SaveAkshareDailyData:
             logging.error(traceback.format_exc())
             return False
 
+
     @timing_decorator
     def download_stock_board_concept_index_ths(self, start_date=None, end_date=None):
         """
@@ -1164,13 +1165,14 @@ class SaveAkshareDailyData:
                 password=self.downloader.origin_password,
                 host=self.downloader.origin_host,
                 database=self.downloader.origin_database,
-                table_name="ods_akshare_board_concept_name_ths",  # 使用新表的同花顺概念信息
-                cols=['board_name', 'board_code']  # 获取概念名称和代码
+                table_name="ods_akshare_board_concept_name_ths",
+                cols=['board_name', 'board_code']
             )
 
             # 去重并获取概念名称列表
             board_names = board_df['board_name'].dropna().unique().tolist()
-            logging.info(f"开始下载 {len(board_names)} 个概念板块的指数数据，日期: {start_date}~{end_date}")
+            total = len(board_names)
+            logging.info(f"开始下载 {total} 个概念板块的指数数据，日期: {start_date}~{end_date}")
 
             all_data = pd.DataFrame()
             success_concepts = []
@@ -1182,7 +1184,8 @@ class SaveAkshareDailyData:
                     if pd.isna(board_name) or not str(board_name).strip():
                         continue
 
-                    logging.info(f"下载概念板块 [{i + 1}/{len(board_names)}]: {board_name}")
+                    # 改为 DEBUG 级别，避免日志刷屏
+                    logging.debug(f"下载概念板块 [{i + 1}/{total}]: {board_name}")
 
                     # 获取概念板块指数数据
                     df = ak.stock_board_concept_index_ths(
@@ -1194,24 +1197,27 @@ class SaveAkshareDailyData:
                     if not df.empty:
                         # 添加概念板块信息
                         df['board_name'] = str(board_name).strip()
-
                         # 查找对应的concept_code
                         concept_code_row = board_df[board_df['board_name'] == board_name]
                         if not concept_code_row.empty:
                             df['board_code'] = concept_code_row.iloc[0]['board_code']
                         else:
-                            df['board_code'] = str(board_name).strip()  # 降级处理
+                            df['board_code'] = str(board_name).strip()
 
                         all_data = pd.concat([all_data, df], ignore_index=True)
                         success_concepts.append(board_name)
 
-                        logging.info(f"  {board_name}: 获取到 {len(df)} 条记录")
+                        logging.debug(f"  {board_name}: 获取到 {len(df)} 条记录")
                     else:
                         logging.warning(f"  {board_name}: 指数数据为空")
                         failed_concepts.append(board_name)
 
                     # 添加延迟以避免封IP
                     time.sleep(random.uniform(0.5, 1.5))
+
+                    # 每50个打印一次进度，或最后几个
+                    if (i + 1) % 50 == 0 or (i + 1) == total:
+                        logging.info(f"进度: [{i + 1}/{total}] 成功 {len(success_concepts)} 失败 {len(failed_concepts)}")
 
                 except Exception as e:
                     error_msg = str(e)
@@ -1220,8 +1226,11 @@ class SaveAkshareDailyData:
                     else:
                         logging.error(f"  下载 {board_name} 失败: {error_msg[:100]}")
                     failed_concepts.append(board_name)
-                    time.sleep(2)  # 失败后等待更长时间
+                    time.sleep(2)
                     continue
+
+            # 最终汇总
+            logging.info(f"概念板块下载完成: 成功 {len(success_concepts)} 个, 失败 {len(failed_concepts)} 个, 总记录 {len(all_data)} 条")
 
             # 列映射
             column_mapping = {
@@ -1244,14 +1253,10 @@ class SaveAkshareDailyData:
                 all_data=all_data,
                 column_mapping=column_mapping,
                 date_column='ymd',
-                date_format='%Y-%m-%d',  # akshare返回的是YYYY-MM-DD格式
+                date_format='%Y-%m-%d',
                 numeric_columns=numeric_columns,
                 table_name='ods_akshare_stock_board_concept_index_ths'
             )
-
-            # # 在数据处理后清理board_name列的空格
-            # if not processed_df.empty and 'board_name' in processed_df.columns:
-            #     processed_df['board_name'] = processed_df['board_name'].str.replace(' ', '')
 
             # 使用downloader的保存方法
             success = self.downloader._save_to_mysql(
@@ -1266,6 +1271,7 @@ class SaveAkshareDailyData:
             import traceback
             logging.error(traceback.format_exc())
             return False
+
 
 
     @script_run(script_name="download_akshare_data_afternoon.py")
@@ -1288,11 +1294,11 @@ class SaveAkshareDailyData:
         # # 4. 下载筹码数据（需要股票代码，分批次处理）    封堵IP   不可用
         # self.download_stock_cyq_em()
         #
-        # # 5. 下载业绩快报数据（指定日期）         【可用】  日跑
-        # self.download_stock_yjkb_em()
-        #
-        # # 6. 下载业绩预告数据（指定日期）         【可用】  日跑
-        # self.download_stock_yjyg_em()
+        # 5. 下载业绩快报数据（指定日期）         【可用】  日跑
+        self.download_stock_yjkb_em()
+
+        # 6. 下载业绩预告数据（指定日期）         【可用】  日跑
+        self.download_stock_yjyg_em()
 
         # 7. 下载大盘高低统计数据               【可用】  日跑
         self.download_stock_a_high_low_statistics()
@@ -1320,5 +1326,6 @@ class SaveAkshareDailyData:
 if __name__ == '__main__':
     downloader = SaveAkshareDailyData()
     downloader.setup()
+
 
 

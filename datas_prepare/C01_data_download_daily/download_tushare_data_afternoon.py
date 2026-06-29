@@ -24,6 +24,7 @@ class SaveTushareDailyData:
         ts.set_token(base_properties.ts_token)
         self.pro = ts.pro_api()
 
+
     @timing_decorator
     def get_stock_kline_tushare(self):
         """
