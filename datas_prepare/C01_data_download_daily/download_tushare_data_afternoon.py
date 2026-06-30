@@ -34,7 +34,7 @@ class SaveTushareDailyData:
         """
         # 1. 获取日期范围
         today = DateUtility.today()
-        time_start_date = today
+        time_start_date = '20260501'
         time_end_date = today
 
         # 2. 获取股票代码列表
@@ -42,8 +42,11 @@ class SaveTushareDailyData:
         logging.info(f"获取到 {len(stock_code_list)} 支股票")
 
         # 3. 分批处理设置
-        batch_size = 100  # 每个批次100个股票
-        batches_per_sleep = 5  # 每5个批次后sleep（500次请求）
+        # 关键修复：adj_factor 接口限制 200次/分钟，pro_bar(adj='qfq') 内部会调用 adj_factor
+        # 所以必须按 adj_factor 的限制来控制频率，而不是 pro_bar 的 500次/分钟
+        batch_size = 50  # 每个批次50个股票（降低以匹配 adj_factor 200次/分钟限制）
+        batches_per_sleep = 3  # 每3个批次后sleep（150次请求 < 200次/分钟限制）
+        request_delay = 0.3  # 每只股票请求后额外等待0.3秒，更保险
 
         def get_batches(lst, batch_size):
             for start in range(0, len(lst), batch_size):
@@ -53,6 +56,7 @@ class SaveTushareDailyData:
         kline_total_df = pd.DataFrame()
         successful_count = 0
         failed_count = 0
+        rate_limit_hits = 0  # 统计频率限制触发次数
 
         # 4. 下载tushare数据
         for i, batch_list in enumerate(get_batches(stock_code_list, batch_size), start=1):
@@ -79,18 +83,24 @@ class SaveTushareDailyData:
                     else:
                         failed_count += 1
 
+                    # 每只股票请求后等待，避免触发 adj_factor 频率限制
+                    time.sleep(request_delay)
+
                 except Exception as e:
                     failed_count += 1
                     error_msg = str(e)
-                    if "每分钟最多访问该接口500次" in error_msg:
-                        logging.warning(f"批次{i}遇到频率限制: {error_msg[:50]}")
+                    if "频率超限" in error_msg or "频次" in error_msg or "adj_factor" in error_msg:
+                        rate_limit_hits += 1
+                        # 如果触发频率限制，增加等待时间
+                        logging.warning(f"批次{i}遇到频率限制({error_msg[:80]})，额外等待30秒...")
+                        time.sleep(30)
                     continue
 
             # 将批次数据添加到总数据
             if not batch_data.empty:
                 kline_total_df = pd.concat([kline_total_df, batch_data], ignore_index=True)
 
-            # 每5个批次后等待60秒（刚好500次请求）
+            # 每3个批次后等待60秒（刚好150次请求，低于200次/分钟限制）
             if i % batches_per_sleep == 0 and i < total_batches:
                 wait_time = 60  # 等待60秒
                 logging.info(f"已完成{i}个批次（约{i * batch_size}次请求），等待{wait_time}秒...")
@@ -99,7 +109,7 @@ class SaveTushareDailyData:
 
         sys.stdout.write("\n")
         logging.info(
-            f"请求统计: 成功 {successful_count}, 失败 {failed_count}, 成功率: {successful_count / (successful_count + failed_count) * 100:.1f}%")
+            f"请求统计: 成功 {successful_count}, 失败 {failed_count}, 频率限制触发 {rate_limit_hits} 次")
 
         # 5. 数据处理：对齐现有数据结构
         if not kline_total_df.empty:
@@ -194,5 +204,3 @@ class SaveTushareDailyData:
 if __name__ == '__main__':
     downloader = SaveTushareDailyData()
     downloader.setup()
-
-
