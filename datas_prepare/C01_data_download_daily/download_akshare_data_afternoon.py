@@ -1285,38 +1285,38 @@ class SaveAkshareDailyData:
         # 1. 获取股票代码列表（用于需要股票代码的接口）
         self.get_stock_codes()
 
-        # # 2. 下载股票估值数据            封堵IP 办公IP可用 但下载800w+ 记录 【周末跑】
-        # self.download_stock_value_em()
+        # # # 2. 下载股票估值数据            封堵IP 办公IP可用 但下载800w+ 记录 【周末跑】
+        # # self.download_stock_value_em()
+        # #
+        # # # 3. 下载股东户数数据（需要股票代码，分批次处理）   可用              【周末跑】
+        # # self.download_stock_zh_a_gdhs_detail_em()
+        # #
+        # # # 4. 下载筹码数据（需要股票代码，分批次处理）    封堵IP   不可用
+        # # self.download_stock_cyq_em()
+        # #
+        # # 5. 下载业绩快报数据（指定日期）         【可用】  日跑
+        # self.download_stock_yjkb_em()
         #
-        # # 3. 下载股东户数数据（需要股票代码，分批次处理）   可用              【周末跑】
-        # self.download_stock_zh_a_gdhs_detail_em()
+        # # 6. 下载业绩预告数据（指定日期）         【可用】  日跑
+        # self.download_stock_yjyg_em()
         #
-        # # 4. 下载筹码数据（需要股票代码，分批次处理）    封堵IP   不可用
-        # self.download_stock_cyq_em()
+        # # 7. 下载大盘高低统计数据               【可用】  日跑
+        # self.download_stock_a_high_low_statistics()
+        # #
+        # # # 8. 下载个股行情数据（实时数据）     目前只能返回100条  IP封堵严重 不可用
+        # # self.download_stock_zh_a_spot_em()
         #
-        # 5. 下载业绩快报数据（指定日期）         【可用】  日跑
-        self.download_stock_yjkb_em()
-
-        # 6. 下载业绩预告数据（指定日期）         【可用】  日跑
-        self.download_stock_yjyg_em()
-
-        # 7. 下载大盘高低统计数据               【可用】  日跑
-        self.download_stock_a_high_low_statistics()
+        # # # 9. 下载板块行情数据               封堵IP   不可用
+        # # self.download_stock_board_concept_name_em()
         #
-        # # 8. 下载个股行情数据（实时数据）     目前只能返回100条  IP封堵严重 不可用
-        # self.download_stock_zh_a_spot_em()
-
-        # # 9. 下载板块行情数据               封堵IP   不可用
-        # self.download_stock_board_concept_name_em()
-
-        # # 10. 下载板块内个股行情数据       封堵IP   不可用
-        # self.download_stock_board_concept_cons_em()
+        # # # 10. 下载板块内个股行情数据       封堵IP   不可用
+        # # self.download_stock_board_concept_cons_em()
+        # #
+        # # # 11. 下载板块历史行情数据         封堵IP   不可用
+        # # self.download_stock_board_concept_hist_em()
         #
-        # # 11. 下载板块历史行情数据         封堵IP   不可用
-        # self.download_stock_board_concept_hist_em()
-
-        # 12. 同花顺板块码值                  可用    日跑
-        self.download_stock_board_concept_name_ths()
+        # # 12. 同花顺板块码值                  可用    日跑
+        # self.download_stock_board_concept_name_ths()
 
         # 13. 同花顺板块日K行情数据            可用    日跑
         self.download_stock_board_concept_index_ths()
