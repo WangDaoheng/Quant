@@ -279,12 +279,13 @@ class CalDWD:
 
 
     @timing_decorator
-    def cal_stock_base_info(self):
+    def cal_stock_base_info(self, ymd=None):
         """
         计算股票基础信息，汇总表，名称、编码、板块、股本、市值、净资产
         """
         #  1.获取日期
-        ymd = DateUtility.today()
+        if ymd is None:
+            ymd = DateUtility.today()
         # ymd = DateUtility.next_day(-1)
 
         # 2.定义 SQL 模板
@@ -396,18 +397,78 @@ class CalDWD:
             database=origin_database,
             sql_statements=sql_statements)
 
+    @timing_decorator
+    def cal_stock_base_info_batch(self, start_ymd='20260501', end_ymd=None):
+        """
+        批量重跑 dwd_ashare_stock_base_info
+        """
+        if end_ymd is None:
+            end_ymd = DateUtility.today()
+
+        # 获取交易日列表
+        trading_days_sql = f"""
+            SELECT ymd 
+            FROM quant.ods_trading_days_insight 
+            WHERE ymd >= '{start_ymd}' AND ymd <= '{end_ymd}' 
+            ORDER BY ymd;
+        """
+
+        trading_days_df = mysql_utils.execute_query(
+            user=origin_user,
+            password=origin_password,
+            host=origin_host,
+            database=origin_database,
+            sql=trading_days_sql
+        )
+
+        if trading_days_df.empty:
+            logging.warning(f"未找到 {start_ymd} 到 {end_ymd} 之间的交易日")
+            return
+
+        trading_days = trading_days_df['ymd'].astype(str).tolist()
+        total_days = len(trading_days)
+        logging.info(f"共需处理 {total_days} 个交易日，范围：{start_ymd} ~ {end_ymd}")
+
+        success_count = 0
+        fail_count = 0
+        fail_days = []
+
+        for idx, day_ymd in enumerate(trading_days, 1):
+            logging.info(f"【{idx}/{total_days}】正在处理日期：{day_ymd}")
+            try:
+                self.cal_stock_base_info(day_ymd)  # 直接调用
+                success_count += 1
+            except Exception as e:
+                fail_count += 1
+                fail_days.append(day_ymd)
+                logging.error(f"日期 {day_ymd} 处理失败：{str(e)}")
+                continue
+
+        logging.info(f"批量重跑完成：成功 {success_count} 天，失败 {fail_count} 天")
+        if fail_days:
+            logging.warning(f"失败日期：{fail_days}")
+
+        return {
+            'total': total_days,
+            'success': success_count,
+            'fail': fail_count,
+            'fail_days': fail_days
+        }
 
     @timing_decorator
     def cal_ZT_DT(self):
         """
         计算一只股票是否 涨停 / 跌停
         添加了详细的进度日志（兼容GBK编码）
+        写入  dwd_stock_zt_list
+             dwd_stock_dt_list
         """
         import time
         start_time = time.time()
 
         # 1.确定起止日期
-        time_start_date = DateUtility.next_day(-5)
+        # time_start_date = DateUtility.next_day(-5)
+        time_start_date = '20260501'
         time_end_date = DateUtility.today()
 
         logging.info("=" * 60)
@@ -658,9 +719,9 @@ class CalDWD:
             end_date: 结束日期 (YYYYMMDD)
         """
         try:
-            # start_date = '20210101'
+            start_date = '20260501'
             # end_date = '20260225'
-            start_date = DateUtility.first_day_of_month()
+            # start_date = DateUtility.first_day_of_month()
             end_date = DateUtility.today()
             # 1. 获取原始K线数据（需要多取一些历史数据用于计算均线）
             start_dt = pd.to_datetime(start_date)
@@ -769,23 +830,26 @@ class CalDWD:
     @script_run(script_name="calculate_DWD_datas.py")
     def setup(self):
 
-        # 聚合股票的板块，把各个板块数据聚合在一起   周末手动执行
-        self.cal_ashare_plate()
+        # # 聚合股票的板块，把各个板块数据聚合在一起   周末手动执行
+        # self.cal_ashare_plate()
+        #
+        # # 计算股票所归属的交易所，判断其是主办、创业板、科创板、北交所等等
+        # self.cal_stock_exchange()
+        #
+        # # 全量票的最新股东数数据
+        # self.cal_shareholder_num_latest()
+        #
+        # # 计算股票基础信息，汇总表，名称、编码、板块、股本、市值、净资产
+        # self.cal_stock_base_info()
 
-        # 计算股票所归属的交易所，判断其是主办、创业板、科创板、北交所等等
-        self.cal_stock_exchange()
-
-        # 全量票的最新股东数数据
-        self.cal_shareholder_num_latest()
-
-        # 计算股票基础信息，汇总表，名称、编码、板块、股本、市值、净资产
-        self.cal_stock_base_info()
-
-        # 计算一只股票是否 涨停 / 跌停
-        self.cal_ZT_DT()
+        # # 计算一只股票是否 涨停 / 跌停
+        # self.cal_ZT_DT()
 
         # 计算行情衍生指标  均线等
         self.cal_technical_indicators()
+
+        # # 补录base_info
+        # self.cal_stock_base_info_batch()
 
 
 if __name__ == '__main__':

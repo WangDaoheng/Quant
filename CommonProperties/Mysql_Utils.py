@@ -54,54 +54,6 @@ def check_data_written(total_rows, table_name, engine):
         return False
 
 
-# def data_from_dataframe_to_mysql(user, password, host, database='quant', df=pd.DataFrame(), table_name='', merge_on=[]):
-#     """
-#     把 dataframe 类型数据写入 mysql 表里面, 同时调用了
-#     Args:
-#         df:
-#         table_name:
-#         database:
-#     Returns:
-#     """
-#     db_url = f'mysql+pymysql://{user}:{password}@{host}:3306/{database}'
-#     engine = create_engine(db_url)
-#
-#     # 对输入的df的空值做处理
-#     df = df.replace({np.nan: None})
-#
-#     # 确保 df 中的字段列顺序与表中的列顺序一致
-#     columns = df.columns.tolist()
-#
-#     # 检查是否存在重复数据，并将其去除
-#     if merge_on:
-#         df.drop_duplicates(subset=merge_on, keep='first', inplace=True)
-#
-#     total_rows = df.shape[0]
-#     if total_rows == 0:
-#         logging.info(f"所有数据已存在，无需插入新的数据到 {host} 的 {table_name} 表中。")
-#         return
-#
-#     # 使用 INSERT IGNORE 来去重
-#     insert_sql = f"""
-#     INSERT IGNORE INTO {table_name} ({', '.join(columns)})
-#     VALUES ({', '.join([f':{col}' for col in columns])});
-#     """
-#
-#     # 转换 df 为一个可以传递给 executemany 的字典列表
-#     values = df.to_dict('records')
-#
-#     with engine.connect() as connection:
-#         transaction = connection.begin()
-#         try:
-#             connection.execute(text(insert_sql), values)
-#             transaction.commit()
-#             logging.info(f"成功插入 {total_rows} 行数据到 {host} 的 {table_name} 表中。")
-#         except Exception as e:
-#             transaction.rollback()
-#             logging.error(f"写入 {host} 的表：{table_name} 时发生错误: {e}")
-#             raise
-
-
 def data_from_dataframe_to_mysql(user, password, host, database='quant', df=pd.DataFrame(), table_name='', merge_on=[],
                                  batch_size=20000):
     """
@@ -582,3 +534,19 @@ def execute_sql_statements(user, password, host, database, sql_statements):
         engine.dispose()
 
 
+def execute_query(user, password, host, database, sql):
+    """
+    执行查询 SQL，返回 DataFrame
+    """
+    db_url = f'mysql+pymysql://{user}:{password}@{host}:3306/{database}'
+    engine = create_engine(db_url, pool_size=5, max_overflow=10, pool_recycle=3600)
+
+    try:
+        with engine.connect() as connection:
+            result = pd.read_sql(text(sql), connection)
+            return result
+    except SQLAlchemyError as e:
+        print(f"Error executing query: {e}")
+        return pd.DataFrame()
+    finally:
+        engine.dispose()
