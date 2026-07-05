@@ -154,8 +154,9 @@ class SaveInsightData:
     @timing_decorator
     def get_stock_kline(self):
         """
+        【已废弃】
         根据当日上市的stock_codes，来获得全部(去除ST|退|B)股票的历史数据
-        :return: 【已废弃】
+        :return: 写入 ods_stock_kline_daily_insight
          stock_kline_df  [ymd	htsc_code	name	exchange]
         """
 
