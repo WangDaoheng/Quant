@@ -1143,7 +1143,7 @@ class SaveAkshareDailyData:
             return False
 
 
-    @timing_decorator
+    # @timing_decorator
     def download_stock_board_concept_index_ths(self, start_date=None, end_date=None):
         """
         下载同花顺概念板块指数数据 - ods_akshare_stock_board_concept_index_ths

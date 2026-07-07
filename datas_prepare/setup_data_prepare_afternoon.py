@@ -43,11 +43,11 @@ class RunDataDaily:
         #  下载 insight 当日数据
         self.save_insight_now.setup()
 
-        #  下载 akshare 当日数据
-        self.save_akshare_data.setup()
-
         #  下载 tushare 当日数据
         self.save_tushare_data.setup()
+
+        #  下载 akshare 当日数据
+        self.save_akshare_data.setup()
 
         # #  下载 vantage 当日数据
         # self.save_vantage_now.setup()
