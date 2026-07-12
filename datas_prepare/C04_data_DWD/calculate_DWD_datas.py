@@ -47,61 +47,6 @@ class CalDWD:
             """
             INSERT IGNORE INTO quant.dwd_stock_a_total_plate
             SELECT 
-                 ymd
-                ,concept_name AS board_code
-                ,concept_name AS board_name
-                ,stock_code
-                ,stock_name
-                ,'ods_tdx_stock_concept_plate' AS source_table
-                ,'' AS remark
-            FROM quant.ods_tdx_stock_concept_plate
-            WHERE ymd='{ymd}'
-            UNION ALL
-            SELECT 
-                 ymd
-                ,style_code   AS board_code
-                ,style_name   AS board_name
-                ,stock_code
-                ,stock_name
-                ,'ods_tdx_stock_style_plate'   AS source_table
-                ,'' AS remark
-            FROM quant.ods_tdx_stock_style_plate
-            WHERE ymd='{ymd}'
-            UNION ALL
-            SELECT 
-                ymd
-               ,industry_code AS board_code
-               ,industry_name AS board_name
-               ,stock_code
-               ,stock_name
-               ,'ods_tdx_stock_industry_plate' AS source_table
-               ,'' AS remark
-            FROM quant.ods_tdx_stock_industry_plate
-            WHERE ymd='{ymd}'
-            UNION ALL
-            SELECT 
-                ymd
-               ,region_name   AS board_code
-               ,region_name   AS board_name
-               ,stock_code
-               ,stock_name
-               ,'ods_tdx_stock_region_plate'   AS source_table
-               ,'' AS remark
-            FROM quant.ods_tdx_stock_region_plate
-            WHERE ymd='{ymd}'
-            UNION ALL
-            SELECT 
-                ymd
-               ,index_code    AS board_code
-               ,index_name    AS board_name
-               ,stock_code
-               ,stock_name
-               ,'ods_tdx_stock_index_plate'    AS source_table
-               ,'' AS remark
-            FROM quant.ods_tdx_stock_index_plate
-            WHERE ymd='{ymd}'
-            UNION ALL
-            SELECT 
                 ymd
                ,''            AS board_code
                ,plate_name    AS board_name
@@ -118,14 +63,14 @@ class CalDWD:
                ,tboard_name.board_name
                ,tboard_stock.stock_code
                ,tboard_stock.stock_name
-               ,'ods_akshare_board_concept_name_ths'      AS source_table
+               ,'ods_tushare_board_concept_name_ths'      AS source_table
                ,tboard_stock.weight                       AS remark
             FROM 
             (SELECT
                  ymd         -- 数据日期（核心日期维度，适配量化数据统一归档）
                 ,board_name  -- 板块名称
                 ,board_code  -- 板块代码
-             FROM  ods_akshare_board_concept_name_ths
+             FROM  ods_tushare_board_concept_name_ths
              WHERE ymd ='{ymd}'
             ) tboard_name
             inner JOIN
@@ -282,6 +227,7 @@ class CalDWD:
     def cal_stock_base_info(self, ymd=None):
         """
         计算股票基础信息，汇总表，名称、编码、板块、股本、市值、净资产
+        写入 dwd_ashare_stock_base_info
         """
         #  1.获取日期
         if ymd is None:
@@ -830,26 +776,26 @@ class CalDWD:
     @script_run(script_name="calculate_DWD_datas.py")
     def setup(self):
 
-        # # 聚合股票的板块，把各个板块数据聚合在一起   周末手动执行
-        # self.cal_ashare_plate()
-        #
-        # # 计算股票所归属的交易所，判断其是主办、创业板、科创板、北交所等等
-        # self.cal_stock_exchange()
-        #
-        # # 全量票的最新股东数数据
-        # self.cal_shareholder_num_latest()
-        #
-        # # 计算股票基础信息，汇总表，名称、编码、板块、股本、市值、净资产
-        # self.cal_stock_base_info()
+        # 聚合股票的板块，把各个板块数据聚合在一起   周末手动执行
+        self.cal_ashare_plate()
 
-        # # 计算一只股票是否 涨停 / 跌停
-        # self.cal_ZT_DT()
+        # 计算股票所归属的交易所，判断其是主办、创业板、科创板、北交所等等
+        self.cal_stock_exchange()
+
+        # 全量票的最新股东数数据
+        self.cal_shareholder_num_latest()
+
+        # 计算股票基础信息，汇总表，名称、编码、板块、股本、市值、净资产
+        self.cal_stock_base_info()
+
+        # 计算一只股票是否 涨停 / 跌停
+        self.cal_ZT_DT()
 
         # 计算行情衍生指标  均线等
         self.cal_technical_indicators()
 
-        # # 补录base_info
-        # self.cal_stock_base_info_batch()
+        # 补录base_info
+        self.cal_stock_base_info_batch()
 
 
 if __name__ == '__main__':

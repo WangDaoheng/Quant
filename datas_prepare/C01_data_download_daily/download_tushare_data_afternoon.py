@@ -10,188 +10,16 @@ import CommonProperties.Mysql_Utils as mysql_utils
 from CommonProperties.DateUtility import DateUtility
 from CommonProperties.Base_utils import timing_decorator, script_run
 
-# 方法1：屏蔽所有 FutureWarning（最简单有效）
 warnings.filterwarnings('ignore', category=FutureWarning)
+
+# 配置日志（如果外部已配置，这行可移除）
+# logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
 class SaveTushareDailyData:
     def __init__(self):
-        """
-        初始化Tushare
-        :param tushare_token: 你的Tushare API Token
-        """
-        # 设置Tushare Token
         ts.set_token(base_properties.ts_token)
         self.pro = ts.pro_api()
-
-
-    # @timing_decorator
-    # def get_stock_kline_tushare(self):
-    #     """
-    #     使用Tushare获取全部股票的历史日K线数据，并存入数据库
-    #     添加阴线判断字段 today_pct 和 is_down
-    #     写入 ods_stock_kline_daily_ts
-    #     """
-    #     # 1. 获取日期范围
-    #     today = DateUtility.today()
-    #     time_start_date = '20260501'
-    #     time_end_date = today
-    #
-    #     # 2. 获取股票代码列表
-    #     stock_code_list = mysql_utils.get_stock_codes_latest()['stock_code'].tolist()
-    #     logging.info(f"获取到 {len(stock_code_list)} 支股票")
-    #
-    #     # 3. 分批处理设置
-    #     # 关键修复：adj_factor 接口限制 200次/分钟，pro_bar(adj='qfq') 内部会调用 adj_factor
-    #     # 所以必须按 adj_factor 的限制来控制频率，而不是 pro_bar 的 500次/分钟
-    #     batch_size = 50  # 每个批次50个股票（降低以匹配 adj_factor 200次/分钟限制）
-    #     batches_per_sleep = 3  # 每3个批次后sleep（150次请求 < 200次/分钟限制）
-    #     request_delay = 0.3  # 每只股票请求后额外等待0.3秒，更保险
-    #
-    #     def get_batches(lst, batch_size):
-    #         for start in range(0, len(lst), batch_size):
-    #             yield lst[start:start + batch_size]
-    #
-    #     total_batches = (len(stock_code_list) + batch_size - 1) // batch_size
-    #     kline_total_df = pd.DataFrame()
-    #     successful_count = 0
-    #     failed_count = 0
-    #     rate_limit_hits = 0  # 统计频率限制触发次数
-    #
-    #     # 4. 下载tushare数据
-    #     for i, batch_list in enumerate(get_batches(stock_code_list, batch_size), start=1):
-    #         sys.stdout.write(f"\r当前执行get_stock_kline_tushare的第{i}次循环，总共{total_batches}个批次")
-    #         sys.stdout.flush()
-    #
-    #         batch_data = pd.DataFrame()
-    #
-    #         # 处理批次内的每个股票
-    #         for ts_code in batch_list:
-    #             try:
-    #                 # 使用Tushare的pro_bar接口（日线数据）
-    #                 df_batch = ts.pro_bar(
-    #                     ts_code=ts_code,
-    #                     start_date=time_start_date,
-    #                     end_date=time_end_date,
-    #                     adj='qfq',  # 前复权，对应你的fq="pre"
-    #                     freq='D'  # 日线
-    #                 )
-    #
-    #                 if df_batch is not None and not df_batch.empty:
-    #                     batch_data = pd.concat([batch_data, df_batch], ignore_index=True)
-    #                     successful_count += 1
-    #                 else:
-    #                     failed_count += 1
-    #
-    #                 # 每只股票请求后等待，避免触发 adj_factor 频率限制
-    #                 time.sleep(request_delay)
-    #
-    #             except Exception as e:
-    #                 failed_count += 1
-    #                 error_msg = str(e)
-    #                 if "频率超限" in error_msg or "频次" in error_msg or "adj_factor" in error_msg:
-    #                     rate_limit_hits += 1
-    #                     # 如果触发频率限制，增加等待时间
-    #                     logging.warning(f"批次{i}遇到频率限制({error_msg[:80]})，额外等待30秒...")
-    #                     time.sleep(30)
-    #                 continue
-    #
-    #         # 将批次数据添加到总数据
-    #         if not batch_data.empty:
-    #             kline_total_df = pd.concat([kline_total_df, batch_data], ignore_index=True)
-    #
-    #         # 每3个批次后等待60秒（刚好150次请求，低于200次/分钟限制）
-    #         if i % batches_per_sleep == 0 and i < total_batches:
-    #             wait_time = 60  # 等待60秒
-    #             logging.info(f"已完成{i}个批次（约{i * batch_size}次请求），等待{wait_time}秒...")
-    #             time.sleep(wait_time)
-    #             logging.info("等待结束，继续执行...")
-    #
-    #     sys.stdout.write("\n")
-    #     logging.info(
-    #         f"请求统计: 成功 {successful_count}, 失败 {failed_count}, 频率限制触发 {rate_limit_hits} 次")
-    #
-    #     # 5. 数据处理：对齐现有数据结构
-    #     if not kline_total_df.empty:
-    #         # 检查实际返回的列名
-    #         logging.info(f"Tushare返回的列名: {kline_total_df.columns.tolist()}")
-    #
-    #         # 重命名列以匹配你的数据库schema
-    #         column_mapping = {
-    #             'trade_date': 'ymd',
-    #             'ts_code': 'stock_code',
-    #             'pct_chg': 'change_pct',
-    #             'vol': 'volume',
-    #             'amount': 'trading_amount'
-    #         }
-    #
-    #         # 应用重命名
-    #         kline_total_df.rename(columns=column_mapping, inplace=True)
-    #
-    #         # 转换日期格式
-    #         if 'ymd' in kline_total_df.columns:
-    #             kline_total_df['ymd'] = pd.to_datetime(kline_total_df['ymd']).dt.strftime('%Y%m%d')
-    #         else:
-    #             # 添加当天日期
-    #             kline_total_df['ymd'] = today
-    #
-    #         # 计算阴线相关字段
-    #         logging.info("开始计算阴线相关字段...")
-    #
-    #         # 计算当日涨跌幅 today_pct = (close - open) / open * 100
-    #         kline_total_df['today_pct'] = ((kline_total_df['close'] - kline_total_df['open']) /
-    #                                        kline_total_df['open'] * 100).round(2)
-    #
-    #         # 判断是否阴线 is_down = 1 如果 close < open，否则 0
-    #         kline_total_df['is_down'] = (kline_total_df['close'] < kline_total_df['open']).astype(int)
-    #
-    #         # 统计阴线比例
-    #         down_count = kline_total_df['is_down'].sum()
-    #         total_count = len(kline_total_df)
-    #         logging.info(f"阴线统计: 阴线 {down_count} 条, 阳线 {total_count - down_count} 条, "
-    #                      f"阴线比例 {down_count / total_count * 100:.2f}%")
-    #
-    #         # 选择需要的列（包括新增的阴线字段） todo 调整ymd的字段顺序，添加 stock_name
-    #         required_columns = ['stock_code', 'ymd', 'open', 'close', 'high', 'low',
-    #                             'change_pct', 'today_pct', 'is_down', 'volume', 'trading_amount']
-    #
-    #         # 确保列存在
-    #         existing_columns = [col for col in required_columns if col in kline_total_df.columns]
-    #         kline_total_df = kline_total_df[existing_columns]
-    #
-    #         # 去除重复（复用你的逻辑）
-    #         if 'ymd' in kline_total_df.columns and 'stock_code' in kline_total_df.columns:
-    #             kline_total_df = kline_total_df.drop_duplicates(subset=['ymd', 'stock_code'], keep='first')
-    #
-    #         # 输出统计信息
-    #         if 'ymd' in kline_total_df.columns:
-    #             date_counts = kline_total_df['ymd'].value_counts()
-    #             logging.info("各日期数据量统计:")
-    #             for date, count in date_counts.head(10).items():  # 只显示前10个日期
-    #                 logging.info(f"  {date}: {count}条")
-    #             if len(date_counts) > 10:
-    #                 logging.info(f"  ... 共{len(date_counts)}个日期")
-    #
-    #         # 6. 存入数据库（完全复用你的函数）
-    #         try:
-    #             mysql_utils.data_from_dataframe_to_mysql(
-    #                 user=base_properties.origin_mysql_user,
-    #                 password=base_properties.origin_mysql_password,
-    #                 host=base_properties.origin_mysql_host,
-    #                 database=base_properties.origin_mysql_database,
-    #                 df=kline_total_df,
-    #                 table_name="ods_stock_kline_daily_ts",
-    #                 merge_on=['ymd', 'stock_code']
-    #             )
-    #             logging.info(f"成功获取{len(kline_total_df)}条日K线数据")
-    #         except Exception as e:
-    #             logging.error(f"保存到数据库失败: {str(e)}")
-    #             return pd.DataFrame()
-    #
-    #         return kline_total_df
-    #     else:
-    #         logging.warning('get_stock_kline_tushare的返回值为空')
-    #         return pd.DataFrame()
 
     @timing_decorator
     def get_stock_kline_tushare(self):
@@ -199,14 +27,12 @@ class SaveTushareDailyData:
         使用Tushare获取全部股票的历史日K线数据，并存入数据库
         添加阴线判断字段 today_pct 和 is_down
         写入 ods_stock_kline_daily_ts
-        优化：使用 pro.daily 按日期批量获取，避免 pro_bar 单票请求触发 adj_factor 频率限制
         """
-        # 1. 获取日期范围
         today = DateUtility.today()
         time_start_date = DateUtility.first_day_of_month()
         time_end_date = today
 
-        # 2. 获取交易日列表（只取开市日期，减少无效请求）
+        # 获取交易日列表
         try:
             trade_cal_df = self.pro.trade_cal(
                 start_date=time_start_date,
@@ -218,31 +44,24 @@ class SaveTushareDailyData:
                 return pd.DataFrame()
 
             trade_dates = sorted(trade_cal_df['cal_date'].tolist())
-            logging.info(f"获取到 {len(trade_dates)} 个交易日，从 {trade_dates[0]} 到 {trade_dates[-1]}")
+            logging.info(f"交易日历: {len(trade_dates)} 天, {trade_dates[0]} ~ {trade_dates[-1]}")
         except Exception as e:
-            logging.error(f"获取交易日历失败: {str(e)}")
+            logging.error(f"获取交易日历失败: {e}")
             return pd.DataFrame()
 
-        # 3. 按日期批量获取全市场日线数据
-        # pro.daily 限制 300次/分钟，留安全余量按 180次/分钟 控制
+        # 速率控制
         rate_limit_max = 180
-        request_timestamps = []  # 记录每次请求时间
+        request_timestamps = []
 
         def check_rate_limit():
-            """检查并等待速率限制"""
             now = time.time()
-            # 清理60秒前的记录
             request_timestamps[:] = [t for t in request_timestamps if now - t < 60]
-
             if len(request_timestamps) >= rate_limit_max:
-                # 需要等待直到最早请求超过60秒
-                wait_time = 60 - (now - request_timestamps[0]) + 1.0  # 多等1秒保险
-                logging.warning(f"速率限制: 当前 {len(request_timestamps)} 次/分钟，等待 {wait_time:.1f} 秒...")
+                wait_time = 60 - (now - request_timestamps[0]) + 1.0
+                logging.info(f"速率限制等待 {wait_time:.1f}s")
                 time.sleep(max(wait_time, 0))
-                # 重新清理
                 now = time.time()
                 request_timestamps[:] = [t for t in request_timestamps if now - t < 60]
-
             request_timestamps.append(time.time())
 
         kline_total_df = pd.DataFrame()
@@ -250,17 +69,12 @@ class SaveTushareDailyData:
         failed_dates = 0
         rate_limit_hits = 0
 
-        total_dates = len(trade_dates)
-
         for i, trade_date in enumerate(trade_dates, start=1):
-            sys.stdout.write(f"\r当前执行get_stock_kline_tushare: 第{i}/{total_dates}个交易日 {trade_date}")
+            sys.stdout.write(f"\rK线下载: {i}/{len(trade_dates)} {trade_date}")
             sys.stdout.flush()
 
             try:
-                # 速率控制
                 check_rate_limit()
-
-                # 使用 pro.daily 一次性获取全市场当天数据（单接口调用）
                 df_daily = self.pro.daily(trade_date=trade_date)
 
                 if df_daily is not None and not df_daily.empty:
@@ -268,35 +82,24 @@ class SaveTushareDailyData:
                     successful_dates += 1
                 else:
                     failed_dates += 1
-                    logging.warning(f"{trade_date}: 返回数据为空")
 
             except Exception as e:
                 failed_dates += 1
                 error_msg = str(e)
                 if "频率超限" in error_msg or "频次" in error_msg:
                     rate_limit_hits += 1
-                    logging.warning(f"{trade_date} 触发频率限制: {error_msg[:80]}")
-                    # 强制冷却60秒，并重置速率记录
                     time.sleep(60)
                     request_timestamps.clear()
-                else:
-                    logging.error(f"{trade_date} 请求失败: {error_msg[:120]}")
                 continue
 
         sys.stdout.write("\n")
-        logging.info(
-            f"请求统计: 成功 {successful_dates} 天, 失败 {failed_dates} 天, 频率限制触发 {rate_limit_hits} 次"
-        )
+        logging.info(f"K线请求: 成功 {successful_dates} 天, 失败 {failed_dates} 天, 频率限制 {rate_limit_hits} 次")
 
-        # 4. 数据处理：对齐现有数据结构
         if kline_total_df.empty:
-            logging.warning('get_stock_kline_tushare 返回值为空')
+            logging.warning("K线数据为空")
             return pd.DataFrame()
 
-        # 检查实际返回的列名
-        logging.info(f"Tushare返回的列名: {kline_total_df.columns.tolist()}")
-
-        # 重命名列以匹配数据库schema
+        # 数据处理
         column_mapping = {
             'trade_date': 'ymd',
             'ts_code': 'stock_code',
@@ -305,49 +108,25 @@ class SaveTushareDailyData:
             'amount': 'trading_amount'
         }
         kline_total_df.rename(columns=column_mapping, inplace=True)
+        kline_total_df['ymd'] = pd.to_datetime(kline_total_df['ymd']).dt.strftime('%Y%m%d')
 
-        # 转换日期格式
-        if 'ymd' in kline_total_df.columns:
-            kline_total_df['ymd'] = pd.to_datetime(kline_total_df['ymd']).dt.strftime('%Y%m%d')
-
-        # 计算阴线相关字段
-        logging.info("开始计算阴线相关字段...")
-
-        # 计算当日涨跌幅 today_pct = (close - open) / open * 100
         kline_total_df['today_pct'] = ((kline_total_df['close'] - kline_total_df['open']) /
                                        kline_total_df['open'] * 100).round(2)
-
-        # 判断是否阴线 is_down = 1 如果 close < open，否则 0
         kline_total_df['is_down'] = (kline_total_df['close'] < kline_total_df['open']).astype(int)
 
-        # 统计阴线比例
         down_count = kline_total_df['is_down'].sum()
-        total_count = len(kline_total_df)
-        logging.info(f"阴线统计: 阴线 {down_count} 条, 阳线 {total_count - down_count} 条, "
-                     f"阴线比例 {down_count / total_count * 100:.2f}%")
+        logging.info(f"阴线统计: {down_count}/{len(kline_total_df)} ({down_count/len(kline_total_df)*100:.1f}%)")
 
-        # 选择需要的列
         required_columns = ['stock_code', 'ymd', 'open', 'close', 'high', 'low',
                             'change_pct', 'today_pct', 'is_down', 'volume', 'trading_amount']
-
         existing_columns = [col for col in required_columns if col in kline_total_df.columns]
         kline_total_df = kline_total_df[existing_columns]
+        kline_total_df = kline_total_df.drop_duplicates(subset=['ymd', 'stock_code'], keep='first')
 
-        # 去除重复
-        if 'ymd' in kline_total_df.columns and 'stock_code' in kline_total_df.columns:
-            kline_total_df = kline_total_df.drop_duplicates(subset=['ymd', 'stock_code'], keep='first')
+        # 日期统计
+        date_counts = kline_total_df['ymd'].value_counts().sort_index()
+        logging.info(f"K线数据: {len(kline_total_df)} 条, 日期范围 {date_counts.index[0]} ~ {date_counts.index[-1]}")
 
-        # 输出统计信息
-        if 'ymd' in kline_total_df.columns:
-            date_counts = kline_total_df['ymd'].value_counts().sort_index()
-            logging.info("各日期数据量统计:")
-            for date, count in date_counts.head(10).items():
-                logging.info(f"  {date}: {count}条")
-            if len(date_counts) > 10:
-                logging.info(
-                    f"  ... 共{len(date_counts)}个日期，最近日期 {date_counts.index[-1]}: {date_counts.iloc[-1]}条")
-
-        # 5. 存入数据库
         try:
             mysql_utils.data_from_dataframe_to_mysql(
                 user=base_properties.origin_mysql_user,
@@ -358,20 +137,250 @@ class SaveTushareDailyData:
                 table_name="ods_stock_kline_daily_ts",
                 merge_on=['ymd', 'stock_code']
             )
-            logging.info(f"成功获取 {len(kline_total_df)} 条日K线数据")
+            logging.info(f"K线写入完成: {len(kline_total_df)} 条")
         except Exception as e:
-            logging.error(f"保存到数据库失败: {str(e)}")
+            logging.error(f"K线保存失败: {e}")
             return pd.DataFrame()
 
         return kline_total_df
 
+    @timing_decorator
+    def download_board_list(self):
+        """下载同花顺板块列表，写入 ods_tushare_board_concept_name_ths"""
+        df = self.pro.ths_index(exchange='A')
+        if df is None or df.empty:
+            logging.warning("ths_index 返回为空")
+            return pd.DataFrame()
 
+        today = DateUtility.today()
+        df['ymd'] = today
+
+        df.rename(columns={
+            'ts_code': 'board_code',
+            'name': 'board_name',
+            'count': 'component_count',
+            'exchange': 'market',
+            'list_date': 'list_date'
+        }, inplace=True)
+
+        if 'list_date' in df.columns:
+            df['list_date'] = pd.to_datetime(df['list_date'], errors='coerce').dt.strftime('%Y-%m-%d')
+
+        target_cols = ['ymd', 'board_name', 'board_code', 'component_count', 'market', 'list_date']
+        df = df[[c for c in target_cols if c in df.columns]]
+
+        mysql_utils.data_from_dataframe_to_mysql(
+            user=base_properties.origin_mysql_user,
+            password=base_properties.origin_mysql_password,
+            host=base_properties.origin_mysql_host,
+            database=base_properties.origin_mysql_database,
+            df=df,
+            table_name="ods_tushare_board_concept_name_ths",
+            merge_on=['ymd', 'board_code']
+        )
+        logging.info(f"板块列表: {len(df)} 个")
+
+
+    @timing_decorator
+    def download_board_daily(self, start_date=None, end_date=None):
+        """下载同花顺板块行情，写入 ods_tushare_stock_board_concept_index_ths"""
+        if not end_date:
+            end_date = DateUtility.today()
+        if not start_date:
+            start_date = DateUtility.first_day_of_month()
+
+        logging.info(f"板块行情: {start_date} ~ {end_date}")
+
+        board_df = mysql_utils.data_from_mysql_to_dataframe_latest(
+            user=base_properties.origin_mysql_user,
+            password=base_properties.origin_mysql_password,
+            host=base_properties.origin_mysql_host,
+            database=base_properties.origin_mysql_database,
+            table_name='ods_tushare_board_concept_name_ths',
+            cols=['ymd', 'board_name', 'board_code']
+        )
+        if board_df.empty:
+            logging.warning("板块列表为空，跳过行情下载")
+            return pd.DataFrame()
+
+        all_data = []
+        failed = []
+        total = len(board_df)
+
+        for idx, row in board_df.iterrows():
+            ts_code = row['board_code']
+            board_name = row['board_name']
+
+            # 进度条，每50个打印一次
+            if (idx + 1) % 50 == 0 or idx == 0 or idx == total - 1:
+                sys.stdout.write(f"\r板块行情: {idx+1}/{total}")
+                sys.stdout.flush()
+
+            try:
+                df = self.pro.ths_daily(ts_code=ts_code, start_date=start_date, end_date=end_date)
+                if df is not None and not df.empty:
+                    all_data.append(df)
+                else:
+                    failed.append(ts_code)
+            except Exception as e:
+                error_msg = str(e)
+                if "积分" in error_msg or "权限" in error_msg:
+                    logging.error(f"积分/权限不足: {error_msg}")
+                    raise
+                failed.append(ts_code)
+
+            time.sleep(0.25)
+
+        sys.stdout.write("\n")
+
+        if not all_data:
+            logging.warning("未获取到行情数据")
+            return pd.DataFrame()
+
+        result = pd.concat(all_data, ignore_index=True)
+
+        result['trade_date'] = result['trade_date'].astype(str).str.strip()
+        result['ymd'] = result['trade_date']
+
+        result.rename(columns={
+            'ts_code': 'board_code',
+            'open': 'open',
+            'high': 'high',
+            'low': 'low',
+            'close': 'close',
+            'vol': 'trading_volume',
+            'amount': 'trading_amount'
+        }, inplace=True)
+
+        board_names = dict(zip(board_df['board_code'], board_df['board_name']))
+        result['board_name'] = result['board_code'].map(board_names)
+
+        for col in ['open', 'high', 'low', 'close', 'trading_volume', 'trading_amount']:
+            if col in result.columns:
+                result[col] = pd.to_numeric(result[col], errors='coerce')
+
+        target_cols = ['ymd', 'board_name', 'board_code', 'open', 'high', 'low', 'close', 'trading_volume', 'trading_amount']
+        result = result[[c for c in target_cols if c in result.columns]]
+        result = result.drop_duplicates(subset=['ymd', 'board_code'], keep='first')
+
+        date_counts = result['ymd'].value_counts().sort_index()
+        logging.info(f"行情日期分布: {dict(date_counts)}")
+
+        mysql_utils.data_from_dataframe_to_mysql(
+            user=base_properties.origin_mysql_user,
+            password=base_properties.origin_mysql_password,
+            host=base_properties.origin_mysql_host,
+            database=base_properties.origin_mysql_database,
+            df=result,
+            table_name="ods_tushare_stock_board_concept_index_ths",
+            merge_on=['ymd', 'board_code']
+        )
+
+        logging.info(f"板块行情: {len(result)} 条, 成功 {total - len(failed)} 个, 失败 {len(failed)} 个")
+
+
+    @timing_decorator
+    def download_board_members(self):
+        """下载同花顺板块成分股，写入 ods_tushare_stock_board_concept_maps_ths"""
+        board_df = mysql_utils.data_from_mysql_to_dataframe_latest(
+            user=base_properties.origin_mysql_user,
+            password=base_properties.origin_mysql_password,
+            host=base_properties.origin_mysql_host,
+            database=base_properties.origin_mysql_database,
+            table_name='ods_akshare_board_concept_name_ths',
+            cols=['ymd', 'board_name', 'board_code']
+        )
+        if board_df.empty:
+            logging.warning("板块列表为空，跳过成分股下载")
+            return pd.DataFrame()
+
+        all_members = []
+        failed = []
+        ymd = pd.to_datetime(board_df['ymd'].iloc[0]).strftime('%Y%m%d')
+        total = len(board_df)
+
+        for idx, row in board_df.iterrows():
+            ts_code = row['board_code']
+            board_name = row['board_name']
+
+            # 进度条，每100个打印一次
+            if (idx + 1) % 100 == 0 or idx == 0 or idx == total - 1:
+                sys.stdout.write(f"\r成分股: {idx+1}/{total}")
+                sys.stdout.flush()
+
+            try:
+                df = self.pro.ths_member(ts_code=ts_code)
+                if df is not None and not df.empty:
+                    df['ymd'] = ymd
+                    df['board_code'] = ts_code
+                    df['board_name'] = board_name
+
+                    df = df.rename(columns={
+                        'con_code': 'stock_code',
+                        'con_name': 'stock_name'
+                    })
+
+                    if 'ts_code' in df.columns:
+                        df = df.drop(columns=['ts_code'])
+
+                    if 'stock_code' not in df.columns or 'stock_name' not in df.columns:
+                        failed.append(ts_code)
+                        continue
+
+                    for col in ['weight', 'in_date', 'out_date', 'is_new']:
+                        if col not in df.columns:
+                            df[col] = None
+
+                    target_cols = ['ymd', 'board_name', 'board_code', 'stock_code', 'stock_name', 'weight', 'in_date', 'out_date', 'is_new']
+                    available_cols = [c for c in target_cols if c in df.columns]
+                    all_members.append(df[available_cols])
+                else:
+                    failed.append(ts_code)
+            except Exception as e:
+                error_msg = str(e)
+                if "积分" in error_msg or "权限" in error_msg:
+                    logging.error(f"积分/权限不足: {error_msg}")
+                    raise
+                failed.append(ts_code)
+
+            time.sleep(0.8)
+
+        sys.stdout.write("\n")
+
+        if not all_members:
+            logging.warning("未获取到任何成分股")
+            return pd.DataFrame()
+
+        result = pd.concat(all_members, ignore_index=True)
+
+        for col in ['in_date', 'out_date']:
+            if col in result.columns:
+                result[col] = pd.to_datetime(result[col], errors='coerce').dt.strftime('%Y%m%d')
+                result[col] = result[col].replace('NaT', None)
+
+        result = result.drop_duplicates(subset=['ymd', 'board_code', 'stock_code'], keep='first')
+
+        logging.info(f"成分股: {len(result)} 条, 成功 {total - len(failed)} 个板块, 失败 {len(failed)} 个")
+
+        mysql_utils.data_from_dataframe_to_mysql(
+            user=base_properties.origin_mysql_user,
+            password=base_properties.origin_mysql_password,
+            host=base_properties.origin_mysql_host,
+            database=base_properties.origin_mysql_database,
+            df=result,
+            table_name="ods_tushare_stock_board_concept_maps_ths",
+            merge_on=['ymd', 'board_code', 'stock_code']
+        )
+
+        logging.info("成分股写入完成")
+        return result
 
     @script_run(script_name="download_tushare_data_afternoon.py")
     def setup(self):
-        # 下载每日收盘后的日K线行情数据
-        result = self.get_stock_kline_tushare()
-        return result
+        self.get_stock_kline_tushare()
+        self.download_board_list()
+        self.download_board_daily()
+        self.download_board_members()
 
 
 if __name__ == '__main__':

@@ -47,6 +47,7 @@ class CalDMART:
     def cal_zt_details(self):
         """
         涨停股票的明细
+        写入  dmart_stock_zt_details
         Returns:
         """
         #  1.获取日期
@@ -117,6 +118,7 @@ class CalDMART:
     def cal_zt_details_explode(self):
         """
         涨停股票的明细的拆分
+        写入 dmart_stock_zt_details
         Returns:
         """
         # 1. 获取日期范围

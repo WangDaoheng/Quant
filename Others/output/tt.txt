@@ -1,13 +1,21 @@
 
-下午跑：
-insight 行情源
+
+ODS 层
+
+（一）、下午跑：
+1. insight 行情源
 ods_stock_code_daily_insight
 ods_stock_limit_summary_insight
 ods_stock_chouma_insight
 ods_astock_industry_overview
 ods_astock_industry_detail
 
-akshare 行情源
+
+2. tushare 行情源
+ods_stock_kline_daily_ts
+
+
+3. akshare 行情源
 ods_akshare_stock_yjkb_em
 ods_akshare_stock_yjyg_em
 ods_akshare_stock_a_high_low_statistics
@@ -15,25 +23,34 @@ ods_akshare_board_concept_name_ths
 ods_akshare_stock_board_concept_index_ths
 
 
+（二）、凌晨跑
+ods_index_a_share_insight
+ods_future_inside_insight
+ods_shareholder_num
+
+
+
+（三）、周末跑
+ods_akshare_stock_value_em
+ods_akshare_stock_zh_a_gdhs_detail_em
+
+
+
+DWD 层
+dwd_stock_a_total_plate
+ods_stock_exchange_market
+dwd_shareholder_num_latest
+dwd_ashare_stock_base_info
+dwd_stock_zt_list
+dwd_stock_dt_list
+dwd_stock_technical_indicators
 
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+MART 层
+dmart_stock_zt_details
+dmart_stock_zt_details
 
 
 

@@ -15,14 +15,57 @@ logger = logging.getLogger(__name__)
 class TableDataExporterFull:
     """导出数据库表数据样例到单个HTML文件 - 带目录导航和超链接"""
 
-    # 定义固定的展示顺序
-    PREFIX_ORDER = {
-        'ods_': 1,
-        'dwd_': 2,
-        'dmart_': 3,
-        'dwt_': 4,
-        'dim_': 5,
-        'other': 99  # 其他表放最后
+    # ========== 表优先级定义：按用户指定顺序 ==========
+    # 数字越小越靠前，不在此列表的表排最后，按字母序
+    TABLE_PRIORITY = {
+        # ODS 层 - 下午跑 - insight 行情源
+        'ods_stock_code_daily_insight': (1, 1, 1),
+        'ods_stock_limit_summary_insight': (1, 1, 2),
+        'ods_stock_chouma_insight': (1, 1, 3),
+        'ods_astock_industry_overview': (1, 1, 4),
+        'ods_astock_industry_detail': (1, 1, 5),
+        # ODS 层 - 下午跑 - tushare 行情源
+        'ods_stock_kline_daily_ts': (1, 2, 1),
+        # ODS 层 - 下午跑 - akshare 行情源
+        'ods_akshare_stock_yjkb_em': (1, 3, 1),
+        'ods_akshare_stock_yjyg_em': (1, 3, 2),
+        'ods_akshare_stock_a_high_low_statistics': (1, 3, 3),
+        'ods_akshare_board_concept_name_ths': (1, 3, 4),
+        'ods_akshare_stock_board_concept_index_ths': (1, 3, 5),
+        # ODS 层 - 凌晨跑
+        'ods_index_a_share_insight': (1, 4, 1),
+        'ods_future_inside_insight': (1, 4, 2),
+        'ods_shareholder_num': (1, 4, 3),
+        # ODS 层 - 周末跑
+        'ods_akshare_stock_value_em': (1, 5, 1),
+        'ods_akshare_stock_zh_a_gdhs_detail_em': (1, 5, 2),
+        # DWD 层
+        'dwd_stock_a_total_plate': (2, 1, 1),
+        'ods_stock_exchange_market': (2, 1, 2),  # 注意：用户写的是ods开头但放在DWD层
+        'dwd_shareholder_num_latest': (2, 1, 3),
+        'dwd_ashare_stock_base_info': (2, 1, 4),
+        'dwd_stock_zt_list': (2, 1, 5),
+        'dwd_stock_dt_list': (2, 1, 6),
+        'dwd_stock_technical_indicators': (2, 1, 7),
+        # MART 层
+        'dmart_stock_zt_details': (3, 1, 1),
+    }
+
+    # 层级展示名称
+    LAYER_NAMES = {
+        1: 'ODS 层（原始数据）',
+        2: 'DWD 层（明细数据）',
+        3: 'MART 层（数据集市）',
+        99: '其他表'
+    }
+
+    # ODS 子分组名称
+    ODS_SUBGROUP_NAMES = {
+        (1, 1): '（一）下午跑 - insight 行情源',
+        (1, 2): '（一）下午跑 - tushare 行情源',
+        (1, 3): '（一）下午跑 - akshare 行情源',
+        (1, 4): '（二）凌晨跑',
+        (1, 5): '（三）周末跑',
     }
 
     def __init__(self):
@@ -367,26 +410,30 @@ class TableDataExporterFull:
         """生成表对应的HTML锚点ID"""
         return f"table-{table_name}"
 
-    def _get_prefix_display_name(self, prefix):
-        """获取前缀的展示名称"""
-        prefix_names = {
-            'ods': 'ODS层（原始数据）',
-            'dwd': 'DWD层（明细数据）',
-            'dmart': 'DMART层（数据集市）',
-            'dwt': 'DWT层（宽表）',
-            'dim': 'DIM层（维度表）',
-            'other': '其他表'
-        }
-        return prefix_names.get(prefix, f'{prefix.upper()}层')
-
+    # ========== 排序核心：按用户定义的优先级 ==========
     def _get_sort_key(self, table_name):
-        """获取表的排序键，用于固定顺序：ods -> dwd -> dmart -> other"""
-        for prefix, order in sorted(self.PREFIX_ORDER.items(), key=lambda x: x[1]):
-            if prefix != 'other' and table_name.startswith(prefix):
-                return (order, table_name)
-        return (self.PREFIX_ORDER['other'], table_name)
+        """
+        返回排序键元组 (layer, subgroup, order, table_name)
+        不在 TABLE_PRIORITY 中的表: layer=99, 按字母序排最后
+        """
+        if table_name in self.TABLE_PRIORITY:
+            layer, subgroup, order = self.TABLE_PRIORITY[table_name]
+            return (layer, subgroup, order, table_name)
+        else:
+            # 其他表：按字母顺序排最后
+            return (99, 99, 99, table_name)
 
-    def _generate_html_toc(self, table_groups):
+    def _get_layer_name(self, layer_num):
+        """获取层级展示名称"""
+        return self.LAYER_NAMES.get(layer_num, '其他表')
+
+    def _get_subgroup_name(self, layer, subgroup):
+        """获取ODS子分组名称"""
+        if layer == 1:
+            return self.ODS_SUBGROUP_NAMES.get((layer, subgroup), f'其他 ODS 表')
+        return None
+
+    def _generate_html_toc(self, layer_groups):
         """生成HTML目录（Table of Contents）"""
         toc_html = []
         toc_html.append('<nav class="toc" id="toc">')
@@ -394,21 +441,45 @@ class TableDataExporterFull:
         toc_html.append('  <p class="toc-hint">点击表名快速跳转到详情，点击"🔝"返回目录</p>')
         toc_html.append('  <ul class="toc-list">')
 
-        for prefix in sorted(table_groups.keys(),
-                             key=lambda p: self.PREFIX_ORDER.get(p + '_', self.PREFIX_ORDER['other'])):
-            group_tables = sorted(table_groups[prefix], key=lambda t: t.lower())
-            display_name = self._get_prefix_display_name(prefix)
+        # 按层级排序：1=ODS, 2=DWD, 3=MART, 99=其他
+        for layer in sorted(layer_groups.keys()):
+            layer_tables = layer_groups[layer]
+            if not layer_tables:
+                continue
 
+            layer_name = self._get_layer_name(layer)
             toc_html.append(f'    <li class="toc-group">')
-            toc_html.append(f'      <span class="toc-group-title">{display_name}</span>')
-            toc_html.append(f'      <span class="toc-count">({len(group_tables)}张)</span>')
-            toc_html.append('      <ul class="toc-sublist">')
+            toc_html.append(f'      <span class="toc-group-title">{layer_name}</span>')
+            toc_html.append(f'      <span class="toc-count">({len(layer_tables)}张)</span>')
 
-            for table in group_tables:
-                anchor = self._get_anchor_id(table)
-                toc_html.append(f'        <li><a href="#{anchor}" class="toc-link">{table}</a></li>')
+            # ODS 层需要再按子分组展示
+            if layer == 1:
+                # 按子分组归类
+                subgroups = {}
+                for table in layer_tables:
+                    key = self.TABLE_PRIORITY.get(table, (1, 99, 99))
+                    sg = key[1]
+                    if sg not in subgroups:
+                        subgroups[sg] = []
+                    subgroups[sg].append(table)
 
-            toc_html.append('      </ul>')
+                toc_html.append('      <ul class="toc-sublist">')
+                for sg in sorted(subgroups.keys()):
+                    sg_name = self._get_subgroup_name(layer, sg)
+                    if sg_name:
+                        toc_html.append(f'        <li class="toc-subgroup-title">{sg_name}</li>')
+                    for table in subgroups[sg]:
+                        anchor = self._get_anchor_id(table)
+                        toc_html.append(f'        <li><a href="#{anchor}" class="toc-link">{table}</a></li>')
+                toc_html.append('      </ul>')
+
+            else:
+                toc_html.append('      <ul class="toc-sublist">')
+                for table in layer_tables:
+                    anchor = self._get_anchor_id(table)
+                    toc_html.append(f'        <li><a href="#{anchor}" class="toc-link">{table}</a></li>')
+                toc_html.append('      </ul>')
+
             toc_html.append('    </li>')
 
         toc_html.append('  </ul>')
@@ -423,10 +494,26 @@ class TableDataExporterFull:
         table_name = table_info['table_name']
         anchor = self._get_anchor_id(table_name)
 
+        # 获取该表在优先级中的位置信息，用于展示标签
+        priority_info = self.TABLE_PRIORITY.get(table_name)
+        tags_html = ""
+        if priority_info:
+            layer, subgroup, order = priority_info
+            layer_name = self._get_layer_name(layer)
+            if layer == 1:
+                sg_name = self._get_subgroup_name(layer, subgroup)
+                tags_html = f'<span class="table-tag layer-ods">{sg_name}</span>'
+            else:
+                tags_html = f'<span class="table-tag layer-{layer}">{layer_name}</span>'
+
         html = []
         html.append(f'<section class="table-detail" id="{anchor}">')
         html.append(f'  <div class="table-header">')
-        html.append(f'    <h2>【表 {table_num}/{total_tables}】{table_name}</h2>')
+        html.append(f'    <div class="table-title-wrap">')
+        html.append(f'      <h2>【表 {table_num}/{total_tables}】{table_name}</h2>')
+        if tags_html:
+            html.append(f'      <div class="table-tags">{tags_html}</div>')
+        html.append(f'    </div>')
         html.append(f'    <a href="#toc" class="back-to-top" title="返回目录">🔝</a>')
         html.append(f'  </div>')
 
@@ -596,6 +683,7 @@ class TableDataExporterFull:
         .toc-group-title { font-weight: bold; font-size: 1.1em; color: #444; }
         .toc-count { color: #888; margin-left: 8px; }
         .toc-sublist { list-style: none; margin-left: 20px; margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px; }
+        .toc-subgroup-title { width: 100%; font-weight: 600; color: #666; margin: 8px 0 4px 0; font-size: 0.95em; border-left: 3px solid #667eea; padding-left: 8px; }
         .toc-link { display: inline-block; padding: 4px 12px; background: #f0f4ff; color: #667eea; text-decoration: none; border-radius: 20px; font-size: 0.9em; transition: all 0.2s; }
         .toc-link:hover { background: #667eea; color: white; transform: translateY(-1px); }
 
@@ -607,7 +695,13 @@ class TableDataExporterFull:
 
         .table-detail { background: white; margin: 20px auto; max-width: 1200px; padding: 30px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
         .table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 3px solid #667eea; }
-        .table-header h2 { color: #333; font-size: 1.5em; }
+        .table-title-wrap { flex: 1; }
+        .table-title-wrap h2 { color: #333; font-size: 1.5em; }
+        .table-tags { margin-top: 8px; }
+        .table-tag { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.8em; margin-right: 6px; }
+        .layer-ods { background: #e3f2fd; color: #1565c0; }
+        .layer-2 { background: #f3e5f5; color: #6a1b9a; }
+        .layer-3 { background: #e8f5e9; color: #2e7d32; }
         .back-to-top { text-decoration: none; font-size: 1.3em; padding: 5px 10px; border-radius: 8px; transition: background 0.2s; }
         .back-to-top:hover { background: #f0f4ff; }
 
@@ -654,6 +748,8 @@ class TableDataExporterFull:
         .layer-section { margin: 30px auto; max-width: 1200px; }
         .layer-title { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px 30px; border-radius: 12px; font-size: 1.3em; margin-bottom: 20px; }
 
+        .subgroup-title { background: #f0f4ff; color: #444; padding: 12px 20px; border-radius: 8px; font-size: 1.1em; margin: 20px 0 10px 0; border-left: 4px solid #667eea; }
+
         @media (max-width: 768px) {
             .report-header { padding: 20px; }
             .report-header h1 { font-size: 1.5em; }
@@ -663,7 +759,7 @@ class TableDataExporterFull:
         '''
 
     def export_important_tables(self):
-        """导出重要的表（按前缀筛选，输出HTML带目录导航）"""
+        """导出重要的表（按用户指定优先级，输出HTML带目录导航）"""
         print("开始导出数据库表信息...")
 
         if not self.test_connection():
@@ -674,52 +770,29 @@ class TableDataExporterFull:
             print("错误：数据库中没有找到任何表")
             return
 
-        # 按固定顺序排序并分类
+        # 按用户定义的优先级排序
         tables.sort(key=self._get_sort_key)
 
-        table_groups = {}
-        important_tables = []
-        other_tables = []
-
+        # 按层级分组
+        layer_groups = {1: [], 2: [], 3: [], 99: []}
         for table in tables:
-            assigned = False
-            for prefix in ['ods_', 'dwd_', 'dmart_', 'dwt_', 'dim_']:
-                if table.startswith(prefix):
-                    prefix_key = prefix.rstrip('_')
-                    if prefix_key not in table_groups:
-                        table_groups[prefix_key] = []
-                    table_groups[prefix_key].append(table)
-                    important_tables.append(table)
-                    assigned = True
-                    break
-            if not assigned:
-                if 'other' not in table_groups:
-                    table_groups['other'] = []
-                table_groups['other'].append(table)
-                other_tables.append(table)
+            if table in self.TABLE_PRIORITY:
+                layer = self.TABLE_PRIORITY[table][0]
+                layer_groups[layer].append(table)
+            else:
+                layer_groups[99].append(table)
+
+        # 清理空分组
+        layer_groups = {k: v for k, v in layer_groups.items() if v}
 
         print(f"找到 {len(tables)} 张表，其中:")
-        for prefix in sorted(table_groups.keys(),
-                             key=lambda p: self.PREFIX_ORDER.get(p + '_', self.PREFIX_ORDER['other'])):
-            print(f"  {self._get_prefix_display_name(prefix)}: {len(table_groups[prefix])} 张")
+        for layer in sorted(layer_groups.keys()):
+            layer_name = self._get_layer_name(layer)
+            count = len(layer_groups[layer])
+            print(f"  {layer_name}: {count} 张")
 
-        print("\n导出选项:")
-        print("1. 只导出重要表（ods/dwd/dmart/dwt/dim开头）")
-        print("2. 导出所有表")
-        print("3. 导出指定前缀的表")
-
-        choice = input("请选择 (1/2/3, 默认1): ").strip()
-
-        if choice == '2':
-            tables_to_export = tables
-        elif choice == '3':
-            prefix = input("请输入表前缀 (如 ods_): ").strip()
-            tables_to_export = [t for t in tables if t.startswith(prefix)]
-            if not tables_to_export:
-                print(f"没有以 {prefix} 开头的表")
-                return
-        else:
-            tables_to_export = important_tables
+        # 导出所有表（不再询问，直接全量导出）
+        tables_to_export = tables
 
         print(f"\n开始导出 {len(tables_to_export)} 张表...")
 
@@ -747,23 +820,16 @@ class TableDataExporterFull:
                     'error': str(e)
                 })
 
-        # 重新按固定顺序分组
-        export_groups = {}
+        # 重新按层级分组（用于生成HTML）
+        export_layer_groups = {1: [], 2: [], 3: [], 99: []}
         for info in all_table_infos:
             table = info['table_name']
-            assigned = False
-            for prefix in ['ods_', 'dwd_', 'dmart_', 'dwt_', 'dim_']:
-                if table.startswith(prefix):
-                    key = prefix.rstrip('_')
-                    if key not in export_groups:
-                        export_groups[key] = []
-                    export_groups[key].append(table)
-                    assigned = True
-                    break
-            if not assigned:
-                if 'other' not in export_groups:
-                    export_groups['other'] = []
-                export_groups['other'].append(table)
+            if table in self.TABLE_PRIORITY:
+                layer = self.TABLE_PRIORITY[table][0]
+                export_layer_groups[layer].append(table)
+            else:
+                export_layer_groups[99].append(table)
+        export_layer_groups = {k: v for k, v in export_layer_groups.items() if v}
 
         # 生成HTML
         timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -793,37 +859,57 @@ class TableDataExporterFull:
         html_parts.append('  </header>')
 
         # 目录
-        html_parts.append(self._generate_html_toc(export_groups))
+        html_parts.append(self._generate_html_toc(export_layer_groups))
 
         # 统计概览
         html_parts.append('  <div class="summary-section">')
         html_parts.append('    <h2>📋 各层统计概览</h2>')
         html_parts.append('    <table class="summary-table">')
         html_parts.append('      <tr><th>层级</th><th>表数量</th><th>占比</th></tr>')
-        for prefix in sorted(export_groups.keys(),
-                             key=lambda p: self.PREFIX_ORDER.get(p + '_', self.PREFIX_ORDER['other'])):
-            count = len(export_groups[prefix])
+        for layer in sorted(export_layer_groups.keys()):
+            count = len(export_layer_groups[layer])
             pct = count / len(tables_to_export) * 100 if tables_to_export else 0
-            display_name = self._get_prefix_display_name(prefix)
+            display_name = self._get_layer_name(layer)
             html_parts.append(f'      <tr><td>{display_name}</td><td>{count}</td><td>{pct:.1f}%</td></tr>')
         html_parts.append('    </table>')
         html_parts.append('  </div>')
 
         # 各层详情
         table_num = 0
-        for prefix in sorted(export_groups.keys(),
-                             key=lambda p: self.PREFIX_ORDER.get(p + '_', self.PREFIX_ORDER['other'])):
-            group_tables = sorted(export_groups[prefix], key=lambda t: t.lower())
-            display_name = self._get_prefix_display_name(prefix)
+        for layer in sorted(export_layer_groups.keys()):
+            group_tables = export_layer_groups[layer]
+            display_name = self._get_layer_name(layer)
 
-            html_parts.append(f'  <div class="layer-section" id="layer-{prefix}">')
+            html_parts.append(f'  <div class="layer-section" id="layer-{layer}">')
             html_parts.append(f'    <h2 class="layer-title">{display_name} ({len(group_tables)}张表)</h2>')
 
-            for table in group_tables:
-                table_num += 1
-                info = next((i for i in all_table_infos if i['table_name'] == table), None)
-                if info:
-                    html_parts.append(self._generate_html_table_detail(info, table_num, total_exported))
+            # ODS 层需要按子分组展示
+            if layer == 1:
+                # 按子分组归类
+                subgroups = {}
+                for table in group_tables:
+                    key = self.TABLE_PRIORITY.get(table, (1, 99, 99))
+                    sg = key[1]
+                    if sg not in subgroups:
+                        subgroups[sg] = []
+                    subgroups[sg].append(table)
+
+                for sg in sorted(subgroups.keys()):
+                    sg_name = self._get_subgroup_name(layer, sg)
+                    if sg_name:
+                        html_parts.append(f'    <h3 class="subgroup-title">{sg_name}</h3>')
+
+                    for table in subgroups[sg]:
+                        table_num += 1
+                        info = next((i for i in all_table_infos if i['table_name'] == table), None)
+                        if info:
+                            html_parts.append(self._generate_html_table_detail(info, table_num, total_exported))
+            else:
+                for table in group_tables:
+                    table_num += 1
+                    info = next((i for i in all_table_infos if i['table_name'] == table), None)
+                    if info:
+                        html_parts.append(self._generate_html_table_detail(info, table_num, total_exported))
 
             html_parts.append('  </div>')
 
@@ -846,11 +932,23 @@ class TableDataExporterFull:
             print(f"导出表数: {total_exported}/{len(tables_to_export)}")
             print("=" * 60)
 
+            print("\n展示顺序:")
+            print("1️⃣  ODS 层")
+            print("    （一）下午跑")
+            print("        · insight 行情源")
+            print("        · tushare 行情源")
+            print("        · akshare 行情源")
+            print("    （二）凌晨跑")
+            print("    （三）周末跑")
+            print("2️⃣  DWD 层")
+            print("3️⃣  MART 层")
+            print("4️⃣  其他表（按字母顺序）")
+
             print("\n文件特性:")
             print("✅ HTML格式，浏览器直接打开")
             print("✅ 顶部目录导航，点击表名跳转")
             print("✅ 每个表详情右上角 🔝 返回目录")
-            print("✅ 固定顺序: ODS → DWD → DMART → DWT → DIM → 其他")
+            print("✅ 表头带层级标签（ODS/DWD/MART）")
             print("✅ 全表真实最早/最晚日期（非近10天）")
             print("✅ 交易日覆盖检查（只比对已发生的交易日）")
             print("✅ 每日数据量明细 + 波动检测（>20%标红）")
@@ -872,7 +970,8 @@ def main():
     print("QUANT数据库表结构导出工具（HTML版）")
     print("=" * 60)
     print("输出格式: HTML（带目录导航和超链接）")
-    print("展示顺序: ODS → DWD → DMART → DWT → DIM → 其他")
+    print("展示顺序: ODS → DWD → MART → 其他")
+    print("ODS子分组: 下午跑(insight/tushare/akshare) → 凌晨跑 → 周末跑")
     print("日期修复: 全表真实最早/最晚日期（非近10天）")
     print("交易日历: 只比对今天及之前的已发生交易日")
     print("波动检测: 相邻日期间数据量波动超过20%会标红提示")
