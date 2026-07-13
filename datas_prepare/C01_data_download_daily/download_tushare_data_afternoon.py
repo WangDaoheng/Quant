@@ -287,7 +287,7 @@ class SaveTushareDailyData:
             password=base_properties.origin_mysql_password,
             host=base_properties.origin_mysql_host,
             database=base_properties.origin_mysql_database,
-            table_name='ods_akshare_board_concept_name_ths',
+            table_name='ods_tushare_board_concept_name_ths',
             cols=['ymd', 'board_name', 'board_code']
         )
         if board_df.empty:
