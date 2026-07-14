@@ -114,104 +114,104 @@ class CalDMART:
             sql_statements=sql_statements)
 
 
-    @timing_decorator
-    def cal_zt_details_explode(self):
-        """
-        涨停股票的明细的拆分
-        写入 dmart_stock_zt_details
-        Returns:
-        """
-        # 1. 获取日期范围
-        time_start_date = DateUtility.next_day(-2)  # 2天前的日期
-        time_start_date = '20241126'
-
-        time_end_date = DateUtility.next_day(0)  # 当前日期
-        time_end_date = '20250318'
-
-        logging.info(f"开始处理涨停股票明细数据，日期范围：{time_start_date} 至 {time_end_date}")
-
-        # 2. 从 MySQL 获取起止日期范围内的数据
-        df = mysql_utils.data_from_mysql_to_dataframe(
-            user=origin_user,
-            password=origin_password,
-            host=origin_host,
-            database=origin_database,
-            table_name='dmart_stock_zt_details',
-            start_date=time_start_date,
-            end_date=time_end_date,
-            cols=['ymd', 'stock_code', 'stock_name', 'concept_plate', 'index_plate', 'industry_plate', 'style_plate',
-                  'out_plate']
-        )
-
-        if df.empty:
-            logging.warning("未获取到数据，可能日期范围内没有数据或表为空。")
-            return
-
-        logging.info(f"成功获取到 {len(df)} 条数据，开始拆解处理...")
-
-        # 3. 定义 unpack_plates 函数
-        def unpack_plates(df):
-            result = []
-            for _, row in df.iterrows():
-                ymd = row['ymd']
-                stock_code = row['stock_code']
-                stock_name = row['stock_name']
-
-                # 获取每个字段的分隔值
-                fields = {
-                    'concept_plate': row['concept_plate'].split(',') if pd.notna(row['concept_plate']) else [],
-                    'index_plate': row['index_plate'].split(',') if pd.notna(row['index_plate']) else [],
-                    'industry_plate': row['industry_plate'].split(',') if pd.notna(row['industry_plate']) else [],
-                    'style_plate': row['style_plate'].split(',') if pd.notna(row['style_plate']) else [],
-                    'out_plate': row['out_plate'].split(',') if pd.notna(row['out_plate']) else []
-                }
-
-                # 找到分隔值最多的字段
-                max_length = max(len(fields[field]) for field in fields)
-
-                # 按最大长度填充数据
-                for i in range(max_length):
-                    result_row = {
-                        'ymd': ymd.strftime('%Y%m%d'),
-                        'stock_code': stock_code,
-                        'stock_name': stock_name,
-                        'concept_plate': fields['concept_plate'][i].strip() if i < len(
-                            fields['concept_plate']) else None,
-                        'index_plate': fields['index_plate'][i].strip() if i < len(fields['index_plate']) else None,
-                        'industry_plate': fields['industry_plate'][i].strip() if i < len(
-                            fields['industry_plate']) else None,
-                        'style_plate': fields['style_plate'][i].strip() if i < len(fields['style_plate']) else None,
-                        'out_plate': fields['out_plate'][i].strip() if i < len(fields['out_plate']) else None
-                    }
-                    result.append(result_row)
-
-            return pd.DataFrame(result)
-
-        # 4. 调用 unpack_plates 函数处理数据
-        output_df = unpack_plates(df)
-
-        # 总是保存到远端数据库
-        mysql_utils.data_from_dataframe_to_mysql(
-            user=origin_user,
-            password=origin_password,
-            host=origin_host,
-            database=origin_database,
-            df=output_df,
-            table_name="dmart_stock_zt_details_expanded",
-            merge_on=['ymd', 'stock_code', 'concept_plate', 'index_plate', 'industry_plate', 'style_plate',
-                      'out_plate']
-        )
-        logging.info(
-            f"数据处理完成，已将结果保存到 {origin_host} 的 {origin_database}.dmart_stock_zt_details_expanded 表中。")
-
+    # @timing_decorator
+    # def cal_zt_details_explode(self):
+    #     """
+    #     涨停股票的明细的拆分
+    #     写入 dmart_stock_zt_details_expanded
+    #     Returns:
+    #     """
+    #     # 1. 获取日期范围
+    #     time_start_date = DateUtility.next_day(-2)  # 2天前的日期
+    #     time_start_date = '20241126'
+    #
+    #     time_end_date = DateUtility.next_day(0)  # 当前日期
+    #     time_end_date = '20250318'
+    #
+    #     logging.info(f"开始处理涨停股票明细数据，日期范围：{time_start_date} 至 {time_end_date}")
+    #
+    #     # 2. 从 MySQL 获取起止日期范围内的数据
+    #     df = mysql_utils.data_from_mysql_to_dataframe(
+    #         user=origin_user,
+    #         password=origin_password,
+    #         host=origin_host,
+    #         database=origin_database,
+    #         table_name='dmart_stock_zt_details',
+    #         start_date=time_start_date,
+    #         end_date=time_end_date,
+    #         cols=['ymd', 'stock_code', 'stock_name', 'concept_plate', 'index_plate', 'industry_plate', 'style_plate',
+    #               'out_plate']
+    #     )
+    #
+    #     if df.empty:
+    #         logging.warning("未获取到数据，可能日期范围内没有数据或表为空。")
+    #         return
+    #
+    #     logging.info(f"成功获取到 {len(df)} 条数据，开始拆解处理...")
+    #
+    #     # 3. 定义 unpack_plates 函数
+    #     def unpack_plates(df):
+    #         result = []
+    #         for _, row in df.iterrows():
+    #             ymd = row['ymd']
+    #             stock_code = row['stock_code']
+    #             stock_name = row['stock_name']
+    #
+    #             # 获取每个字段的分隔值
+    #             fields = {
+    #                 'concept_plate': row['concept_plate'].split(',') if pd.notna(row['concept_plate']) else [],
+    #                 'index_plate': row['index_plate'].split(',') if pd.notna(row['index_plate']) else [],
+    #                 'industry_plate': row['industry_plate'].split(',') if pd.notna(row['industry_plate']) else [],
+    #                 'style_plate': row['style_plate'].split(',') if pd.notna(row['style_plate']) else [],
+    #                 'out_plate': row['out_plate'].split(',') if pd.notna(row['out_plate']) else []
+    #             }
+    #
+    #             # 找到分隔值最多的字段
+    #             max_length = max(len(fields[field]) for field in fields)
+    #
+    #             # 按最大长度填充数据
+    #             for i in range(max_length):
+    #                 result_row = {
+    #                     'ymd': ymd.strftime('%Y%m%d'),
+    #                     'stock_code': stock_code,
+    #                     'stock_name': stock_name,
+    #                     'concept_plate': fields['concept_plate'][i].strip() if i < len(
+    #                         fields['concept_plate']) else None,
+    #                     'index_plate': fields['index_plate'][i].strip() if i < len(fields['index_plate']) else None,
+    #                     'industry_plate': fields['industry_plate'][i].strip() if i < len(
+    #                         fields['industry_plate']) else None,
+    #                     'style_plate': fields['style_plate'][i].strip() if i < len(fields['style_plate']) else None,
+    #                     'out_plate': fields['out_plate'][i].strip() if i < len(fields['out_plate']) else None
+    #                 }
+    #                 result.append(result_row)
+    #
+    #         return pd.DataFrame(result)
+    #
+    #     # 4. 调用 unpack_plates 函数处理数据
+    #     output_df = unpack_plates(df)
+    #
+    #     # 总是保存到远端数据库
+    #     mysql_utils.data_from_dataframe_to_mysql(
+    #         user=origin_user,
+    #         password=origin_password,
+    #         host=origin_host,
+    #         database=origin_database,
+    #         df=output_df,
+    #         table_name="dmart_stock_zt_details_expanded",
+    #         merge_on=['ymd', 'stock_code', 'concept_plate', 'index_plate', 'industry_plate', 'style_plate',
+    #                   'out_plate']
+    #     )
+    #     logging.info(
+    #         f"数据处理完成，已将结果保存到 {origin_host} 的 {origin_database}.dmart_stock_zt_details_expanded 表中。")
+    #
 
     @script_run(script_name="calculate_MART_datas.py")
     def setup(self):
 
-        # 涨停股票的明细
-        self.cal_zt_details()
+        # # 涨停股票的明细
+        # self.cal_zt_details()
+        pass
 
-        self.cal_zt_details_explode()
 
 
 if __name__ == '__main__':
