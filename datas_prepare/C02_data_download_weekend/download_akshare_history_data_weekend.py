@@ -14,14 +14,9 @@ from CommonProperties.set_config import setup_logging_config
 # 需要下载的akshare数据表（从ODS层SQL定义）:
 # 1. ods_akshare_stock_value_em          股票基本面数据_估值数据
 # 2. ods_akshare_stock_zh_a_gdhs_detail_em 股票基本面数据_股东数据
-# 3. ods_akshare_stock_cyq_em            股票基本面数据_筹码数据
 # 4. ods_akshare_stock_yjkb_em           股票基本面数据_业绩快报数据
 # 5. ods_akshare_stock_yjyg_em           股票基本面数据_业绩预告数据
 # 6. ods_akshare_stock_a_high_low_statistics 大盘情绪数据
-# 7. ods_akshare_stock_zh_a_spot_em      行情数据_个股行情数据
-# 8. ods_akshare_stock_board_concept_name_em 行情数据_板块行情数据
-# 9. ods_akshare_stock_board_concept_cons_em 行情数据_板块内个股行情数据
-# 10. ods_akshare_stock_board_concept_hist_em 行情数据_板块历史行情数据
 # ************************************************************************
 
 # 调用日志配置

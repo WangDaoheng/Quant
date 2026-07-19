@@ -424,39 +424,25 @@ class SaveInsightHistoryData:
 
         #  2.行业信息的总和dataframe
         shareholder_num_df = pd.DataFrame()
-        #  北向资金的总和dataframe
-        north_bound_df = pd.DataFrame()
 
         #  3.获取最新的stock_codes 数据
         code_list = mysql_utils.get_stock_codes_latest()['stock_code'].tolist()
 
         #  4.请求insight  个股股东数   数据
-        #    请求insight  北向资金持仓  数据
         total_xunhuan = len(code_list)
         i = 1  # 总循环标记
         valid_shareholder = 1  # 个股股东数有效标记
-        valid_north_bound = 1  # 北向资金持仓有效标记
 
         for stock_code in code_list:
             # 屏蔽 stdout 和 stderr
             with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
                 res_shareholder = get_shareholder_num(htsc_code=stock_code, end_date=[time_start_date, time_end_date])
-                res_north_bound = get_north_bound(htsc_code=stock_code, trading_day=[time_start_date, time_end_date])
-
             if res_shareholder is not None:
                 shareholder_num_df = pd.concat([shareholder_num_df, res_shareholder], ignore_index=True)
                 sys.stdout.write(
                     f"\r当前执行 get_shareholder_num  第 {i} 次循环，总共 {total_xunhuan} 个批次, {valid_shareholder}个有效股东数据")
                 sys.stdout.flush()
                 valid_shareholder += 1
-
-            if res_north_bound is not None:
-                north_bound_df = pd.concat([north_bound_df, res_north_bound], ignore_index=True)
-                sys.stdout.write(
-                    f"\r当前执行 get_north_bound  第 {i} 次循环，总共 {total_xunhuan} 个批次, {valid_north_bound}个有效北向持仓数据")
-                sys.stdout.flush()
-                valid_north_bound += 1
-
             i += 1
 
         sys.stdout.write("\n")
@@ -466,17 +452,12 @@ class SaveInsightHistoryData:
                                   inplace=True)
         shareholder_num_df['ymd'] = pd.to_datetime(shareholder_num_df['ymd']).dt.strftime('%Y%m%d')
 
-        north_bound_df.rename(columns={'trading_day': 'ymd', 'htsc_code': 'stock_code'}, inplace=True)
-        north_bound_df['ymd'] = pd.to_datetime(shareholder_num_df['ymd']).dt.strftime('%Y%m%d')
-
-        #  6.声明所有的列名，去除多余列
+         #  6.声明所有的列名，去除多余列
         shareholder_num_df = shareholder_num_df[
             ['stock_code', 'stock_name', 'ymd', 'total_sh', 'avg_share', 'pct_of_total_sh', 'pct_of_avg_sh']]
-        north_bound_df = north_bound_df[['stock_code', 'ymd', 'sh_hkshare_hold', 'pct_total_share']]
 
         #  7.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
         shareholder_num_df = shareholder_num_df.drop_duplicates(subset=['ymd', 'stock_code'], keep='first')
-        north_bound_df = north_bound_df.drop_duplicates(subset=['ymd', 'stock_code'], keep='first')
 
         ############################   文件输出模块     ############################
         # 总是保存到远端数据库
@@ -490,15 +471,7 @@ class SaveInsightHistoryData:
             merge_on=['ymd', 'stock_code']
         )
 
-        mysql_utils.data_from_dataframe_to_mysql(
-            user=origin_user,
-            password=origin_password,
-            host=origin_host,
-            database=origin_database,
-            df=north_bound_df,
-            table_name="ods_north_bound_daily",
-            merge_on=['ymd', 'stock_code']
-        )
+
 
     @timing_decorator
     def setup(self):

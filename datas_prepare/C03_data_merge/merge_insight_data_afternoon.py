@@ -175,25 +175,6 @@ class MergeInsightData:
     #                              columns=columns)
     #
 
-    @timing_decorator
-    def merge_north_bound(self):
-        """
-        A股市场的北向资金数据
-        Returns:
-        """
-        source_table = 'ods_north_bound_daily_now'
-        target_table = 'ods_north_bound_daily'
-        columns = ['stock_code', 'ymd', 'sh_hkshare_hold', 'pct_total_share']
-        ############################   文件输出模块     ############################
-        # 总是对远端Mysql做数据聚合
-        mysql_utils.upsert_table(user=origin_user,
-                                 password=origin_password,
-                                 host=origin_host,
-                                 database=origin_database,
-                                 source_table=source_table,
-                                 target_table=target_table,
-                                 columns=columns)
-
 
     @script_run(script_name="merge_insight_data_afternoon.py")
     def setup(self):
@@ -213,8 +194,7 @@ class MergeInsightData:
         #  股东数
         self.merge_shareholder_num()
 
-        #  北向
-        #self.merge_north_bound()
+
 
 
 if __name__ == '__main__':

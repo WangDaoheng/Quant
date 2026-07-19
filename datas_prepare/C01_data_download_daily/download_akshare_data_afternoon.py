@@ -20,14 +20,9 @@ from CommonProperties.set_config import setup_logging_config
 # 需要下载的akshare数据表（从ODS层SQL定义）:
 # 1. ods_akshare_stock_value_em          股票基本面数据_估值数据
 # 2. ods_akshare_stock_zh_a_gdhs_detail_em 股票基本面数据_股东数据
-# 3. ods_akshare_stock_cyq_em            股票基本面数据_筹码数据
 # 4. ods_akshare_stock_yjkb_em           股票基本面数据_业绩快报数据
 # 5. ods_akshare_stock_yjyg_em           股票基本面数据_业绩预告数据
 # 6. ods_akshare_stock_a_high_low_statistics 大盘情绪数据
-# 7. ods_akshare_stock_zh_a_spot_em      行情数据_个股行情数据
-# 8. ods_akshare_stock_board_concept_name_em 行情数据_板块行情数据
-# 9. ods_akshare_stock_board_concept_cons_em 行情数据_板块内个股行情数据
-# 10. ods_akshare_stock_board_concept_hist_em 行情数据_板块历史行情数据
 # ************************************************************************
 
 # 调用日志配置
@@ -174,42 +169,6 @@ class SaveAkshareDailyData:
             date_format='%Y-%m-%d',
             merge_on=['ymd', 'stock_code'],
             auto_add_stock_code=False
-        )
-
-
-    @timing_decorator
-    def download_stock_cyq_em(self):
-        """
-        下载筹码数据 - ods_akshare_stock_cyq_em
-        接口: stock_cyq_em
-        说明: 个股的全量历史数据，需逐一遍历，不可选定日期      封堵IP   不可用
-        """
-        column_mapping = {
-            '日期': 'ymd',
-            '获利比例': 'profit_ratio',
-            '平均成本': 'avg_cost',
-            '90成本-低': 'cost_low_90',
-            '90成本-高': 'cost_high_90',
-            '90集中度': 'concentration_90',
-            '70成本-低': 'cost_low_70',
-            '70成本-高': 'cost_high_70',
-            '70集中度': 'concentration_70'
-        }
-
-        numeric_columns = [
-            'profit_ratio', 'avg_cost', 'cost_low_90', 'cost_high_90',
-            'concentration_90', 'cost_low_70', 'cost_high_70', 'concentration_70'
-        ]
-
-        return self.downloader.download_to_mysql(
-            ak_function_name='stock_cyq_em',
-            table_name='ods_akshare_stock_cyq_em',
-            column_mapping=column_mapping,
-            numeric_columns=numeric_columns,
-            date_format='%Y-%m-%d',
-            merge_on=['ymd', 'stock_code'],
-            auto_add_stock_code=True,
-            adjust="qfq"  # 添加复权参数，前复权
         )
 
 
@@ -429,269 +388,6 @@ class SaveAkshareDailyData:
                 merge_on=['ymd', 'market']
             )
         return False
-
-
-
-
-    @timing_decorator
-    def download_stock_zh_a_spot_em(self):
-        """
-        下载个股行情数据 - ods_akshare_stock_zh_a_spot_em
-        接口: stock_zh_a_spot_em
-        说明: 分页获取所有沪深京 A 股上市公司的实时行情数据
-        """
-        try:
-            logging.info("开始下载个股行情数据...")
-
-            # 分页获取所有个股数据
-            all_data = []
-            page = 1
-            page_size = 500  # 每页数量，可以调整
-            total_records = 0
-            total_num = None
-            max_retries = 3
-            table_name = 'ods_akshare_stock_zh_a_spot_em'
-
-            while True:
-                retry_count = 0
-                success = False
-
-                # 重试机制
-                while retry_count < max_retries and not success:
-                    try:
-                        url = "https://82.push2.eastmoney.com/api/qt/clist/get"
-                        params = {
-                            "pn": str(page),  # 页码
-                            "pz": str(page_size),  # 每页数量
-                            "po": "1",
-                            "np": "2",
-                            "ut": "bd1d9ddb04089700cf9c27f6f7426281",
-                            "fltt": "2",
-                            "invt": "2",
-                            "fid": "f3",
-                            "fs": "m:0 t:6,m:0 t:80,m:1 t:2,m:1 t:23,m:0 t:81 s:2048",
-                            "fields": "f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f12,f13,f14,f15,f16,f17,f18,"
-                                      "f20,f21,f23,f24,f25,f22,f11,f62,f128,f136,f115,f152",
-                            "_": str(int(time.time() * 1000)),  # 时间戳
-                        }
-
-                        r = requests.get(url, params=params, timeout=30)
-                        r.raise_for_status()
-                        data_json = r.json()
-
-                        if not data_json.get("data") or not data_json["data"].get("diff"):
-                            logging.warning(f"第{page}页无数据")
-                            success = True
-                            break
-
-                        diff_data = data_json["data"]["diff"]
-                        if not diff_data:
-                            logging.info(f"第{page}页数据为空，已获取完所有数据")
-                            success = True
-                            break
-
-                        # 只在第一页获取总数据量
-                        if page == 1:
-                            total_num = data_json["data"]["total"]
-                            logging.info(f"个股行情数据总计: {total_num} 条")
-
-                        # 转换数据
-                        temp_df = pd.DataFrame(diff_data).T
-
-                        # 列名映射
-                        temp_df.columns = [
-                            "_",
-                            "最新价",
-                            "涨跌幅",
-                            "涨跌额",
-                            "成交量",
-                            "成交额",
-                            "振幅",
-                            "换手率",
-                            "市盈率-动态",
-                            "量比",
-                            "5分钟涨跌",
-                            "代码",
-                            "_",
-                            "名称",
-                            "最高",
-                            "最低",
-                            "今开",
-                            "昨收",
-                            "总市值",
-                            "流通市值",
-                            "涨速",
-                            "市净率",
-                            "60日涨跌幅",
-                            "年初至今涨跌幅",
-                            "-",
-                            "-",
-                            "-",
-                            "-",
-                            "-",
-                            "-",
-                            "-",
-                        ]
-
-                        temp_df.reset_index(inplace=True)
-                        temp_df["index"] = temp_df.index + 1
-                        temp_df.rename(columns={"index": "序号"}, inplace=True)
-
-                        # 选择需要的列
-                        temp_df = temp_df[
-                            [
-                                "序号",
-                                "代码",
-                                "名称",
-                                "最新价",
-                                "涨跌幅",
-                                "涨跌额",
-                                "成交量",
-                                "成交额",
-                                "振幅",
-                                "最高",
-                                "最低",
-                                "今开",
-                                "昨收",
-                                "量比",
-                                "换手率",
-                                "市盈率-动态",
-                                "市净率",
-                                "总市值",
-                                "流通市值",
-                                "涨速",
-                                "5分钟涨跌",
-                                "60日涨跌幅",
-                                "年初至今涨跌幅",
-                            ]
-                        ]
-
-                        all_data.append(temp_df)
-                        total_records += len(temp_df)
-
-                        logging.info(f"第{page}页获取成功: {len(temp_df)}条，累计{total_records}条")
-                        success = True
-
-                    except (requests.exceptions.RequestException, requests.exceptions.ConnectionError) as e:
-                        retry_count += 1
-                        if retry_count < max_retries:
-                            wait_time = retry_count * 5
-                            logging.warning(f"第{page}页第{retry_count}次重试失败: {str(e)}，等待{wait_time}秒后重试...")
-                            time.sleep(wait_time)
-                        else:
-                            logging.error(f"第{page}页请求失败，已达到最大重试次数: {str(e)}")
-                            break
-                    except Exception as e:
-                        logging.error(f"第{page}页处理失败: {str(e)}")
-                        break
-
-                # 如果重试后仍然失败，退出循环
-                if not success:
-                    break
-
-                # 判断是否继续获取下一页
-                if total_num is not None:
-                    if total_records >= total_num:
-                        logging.info(f"已获取所有数据: 累计{total_records}条 >= 总计{total_num}条")
-                        break
-                else:
-                    # 如果没有获取到总数，使用备用判断
-                    if len(temp_df) < page_size:
-                        logging.info(f"第{page}页数据不足{page_size}条，判断为最后一页")
-                        break
-
-                page += 1
-                time.sleep(1)  # 适当延迟，避免请求过快
-
-            if not all_data:
-                logging.warning("个股行情数据为空")
-                return False
-
-            # 合并所有数据
-            df = pd.concat(all_data, ignore_index=True)
-
-            # 检查是否获取了完整数据
-            if total_num is not None and len(df) < total_num:
-                missing_count = total_num - len(df)
-                logging.warning(f"数据获取不全: 实际获取{len(df)}条，应有{total_num}条，缺少{missing_count}条")
-
-            logging.info(f"个股行情数据获取完成，共 {len(df)} 条记录")
-
-            # 添加日期列
-            today = DateUtility.today()
-            df['ymd'] = today
-
-            # 数据清洗和转换
-            column_mapping = {
-                '序号': 'serial_num',
-                '代码': 'stock_code',
-                '名称': 'stock_name',
-                '最新价': 'close',
-                '涨跌幅': 'change_pct',
-                '涨跌额': 'change_amt',
-                '成交量': 'trading_volume',
-                '成交额': 'trading_amount',
-                '振幅': 'amplitude',
-                '最高': 'high',
-                '最低': 'low',
-                '今开': 'open',
-                '昨收': 'prev_close',
-                '量比': 'volume_ratio',
-                '换手率': 'turnover_rate',
-                '市盈率-动态': 'pe_dynamic',
-                '市净率': 'pb',
-                '总市值': 'total_market',
-                '流通市值': 'circulation_market',
-                '涨速': 'price_rise_speed',
-                '5分钟涨跌': 'five_min_price_change',
-                '60日涨跌幅': 'sixty_day_price_change',
-                '年初至今涨跌幅': 'ytd_price_change'
-            }
-
-            df = df.rename(columns=column_mapping)
-
-            # 保留存在的列
-            available_columns = [col for col in column_mapping.values() if col in df.columns]
-            available_columns.insert(0, 'ymd')
-            df = df[available_columns]
-
-            # 数值类型转换
-            percent_columns = ['change_pct', 'amplitude', 'turnover_rate', 'five_min_price_change',
-                               'sixty_day_price_change', 'ytd_price_change']
-            for col in percent_columns:
-                if col in df.columns:
-                    df[col] = pd.to_numeric(df[col], errors='coerce')
-
-            numeric_columns = ['serial_num', 'close', 'change_amt', 'trading_volume', 'trading_amount',
-                               'high', 'low', 'open', 'prev_close', 'volume_ratio', 'pe_dynamic', 'pb',
-                               'total_market', 'circulation_market', 'price_rise_speed']
-            for col in numeric_columns:
-                if col in df.columns:
-                    df[col] = pd.to_numeric(df[col], errors='coerce')
-
-            # 删除重复记录
-            df = df.drop_duplicates(subset=['ymd', 'stock_code'], keep='first')
-
-            logging.info(f"个股行情数据下载完成，共 {len(df)} 条记录")
-
-            # 保存到MySQL
-            mysql_utils.data_from_dataframe_to_mysql(
-                user=origin_user,
-                password=origin_password,
-                host=origin_host,
-                database=origin_database,
-                df=df,
-                table_name=table_name,
-                merge_on=['ymd', 'stock_code']
-            )
-
-            logging.info(f"个股行情数据保存成功，共 {len(df)} 条记录")
-
-        except Exception as e:
-            logging.error(f"下载个股行情数据失败: {str(e)}")
-            import traceback
-            logging.error(traceback.format_exc())
-
 
 
     # @timing_decorator
@@ -915,10 +611,7 @@ class SaveAkshareDailyData:
         #
         # # 3. 下载股东户数数据（需要股票代码，分批次处理）   可用              【周末跑】
         # self.download_stock_zh_a_gdhs_detail_em()
-        #
-        # # 4. 下载筹码数据（需要股票代码，分批次处理）    封堵IP   不可用
-        # self.download_stock_cyq_em()
-        #
+
         # 5. 下载业绩快报数据（指定日期）         【可用】  日跑
         self.download_stock_yjkb_em()
 
@@ -927,9 +620,7 @@ class SaveAkshareDailyData:
 
         # 7. 下载大盘高低统计数据               【可用】  日跑
         self.download_stock_a_high_low_statistics()
-        #
-        # # 8. 下载个股行情数据（实时数据）     目前只能返回100条  IP封堵严重 不可用
-        # self.download_stock_zh_a_spot_em()
+
 
         # # 12. 同花顺板块码值                  废弃改用tushare    日跑
         # self.download_stock_board_concept_name_ths()

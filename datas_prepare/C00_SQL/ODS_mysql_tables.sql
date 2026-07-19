@@ -225,26 +225,6 @@ CREATE TABLE quant.ods_shareholder_num (
 ) COMMENT='个股的股东数(全量表)';
 
 
---1.10
-------------------  ods_north_bound_daily   北向持仓数据
-CREATE TABLE quant.ods_north_bound_daily_now (
-      stock_code              varchar(100)            COMMENT '股票代码'
-     ,ymd                     DATE                    COMMENT '交易日期'
-     ,sh_hkshare_hold         BIGINT                  COMMENT '持股数量'
-     ,pct_total_share         FLOAT                   COMMENT '持股占总股本比例'
-     ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
-) COMMENT='北向持仓数据(日增量表)';
-
-
-CREATE TABLE quant.ods_north_bound_daily (
-      stock_code              varchar(100)            COMMENT '股票代码'
-     ,ymd                     DATE                    COMMENT '交易日期'
-     ,sh_hkshare_hold         BIGINT                  COMMENT '持股数量'
-     ,pct_total_share         FLOAT                   COMMENT '持股占总股本比例'
-     ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
-) COMMENT='北向持仓数据(全量表)';
-
-
 --2.1
 ------------------  ods_us_stock_daily_vantage   美股 日K
 CREATE TABLE quant.ods_us_stock_daily_vantage (
@@ -337,24 +317,6 @@ CREATE TABLE quant.ods_tdx_stock_index_plate (
 ) COMMENT='通达信指数板块数据';
 
 
---3.6        
-------------------  ods_tdx_stock_pepb_info   股票基本面数据_资产数据   需手动下载的
-CREATE TABLE quant.ods_tdx_stock_pepb_info (
-     ymd                      DATE                    COMMENT '日期'
-    ,stock_code               varchar(50)             COMMENT '代码'
-    ,stock_name               varchar(50)             COMMENT '名称'
-    ,market_value             double                  COMMENT '流通市值(亿)'
-    ,total_asset              double                  COMMENT '总资产(亿)'
-    ,net_asset                double                  COMMENT '净资产(亿)'
-    ,total_capital            double                  COMMENT '总股本(亿)'
-    ,float_capital            double                  COMMENT '流通股(亿)'
-    ,shareholder_num          bigint                  COMMENT '股东人数'
-    ,pb                       double                  COMMENT '市净率'
-    ,pe                       double                  COMMENT '市盈(动)'
-    ,industry                 varchar(50)             COMMENT '细分行业'
-    ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
-) COMMENT='股票基本面数据_资产数据';
-
 
 
 -------------------------------------------   akshare 数据  ---------------------------------
@@ -399,24 +361,6 @@ CREATE TABLE quant.ods_akshare_stock_zh_a_gdhs_detail_em (
     ,holder_num_announce_date DATE                    COMMENT '股东户数公告日期'
     ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
 ) COMMENT='股票基本面数据_股东数据';
-
-
---4.3
-------------------  ods_akshare_stock_cyq_em   股票基本面数据_筹码数据                 个股的全量历史数据   不可选定日期
-CREATE TABLE quant.ods_akshare_stock_cyq_em (
-     ymd                      DATE                    COMMENT '日期'
-    ,stock_code               varchar(50)             COMMENT '股票代码'
-    ,stock_name               varchar(50)             COMMENT '股票名称'
-    ,profit_ratio             float                   COMMENT '获利比例'
-    ,avg_cost                 float                   COMMENT '平均成本'
-    ,cost_low_90              float                   COMMENT '90成本-低'
-    ,cost_high_90             float                   COMMENT '90成本-高'
-    ,concentration_90         float                   COMMENT '90集中度'
-    ,cost_low_70              float                   COMMENT '70成本-低'
-    ,cost_high_70             float                   COMMENT '70成本-高'
-    ,concentration_70         float                   COMMENT '70集中度'
-    ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
-) COMMENT='股票基本面数据_筹码数据';
 
 
 --4.4
@@ -476,104 +420,6 @@ CREATE TABLE quant.ods_akshare_stock_a_high_low_statistics (
 ) COMMENT='大盘情绪数据_大盘区间内的新低新高股票数';
 
 
---4.7
-------------------  ods_akshare_stock_zh_a_spot_em            行情数据_个股行情数据  全量的每日切片数据 不可指定日期
-CREATE TABLE quant.ods_akshare_stock_zh_a_spot_em (
-     ymd                      DATE                    COMMENT '数据日期（行情交易日，统一日期维度）'
-    ,serial_num               bigint                  COMMENT '序号'
-    ,stock_code               varchar(50)             COMMENT '代码'
-    ,stock_name               varchar(50)             COMMENT '名称'
-    ,close                    float                   COMMENT '最新价格'
-    ,change_pct               float                   COMMENT '涨跌幅(%)'
-    ,change_amt               float                   COMMENT '涨跌额'
-    ,trading_volume           float                   COMMENT '成交量(手)'
-    ,trading_amount           double                  COMMENT '成交额(元)'
-    ,amplitude                float                   COMMENT '振幅(%)'
-    ,high                     float                   COMMENT '最高'
-    ,low                      float                   COMMENT '最低'
-    ,open                     float                   COMMENT '今开'
-    ,prev_close               float                   COMMENT '昨收'
-    ,volume_ratio             float                   COMMENT '量比'
-    ,turnover_rate            float                   COMMENT '换手率(%)'
-    ,pe_dynamic               float                   COMMENT '市盈率-动态'
-    ,pb                       float                   COMMENT '市净率'
-    ,total_market             double                  COMMENT '总市值(元)'
-    ,circulation_market       double                  COMMENT '流通市值(元)'
-    ,price_rise_speed         float                   COMMENT '涨速'
-    ,five_min_price_change    float                   COMMENT '5分钟涨跌(%)'
-    ,sixty_day_price_change   float                   COMMENT '60日涨跌幅(%)'
-    ,ytd_price_change         float                   COMMENT '年初至今涨跌幅(%)'
-    ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
-) COMMENT='行情数据_个股行情数据';
-
-
---4.8
-------------------  ods_akshare_stock_board_concept_name_em   行情数据_板块行情数据           全量的每日切片数据 不可指定日期   板块三剑客1 
-CREATE TABLE quant.ods_akshare_stock_board_concept_name_em (
-     ymd                      DATE                    COMMENT '数据日期（核心日期维度，适配量化数据统一归档）'
-    ,ranking                  int                     COMMENT '排名'
-    ,board_name               varchar(100)            COMMENT '板块名称'
-    ,board_code               varchar(50)             COMMENT '板块代码'
-    ,close                    float                   COMMENT '最新价'
-    ,change_amt               float                   COMMENT '涨跌额'
-    ,change_pct               float                   COMMENT '涨跌幅(%)'
-    ,total_market             double                  COMMENT '总市值'
-    ,turnover_rate            float                   COMMENT '换手率(%)'
-    ,rising_stocks_num        int                     COMMENT '上涨家数'
-    ,falling_stocks_num       int                     COMMENT '下跌家数'
-    ,leading_stock            varchar(100)            COMMENT '领涨股票'
-    ,leading_stock_pct        float                   COMMENT '领涨股票-涨跌幅(%)'
-    ,UNIQUE KEY unique_ymd_board_code (ymd, board_code)
-) COMMENT='行情数据_板块行情数据';
-
-
---4.9
-------------------  ods_akshare_stock_board_concept_cons_em   行情数据_板块内个股的行情数据    全量的每日切片数据 不可指定日期   板块三剑客2
-CREATE TABLE quant.ods_akshare_stock_board_concept_cons_em (
-     ymd                      DATE                    COMMENT '数据日期（核心日期维度，用于归档和跨表关联）'
-    ,board_name               varchar(100)            COMMENT '板块名称'
-    ,board_code               varchar(50)             COMMENT '板块代码'
-    ,serial_num               int                     COMMENT '序号'
-    ,stock_code               varchar(50)             COMMENT '代码'
-    ,stock_name               varchar(50)             COMMENT '名称'
-    ,close                    float                   COMMENT '最新价'
-    ,change_pct               float                   COMMENT '涨跌幅(%)'
-    ,change_amt               float                   COMMENT '涨跌额'
-    ,trading_volume           float                   COMMENT '成交量(手)'
-    ,trading_amount           float                   COMMENT '成交额'
-    ,amplitude                float                   COMMENT '振幅(%)'
-    ,high                     float                   COMMENT '最高'
-    ,low                      float                   COMMENT '最低'
-    ,open                     float                   COMMENT '今开'
-    ,prev_close               float                   COMMENT '昨收'
-    ,turnover_rate            float                   COMMENT '换手率(%)'
-    ,pe_dynamic               float                   COMMENT '市盈率-动态'
-    ,pb                       float                   COMMENT '市净率'
-    ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
-) COMMENT='行情数据_板块内个股的行情数据';
-
-
---4.10
-------------------  ods_akshare_stock_board_concept_hist_em   行情数据_板块历史行情数据    可指定日期范围   板块三剑客3
-CREATE TABLE quant.ods_akshare_stock_board_concept_hist_em (
-     ymd                      DATE                    COMMENT '日期（行情交易日）'
-    ,board_code               varchar(50)             COMMENT '板块代码（补充字段，关联板块基础信息，适配量化关联分析）'
-    ,open                     float                   COMMENT '开盘'
-    ,close                    float                   COMMENT '收盘'
-    ,high                     float                   COMMENT '最高'
-    ,low                      float                   COMMENT '最低'
-    ,change_pct               float                   COMMENT '涨跌幅(%)'
-    ,change_amt               float                   COMMENT '涨跌额'
-    ,trading_volume           bigint                  COMMENT '成交量'
-    ,trading_amount           double                  COMMENT '成交额'
-    ,amplitude                float                   COMMENT '振幅(%)'
-    ,turnover_rate            float                   COMMENT '换手率(%)'
-    ,UNIQUE KEY unique_ymd_board_code (ymd, board_code)
-) COMMENT='行情数据_板块历史行情数据';
-
-
-
-
 --4.11
 ------------------  ods_akshare_board_concept_name_ths          行情数据_同花顺板块码值       全量的每日切片数据 不可指定日期   同花顺板块三剑客1 
 CREATE TABLE quant.ods_akshare_board_concept_name_ths (
@@ -598,20 +444,6 @@ CREATE TABLE quant.ods_akshare_stock_board_concept_index_ths (
     ,trading_amount           float                   COMMENT '成交额'
     ,UNIQUE KEY unique_ymd_board_code (ymd, board_code)
 ) COMMENT='行情数据_板块内个股的行情数据';
-
-
-
---4.13
-------------------  ods_akshare_stock_board_concept_index_ths   行情数据_同花顺板块内含股票    手动跑爬虫获取
-CREATE TABLE quant.ods_akshare_stock_board_concept_maps_ths (
-     ymd                      DATE                    COMMENT '数据日期（核心日期维度，用于归档和跨表关联）'
-    ,board_name               varchar(100)            COMMENT '板块名称'
-    ,board_code               varchar(50)             COMMENT '板块代码'
-    ,stock_code               varchar(50)             COMMENT '代码'
-    ,stock_name               varchar(50)             COMMENT '名称'
-    ,UNIQUE KEY unique_ymd_board_code (ymd, board_code)
-) COMMENT='行情数据_同花顺板块内含股票';
-
 
 
 ----------------------------------------- tushare 数据  ----------------------------------------------
@@ -666,57 +498,6 @@ CREATE TABLE quant.ods_tushare_stock_board_concept_maps_ths (
     ,is_new                   varchar(1)              COMMENT '是否最新(Y/N)'
     ,UNIQUE KEY unique_ymd_board_stock (ymd, board_code, stock_code)
 ) COMMENT='行情数据_同花顺板块内含股票_Tushare';
-
-
--- ============ 4. 东方财富概念板块行情数据 ============
--- 对应接口：dc_index
-CREATE TABLE quant.ods_tushare_stock_board_concept_name_em (
-     ymd                      DATE                    COMMENT '数据日期（核心日期维度，适配量化数据统一归档）'
-    ,board_name               varchar(100)            COMMENT '板块名称'
-    ,board_code               varchar(50)             COMMENT '板块代码'
-    ,leading_stock            varchar(100)            COMMENT '领涨股票名称'
-    ,leading_stock_code       varchar(50)             COMMENT '领涨股票代码'
-    ,change_pct               float                   COMMENT '涨跌幅(%)'
-    ,leading_stock_pct        float                   COMMENT '领涨股票涨跌幅(%)'
-    ,total_market_value       float                   COMMENT '总市值（万元）'
-    ,turnover_rate            float                   COMMENT '换手率(%)'
-    ,rising_stocks_num        int                     COMMENT '上涨家数'
-    ,falling_stocks_num       int                     COMMENT '下降家数'
-    ,UNIQUE KEY unique_ymd_board_code (ymd, board_code)
-) COMMENT='行情数据_东方财富概念板块行情_Tushare';
-
-
--- ============ 5. 东方财富板块历史行情数据 ============
--- 对应接口：dc_daily
-CREATE TABLE quant.ods_tushare_stock_board_concept_hist_em (
-     ymd                      DATE                    COMMENT '日期（行情交易日）'
-    ,board_name               varchar(100)            COMMENT '板块名称'
-    ,board_code               varchar(50)             COMMENT '板块代码'
-    ,open                     float                   COMMENT '开盘点位'
-    ,high                     float                   COMMENT '最高点位'
-    ,low                      float                   COMMENT '最低点位'
-    ,close                    float                   COMMENT '收盘点位'
-    ,change_amt               float                   COMMENT '涨跌点位'
-    ,change_pct               float                   COMMENT '涨跌幅(%)'
-    ,trading_volume           float                   COMMENT '成交量(股)'
-    ,trading_amount           float                   COMMENT '成交额(元)'
-    ,amplitude                float                   COMMENT '振幅(%)'
-    ,turnover_rate            float                   COMMENT '换手率(%)'
-    ,category                 varchar(20)             COMMENT '板块类型（概念板块/行业板块/地域板块）'
-    ,UNIQUE KEY unique_ymd_board_code (ymd, board_code)
-) COMMENT='行情数据_东方财富板块历史行情_Tushare';
-
-
--- ============ 6. 东方财富板块内含股票 ============
--- 对应接口：dc_member
-CREATE TABLE quant.ods_tushare_stock_board_concept_maps_em (
-     ymd                      DATE                    COMMENT '数据日期（核心日期维度，用于归档和跨表关联）'
-    ,board_name               varchar(100)            COMMENT '板块名称'
-    ,board_code               varchar(50)             COMMENT '板块代码'
-    ,stock_code               varchar(50)             COMMENT '成分股票代码'
-    ,stock_name               varchar(100)            COMMENT '成分股名称'
-    ,UNIQUE KEY unique_ymd_board_stock (ymd, board_code, stock_code)
-) COMMENT='行情数据_东方财富板块内含股票_Tushare';
 
 
 

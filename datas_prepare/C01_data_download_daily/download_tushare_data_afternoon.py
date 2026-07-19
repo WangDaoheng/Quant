@@ -303,9 +303,8 @@ class SaveTushareDailyData:
             ts_code = row['board_code']
             board_name = row['board_name']
 
-            # 进度条，每100个打印一次
             if (idx + 1) % 100 == 0 or idx == 0 or idx == total - 1:
-                sys.stdout.write(f"\r成分股: {idx+1}/{total}")
+                sys.stdout.write(f"\r成分股: {idx + 1}/{total}")
                 sys.stdout.flush()
 
             try:
@@ -331,7 +330,8 @@ class SaveTushareDailyData:
                         if col not in df.columns:
                             df[col] = None
 
-                    target_cols = ['ymd', 'board_name', 'board_code', 'stock_code', 'stock_name', 'weight', 'in_date', 'out_date', 'is_new']
+                    target_cols = ['ymd', 'board_name', 'board_code', 'stock_code', 'stock_name', 'weight', 'in_date',
+                                   'out_date', 'is_new']
                     available_cols = [c for c in target_cols if c in df.columns]
                     all_members.append(df[available_cols])
                 else:
@@ -348,7 +348,7 @@ class SaveTushareDailyData:
         sys.stdout.write("\n")
 
         if not all_members:
-            logging.warning("未获取到任何成分股")
+            logging.warning("未获取到任何成分股，跳过删除和写入，保留历史数据")
             return pd.DataFrame()
 
         result = pd.concat(all_members, ignore_index=True)
@@ -361,6 +361,38 @@ class SaveTushareDailyData:
         result = result.drop_duplicates(subset=['ymd', 'board_code', 'stock_code'], keep='first')
 
         logging.info(f"成分股: {len(result)} 条, 成功 {total - len(failed)} 个板块, 失败 {len(failed)} 个")
+
+        # ========== 滚动删除：确保删完后表还有数据 ==========
+        try:
+            from sqlalchemy import create_engine, text
+            engine = create_engine(
+                f"mysql+pymysql://{base_properties.origin_mysql_user}:{base_properties.origin_mysql_password}"
+                f"@{base_properties.origin_mysql_host}/{base_properties.origin_mysql_database}"
+            )
+
+            # 先查：表中是否存在 今天之前 的数据
+            check_sql = f"SELECT COUNT(*) as cnt FROM ods_tushare_stock_board_concept_maps_ths WHERE ymd < '{ymd}'"
+            with engine.connect() as conn:
+                check_result = conn.execute(text(check_sql)).fetchone()
+                history_count = check_result[0] if check_result else 0
+
+            if history_count > 0:
+                # 有历史数据才删除：删10天前的
+                cutoff_date = (pd.to_datetime(ymd, format='%Y%m%d') - pd.Timedelta(days=10)).strftime('%Y%m%d')
+                delete_sql = f"DELETE FROM ods_tushare_stock_board_concept_maps_ths WHERE ymd < '{cutoff_date}'"
+                with engine.connect() as conn:
+                    result_delete = conn.execute(text(delete_sql))
+                    conn.commit()
+                    deleted_rows = result_delete.rowcount
+                logging.info(
+                    f"滚动删除完成: ymd < {cutoff_date}，删除 {deleted_rows} 条，历史数据 {history_count} 条保留")
+            else:
+                logging.warning(f"表中无历史数据(ymd < {ymd})，跳过删除，直接写入")
+
+            engine.dispose()
+        except Exception as e:
+            logging.error(f"滚动删除失败: {e}")
+        # ========== 滚动删除结束 ==========
 
         mysql_utils.data_from_dataframe_to_mysql(
             user=base_properties.origin_mysql_user,
@@ -375,6 +407,7 @@ class SaveTushareDailyData:
         logging.info("成分股写入完成")
         return result
 
+
     @script_run(script_name="download_tushare_data_afternoon.py")
     def setup(self):
         self.get_stock_kline_tushare()
@@ -386,3 +419,4 @@ class SaveTushareDailyData:
 if __name__ == '__main__':
     downloader = SaveTushareDailyData()
     downloader.setup()
+
