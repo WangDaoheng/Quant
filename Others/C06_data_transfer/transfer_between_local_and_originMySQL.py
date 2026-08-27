@@ -17,6 +17,56 @@ origin_password = Base_Properties.origin_mysql_password
 origin_database = Base_Properties.origin_mysql_database
 origin_host = Base_Properties.origin_mysql_host
 
+table_all_list = [
+                  'dmart_stock_zt_details_expanded',
+
+                  'ods_stock_code_daily_insight',
+                  'ods_stock_limit_summary_insight',
+                  'ods_stock_chouma_insight',
+                  'ods_astock_industry_overview',
+                  'ods_astock_industry_detail',
+                  'ods_stock_kline_daily_ts',
+                  'ods_tushare_board_concept_name_ths',
+                  'ods_tushare_stock_board_concept_index_ths',
+                  'ods_tushare_stock_board_concept_maps_ths',
+                  'ods_akshare_stock_yjkb_em',
+                  'ods_akshare_stock_yjyg_em',
+                  'ods_akshare_stock_a_high_low_statistics',
+                  'ods_index_a_share_insight',
+                  'ods_future_inside_insight',
+                  'ods_shareholder_num',
+                  'ods_akshare_stock_value_em',
+                  'ods_akshare_stock_zh_a_gdhs_detail_em',
+                  'dwd_stock_a_total_plate',
+                  'ods_stock_exchange_market',
+                  'dwd_shareholder_num_latest',
+                  'dwd_ashare_stock_base_info',
+                  'dwd_stock_zt_list',
+                  'dwd_stock_dt_list',
+                  'dwd_stock_technical_indicators',
+                  'dmart_stock_zt_details',
+
+
+                  'ods_exchange_dxy_vantage',
+                  'ods_exchange_rate_vantage_detail',
+
+
+
+
+
+
+                  'ods_stock_kline_daily_insight',
+
+                  'ods_stock_plate_redbook',
+                  'ods_tdx_stock_concept_plate',
+                  'ods_tdx_stock_index_plate',
+                  'ods_tdx_stock_industry_plate',
+                  'ods_tdx_stock_region_plate',
+                  'ods_tdx_stock_style_plate',
+                  'ods_trading_days_insight',
+                  'ods_us_stock_daily_vantage']
+
+
 
 @timing_decorator
 def transfer_local_to_origin_mysql():
@@ -28,43 +78,9 @@ def transfer_local_to_origin_mysql():
     local_db_url = f'mysql+pymysql://{local_user}:{local_password}@{local_host}:3306/{local_database}'
     origin_db_url = f'mysql+pymysql://{origin_user}:{origin_password}@{origin_host}:3306/{origin_database}'
 
-    # 'stock_kline_daily_insight',
+    # table_temp_list = ['stock_chouma_insight']
 
-    table_all_list = ['dmart_stock_zt_details',
-                      'dmart_stock_zt_details_expanded',
-                      'dwd_ashare_stock_base_info',
-                      'dwd_stock_a_total_plate',
-                      'dwd_stock_dt_list',
-                      'dwd_stock_zt_list',
-                      'ods_akshare_stock_a_high_low_statistics',
-                      'ods_akshare_stock_value_em',
-                      'ods_akshare_stock_yjkb_em',
-                      'ods_akshare_stock_yjyg_em',
-                      'ods_akshare_stock_zh_a_gdhs_detail_em',
-                      'ods_astock_industry_detail',
-                      'ods_astock_industry_overview',
-                      'ods_exchange_dxy_vantage',
-                      'ods_exchange_rate_vantage_detail',
-                      'ods_future_inside_insight',
-                      'ods_index_a_share_insight',
-                      'ods_shareholder_num',
-                      'ods_stock_chouma_insight',
-                      'ods_stock_code_daily_insight',
-                      'ods_stock_exchange_market',
-                      'ods_stock_kline_daily_insight',
-                      'ods_stock_limit_summary_insight',
-                      'ods_stock_plate_redbook',
-                      'ods_tdx_stock_concept_plate',
-                      'ods_tdx_stock_index_plate',
-                      'ods_tdx_stock_industry_plate',
-                      'ods_tdx_stock_region_plate',
-                      'ods_tdx_stock_style_plate',
-                      'ods_trading_days_insight',
-                      'ods_us_stock_daily_vantage']
-
-    table_temp_list = ['stock_chouma_insight']
-
-    for tableName in table_temp_list:
+    for tableName in table_all_list:
         mysql_utils.full_replace_migrate(source_host=local_host,
                                          source_db_url=local_db_url,
                                          target_host=origin_host,

@@ -794,8 +794,8 @@ class CalDWD:
         # 计算行情衍生指标  均线等
         self.cal_technical_indicators()
 
-        # 补录base_info
-        self.cal_stock_base_info_batch()
+        # # 补录 base_info 的历史数据
+        # self.cal_stock_base_info_batch()
 
 
 if __name__ == '__main__':
