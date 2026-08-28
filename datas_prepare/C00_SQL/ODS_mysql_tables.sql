@@ -8,7 +8,8 @@ CREATE TABLE quant.ods_trading_days_insight (
 ) COMMENT='交易所的交易日历';
 
 
---1.1
+-------------------------------------------   insight 数据  ---------------------------------
+--1.1   下午跑
 ------------------  ods_stock_code_daily_insight   当日已上市股票码表
 CREATE TABLE quant.ods_stock_code_daily_insight (
      ymd                      DATE        NOT NULL    COMMENT '交易日期'
@@ -18,23 +19,7 @@ CREATE TABLE quant.ods_stock_code_daily_insight (
     ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
 ) COMMENT='当日已上市股票码表';
 
-
---1.3
-------------------  ods_index_a_share_insight   大A的主要指数日K
-CREATE TABLE quant.ods_index_a_share_insight (
-     index_code               VARCHAR(50) NOT NULL    COMMENT '指数代码'
-    ,index_name               VARCHAR(50) NOT NULL    COMMENT '指数名称'
-    ,ymd                      DATE        NOT NULL    COMMENT '交易日期'
-    ,open                     FLOAT                   COMMENT '开盘价'
-    ,close                    FLOAT                   COMMENT '收盘价'
-    ,high                     FLOAT                   COMMENT '最高价'
-    ,low                      FLOAT                   COMMENT '最低价'
-    ,volume                   BIGINT                  COMMENT '成交量'
-    ,UNIQUE KEY unique_ymd_stock_code (ymd, index_code)
-) COMMENT='大A的主要指数日K(全量表)';
-
-
---1.4
+--1.2   下午跑
 ------------------  ods_stock_limit_summary_insight   当日大A行情温度
 CREATE TABLE quant.ods_stock_limit_summary_insight (
      ymd                      DATE        NOT NULL    COMMENT '日期'
@@ -47,24 +32,7 @@ CREATE TABLE quant.ods_stock_limit_summary_insight (
     ,UNIQUE KEY unique_ymd_name (ymd, name)
 ) COMMENT='当日大A行情温度(全量表)';
 
-
---1.5
-------------------  ods_future_inside_insight   内盘主要期货数据日K
-CREATE TABLE quant.ods_future_inside_insight (
-     stock_code               VARCHAR(50) NOT NULL    COMMENT '期货标的代码'
-    ,ymd                      DATE        NOT NULL    COMMENT '交易日期'
-    ,open                     FLOAT                   COMMENT '开盘价'
-    ,close                    FLOAT                   COMMENT '收盘价'
-    ,high                     FLOAT                   COMMENT '最高价'
-    ,low                      FLOAT                   COMMENT '最低价'
-    ,volume                   BIGINT                  COMMENT '成交量'
-    ,open_interest            BIGINT                  COMMENT '持仓量'
-    ,settle                   BIGINT                  COMMENT '结算价'
-    ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
-) COMMENT='内盘主要期货数据日K(全量表)';
-
-
---1.6
+--1.3   下午跑
 ------------------  ods_stock_chouma_insight   A股的筹码分布数据
 CREATE TABLE quant.ods_stock_chouma_insight (
     stock_code                               VARCHAR(50) NOT NULL     COMMENT '证券代码'
@@ -97,8 +65,7 @@ CREATE TABLE quant.ods_stock_chouma_insight (
    ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
 ) COMMENT='A股的筹码分布数据';
 
-
---1.7
+--1.4   下午跑
 ------------------  ods_astock_industry_overview   行业分类，申万三级分类
 CREATE TABLE quant.ods_astock_industry_overview (
     ymd                       DATE                    COMMENT '交易日期'
@@ -114,8 +81,7 @@ CREATE TABLE quant.ods_astock_industry_overview (
    ,UNIQUE KEY unique_industry_code (ymd, industry_code)
 ) COMMENT='行业分类，申万三级分类';
 
-
---1.8
+--1.5   下午跑
 ------------------  ods_astock_industry_detail   股票&行业的关联
 CREATE TABLE quant.ods_astock_industry_detail (
     ymd                       DATE                    COMMENT '交易日期'
@@ -132,8 +98,36 @@ CREATE TABLE quant.ods_astock_industry_detail (
    ,UNIQUE KEY unique_stock_code (ymd, stock_code)
 ) COMMENT='股票&行业的关联';
 
+--1.6   凌晨跑
+------------------  ods_index_a_share_insight   大A的主要指数日K
+CREATE TABLE quant.ods_index_a_share_insight (
+     index_code               VARCHAR(50) NOT NULL    COMMENT '指数代码'
+    ,index_name               VARCHAR(50) NOT NULL    COMMENT '指数名称'
+    ,ymd                      DATE        NOT NULL    COMMENT '交易日期'
+    ,open                     FLOAT                   COMMENT '开盘价'
+    ,close                    FLOAT                   COMMENT '收盘价'
+    ,high                     FLOAT                   COMMENT '最高价'
+    ,low                      FLOAT                   COMMENT '最低价'
+    ,volume                   BIGINT                  COMMENT '成交量'
+    ,UNIQUE KEY unique_ymd_stock_code (ymd, index_code)
+) COMMENT='大A的主要指数日K(全量表)';
 
---1.9
+--1.7   凌晨跑
+------------------  ods_future_inside_insight   内盘主要期货数据日K
+CREATE TABLE quant.ods_future_inside_insight (
+     stock_code               VARCHAR(50) NOT NULL    COMMENT '期货标的代码'
+    ,ymd                      DATE        NOT NULL    COMMENT '交易日期'
+    ,open                     FLOAT                   COMMENT '开盘价'
+    ,close                    FLOAT                   COMMENT '收盘价'
+    ,high                     FLOAT                   COMMENT '最高价'
+    ,low                      FLOAT                   COMMENT '最低价'
+    ,volume                   BIGINT                  COMMENT '成交量'
+    ,open_interest            BIGINT                  COMMENT '持仓量'
+    ,settle                   BIGINT                  COMMENT '结算价'
+    ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
+) COMMENT='内盘主要期货数据日K(全量表)';
+
+--1.8   凌晨跑
 ------------------  ods_shareholder_num   个股的股东数
 CREATE TABLE quant.ods_shareholder_num (
        stock_code             varchar(100)            COMMENT '股票代码'
@@ -147,143 +141,8 @@ CREATE TABLE quant.ods_shareholder_num (
 ) COMMENT='个股的股东数(全量表)';
 
 
---2.1
-------------------  ods_us_stock_daily_vantage   美股 日K
-CREATE TABLE quant.ods_us_stock_daily_vantage (
-     stock_name               VARCHAR(50) NOT NULL    COMMENT '股票名称'
-    ,ymd                      DATE        NOT NULL    COMMENT '交易日期'
-    ,open                     FLOAT                   COMMENT '开盘价'
-    ,high                     FLOAT                   COMMENT '最高价'
-    ,low                      FLOAT                   COMMENT '最低价'
-    ,close                    FLOAT                   COMMENT '收盘价'
-    ,volume                   BIGINT                  COMMENT '成交量'
-    ,UNIQUE KEY unique_ymd_name (ymd, stock_name)
-) COMMENT='美股 日K';
-
-
---2.2
-------------------  ods_exchange_rate_vantage_detail   汇率&美元指数 日K
-CREATE TABLE quant.ods_exchange_rate_vantage_detail (
-     stock_name               VARCHAR(50) NOT NULL    COMMENT '货币对'
-    ,ymd                      DATE        NOT NULL    COMMENT '交易日期'
-    ,open                     FLOAT                   COMMENT '开盘价'
-    ,high                     FLOAT                   COMMENT '最高价'
-    ,low                      FLOAT                   COMMENT '最低价'
-    ,close                    FLOAT                   COMMENT '收盘价'
-    ,UNIQUE KEY unique_ymd_name (ymd, stock_name)
-) COMMENT='汇率&美元指数 日K';
-
-
---2.3
-------------------  ods_exchange_dxy_vantage   美元指数 日K
-CREATE TABLE quant.ods_exchange_dxy_vantage (
-    ymd                       DATE        NOT NULL    COMMENT '交易日期'
-   ,stock_name                VARCHAR(50) NOT NULL    COMMENT '货币对'
-   ,UNIQUE KEY unique_ymd_name (ymd, stock_name)
-) COMMENT='美元指数 日K';
-
-
--------------------------------------------   通达信数据  ---------------------------------
---3.1        
-------------------  ods_tdx_stock_concept_plate   通达信概念板块数据
-CREATE TABLE quant.ods_tdx_stock_concept_plate (
-     ymd                      DATE        NOT NULL    COMMENT '日期'
-    ,concept_code             VARCHAR(50) NOT NULL    COMMENT '概念板块代码'
-    ,concept_name             VARCHAR(50)             COMMENT '概念板块名称'
-    ,stock_code               VARCHAR(50)             COMMENT '股票代码'
-    ,stock_name               VARCHAR(50)             COMMENT '股票名称'
-) COMMENT='通达信概念板块数据';
-
-
---3.2        
-------------------  ods_tdx_stock_style_plate   通达信风格板块数据
-CREATE TABLE quant.ods_tdx_stock_style_plate (
-     ymd                      DATE        NOT NULL    COMMENT '日期'
-    ,style_code               VARCHAR(50) NOT NULL    COMMENT '风格板块代码'
-    ,style_name               VARCHAR(50)             COMMENT '风格板块名称'
-    ,stock_code               VARCHAR(50)             COMMENT '股票代码'
-    ,stock_name               VARCHAR(50)             COMMENT '股票名称'
-) COMMENT='通达信风格板块数据';
-
-
---3.3        
-------------------  ods_tdx_stock_industry_plate   通达信行业板块数据
-CREATE TABLE quant.ods_tdx_stock_industry_plate (
-     ymd                      DATE        NOT NULL    COMMENT '日期'
-    ,industry_code            VARCHAR(50) NOT NULL    COMMENT '行业板块代码'
-    ,industry_name            VARCHAR(50)             COMMENT '行业板块名称'
-    ,stock_code               VARCHAR(50)             COMMENT '股票代码'
-    ,stock_name               VARCHAR(50)             COMMENT '股票名称'
-) COMMENT='通达信行业板块数据';
-
-
---3.4        
-------------------  ods_tdx_stock_region_plate   通达信地区板块数据
-CREATE TABLE quant.ods_tdx_stock_region_plate (
-     ymd                      DATE        NOT NULL    COMMENT '日期'
-    ,region_code              VARCHAR(50) NOT NULL    COMMENT '地区板块代码'
-    ,region_name              VARCHAR(50)             COMMENT '地区板块名称'
-    ,stock_code               VARCHAR(50)             COMMENT '股票代码'
-    ,stock_name               VARCHAR(50)             COMMENT '股票名称'
-) COMMENT='通达信地区板块数据';
-
-
---3.5        
-------------------  ods_tdx_stock_index_plate   通达信指数板块数据
-CREATE TABLE quant.ods_tdx_stock_index_plate (
-     ymd                      DATE        NOT NULL    COMMENT '日期'
-    ,index_code               VARCHAR(50) NOT NULL    COMMENT '指数板块代码'
-    ,index_name               VARCHAR(50)             COMMENT '指数板块名称'
-    ,stock_code               VARCHAR(50)             COMMENT '股票代码'
-    ,stock_name               VARCHAR(50)             COMMENT '股票名称'
-) COMMENT='通达信指数板块数据';
-
-
 -------------------------------------------   akshare 数据  ---------------------------------
---4.1        
-------------------  ods_akshare_stock_value_em   股票基本面数据_估值数据              个股的全量历史数据   不可选定日期
-CREATE TABLE quant.ods_akshare_stock_value_em (
-     ymd                      DATE                    COMMENT '数据日期'
-    ,stock_code               varchar(50)             COMMENT '股票代码'
-    ,close                    float                   COMMENT '当日收盘价(元)'
-    ,change_pct               float                   COMMENT '当日涨跌幅(%)'
-    ,total_market             double                  COMMENT '总市值(元)'
-    ,circulation_market       double                  COMMENT '流通市值(元)'
-    ,total_shares             double                  COMMENT '总股本(股)'
-    ,circulation_shares       double                  COMMENT '流通股本(股)'
-    ,pe_ttm                   float(12,2)             COMMENT 'PE(TTM)'
-    ,pe_static                float(12,2)             COMMENT 'PE(静)'
-    ,pb                       float(12,2)             COMMENT '市净率'
-    ,peg                      float(12,2)             COMMENT 'PEG值'
-    ,pcf                      float(12,2)             COMMENT '市现率'
-    ,ps                       float(12,2)             COMMENT '市销率'
-    ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
-) COMMENT='股票基本面数据_估值数据';
-
-
---4.2
-------------------  ods_akshare_stock_zh_a_gdhs_detail_em   股票基本面数据_股东数据    个股的全量历史数据   不可选定日期
-CREATE TABLE quant.ods_akshare_stock_zh_a_gdhs_detail_em (
-     ymd                      DATE                    COMMENT '股东户数统计截止日（对应核心日期维度）'
-    ,stock_code               varchar(50)             COMMENT '股票代码'
-    ,stock_name               varchar(50)             COMMENT '股票名称'
-    ,range_change_pct         float                   COMMENT '区间涨跌幅(%)'
-    ,holder_num_current       bigint                  COMMENT '股东户数-本次'
-    ,holder_num_last          bigint                  COMMENT '股东户数-上次'
-    ,holder_num_change        bigint                  COMMENT '股东户数-增减'
-    ,holder_num_change_pct    float                   COMMENT '股东户数-增减比例(%)'
-    ,avg_holder_market        double                  COMMENT '户均持股市值'
-    ,avg_holder_share_num     float                   COMMENT '户均持股数量'
-    ,total_market             double                  COMMENT '总市值'
-    ,total_shares             bigint                  COMMENT '总股本'
-    ,share_change             bigint                  COMMENT '股本变动'
-    ,share_change_reason      varchar(255)            COMMENT '股本变动原因'
-    ,holder_num_announce_date DATE                    COMMENT '股东户数公告日期'
-    ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
-) COMMENT='股票基本面数据_股东数据';
-
-
---4.4
+--2.1   下午跑
 ------------------  ods_akshare_stock_yjkb_em   股票基本面数据_业绩快报数据    全量的每日切片数据 可选定日期
 CREATE TABLE quant.ods_akshare_stock_yjkb_em (
      ymd                      DATE                    COMMENT '公告日期（核心日期维度）'
@@ -305,8 +164,7 @@ CREATE TABLE quant.ods_akshare_stock_yjkb_em (
     ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
 ) COMMENT='股票基本面数据_业绩快报数据';
 
-
---4.5
+--2.2   下午跑
 ------------------  ods_akshare_stock_yjyg_em   股票基本面数据_业绩预告数据    全量的每日切片数据  可选定日期
 CREATE TABLE quant.ods_akshare_stock_yjyg_em (
      ymd                      DATE                    COMMENT '公告日期'
@@ -323,8 +181,7 @@ CREATE TABLE quant.ods_akshare_stock_yjyg_em (
     ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
 ) COMMENT='股票基本面数据_业绩预告数据';
 
-
---4.6
+--2.3   下午跑
 ------------------  ods_akshare_stock_a_high_low_statistics   大盘情绪数据_大盘区间内的新低新高股票数  全量的每日切片数据 不可指定日期
 CREATE TABLE quant.ods_akshare_stock_a_high_low_statistics (
      ymd                      DATE                    COMMENT '交易日'
@@ -339,55 +196,50 @@ CREATE TABLE quant.ods_akshare_stock_a_high_low_statistics (
     ,UNIQUE KEY unique_ymd_market (ymd, market)
 ) COMMENT='大盘情绪数据_大盘区间内的新低新高股票数';
 
------------------------------------------ tushare 数据  ----------------------------------------------
--- ============ 1. 同花顺板块指数列表 (ths_index) ============
--- ============ 1. 同花顺板块码值（基础信息） ============
--- 对应接口：ths_index
-CREATE TABLE quant.ods_tushare_board_concept_name_ths (
-     ymd                      DATE                    COMMENT '数据日期（核心日期维度，适配量化数据统一归档）'
-    ,board_name               varchar(100)            COMMENT '板块名称'
-    ,board_code               varchar(50)             COMMENT '板块代码'
-    ,component_count          int                     COMMENT '成分个数'
-    ,market                   varchar(10)             COMMENT '交易所（A-沪深 HK-港股 US-美股）'
-    ,list_date                varchar(8)              COMMENT '上市日期YYYYMMDD'
-    ,index_type               varchar(10)             COMMENT '指数类型（N-概念 I-行业 R-地域 S-特色 ST-风格 TH-主题 BB-宽基）'
-    ,UNIQUE KEY unique_ymd_board_code (ymd, board_code)
-) COMMENT='板块数据_同花顺板块码值_Tushare';
-
-
--- ============ 2. 同花顺板块历史行情数据 ============
--- 对应接口：ths_daily
-CREATE TABLE quant.ods_tushare_stock_board_concept_index_ths (
-     ymd                      DATE                    COMMENT '日期（行情交易日）'
-    ,board_name               varchar(100)            COMMENT '板块名称'
-    ,board_code               varchar(50)             COMMENT '板块代码'
-    ,open                     float                   COMMENT '开盘点位'
-    ,high                     float                   COMMENT '最高点位'
-    ,low                      float                   COMMENT '最低点位'
-    ,close                    float                   COMMENT '收盘点位'
-    ,trading_volume           float                   COMMENT '成交量'
-    ,trading_amount           float                   COMMENT '成交额'
-    ,UNIQUE KEY unique_ymd_board_code (ymd, board_code)
-) COMMENT='行情数据_同花顺板块历史行情_Tushare';
-
-
--- ============ 3. 同花顺板块内含股票（核心） ============
--- 对应接口：ths_member
-CREATE TABLE quant.ods_tushare_stock_board_concept_maps_ths (
-     ymd                      DATE                    COMMENT '数据日期（核心日期维度，用于归档和跨表关联）'
-    ,board_name               varchar(100)            COMMENT '板块名称'
-    ,board_code               varchar(50)             COMMENT '板块代码'
+--2.4   周末跑
+------------------  ods_akshare_stock_value_em   股票基本面数据_估值数据              个股的全量历史数据   不可选定日期
+CREATE TABLE quant.ods_akshare_stock_value_em (
+     ymd                      DATE                    COMMENT '数据日期'
     ,stock_code               varchar(50)             COMMENT '股票代码'
-    ,stock_name               varchar(100)            COMMENT '股票名称'
-    ,weight                   float                   COMMENT '权重'
-    ,in_date                  varchar(8)              COMMENT '纳入日期YYYYMMDD'
-    ,out_date                 varchar(8)              COMMENT '剔除日期YYYYMMDD'
-    ,is_new                   varchar(1)              COMMENT '是否最新(Y/N)'
-    ,UNIQUE KEY unique_ymd_board_stock (ymd, board_code, stock_code)
-) COMMENT='行情数据_同花顺板块内含股票_Tushare';
+    ,close                    float                   COMMENT '当日收盘价(元)'
+    ,change_pct               float                   COMMENT '当日涨跌幅(%)'
+    ,total_market             double                  COMMENT '总市值(元)'
+    ,circulation_market       double                  COMMENT '流通市值(元)'
+    ,total_shares             double                  COMMENT '总股本(股)'
+    ,circulation_shares       double                  COMMENT '流通股本(股)'
+    ,pe_ttm                   float(12,2)             COMMENT 'PE(TTM)'
+    ,pe_static                float(12,2)             COMMENT 'PE(静)'
+    ,pb                       float(12,2)             COMMENT '市净率'
+    ,peg                      float(12,2)             COMMENT 'PEG值'
+    ,pcf                      float(12,2)             COMMENT '市现率'
+    ,ps                       float(12,2)             COMMENT '市销率'
+    ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
+) COMMENT='股票基本面数据_估值数据';
+
+--2.5   周末跑
+------------------  ods_akshare_stock_zh_a_gdhs_detail_em   股票基本面数据_股东数据    个股的全量历史数据   不可选定日期
+CREATE TABLE quant.ods_akshare_stock_zh_a_gdhs_detail_em (
+     ymd                      DATE                    COMMENT '股东户数统计截止日（对应核心日期维度）'
+    ,stock_code               varchar(50)             COMMENT '股票代码'
+    ,stock_name               varchar(50)             COMMENT '股票名称'
+    ,range_change_pct         float                   COMMENT '区间涨跌幅(%)'
+    ,holder_num_current       bigint                  COMMENT '股东户数-本次'
+    ,holder_num_last          bigint                  COMMENT '股东户数-上次'
+    ,holder_num_change        bigint                  COMMENT '股东户数-增减'
+    ,holder_num_change_pct    float                   COMMENT '股东户数-增减比例(%)'
+    ,avg_holder_market        double                  COMMENT '户均持股市值'
+    ,avg_holder_share_num     float                   COMMENT '户均持股数量'
+    ,total_market             double                  COMMENT '总市值'
+    ,total_shares             bigint                  COMMENT '总股本'
+    ,share_change             bigint                  COMMENT '股本变动'
+    ,share_change_reason      varchar(255)            COMMENT '股本变动原因'
+    ,holder_num_announce_date DATE                    COMMENT '股东户数公告日期'
+    ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
+) COMMENT='股票基本面数据_股东数据';
 
 
---6.1
+-------------------------------------------   tushare 数据  ---------------------------------
+--3.1   下午跑
 ------------------  ods_stock_kline_daily_ts   行情数据_A股历史日K线的tushare数据
 CREATE TABLE quant.ods_stock_kline_daily_ts (
      stock_code               VARCHAR(50) NOT NULL    COMMENT '股票代码'
@@ -404,7 +256,137 @@ CREATE TABLE quant.ods_stock_kline_daily_ts (
     ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
 ) COMMENT='行情数据_A股历史日K线的tushare数据';
 
+--3.2   下午跑
+------------------  ods_tushare_board_concept_name_ths   同花顺板块指数列表 (ths_index 接口)
+CREATE TABLE quant.ods_tushare_board_concept_name_ths (
+     ymd                      DATE                    COMMENT '数据日期（核心日期维度，适配量化数据统一归档）'
+    ,board_name               varchar(100)            COMMENT '板块名称'
+    ,board_code               varchar(50)             COMMENT '板块代码'
+    ,component_count          int                     COMMENT '成分个数'
+    ,market                   varchar(10)             COMMENT '交易所（A-沪深 HK-港股 US-美股）'
+    ,list_date                varchar(8)              COMMENT '上市日期YYYYMMDD'
+    ,index_type               varchar(10)             COMMENT '指数类型（N-概念 I-行业 R-地域 S-特色 ST-风格 TH-主题 BB-宽基）'
+    ,UNIQUE KEY unique_ymd_board_code (ymd, board_code)
+) COMMENT='板块数据_同花顺板块码值_Tushare';
 
+--3.3   下午跑
+------------------  ods_tushare_stock_board_concept_index_ths   同花顺板块历史行情数据 (ths_daily 接口)
+CREATE TABLE quant.ods_tushare_stock_board_concept_index_ths (
+     ymd                      DATE                    COMMENT '日期（行情交易日）'
+    ,board_name               varchar(100)            COMMENT '板块名称'
+    ,board_code               varchar(50)             COMMENT '板块代码'
+    ,open                     float                   COMMENT '开盘点位'
+    ,high                     float                   COMMENT '最高点位'
+    ,low                      float                   COMMENT '最低点位'
+    ,close                    float                   COMMENT '收盘点位'
+    ,trading_volume           float                   COMMENT '成交量'
+    ,trading_amount           float                   COMMENT '成交额'
+    ,UNIQUE KEY unique_ymd_board_code (ymd, board_code)
+) COMMENT='行情数据_同花顺板块历史行情_Tushare';
+
+--3.4   下午跑
+------------------  ods_tushare_stock_board_concept_maps_ths   同花顺板块内含股票（核心） (ths_member 接口)
+CREATE TABLE quant.ods_tushare_stock_board_concept_maps_ths (
+     ymd                      DATE                    COMMENT '数据日期（核心日期维度，用于归档和跨表关联）'
+    ,board_name               varchar(100)            COMMENT '板块名称'
+    ,board_code               varchar(50)             COMMENT '板块代码'
+    ,stock_code               varchar(50)             COMMENT '股票代码'
+    ,stock_name               varchar(100)            COMMENT '股票名称'
+    ,weight                   float                   COMMENT '权重'
+    ,in_date                  varchar(8)              COMMENT '纳入日期YYYYMMDD'
+    ,out_date                 varchar(8)              COMMENT '剔除日期YYYYMMDD'
+    ,is_new                   varchar(1)              COMMENT '是否最新(Y/N)'
+    ,UNIQUE KEY unique_ymd_board_stock (ymd, board_code, stock_code)
+) COMMENT='行情数据_同花顺板块内含股票_Tushare';
+
+-------------------------------------------   通达信 数据  ---------------------------------
+--4.1   手工不定期维护
+------------------  ods_tdx_stock_concept_plate   通达信概念板块数据
+CREATE TABLE quant.ods_tdx_stock_concept_plate (
+     ymd                      DATE        NOT NULL    COMMENT '日期'
+    ,concept_code             VARCHAR(50) NOT NULL    COMMENT '概念板块代码'
+    ,concept_name             VARCHAR(50)             COMMENT '概念板块名称'
+    ,stock_code               VARCHAR(50)             COMMENT '股票代码'
+    ,stock_name               VARCHAR(50)             COMMENT '股票名称'
+) COMMENT='通达信概念板块数据';
+
+--4.2   手工不定期维护
+------------------  ods_tdx_stock_style_plate   通达信风格板块数据
+CREATE TABLE quant.ods_tdx_stock_style_plate (
+     ymd                      DATE        NOT NULL    COMMENT '日期'
+    ,style_code               VARCHAR(50) NOT NULL    COMMENT '风格板块代码'
+    ,style_name               VARCHAR(50)             COMMENT '风格板块名称'
+    ,stock_code               VARCHAR(50)             COMMENT '股票代码'
+    ,stock_name               VARCHAR(50)             COMMENT '股票名称'
+) COMMENT='通达信风格板块数据';
+
+--4.3   手工不定期维护
+------------------  ods_tdx_stock_industry_plate   通达信行业板块数据
+CREATE TABLE quant.ods_tdx_stock_industry_plate (
+     ymd                      DATE        NOT NULL    COMMENT '日期'
+    ,industry_code            VARCHAR(50) NOT NULL    COMMENT '行业板块代码'
+    ,industry_name            VARCHAR(50)             COMMENT '行业板块名称'
+    ,stock_code               VARCHAR(50)             COMMENT '股票代码'
+    ,stock_name               VARCHAR(50)             COMMENT '股票名称'
+) COMMENT='通达信行业板块数据';
+
+--4.4   手工不定期维护
+------------------  ods_tdx_stock_region_plate   通达信地区板块数据
+CREATE TABLE quant.ods_tdx_stock_region_plate (
+     ymd                      DATE        NOT NULL    COMMENT '日期'
+    ,region_code              VARCHAR(50) NOT NULL    COMMENT '地区板块代码'
+    ,region_name              VARCHAR(50)             COMMENT '地区板块名称'
+    ,stock_code               VARCHAR(50)             COMMENT '股票代码'
+    ,stock_name               VARCHAR(50)             COMMENT '股票名称'
+) COMMENT='通达信地区板块数据';
+
+--4.5   手工不定期维护
+------------------  ods_tdx_stock_index_plate   通达信指数板块数据
+CREATE TABLE quant.ods_tdx_stock_index_plate (
+     ymd                      DATE        NOT NULL    COMMENT '日期'
+    ,index_code               VARCHAR(50) NOT NULL    COMMENT '指数板块代码'
+    ,index_name               VARCHAR(50)             COMMENT '指数板块名称'
+    ,stock_code               VARCHAR(50)             COMMENT '股票代码'
+    ,stock_name               VARCHAR(50)             COMMENT '股票名称'
+) COMMENT='通达信指数板块数据';
+
+
+-------------------------------------------   vantage 数据  ---------------------------------
+--5.1
+------------------  ods_us_stock_daily_vantage   美股 日K
+CREATE TABLE quant.ods_us_stock_daily_vantage (
+     stock_name               VARCHAR(50) NOT NULL    COMMENT '股票名称'
+    ,ymd                      DATE        NOT NULL    COMMENT '交易日期'
+    ,open                     FLOAT                   COMMENT '开盘价'
+    ,high                     FLOAT                   COMMENT '最高价'
+    ,low                      FLOAT                   COMMENT '最低价'
+    ,close                    FLOAT                   COMMENT '收盘价'
+    ,volume                   BIGINT                  COMMENT '成交量'
+    ,UNIQUE KEY unique_ymd_name (ymd, stock_name)
+) COMMENT='美股 日K';
+
+--5.2
+------------------  ods_exchange_rate_vantage_detail   汇率&美元指数 日K
+CREATE TABLE quant.ods_exchange_rate_vantage_detail (
+     stock_name               VARCHAR(50) NOT NULL    COMMENT '货币对'
+    ,ymd                      DATE        NOT NULL    COMMENT '交易日期'
+    ,open                     FLOAT                   COMMENT '开盘价'
+    ,high                     FLOAT                   COMMENT '最高价'
+    ,low                      FLOAT                   COMMENT '最低价'
+    ,close                    FLOAT                   COMMENT '收盘价'
+    ,UNIQUE KEY unique_ymd_name (ymd, stock_name)
+) COMMENT='汇率&美元指数 日K';
+
+--5.3
+------------------  ods_exchange_dxy_vantage   美元指数 日K
+CREATE TABLE quant.ods_exchange_dxy_vantage (
+    ymd                       DATE        NOT NULL    COMMENT '交易日期'
+   ,stock_name                VARCHAR(50) NOT NULL    COMMENT '货币对'
+   ,UNIQUE KEY unique_ymd_name (ymd, stock_name)
+) COMMENT='美元指数 日K';
+
+
+-------------------------------------------   其他  ---------------------------------
 --6.1        多渠道板块数据 -- 小红书
 ------------------  ods_stock_plate_redbook
 CREATE TABLE quant.ods_stock_plate_redbook (
@@ -415,7 +397,6 @@ CREATE TABLE quant.ods_stock_plate_redbook (
     ,remark                   VARCHAR(50)             COMMENT '备注'
 ) COMMENT='多渠道板块数据 -- 小红书';
 
-
 --6.2        股票基本面数据_所属交易所，主板/创业板/科创板/北证
 ------------------  ods_stock_exchange_market
 CREATE TABLE quant.ods_stock_exchange_market (
@@ -425,6 +406,4 @@ CREATE TABLE quant.ods_stock_exchange_market (
     ,market                   VARCHAR(50)             COMMENT '市场特征主板创业板等'
     ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
 ) COMMENT='股票基本面数据_所属交易所，主板/创业板/科创板/北证';
-
-
 

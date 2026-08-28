@@ -307,7 +307,7 @@ class CalDWD:
               from  quant.dwd_shareholder_num_latest
               where ymd=(select max(ymd) from quant.dwd_shareholder_num_latest)
             ) tshare
-            on tkline.stock_code = tshare.stock_code
+            on SUBSTRING_INDEX(tkline.stock_code, '.', 1) = tshare.stock_code
             left join 
             ( select 
                   ymd                                               

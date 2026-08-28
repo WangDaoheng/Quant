@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import pandas as pd
-from sqlalchemy import create_engine
-import gc
 from CommonProperties import Base_Properties
 from CommonProperties.Base_utils import timing_decorator
 import CommonProperties.Mysql_Utils as mysql_utils
@@ -17,10 +14,7 @@ origin_password = Base_Properties.origin_mysql_password
 origin_database = Base_Properties.origin_mysql_database
 origin_host = Base_Properties.origin_mysql_host
 
-table_all_list = [
-                  'dmart_stock_zt_details_expanded',
-
-                  'ods_stock_code_daily_insight',
+table_all_list = ['ods_stock_code_daily_insight',
                   'ods_stock_limit_summary_insight',
                   'ods_stock_chouma_insight',
                   'ods_astock_industry_overview',
@@ -45,18 +39,10 @@ table_all_list = [
                   'dwd_stock_dt_list',
                   'dwd_stock_technical_indicators',
                   'dmart_stock_zt_details',
-
-
+                  'dwd_factor_summary',
+                  'dwd_factor_volume_shrinkage',
                   'ods_exchange_dxy_vantage',
                   'ods_exchange_rate_vantage_detail',
-
-
-
-
-
-
-                  'ods_stock_kline_daily_insight',
-
                   'ods_stock_plate_redbook',
                   'ods_tdx_stock_concept_plate',
                   'ods_tdx_stock_index_plate',
@@ -65,7 +51,6 @@ table_all_list = [
                   'ods_tdx_stock_style_plate',
                   'ods_trading_days_insight',
                   'ods_us_stock_daily_vantage']
-
 
 
 @timing_decorator
@@ -93,43 +78,10 @@ def transfer_origin_to_local_mysql():
     """
     从 远端 向 本地 主机刷新 mysql 数据   全删全插
     Returns:
-
     """
 
     local_db_url = f'mysql+pymysql://{local_user}:{local_password}@{local_host}:3306/{local_database}'
     origin_db_url = f'mysql+pymysql://{origin_user}:{origin_password}@{origin_host}:3306/{origin_database}'
-
-    table_all_list = ['dmart_stock_zt_details',
-                      'dmart_stock_zt_details_expanded',
-                      'dwd_ashare_stock_base_info',
-                      'dwd_stock_a_total_plate',
-                      'dwd_stock_dt_list',
-                      'dwd_stock_zt_list',
-                      'ods_akshare_stock_a_high_low_statistics',
-                      'ods_akshare_stock_value_em',
-                      'ods_akshare_stock_yjkb_em',
-                      'ods_akshare_stock_yjyg_em',
-                      'ods_akshare_stock_zh_a_gdhs_detail_em',
-                      'ods_astock_industry_detail',
-                      'ods_astock_industry_overview',
-                      'ods_exchange_dxy_vantage',
-                      'ods_exchange_rate_vantage_detail',
-                      'ods_future_inside_insight',
-                      'ods_index_a_share_insight',
-                      'ods_shareholder_num',
-                      'ods_stock_chouma_insight',
-                      'ods_stock_code_daily_insight',
-                      'ods_stock_exchange_market',
-                      'ods_stock_kline_daily_insight',
-                      'ods_stock_limit_summary_insight',
-                      'ods_stock_plate_redbook',
-                      'ods_tdx_stock_concept_plate',
-                      'ods_tdx_stock_index_plate',
-                      'ods_tdx_stock_industry_plate',
-                      'ods_tdx_stock_region_plate',
-                      'ods_tdx_stock_style_plate',
-                      'ods_trading_days_insight',
-                      'ods_us_stock_daily_vantage']
 
     for tableName in table_all_list:
         mysql_utils.full_replace_migrate(source_host=origin_host,
@@ -138,6 +90,7 @@ def transfer_origin_to_local_mysql():
                                          target_db_url=local_db_url,
                                          table_name=tableName)
 
+
 @timing_decorator
 def append_origin_to_local_mysql():
     """
@@ -145,42 +98,7 @@ def append_origin_to_local_mysql():
     Returns:
     """
 
-    table_all_list = ['dmart_stock_zt_details',
-                      'dmart_stock_zt_details_expanded',
-                      'dwd_ashare_stock_base_info',
-                      'dwd_stock_a_total_plate',
-                      'dwd_stock_dt_list',
-                      'dwd_stock_zt_list',
-                      'ods_akshare_stock_a_high_low_statistics',
-                      'ods_akshare_stock_value_em',
-                      'ods_akshare_stock_yjkb_em',
-                      'ods_akshare_stock_yjyg_em',
-                      'ods_akshare_stock_zh_a_gdhs_detail_em',
-                      'ods_astock_industry_detail',
-                      'ods_astock_industry_overview',
-                      'ods_exchange_dxy_vantage',
-                      'ods_exchange_rate_vantage_detail',
-                      'ods_future_inside_insight',
-                      'ods_index_a_share_insight',
-                      'ods_shareholder_num',
-                      'ods_stock_chouma_insight',
-                      'ods_stock_code_daily_insight',
-                      'ods_stock_exchange_market',
-                      'ods_stock_kline_daily_insight',
-                      'ods_stock_limit_summary_insight',
-                      'ods_stock_plate_redbook',
-                      'ods_tdx_stock_concept_plate',
-                      'ods_tdx_stock_index_plate',
-                      'ods_tdx_stock_industry_plate',
-                      'ods_tdx_stock_region_plate',
-                      'ods_tdx_stock_style_plate',
-                      'ods_trading_days_insight',
-                      'ods_us_stock_daily_vantage']
-
     #  设置起止时间，从source_table 中拉取数据
-    # start_date = '2024-12-11'
-    # end_date = '2025-01-02'
-
     start_date = '2025-01-03'
     end_date = '2025-02-22'
 
@@ -201,17 +119,6 @@ def append_origin_to_local_mysql():
                                             start_date=start_date,
                                             end_date=end_date)
 
-        # mysql_utils.cross_server_upsert_all(source_user=origin_user,
-        #                                     source_password=origin_password,
-        #                                     source_host=origin_host,
-        #                                     source_database=origin_database,
-        #                                     target_user=local_user,
-        #                                     target_password=local_password,
-        #                                     target_host=local_host,
-        #                                     target_database=local_database,
-        #                                     source_table=sourceTable,
-        #                                     target_table=targetTable)
-
 
 @timing_decorator
 def append_local_to_origin_mysql():
@@ -219,39 +126,6 @@ def append_local_to_origin_mysql():
     从 本地 向 远端 服务器刷新 mysql 数据   追加形式
     Returns:
     """
-
-    table_all_list = ['dmart_stock_zt_details',
-                      'dmart_stock_zt_details_expanded',
-                      'dwd_ashare_stock_base_info',
-                      'dwd_stock_a_total_plate',
-                      'dwd_stock_dt_list',
-                      'dwd_stock_zt_list',
-                      'ods_akshare_stock_a_high_low_statistics',
-                      'ods_akshare_stock_value_em',
-                      'ods_akshare_stock_yjkb_em',
-                      'ods_akshare_stock_yjyg_em',
-                      'ods_akshare_stock_zh_a_gdhs_detail_em',
-                      'ods_astock_industry_detail',
-                      'ods_astock_industry_overview',
-                      'ods_exchange_dxy_vantage',
-                      'ods_exchange_rate_vantage_detail',
-                      'ods_future_inside_insight',
-                      'ods_index_a_share_insight',
-                      'ods_shareholder_num',
-                      'ods_stock_chouma_insight',
-                      'ods_stock_code_daily_insight',
-                      'ods_stock_exchange_market',
-                      'ods_stock_kline_daily_insight',
-                      'ods_stock_limit_summary_insight',
-                      'ods_stock_plate_redbook',
-                      'ods_tdx_stock_concept_plate',
-                      'ods_tdx_stock_index_plate',
-                      'ods_tdx_stock_industry_plate',
-                      'ods_tdx_stock_region_plate',
-                      'ods_tdx_stock_style_plate',
-                      'ods_trading_days_insight',
-                      'ods_us_stock_daily_vantage']
-
     #  设置起止时间，从source_table 中拉取数据
     start_date = '2024-10-01'
     end_date = '2024-11-04'
