@@ -229,108 +229,96 @@ class CalDWD:
         计算股票基础信息，汇总表，名称、编码、板块、股本、市值、净资产
         写入 dwd_ashare_stock_base_info
         """
-        #  1.获取日期
+        # 1.获取日期
         if ymd is None:
             ymd = DateUtility.today()
-        # ymd = DateUtility.next_day(-1)
 
-        # 2.定义 SQL 模板
+        # 2.定义 SQL 模板（改用虚拟列，去掉所有 SUBSTRING_INDEX）
         sql_statements_template = [
             """
-            DELETE  FROM quant.dwd_ashare_stock_base_info WHERE  ymd = '{ymd}';
+            DELETE FROM quant.dwd_ashare_stock_base_info WHERE ymd = '{ymd}';
             """,
             """
-            insert IGNORE  into quant.dwd_ashare_stock_base_info 
-            select 
-                  tkline.ymd       
-                 ,tkline.stock_code
-                 ,tcode.stock_name 
-                 ,tkline.close      
-                 ,tkline.change_pct
-                 ,tkline.volume
-                 ,tkline.trading_amount
-                 ,IFNULL(tpepb.circulation_market, 0)                 AS  market_value
-                 ,IFNULL(tpepb.total_market, 0)                       AS  total_value
-                 ,IFNULL(tpepb.total_shares, 0)                       AS  total_capital
-                 ,IFNULL(tpepb.circulation_shares, 0)                 AS  float_capital
-                 ,tshare.total_sh                                     AS  shareholder_num
-                 ,tshare.pct_of_total_sh                              AS  pct_of_total_sh
-                 ,IFNULL(tpepb.pb, 0)                                 AS  pb
-                 ,IFNULL(tpepb.pe_ttm, 0)                             AS  pe
-                 ,texchange.market                                    AS  market
-                 ,tplate.plate_names                                  AS  plate_names
-            from  
-            ( select
-                  stock_code
-                 ,ymd
-                 ,close
-                 ,change_pct
-                 ,volume
-                 ,trading_amount
-              from  quant.ods_stock_kline_daily_ts
-              where  ymd='{ymd}'
+            INSERT IGNORE INTO quant.dwd_ashare_stock_base_info 
+            SELECT 
+                tkline.ymd,
+                tkline.stock_code,
+                tcode.stock_name,
+                tkline.close,
+                tkline.change_pct,
+                tkline.volume,
+                tkline.trading_amount,
+                IFNULL(tpepb.circulation_market, 0)                 AS market_value,
+                IFNULL(tpepb.total_market, 0)                       AS total_value,
+                IFNULL(tpepb.total_shares, 0)                       AS total_capital,
+                IFNULL(tpepb.circulation_shares, 0)                 AS float_capital,
+                tshare.total_sh                                     AS shareholder_num,
+                tshare.pct_of_total_sh                              AS pct_of_total_sh,
+                IFNULL(tpepb.pb, 0)                                 AS pb,
+                IFNULL(tpepb.pe_ttm, 0)                             AS pe,
+                texchange.market                                    AS market,
+                tplate.plate_names                                  AS plate_names
+            FROM (
+                SELECT 
+                    stock_code,
+                    stock_code_pure,    
+                    ymd,
+                    close,
+                    change_pct,
+                    volume,
+                    trading_amount
+                FROM quant.ods_stock_kline_daily_ts
+                WHERE ymd = '{ymd}'
             ) tkline
-            left join
-            ( select
-                  ymd
-                 ,stock_code
-                 ,stock_name
-                 ,exchange
-              from quant.ods_stock_code_daily_insight
-              where ymd=(select max(ymd) from quant.ods_stock_code_daily_insight)
+            LEFT JOIN (
+                SELECT ymd, stock_code, stock_name
+                FROM quant.ods_stock_code_daily_insight
+                WHERE ymd = (SELECT MAX(ymd) FROM quant.ods_stock_code_daily_insight)
             ) tcode
-            on tkline.stock_code = tcode.stock_code
-            left join
-            ( select
-                  ymd                  
-                 ,stock_code           
-                 ,total_market         -- 总市值
-                 ,circulation_market   -- 流通市值
-                 ,total_shares         -- 总股本
-                 ,circulation_shares   -- 流通股本
-                 ,pe_ttm               -- PE_TTM
-                 ,pb                   -- 市净率
-                 ,peg                  -- PEG值
-              from  quant.ods_akshare_stock_value_em
-              where ymd=(select max(ymd) from quant.ods_akshare_stock_value_em)
+                ON tkline.stock_code = tcode.stock_code
+            LEFT JOIN (
+                SELECT 
+                    ymd,
+                    stock_code,         
+                    total_market,
+                    circulation_market,
+                    total_shares,
+                    circulation_shares,
+                    pe_ttm,
+                    pb,
+                    peg
+                FROM quant.ods_akshare_stock_value_em
+                WHERE ymd = (SELECT MAX(ymd) FROM quant.ods_akshare_stock_value_em)
             ) tpepb
-            ON SUBSTRING_INDEX(tkline.stock_code, '.', 1) = tpepb.stock_code
-            left join 
-            ( select
-                  ymd            
-                 ,stock_code     
-                 ,stock_name     
-                 ,total_sh       
-                 ,avg_share      
-                 ,pct_of_total_sh
-                 ,pct_of_avg_sh  
-              from  quant.dwd_shareholder_num_latest
-              where ymd=(select max(ymd) from quant.dwd_shareholder_num_latest)
+                ON tkline.stock_code_pure = tpepb.stock_code      
+            LEFT JOIN (
+                SELECT 
+                    ymd,
+                    stock_code_pure,    -- 改：用虚拟列
+                    total_sh,
+                    pct_of_total_sh
+                FROM quant.dwd_shareholder_num_latest
+                WHERE ymd = (SELECT MAX(ymd) FROM quant.dwd_shareholder_num_latest)
             ) tshare
-            on SUBSTRING_INDEX(tkline.stock_code, '.', 1) = tshare.stock_code
-            left join 
-            ( select 
-                  ymd                                               
-                 ,stock_code                                        
-                 ,stock_name                                        
-                 ,market                                            
-              from  quant.ods_stock_exchange_market 
-              where ymd = (SELECT MAX(ymd) FROM quant.ods_stock_exchange_market)
-            ) texchange 
-            on tkline.stock_code = texchange.stock_code
-            left join 
-            (
-              select 
-                  ymd                                              
-                 ,stock_code                                       
-                 ,stock_name                                       
-                 ,GROUP_CONCAT(board_name ORDER BY board_name SEPARATOR ',') AS plate_names   
-              from  quant.dwd_stock_a_total_plate  
-              where ymd = (SELECT MAX(ymd) FROM quant.dwd_stock_a_total_plate)
-              group by ymd, stock_code, stock_name 
+                ON tkline.stock_code_pure = tshare.stock_code_pure  
+            LEFT JOIN (
+                SELECT ymd, stock_code, market
+                FROM quant.ods_stock_exchange_market
+                WHERE ymd = (SELECT MAX(ymd) FROM quant.ods_stock_exchange_market)
+            ) texchange
+                ON tkline.stock_code = texchange.stock_code
+            LEFT JOIN (
+                SELECT 
+                    ymd,
+                    stock_code_pure,    -- 改：用虚拟列
+                    GROUP_CONCAT(board_name ORDER BY board_name SEPARATOR ',') AS plate_names
+                FROM quant.dwd_stock_a_total_plate
+                WHERE ymd = (SELECT MAX(ymd) FROM quant.dwd_stock_a_total_plate)
+                GROUP BY ymd, stock_code_pure                      
             ) tplate
-            ON SUBSTRING_INDEX(tkline.stock_code, '.', 1)=SUBSTRING_INDEX(tplate.stock_code, '.', 1);
-            """]
+                ON tkline.stock_code_pure = tplate.stock_code_pure;  
+            """
+        ]
 
         # 3.主程序替换 {ymd} 占位符
         sql_statements = [stmt.format(ymd=ymd) for stmt in sql_statements_template]
@@ -341,7 +329,9 @@ class CalDWD:
             password=origin_password,
             host=origin_host,
             database=origin_database,
-            sql_statements=sql_statements)
+            sql_statements=sql_statements
+        )
+
 
     @timing_decorator
     def cal_stock_base_info_batch(self, start_ymd='20260501', end_ymd=None):

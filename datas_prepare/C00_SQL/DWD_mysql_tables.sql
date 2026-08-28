@@ -203,7 +203,8 @@ CREATE TABLE quant.dwd_stock_a_total_plate (
       ,stock_name         VARCHAR(50)              COMMENT '标的名称'
       ,source_table       VARCHAR(50)              COMMENT '来源表'
       ,remark             VARCHAR(50)              COMMENT '备注'
-      ,UNIQUE KEY unique_ymd_plate_code (ymd, plate_name, stock_code)
+      ,UNIQUE KEY unique_ymd_board_code (ymd, board_name, stock_code)
+      ,INDEX idx_ymd_stock_board (ymd, stock_code, board_name)
 ) COMMENT='多渠道板块数据 -- 多渠道汇总';
 
 
