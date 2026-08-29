@@ -33,71 +33,59 @@ class CalDWD:
     def cal_ashare_plate(self):
         """
         聚合股票的板块，把各个板块数据聚合在一起
-        写入  dwd_stock_a_total_plate
+        写入 dwd_stock_a_total_plate
         """
-        #  1.获取日期
         ymd = DateUtility.today()
-        # ymd = DateUtility.next_day(-1)
 
-        # 2.定义 SQL 模板
         sql_statements_template = [
             """
             DELETE FROM quant.dwd_stock_a_total_plate WHERE ymd='{ymd}';
             """,
             """
             INSERT IGNORE INTO quant.dwd_stock_a_total_plate
+                (ymd, board_code, board_name, stock_code, stock_name, source_table, remark)
             SELECT 
-                ymd
-               ,''            AS board_code
-               ,plate_name    AS board_name
-               ,stock_code
-               ,stock_name
-               ,'ods_stock_plate_redbook'      AS source_table
-               ,remark
+                ymd,
+                '' AS board_code,
+                plate_name AS board_name,
+                stock_code,
+                stock_name,
+                'ods_stock_plate_redbook' AS source_table,
+                remark
             FROM quant.ods_stock_plate_redbook
             WHERE ymd='{ymd}'
             UNION ALL
             SELECT
-                tboard_name.ymd
-               ,tboard_name.board_code
-               ,tboard_name.board_name
-               ,tboard_stock.stock_code
-               ,tboard_stock.stock_name
-               ,'ods_tushare_board_concept_name_ths'      AS source_table
-               ,tboard_stock.weight                       AS remark
+                tboard_stock.ymd,
+                tboard_stock.board_code,
+                tboard_stock.board_name,        -- 从 maps_ths 取 board_name
+                tboard_stock.stock_code,
+                tboard_stock.stock_name,
+                'ods_tushare_board_concept_name_ths' AS source_table,
+                tboard_stock.weight AS remark
             FROM 
-            (SELECT
-                 ymd         -- 数据日期（核心日期维度，适配量化数据统一归档）
-                ,board_name  -- 板块名称
-                ,board_code  -- 板块代码
-             FROM  ods_tushare_board_concept_name_ths
+            (SELECT ymd, board_code
+             FROM quant.ods_tushare_board_concept_name_ths
              WHERE ymd ='{ymd}'
             ) tboard_name
-            inner JOIN
-            (SELECT 
-               ymd         -- 数据日期
-              ,board_name  -- 板块名称
-              ,board_code  -- 板块代码
-              ,stock_code  -- 股票代码
-              ,stock_name  -- 股票名称
-              ,weight      -- 权重
-             FROM  ods_tushare_stock_board_concept_maps_ths
-             WHERE ymd=(SELECT MAX(ymd) FROM  ods_tushare_stock_board_concept_maps_ths)
+            INNER JOIN
+            (SELECT ymd, board_code, board_name, stock_code, stock_name, weight
+             FROM quant.ods_tushare_stock_board_concept_maps_ths
+             WHERE ymd='{ymd}'
             ) tboard_stock
-            ON REPLACE(tboard_name.board_name, ' ', '') = REPLACE(tboard_stock.board_name, ' ', '');
+            ON tboard_name.board_code = tboard_stock.board_code;
             """
         ]
 
-        # 3.主程序替换 {ymd} 占位符
         sql_statements = [stmt.format(ymd=ymd) for stmt in sql_statements_template]
 
-        # 4.执行远端MySQL
         mysql_utils.execute_sql_statements(
             user=origin_user,
             password=origin_password,
             host=origin_host,
             database=origin_database,
-            sql_statements=sql_statements)
+            sql_statements=sql_statements
+        )
 
 
     @timing_decorator
@@ -180,7 +168,6 @@ class CalDWD:
         """
         # 1.获取日期
         ymd = DateUtility.today()
-        # ymd = DateUtility.next_day(-1)
 
         # 2.定义 SQL 模板
         sql_statements_template = [
@@ -232,6 +219,8 @@ class CalDWD:
         # 1.获取日期
         if ymd is None:
             ymd = DateUtility.today()
+
+        ymd= '20260828'
 
         # 2.定义 SQL 模板（改用虚拟列，去掉所有 SUBSTRING_INDEX）
         sql_statements_template = [
@@ -784,8 +773,8 @@ class CalDWD:
         # 计算行情衍生指标  均线等
         self.cal_technical_indicators()
 
-        # # 补录 base_info 的历史数据
-        # self.cal_stock_base_info_batch()
+        # 补录 base_info 的历史数据
+        self.cal_stock_base_info_batch()
 
 
 if __name__ == '__main__':
