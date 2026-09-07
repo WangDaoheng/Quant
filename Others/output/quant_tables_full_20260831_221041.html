@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>QUANT数据库表结构报告 - 2026-08-29 15:54:51</title>
+  <title>QUANT数据库表结构报告 - 2026-08-31 22:12:31</title>
   <style>
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -102,9 +102,9 @@
   <header class="report-header">
     <h1>📊 QUANT数据库表结构及数据样例报告</h1>
     <div class="meta-info">
-      <p>生成时间: 2026-08-29 15:54:51</p>
+      <p>生成时间: 2026-08-31 22:12:31</p>
       <p>数据库: quant @ 117.72.162.13</p>
-      <p>总表数: 39 | 本次导出: 39/39</p>
+      <p>总表数: 38 | 本次导出: 38/38</p>
     </div>
   </header>
 <nav class="toc" id="toc">
@@ -161,7 +161,7 @@
     </li>
     <li class="toc-group">
       <span class="toc-group-title">其他表</span>
-      <span class="toc-count">(14张)</span>
+      <span class="toc-count">(13张)</span>
       <ul class="toc-sublist">
         <li><a href="#table-dwd_factor_summary" class="toc-link">dwd_factor_summary</a></li>
         <li><a href="#table-dwd_factor_volume_shrinkage" class="toc-link">dwd_factor_volume_shrinkage</a></li>
@@ -176,7 +176,6 @@
         <li><a href="#table-ods_tdx_stock_style_plate" class="toc-link">ods_tdx_stock_style_plate</a></li>
         <li><a href="#table-ods_trading_days_insight" class="toc-link">ods_trading_days_insight</a></li>
         <li><a href="#table-ods_us_stock_daily_vantage" class="toc-link">ods_us_stock_daily_vantage</a></li>
-        <li><a href="#table-tmp_plate_2021" class="toc-link">tmp_plate_2021</a></li>
       </ul>
     </li>
   </ul>
@@ -185,10 +184,10 @@
     <h2>📋 各层统计概览</h2>
     <table class="summary-table">
       <tr><th>层级</th><th>表数量</th><th>占比</th></tr>
-      <tr><td>ODS 层（原始数据）</td><td>17</td><td>43.6%</td></tr>
-      <tr><td>DWD 层（明细数据）</td><td>7</td><td>17.9%</td></tr>
+      <tr><td>ODS 层（原始数据）</td><td>17</td><td>44.7%</td></tr>
+      <tr><td>DWD 层（明细数据）</td><td>7</td><td>18.4%</td></tr>
       <tr><td>MART 层（数据集市）</td><td>1</td><td>2.6%</td></tr>
-      <tr><td>其他表</td><td>14</td><td>35.9%</td></tr>
+      <tr><td>其他表</td><td>13</td><td>34.2%</td></tr>
     </table>
   </div>
   <div class="layer-section" id="layer-1">
@@ -197,7 +196,7 @@
 <section class="table-detail" id="table-ods_stock_code_daily_insight">
   <div class="table-header">
     <div class="table-title-wrap">
-      <h2>【表 1/39】ods_stock_code_daily_insight</h2>
+      <h2>【表 1/38】ods_stock_code_daily_insight</h2>
       <div class="table-tags"><span class="table-tag layer-ods">（一）下午跑 - insight 行情源</span></div>
     </div>
     <a href="#toc" class="back-to-top" title="返回目录">🔝</a>
@@ -205,7 +204,7 @@
   <div class="info-section">
     <h3>📊 基本信息</h3>
     <table class="info-table">
-      <tr><td>行数</td><td>2,398,977</td></tr>
+      <tr><td>行数</td><td>2,404,325</td></tr>
       <tr><td>列数</td><td>4</td></tr>
     </table>
   </div>
@@ -215,44 +214,46 @@
       <tr><td>存在ymd列</td><td>✓</td></tr>
       <tr><td>日期总数</td><td>10</td></tr>
       <tr><td>全表最早日期</td><td>2024-08-12</td></tr>
-      <tr><td>全表最晚日期</td><td>2026-08-29</td></tr>
-      <tr><td>最近10天范围</td><td>2026-08-17 ~ 2026-08-29</td></tr>
+      <tr><td>全表最晚日期</td><td>2026-08-31</td></tr>
+      <tr><td>最近10天范围</td><td>2026-08-18 ~ 2026-08-31</td></tr>
     </table>
     <p>最近10个日期(倒序):</p>
     <div class="date-list">
-      <span class="date-tag">1. 2026-08-29</span>
-      <span class="date-tag">2. 2026-08-27</span>
-      <span class="date-tag">3. 2026-08-26</span>
-      <span class="date-tag">4. 2026-08-25</span>
-      <span class="date-tag">5. 2026-08-24</span>
-      <span class="date-tag">6. 2026-08-21</span>
-      <span class="date-tag">7. 2026-08-20</span>
-      <span class="date-tag">8. 2026-08-19</span>
-      <span class="date-tag">9. 2026-08-18</span>
-      <span class="date-tag">10. 2026-08-17</span>
+      <span class="date-tag">1. 2026-08-31</span>
+      <span class="date-tag">2. 2026-08-28</span>
+      <span class="date-tag">3. 2026-08-27</span>
+      <span class="date-tag">4. 2026-08-26</span>
+      <span class="date-tag">5. 2026-08-25</span>
+      <span class="date-tag">6. 2026-08-24</span>
+      <span class="date-tag">7. 2026-08-21</span>
+      <span class="date-tag">8. 2026-08-20</span>
+      <span class="date-tag">9. 2026-08-19</span>
+      <span class="date-tag">10. 2026-08-18</span>
     </div>
   </div>
   <div class="info-section">
     <h3>🔍 交易日覆盖检查（以 ods_trading_days_insight 为基准）</h3>
     <table class="info-table">
-      <tr><td>基准区间</td><td>2026-08-17 ~ 2026-08-28 (共10个交易日)</td></tr>
-      <tr><td>覆盖情况</td><td><strong>9/10</strong> (90.0%)</td></tr>
+      <tr><td>基准区间</td><td>2026-08-18 ~ 2026-08-31 (共10个交易日)</td></tr>
+      <tr><td>覆盖情况</td><td><strong>10/10</strong> (100.0%)</td></tr>
     </table>
-    <div class="alert alert-warning">
-      <p>⚠️ 缺失日期 (1天):</p>
-      <div class="missing-dates">
-        <span class="missing-tag">❌ 2026-08-28</span>
-      </div>
-      <p class="severity severity-low">🟡 提示：少量缺失，可能是非交易日或数据延迟</p>
+    <div class="alert alert-success">
+      <p>✅ 全部覆盖：最近10个交易日数据完整</p>
     </div>
     <h4>📈 每日数据量明细:</h4>
     <table class="data-table">
       <tr><th>日期</th><th>条数</th><th>状态</th><th>环比</th></tr>
       <tr>
+        <td>2026-08-31</td>
+        <td>5,348</td>
+        <td class="status-ok">✓</td>
+        <td>+0.0%</td>
+      </tr>
+      <tr>
         <td>2026-08-28</td>
-        <td>0</td>
-        <td class="status-error">✗</td>
-        <td>-</td>
+        <td>5,346</td>
+        <td class="status-ok">✓</td>
+        <td>+0.0%</td>
       </tr>
       <tr>
         <td>2026-08-27</td>
@@ -300,16 +301,10 @@
         <td>2026-08-18</td>
         <td>5,339</td>
         <td class="status-ok">✓</td>
-        <td>+0.0%</td>
-      </tr>
-      <tr>
-        <td>2026-08-17</td>
-        <td>5,338</td>
-        <td class="status-ok">✓</td>
         <td>-</td>
       </tr>
     </table>
-    <p class="summary-line">10日总计: 48,079 条 | 日均: 5,342.1 条</p>
+    <p class="summary-line">10日总计: 53,435 条 | 日均: 5,343.5 条</p>
   </div>
   <div class="info-section">
     <h3>📝 数据样例（按ymd倒序，前5行）</h3>
@@ -325,31 +320,31 @@
   </thead>
   <tbody>
     <tr>
-      <td>2026-08-29</td>
+      <td>2026-08-31</td>
       <td>920992.BJ</td>
       <td>中科美菱</td>
       <td>XBSE</td>
     </tr>
     <tr>
-      <td>2026-08-29</td>
+      <td>2026-08-31</td>
       <td>920985.BJ</td>
       <td>海泰新能</td>
       <td>XBSE</td>
     </tr>
     <tr>
-      <td>2026-08-29</td>
+      <td>2026-08-31</td>
       <td>920982.BJ</td>
       <td>锦波生物</td>
       <td>XBSE</td>
     </tr>
     <tr>
-      <td>2026-08-29</td>
+      <td>2026-08-31</td>
       <td>920981.BJ</td>
       <td>晶赛科技</td>
       <td>XBSE</td>
     </tr>
     <tr>
-      <td>2026-08-29</td>
+      <td>2026-08-31</td>
       <td>920978.BJ</td>
       <td>开特股份</td>
       <td>XBSE</td>
@@ -362,7 +357,7 @@
 <section class="table-detail" id="table-ods_stock_limit_summary_insight">
   <div class="table-header">
     <div class="table-title-wrap">
-      <h2>【表 2/39】ods_stock_limit_summary_insight</h2>
+      <h2>【表 2/38】ods_stock_limit_summary_insight</h2>
       <div class="table-tags"><span class="table-tag layer-ods">（一）下午跑 - insight 行情源</span></div>
     </div>
     <a href="#toc" class="back-to-top" title="返回目录">🔝</a>
@@ -370,7 +365,7 @@
   <div class="info-section">
     <h3>📊 基本信息</h3>
     <table class="info-table">
-      <tr><td>行数</td><td>1,358</td></tr>
+      <tr><td>行数</td><td>1,359</td></tr>
       <tr><td>列数</td><td>7</td></tr>
     </table>
   </div>
@@ -380,27 +375,27 @@
       <tr><td>存在ymd列</td><td>✓</td></tr>
       <tr><td>日期总数</td><td>10</td></tr>
       <tr><td>全表最早日期</td><td>2021-01-04</td></tr>
-      <tr><td>全表最晚日期</td><td>2026-08-28</td></tr>
-      <tr><td>最近10天范围</td><td>2026-08-17 ~ 2026-08-28</td></tr>
+      <tr><td>全表最晚日期</td><td>2026-08-31</td></tr>
+      <tr><td>最近10天范围</td><td>2026-08-18 ~ 2026-08-31</td></tr>
     </table>
     <p>最近10个日期(倒序):</p>
     <div class="date-list">
-      <span class="date-tag">1. 2026-08-28</span>
-      <span class="date-tag">2. 2026-08-27</span>
-      <span class="date-tag">3. 2026-08-26</span>
-      <span class="date-tag">4. 2026-08-25</span>
-      <span class="date-tag">5. 2026-08-24</span>
-      <span class="date-tag">6. 2026-08-21</span>
-      <span class="date-tag">7. 2026-08-20</span>
-      <span class="date-tag">8. 2026-08-19</span>
-      <span class="date-tag">9. 2026-08-18</span>
-      <span class="date-tag">10. 2026-08-17</span>
+      <span class="date-tag">1. 2026-08-31</span>
+      <span class="date-tag">2. 2026-08-28</span>
+      <span class="date-tag">3. 2026-08-27</span>
+      <span class="date-tag">4. 2026-08-26</span>
+      <span class="date-tag">5. 2026-08-25</span>
+      <span class="date-tag">6. 2026-08-24</span>
+      <span class="date-tag">7. 2026-08-21</span>
+      <span class="date-tag">8. 2026-08-20</span>
+      <span class="date-tag">9. 2026-08-19</span>
+      <span class="date-tag">10. 2026-08-18</span>
     </div>
   </div>
   <div class="info-section">
     <h3>🔍 交易日覆盖检查（以 ods_trading_days_insight 为基准）</h3>
     <table class="info-table">
-      <tr><td>基准区间</td><td>2026-08-17 ~ 2026-08-28 (共10个交易日)</td></tr>
+      <tr><td>基准区间</td><td>2026-08-18 ~ 2026-08-31 (共10个交易日)</td></tr>
       <tr><td>覆盖情况</td><td><strong>10/10</strong> (100.0%)</td></tr>
     </table>
     <div class="alert alert-success">
@@ -409,6 +404,12 @@
     <h4>📈 每日数据量明细:</h4>
     <table class="data-table">
       <tr><th>日期</th><th>条数</th><th>状态</th><th>环比</th></tr>
+      <tr>
+        <td>2026-08-31</td>
+        <td>1</td>
+        <td class="status-ok">✓</td>
+        <td>+0.0%</td>
+      </tr>
       <tr>
         <td>2026-08-28</td>
         <td>1</td>
@@ -461,12 +462,6 @@
         <td>2026-08-18</td>
         <td>1</td>
         <td class="status-ok">✓</td>
-        <td>+0.0%</td>
-      </tr>
-      <tr>
-        <td>2026-08-17</td>
-        <td>1</td>
-        <td class="status-ok">✓</td>
         <td>-</td>
       </tr>
     </table>
@@ -488,6 +483,15 @@
     </tr>
   </thead>
   <tbody>
+    <tr>
+      <td>2026-08-31</td>
+      <td>全A</td>
+      <td>87</td>
+      <td>13</td>
+      <td>80</td>
+      <td>3</td>
+      <td>0.77</td>
+    </tr>
     <tr>
       <td>2026-08-28</td>
       <td>全A</td>
@@ -524,15 +528,6 @@
       <td>14</td>
       <td>0.78</td>
     </tr>
-    <tr>
-      <td>2026-08-24</td>
-      <td>全A</td>
-      <td>48</td>
-      <td>14</td>
-      <td>54</td>
-      <td>15</td>
-      <td>0.58</td>
-    </tr>
   </tbody>
 </table>
     </div>
@@ -541,7 +536,7 @@
 <section class="table-detail" id="table-ods_stock_chouma_insight">
   <div class="table-header">
     <div class="table-title-wrap">
-      <h2>【表 3/39】ods_stock_chouma_insight</h2>
+      <h2>【表 3/38】ods_stock_chouma_insight</h2>
       <div class="table-tags"><span class="table-tag layer-ods">（一）下午跑 - insight 行情源</span></div>
     </div>
     <a href="#toc" class="back-to-top" title="返回目录">🔝</a>
@@ -549,7 +544,7 @@
   <div class="info-section">
     <h3>📊 基本信息</h3>
     <table class="info-table">
-      <tr><td>行数</td><td>1,737,407</td></tr>
+      <tr><td>行数</td><td>1,742,382</td></tr>
       <tr><td>列数</td><td>27</td></tr>
     </table>
   </div>
@@ -559,27 +554,27 @@
       <tr><td>存在ymd列</td><td>✓</td></tr>
       <tr><td>日期总数</td><td>10</td></tr>
       <tr><td>全表最早日期</td><td>2024-08-12</td></tr>
-      <tr><td>全表最晚日期</td><td>2026-08-28</td></tr>
-      <tr><td>最近10天范围</td><td>2026-08-17 ~ 2026-08-28</td></tr>
+      <tr><td>全表最晚日期</td><td>2026-08-31</td></tr>
+      <tr><td>最近10天范围</td><td>2026-08-18 ~ 2026-08-31</td></tr>
     </table>
     <p>最近10个日期(倒序):</p>
     <div class="date-list">
-      <span class="date-tag">1. 2026-08-28</span>
-      <span class="date-tag">2. 2026-08-27</span>
-      <span class="date-tag">3. 2026-08-26</span>
-      <span class="date-tag">4. 2026-08-25</span>
-      <span class="date-tag">5. 2026-08-24</span>
-      <span class="date-tag">6. 2026-08-21</span>
-      <span class="date-tag">7. 2026-08-20</span>
-      <span class="date-tag">8. 2026-08-19</span>
-      <span class="date-tag">9. 2026-08-18</span>
-      <span class="date-tag">10. 2026-08-17</span>
+      <span class="date-tag">1. 2026-08-31</span>
+      <span class="date-tag">2. 2026-08-28</span>
+      <span class="date-tag">3. 2026-08-27</span>
+      <span class="date-tag">4. 2026-08-26</span>
+      <span class="date-tag">5. 2026-08-25</span>
+      <span class="date-tag">6. 2026-08-24</span>
+      <span class="date-tag">7. 2026-08-21</span>
+      <span class="date-tag">8. 2026-08-20</span>
+      <span class="date-tag">9. 2026-08-19</span>
+      <span class="date-tag">10. 2026-08-18</span>
     </div>
   </div>
   <div class="info-section">
     <h3>🔍 交易日覆盖检查（以 ods_trading_days_insight 为基准）</h3>
     <table class="info-table">
-      <tr><td>基准区间</td><td>2026-08-17 ~ 2026-08-28 (共10个交易日)</td></tr>
+      <tr><td>基准区间</td><td>2026-08-18 ~ 2026-08-31 (共10个交易日)</td></tr>
       <tr><td>覆盖情况</td><td><strong>10/10</strong> (100.0%)</td></tr>
     </table>
     <div class="alert alert-success">
@@ -588,6 +583,12 @@
     <h4>📈 每日数据量明细:</h4>
     <table class="data-table">
       <tr><th>日期</th><th>条数</th><th>状态</th><th>环比</th></tr>
+      <tr>
+        <td>2026-08-31</td>
+        <td>4,975</td>
+        <td class="status-ok">✓</td>
+        <td>+0.0%</td>
+      </tr>
       <tr>
         <td>2026-08-28</td>
         <td>4,974</td>
@@ -640,16 +641,10 @@
         <td>2026-08-18</td>
         <td>4,961</td>
         <td class="status-ok">✓</td>
-        <td>-0.1%</td>
-      </tr>
-      <tr>
-        <td>2026-08-17</td>
-        <td>4,967</td>
-        <td class="status-ok">✓</td>
         <td>-</td>
       </tr>
     </table>
-    <p class="summary-line">10日总计: 49,687 条 | 日均: 4,968.7 条</p>
+    <p class="summary-line">10日总计: 49,695 条 | 日均: 4,969.5 条</p>
   </div>
   <div class="info-section">
     <h3>📝 数据样例（按ymd倒序，前5行）</h3>
@@ -688,27 +683,56 @@
   </thead>
   <tbody>
     <tr>
-      <td>000006.SZ</td>
-      <td>2026-08-28</td>
+      <td>000002.SZ</td>
+      <td>2026-08-31</td>
       <td>XSHE</td>
+      <td>3.14</td>
+      <td>3.16</td>
+      <td>11930709471</td>
+      <td>9724196533</td>
+      <td>9715113154</td>
+      <td>9715113154</td>
+      <td>9083379</td>
+      <td>3.05848</td>
+      <td>3.34444</td>
+      <td>6.82710</td>
+      <td>12.38030</td>
+      <td>14.08180</td>
+      <td>14.96</td>
+      <td>36.0</td>
+      <td>2.8</td>
+      <td>6.40</td>
+      <td>158.36</td>
+      <td>7.54</td>
+      <td>6.61</td>
+      <td>21.9</td>
+      <td>0.4</td>
+      <td>7.41</td>
+      <td>3.695990e+09</td>
+      <td>38.01</td>
+    </tr>
+    <tr>
+      <td>000006.SZ</td>
+      <td>2026-08-31</td>
+      <td>XSHE</td>
+      <td>7.18</td>
       <td>7.48</td>
-      <td>7.34</td>
       <td>1349995046</td>
       <td>1349995046</td>
       <td>1349995046</td>
       <td>1349995046</td>
       <td>0</td>
-      <td>6.00727</td>
-      <td>6.46890</td>
-      <td>7.38601</td>
-      <td>8.51135</td>
-      <td>8.97254</td>
-      <td>9.25</td>
+      <td>6.00864</td>
+      <td>6.47938</td>
+      <td>7.37977</td>
+      <td>8.50559</td>
+      <td>8.96716</td>
+      <td>9.24</td>
       <td>15.5</td>
       <td>4.8</td>
-      <td>29.70</td>
+      <td>20.56</td>
       <td>63.96</td>
-      <td>27.64</td>
+      <td>29.60</td>
       <td>0.00</td>
       <td>0.0</td>
       <td>0.0</td>
@@ -717,56 +741,56 @@
       <td>40.90</td>
     </tr>
     <tr>
-      <td>689009.SH</td>
-      <td>2026-08-28</td>
-      <td>XSHG</td>
-      <td>42.38</td>
-      <td>43.95</td>
-      <td>73584850</td>
-      <td>73584850</td>
-      <td>56223139</td>
-      <td>56223139</td>
-      <td>17361711</td>
-      <td>24.58730</td>
-      <td>25.96660</td>
-      <td>28.66500</td>
-      <td>31.49780</td>
-      <td>32.71240</td>
-      <td>99.23</td>
-      <td>158.5</td>
-      <td>19.9</td>
-      <td>34.68</td>
-      <td>136.84</td>
-      <td>45.82</td>
-      <td>137.89</td>
-      <td>158.6</td>
-      <td>-4.5</td>
-      <td>21.95</td>
-      <td>1.102060e+07</td>
-      <td>14.98</td>
+      <td>000007.SZ</td>
+      <td>2026-08-31</td>
+      <td>XSHE</td>
+      <td>12.86</td>
+      <td>12.60</td>
+      <td>346448044</td>
+      <td>346448044</td>
+      <td>346448044</td>
+      <td>346448044</td>
+      <td>0</td>
+      <td>7.17651</td>
+      <td>7.90762</td>
+      <td>9.75061</td>
+      <td>11.11780</td>
+      <td>11.65310</td>
+      <td>11.95</td>
+      <td>20.6</td>
+      <td>6.0</td>
+      <td>70.71</td>
+      <td>65.04</td>
+      <td>56.91</td>
+      <td>0.00</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>9.89</td>
+      <td>1.547940e+08</td>
+      <td>44.68</td>
     </tr>
     <tr>
       <td>000001.SZ</td>
-      <td>2026-08-28</td>
+      <td>2026-08-31</td>
       <td>XSHE</td>
+      <td>11.72</td>
       <td>11.65</td>
-      <td>11.59</td>
       <td>19405918198</td>
       <td>19405918198</td>
       <td>19405684991</td>
       <td>19405684991</td>
       <td>233207</td>
-      <td>7.01976</td>
-      <td>7.78903</td>
-      <td>9.43212</td>
-      <td>10.74460</td>
-      <td>11.66050</td>
-      <td>12.15</td>
+      <td>7.01981</td>
+      <td>7.78914</td>
+      <td>9.43396</td>
+      <td>10.74900</td>
+      <td>11.66430</td>
+      <td>12.16</td>
       <td>22.3</td>
       <td>5.7</td>
-      <td>73.09</td>
+      <td>73.86</td>
       <td>81.43</td>
-      <td>70.17</td>
+      <td>73.08</td>
       <td>0.00</td>
       <td>0.0</td>
       <td>0.0</td>
@@ -775,62 +799,33 @@
       <td>64.29</td>
     </tr>
     <tr>
-      <td>000002.SZ</td>
-      <td>2026-08-28</td>
+      <td>000008.SZ</td>
+      <td>2026-08-31</td>
       <td>XSHE</td>
-      <td>3.16</td>
-      <td>3.11</td>
-      <td>11930709471</td>
-      <td>9724196533</td>
-      <td>9716935865</td>
-      <td>9716935865</td>
-      <td>7260668</td>
-      <td>3.04876</td>
-      <td>3.34225</td>
-      <td>6.82862</td>
-      <td>12.38140</td>
-      <td>14.08290</td>
-      <td>14.96</td>
-      <td>36.0</td>
-      <td>2.8</td>
-      <td>7.60</td>
-      <td>158.36</td>
-      <td>7.07</td>
-      <td>7.52</td>
-      <td>21.9</td>
-      <td>0.4</td>
-      <td>8.08</td>
-      <td>3.874110e+09</td>
-      <td>39.84</td>
-    </tr>
-    <tr>
-      <td>000007.SZ</td>
-      <td>2026-08-28</td>
-      <td>XSHE</td>
-      <td>12.60</td>
-      <td>12.75</td>
-      <td>346448044</td>
-      <td>346448044</td>
-      <td>346448044</td>
-      <td>346448044</td>
-      <td>0</td>
-      <td>7.17622</td>
-      <td>7.90712</td>
-      <td>9.74421</td>
-      <td>11.11450</td>
-      <td>11.65100</td>
-      <td>11.95</td>
-      <td>20.6</td>
-      <td>6.0</td>
-      <td>57.00</td>
-      <td>65.04</td>
-      <td>67.28</td>
-      <td>0.00</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>9.89</td>
-      <td>1.547940e+08</td>
-      <td>44.68</td>
+      <td>2.53</td>
+      <td>2.52</td>
+      <td>2716377683</td>
+      <td>2716377683</td>
+      <td>2716296952</td>
+      <td>2716296952</td>
+      <td>80731</td>
+      <td>1.99775</td>
+      <td>2.22180</td>
+      <td>2.67327</td>
+      <td>4.79080</td>
+      <td>5.31542</td>
+      <td>5.64</td>
+      <td>13.7</td>
+      <td>1.8</td>
+      <td>27.86</td>
+      <td>123.33</td>
+      <td>27.51</td>
+      <td>2.30</td>
+      <td>2.3</td>
+      <td>2.3</td>
+      <td>4.64</td>
+      <td>1.240380e+09</td>
+      <td>45.66</td>
     </tr>
   </tbody>
 </table>
@@ -840,7 +835,7 @@
 <section class="table-detail" id="table-ods_astock_industry_overview">
   <div class="table-header">
     <div class="table-title-wrap">
-      <h2>【表 4/39】ods_astock_industry_overview</h2>
+      <h2>【表 4/38】ods_astock_industry_overview</h2>
       <div class="table-tags"><span class="table-tag layer-ods">（一）下午跑 - insight 行情源</span></div>
     </div>
     <a href="#toc" class="back-to-top" title="返回目录">🔝</a>
@@ -848,7 +843,7 @@
   <div class="info-section">
     <h3>📊 基本信息</h3>
     <table class="info-table">
-      <tr><td>行数</td><td>155,354</td></tr>
+      <tr><td>行数</td><td>155,700</td></tr>
       <tr><td>列数</td><td>10</td></tr>
     </table>
   </div>
@@ -858,44 +853,46 @@
       <tr><td>存在ymd列</td><td>✓</td></tr>
       <tr><td>日期总数</td><td>10</td></tr>
       <tr><td>全表最早日期</td><td>2024-08-25</td></tr>
-      <tr><td>全表最晚日期</td><td>2026-08-29</td></tr>
-      <tr><td>最近10天范围</td><td>2026-08-17 ~ 2026-08-29</td></tr>
+      <tr><td>全表最晚日期</td><td>2026-08-31</td></tr>
+      <tr><td>最近10天范围</td><td>2026-08-18 ~ 2026-08-31</td></tr>
     </table>
     <p>最近10个日期(倒序):</p>
     <div class="date-list">
-      <span class="date-tag">1. 2026-08-29</span>
-      <span class="date-tag">2. 2026-08-27</span>
-      <span class="date-tag">3. 2026-08-26</span>
-      <span class="date-tag">4. 2026-08-25</span>
-      <span class="date-tag">5. 2026-08-24</span>
-      <span class="date-tag">6. 2026-08-21</span>
-      <span class="date-tag">7. 2026-08-20</span>
-      <span class="date-tag">8. 2026-08-19</span>
-      <span class="date-tag">9. 2026-08-18</span>
-      <span class="date-tag">10. 2026-08-17</span>
+      <span class="date-tag">1. 2026-08-31</span>
+      <span class="date-tag">2. 2026-08-28</span>
+      <span class="date-tag">3. 2026-08-27</span>
+      <span class="date-tag">4. 2026-08-26</span>
+      <span class="date-tag">5. 2026-08-25</span>
+      <span class="date-tag">6. 2026-08-24</span>
+      <span class="date-tag">7. 2026-08-21</span>
+      <span class="date-tag">8. 2026-08-20</span>
+      <span class="date-tag">9. 2026-08-19</span>
+      <span class="date-tag">10. 2026-08-18</span>
     </div>
   </div>
   <div class="info-section">
     <h3>🔍 交易日覆盖检查（以 ods_trading_days_insight 为基准）</h3>
     <table class="info-table">
-      <tr><td>基准区间</td><td>2026-08-17 ~ 2026-08-28 (共10个交易日)</td></tr>
-      <tr><td>覆盖情况</td><td><strong>9/10</strong> (90.0%)</td></tr>
+      <tr><td>基准区间</td><td>2026-08-18 ~ 2026-08-31 (共10个交易日)</td></tr>
+      <tr><td>覆盖情况</td><td><strong>10/10</strong> (100.0%)</td></tr>
     </table>
-    <div class="alert alert-warning">
-      <p>⚠️ 缺失日期 (1天):</p>
-      <div class="missing-dates">
-        <span class="missing-tag">❌ 2026-08-28</span>
-      </div>
-      <p class="severity severity-low">🟡 提示：少量缺失，可能是非交易日或数据延迟</p>
+    <div class="alert alert-success">
+      <p>✅ 全部覆盖：最近10个交易日数据完整</p>
     </div>
     <h4>📈 每日数据量明细:</h4>
     <table class="data-table">
       <tr><th>日期</th><th>条数</th><th>状态</th><th>环比</th></tr>
       <tr>
+        <td>2026-08-31</td>
+        <td>346</td>
+        <td class="status-ok">✓</td>
+        <td>+0.0%</td>
+      </tr>
+      <tr>
         <td>2026-08-28</td>
-        <td>0</td>
-        <td class="status-error">✗</td>
-        <td>-</td>
+        <td>346</td>
+        <td class="status-ok">✓</td>
+        <td>+0.0%</td>
       </tr>
       <tr>
         <td>2026-08-27</td>
@@ -943,16 +940,10 @@
         <td>2026-08-18</td>
         <td>346</td>
         <td class="status-ok">✓</td>
-        <td>+0.0%</td>
-      </tr>
-      <tr>
-        <td>2026-08-17</td>
-        <td>346</td>
-        <td class="status-ok">✓</td>
         <td>-</td>
       </tr>
     </table>
-    <p class="summary-line">10日总计: 3,114 条 | 日均: 346.0 条</p>
+    <p class="summary-line">10日总计: 3,460 条 | 日均: 346.0 条</p>
   </div>
   <div class="info-section">
     <h3>📝 数据样例（按ymd倒序，前5行）</h3>
@@ -974,7 +965,7 @@
   </thead>
   <tbody>
     <tr>
-      <td>2026-08-29</td>
+      <td>2026-08-31</td>
       <td>sw_l3</td>
       <td>医美服务</td>
       <td>770302</td>
@@ -986,7 +977,7 @@
       <td>医美服务</td>
     </tr>
     <tr>
-      <td>2026-08-29</td>
+      <td>2026-08-31</td>
       <td>sw_l3</td>
       <td>医美耗材</td>
       <td>770301</td>
@@ -998,7 +989,7 @@
       <td>医美耗材</td>
     </tr>
     <tr>
-      <td>2026-08-29</td>
+      <td>2026-08-31</td>
       <td>sw_l3</td>
       <td>品牌化妆品</td>
       <td>770202</td>
@@ -1010,7 +1001,7 @@
       <td>品牌化妆品</td>
     </tr>
     <tr>
-      <td>2026-08-29</td>
+      <td>2026-08-31</td>
       <td>sw_l3</td>
       <td>化妆品制造及其他</td>
       <td>770201</td>
@@ -1022,7 +1013,7 @@
       <td>化妆品制造及其他</td>
     </tr>
     <tr>
-      <td>2026-08-29</td>
+      <td>2026-08-31</td>
       <td>sw_l3</td>
       <td>洗护用品</td>
       <td>770102</td>
@@ -1041,7 +1032,7 @@
 <section class="table-detail" id="table-ods_astock_industry_detail">
   <div class="table-header">
     <div class="table-title-wrap">
-      <h2>【表 5/39】ods_astock_industry_detail</h2>
+      <h2>【表 5/38】ods_astock_industry_detail</h2>
       <div class="table-tags"><span class="table-tag layer-ods">（一）下午跑 - insight 行情源</span></div>
     </div>
     <a href="#toc" class="back-to-top" title="返回目录">🔝</a>
@@ -1049,7 +1040,7 @@
   <div class="info-section">
     <h3>📊 基本信息</h3>
     <table class="info-table">
-      <tr><td>行数</td><td>691,660</td></tr>
+      <tr><td>行数</td><td>697,003</td></tr>
       <tr><td>列数</td><td>11</td></tr>
     </table>
   </div>
@@ -1059,33 +1050,33 @@
       <tr><td>存在ymd列</td><td>✓</td></tr>
       <tr><td>日期总数</td><td>10</td></tr>
       <tr><td>全表最早日期</td><td>2024-08-25</td></tr>
-      <tr><td>全表最晚日期</td><td>2026-08-21</td></tr>
-      <tr><td>最近10天范围</td><td>2026-06-19 ~ 2026-08-21</td></tr>
+      <tr><td>全表最晚日期</td><td>2026-08-28</td></tr>
+      <tr><td>最近10天范围</td><td>2026-06-28 ~ 2026-08-28</td></tr>
     </table>
     <p>最近10个日期(倒序):</p>
     <div class="date-list">
-      <span class="date-tag">1. 2026-08-21</span>
-      <span class="date-tag">2. 2026-08-14</span>
-      <span class="date-tag">3. 2026-08-07</span>
-      <span class="date-tag">4. 2026-07-31</span>
-      <span class="date-tag">5. 2026-07-24</span>
-      <span class="date-tag">6. 2026-07-17</span>
-      <span class="date-tag">7. 2026-07-10</span>
-      <span class="date-tag">8. 2026-07-03</span>
-      <span class="date-tag">9. 2026-06-28</span>
-      <span class="date-tag">10. 2026-06-19</span>
+      <span class="date-tag">1. 2026-08-28</span>
+      <span class="date-tag">2. 2026-08-21</span>
+      <span class="date-tag">3. 2026-08-14</span>
+      <span class="date-tag">4. 2026-08-07</span>
+      <span class="date-tag">5. 2026-07-31</span>
+      <span class="date-tag">6. 2026-07-24</span>
+      <span class="date-tag">7. 2026-07-17</span>
+      <span class="date-tag">8. 2026-07-10</span>
+      <span class="date-tag">9. 2026-07-03</span>
+      <span class="date-tag">10. 2026-06-28</span>
     </div>
   </div>
   <div class="info-section">
     <h3>🔍 交易日覆盖检查（以 ods_trading_days_insight 为基准）</h3>
     <table class="info-table">
-      <tr><td>基准区间</td><td>2026-08-17 ~ 2026-08-28 (共10个交易日)</td></tr>
-      <tr><td>覆盖情况</td><td><strong>1/10</strong> (10.0%)</td></tr>
+      <tr><td>基准区间</td><td>2026-08-18 ~ 2026-08-31 (共10个交易日)</td></tr>
+      <tr><td>覆盖情况</td><td><strong>2/10</strong> (20.0%)</td></tr>
     </table>
     <div class="alert alert-warning">
-      <p>⚠️ 缺失日期 (9天):</p>
+      <p>⚠️ 缺失日期 (8天):</p>
       <div class="missing-dates">
-        <span class="missing-tag">❌ 2026-08-28</span>
+        <span class="missing-tag">❌ 2026-08-31</span>
         <span class="missing-tag">❌ 2026-08-27</span>
         <span class="missing-tag">❌ 2026-08-26</span>
         <span class="missing-tag">❌ 2026-08-25</span>
@@ -1093,7 +1084,6 @@
         <span class="missing-tag">❌ 2026-08-20</span>
         <span class="missing-tag">❌ 2026-08-19</span>
         <span class="missing-tag">❌ 2026-08-18</span>
-        <span class="missing-tag">❌ 2026-08-17</span>
       </div>
       <p class="severity severity-medium">🟠 警告：缺失较多，请检查数据同步任务</p>
     </div>
@@ -1101,9 +1091,15 @@
     <table class="data-table">
       <tr><th>日期</th><th>条数</th><th>状态</th><th>环比</th></tr>
       <tr>
-        <td>2026-08-28</td>
+        <td>2026-08-31</td>
         <td>0</td>
         <td class="status-error">✗</td>
+        <td>-</td>
+      </tr>
+      <tr>
+        <td>2026-08-28</td>
+        <td>5,343</td>
+        <td class="status-ok">✓</td>
         <td>-</td>
       </tr>
       <tr>
@@ -1154,14 +1150,8 @@
         <td class="status-error">✗</td>
         <td>-</td>
       </tr>
-      <tr>
-        <td>2026-08-17</td>
-        <td>0</td>
-        <td class="status-error">✗</td>
-        <td>-</td>
-      </tr>
     </table>
-    <p class="summary-line">10日总计: 5,343 条 | 日均: 5,343.0 条</p>
+    <p class="summary-line">10日总计: 10,686 条 | 日均: 5,343.0 条</p>
   </div>
   <div class="info-section">
     <h3>📝 数据样例（按ymd倒序，前5行）</h3>
@@ -1184,7 +1174,7 @@
   </thead>
   <tbody>
     <tr>
-      <td>2026-08-21</td>
+      <td>2026-08-28</td>
       <td>920992.BJ</td>
       <td>中科美菱</td>
       <td>医疗设备</td>
@@ -1197,7 +1187,7 @@
       <td>医疗设备</td>
     </tr>
     <tr>
-      <td>2026-08-21</td>
+      <td>2026-08-28</td>
       <td>920985.BJ</td>
       <td>海泰新能</td>
       <td>光伏电池组件</td>
@@ -1210,7 +1200,7 @@
       <td>光伏电池组件</td>
     </tr>
     <tr>
-      <td>2026-08-21</td>
+      <td>2026-08-28</td>
       <td>920982.BJ</td>
       <td>锦波生物</td>
       <td>医美耗材</td>
@@ -1223,7 +1213,7 @@
       <td>医美耗材</td>
     </tr>
     <tr>
-      <td>2026-08-21</td>
+      <td>2026-08-28</td>
       <td>920981.BJ</td>
       <td>晶赛科技</td>
       <td>被动元件</td>
@@ -1236,7 +1226,7 @@
       <td>被动元件</td>
     </tr>
     <tr>
-      <td>2026-08-21</td>
+      <td>2026-08-28</td>
       <td>920978.BJ</td>
       <td>开特股份</td>
       <td>底盘与发动机系统</td>
@@ -1257,7 +1247,7 @@
 <section class="table-detail" id="table-ods_stock_kline_daily_ts">
   <div class="table-header">
     <div class="table-title-wrap">
-      <h2>【表 6/39】ods_stock_kline_daily_ts</h2>
+      <h2>【表 6/38】ods_stock_kline_daily_ts</h2>
       <div class="table-tags"><span class="table-tag layer-ods">（一）下午跑 - tushare 行情源</span></div>
     </div>
     <a href="#toc" class="back-to-top" title="返回目录">🔝</a>
@@ -1265,7 +1255,7 @@
   <div class="info-section">
     <h3>📊 基本信息</h3>
     <table class="info-table">
-      <tr><td>行数</td><td>6,658,256</td></tr>
+      <tr><td>行数</td><td>6,663,801</td></tr>
       <tr><td>列数</td><td>12</td></tr>
     </table>
   </div>
@@ -1275,27 +1265,27 @@
       <tr><td>存在ymd列</td><td>✓</td></tr>
       <tr><td>日期总数</td><td>10</td></tr>
       <tr><td>全表最早日期</td><td>2021-01-04</td></tr>
-      <tr><td>全表最晚日期</td><td>2026-08-28</td></tr>
-      <tr><td>最近10天范围</td><td>2026-08-17 ~ 2026-08-28</td></tr>
+      <tr><td>全表最晚日期</td><td>2026-08-31</td></tr>
+      <tr><td>最近10天范围</td><td>2026-08-18 ~ 2026-08-31</td></tr>
     </table>
     <p>最近10个日期(倒序):</p>
     <div class="date-list">
-      <span class="date-tag">1. 2026-08-28</span>
-      <span class="date-tag">2. 2026-08-27</span>
-      <span class="date-tag">3. 2026-08-26</span>
-      <span class="date-tag">4. 2026-08-25</span>
-      <span class="date-tag">5. 2026-08-24</span>
-      <span class="date-tag">6. 2026-08-21</span>
-      <span class="date-tag">7. 2026-08-20</span>
-      <span class="date-tag">8. 2026-08-19</span>
-      <span class="date-tag">9. 2026-08-18</span>
-      <span class="date-tag">10. 2026-08-17</span>
+      <span class="date-tag">1. 2026-08-31</span>
+      <span class="date-tag">2. 2026-08-28</span>
+      <span class="date-tag">3. 2026-08-27</span>
+      <span class="date-tag">4. 2026-08-26</span>
+      <span class="date-tag">5. 2026-08-25</span>
+      <span class="date-tag">6. 2026-08-24</span>
+      <span class="date-tag">7. 2026-08-21</span>
+      <span class="date-tag">8. 2026-08-20</span>
+      <span class="date-tag">9. 2026-08-19</span>
+      <span class="date-tag">10. 2026-08-18</span>
     </div>
   </div>
   <div class="info-section">
     <h3>🔍 交易日覆盖检查（以 ods_trading_days_insight 为基准）</h3>
     <table class="info-table">
-      <tr><td>基准区间</td><td>2026-08-17 ~ 2026-08-28 (共10个交易日)</td></tr>
+      <tr><td>基准区间</td><td>2026-08-18 ~ 2026-08-31 (共10个交易日)</td></tr>
       <tr><td>覆盖情况</td><td><strong>10/10</strong> (100.0%)</td></tr>
     </table>
     <div class="alert alert-success">
@@ -1304,6 +1294,12 @@
     <h4>📈 每日数据量明细:</h4>
     <table class="data-table">
       <tr><th>日期</th><th>条数</th><th>状态</th><th>环比</th></tr>
+      <tr>
+        <td>2026-08-31</td>
+        <td>5,545</td>
+        <td class="status-ok">✓</td>
+        <td>-0.0%</td>
+      </tr>
       <tr>
         <td>2026-08-28</td>
         <td>5,547</td>
@@ -1356,16 +1352,10 @@
         <td>2026-08-18</td>
         <td>5,540</td>
         <td class="status-ok">✓</td>
-        <td>+0.0%</td>
-      </tr>
-      <tr>
-        <td>2026-08-17</td>
-        <td>5,539</td>
-        <td class="status-ok">✓</td>
         <td>-</td>
       </tr>
     </table>
-    <p class="summary-line">10日总计: 55,436 条 | 日均: 5,543.6 条</p>
+    <p class="summary-line">10日总计: 55,442 条 | 日均: 5,544.2 条</p>
   </div>
   <div class="info-section">
     <h3>📝 数据样例（按ymd倒序，前5行）</h3>
@@ -1390,72 +1380,72 @@
   <tbody>
     <tr>
       <td>920992.BJ</td>
-      <td>2026-08-28</td>
-      <td>11.31</td>
-      <td>11.41</td>
-      <td>11.49</td>
-      <td>11.26</td>
-      <td>0.3518</td>
-      <td>5671</td>
-      <td>6450.05523</td>
-      <td>0.88</td>
+      <td>2026-08-31</td>
+      <td>11.30</td>
+      <td>11.48</td>
+      <td>11.54</td>
+      <td>11.28</td>
+      <td>0.6135</td>
+      <td>5601</td>
+      <td>6408.30355</td>
+      <td>1.59</td>
       <td>0</td>
       <td>920992</td>
     </tr>
     <tr>
       <td>920985.BJ</td>
-      <td>2026-08-28</td>
-      <td>4.56</td>
+      <td>2026-08-31</td>
+      <td>4.62</td>
       <td>4.66</td>
-      <td>4.67</td>
-      <td>4.54</td>
-      <td>2.1930</td>
-      <td>23476</td>
-      <td>10847.99553</td>
-      <td>2.19</td>
+      <td>4.68</td>
+      <td>4.57</td>
+      <td>0.0000</td>
+      <td>15533</td>
+      <td>7211.17185</td>
+      <td>0.87</td>
       <td>0</td>
       <td>920985</td>
     </tr>
     <tr>
       <td>920982.BJ</td>
-      <td>2026-08-28</td>
-      <td>120.90</td>
-      <td>120.99</td>
-      <td>122.22</td>
-      <td>120.11</td>
-      <td>-0.1403</td>
-      <td>5707</td>
-      <td>69114.78125</td>
-      <td>0.07</td>
-      <td>0</td>
+      <td>2026-08-31</td>
+      <td>120.89</td>
+      <td>118.50</td>
+      <td>120.89</td>
+      <td>117.00</td>
+      <td>-2.0580</td>
+      <td>6603</td>
+      <td>77942.89737</td>
+      <td>-1.98</td>
+      <td>1</td>
       <td>920982</td>
     </tr>
     <tr>
       <td>920981.BJ</td>
-      <td>2026-08-28</td>
-      <td>31.10</td>
-      <td>29.62</td>
-      <td>31.10</td>
-      <td>29.60</td>
-      <td>-2.8534</td>
-      <td>22463</td>
-      <td>67967.31508</td>
-      <td>-4.76</td>
-      <td>1</td>
+      <td>2026-08-31</td>
+      <td>29.20</td>
+      <td>30.09</td>
+      <td>30.09</td>
+      <td>28.78</td>
+      <td>1.5868</td>
+      <td>16127</td>
+      <td>47830.92600</td>
+      <td>3.05</td>
+      <td>0</td>
       <td>920981</td>
     </tr>
     <tr>
       <td>920978.BJ</td>
-      <td>2026-08-28</td>
-      <td>19.02</td>
-      <td>18.83</td>
-      <td>19.20</td>
-      <td>18.74</td>
-      <td>-1.3103</td>
-      <td>10173</td>
-      <td>19213.82191</td>
-      <td>-1.00</td>
-      <td>1</td>
+      <td>2026-08-31</td>
+      <td>18.79</td>
+      <td>18.97</td>
+      <td>19.10</td>
+      <td>18.47</td>
+      <td>0.7435</td>
+      <td>9416</td>
+      <td>17736.21837</td>
+      <td>0.96</td>
+      <td>0</td>
       <td>920978</td>
     </tr>
   </tbody>
@@ -1466,7 +1456,7 @@
 <section class="table-detail" id="table-ods_tushare_board_concept_name_ths">
   <div class="table-header">
     <div class="table-title-wrap">
-      <h2>【表 7/39】ods_tushare_board_concept_name_ths</h2>
+      <h2>【表 7/38】ods_tushare_board_concept_name_ths</h2>
       <div class="table-tags"><span class="table-tag layer-ods">（一）下午跑 - tushare 行情源</span></div>
     </div>
     <a href="#toc" class="back-to-top" title="返回目录">🔝</a>
@@ -1474,7 +1464,7 @@
   <div class="info-section">
     <h3>📊 基本信息</h3>
     <table class="info-table">
-      <tr><td>行数</td><td>56,892</td></tr>
+      <tr><td>行数</td><td>58,558</td></tr>
       <tr><td>列数</td><td>6</td></tr>
     </table>
   </div>
@@ -1484,44 +1474,46 @@
       <tr><td>存在ymd列</td><td>✓</td></tr>
       <tr><td>日期总数</td><td>10</td></tr>
       <tr><td>全表最早日期</td><td>2026-07-10</td></tr>
-      <tr><td>全表最晚日期</td><td>2026-08-29</td></tr>
-      <tr><td>最近10天范围</td><td>2026-08-17 ~ 2026-08-29</td></tr>
+      <tr><td>全表最晚日期</td><td>2026-08-31</td></tr>
+      <tr><td>最近10天范围</td><td>2026-08-18 ~ 2026-08-31</td></tr>
     </table>
     <p>最近10个日期(倒序):</p>
     <div class="date-list">
-      <span class="date-tag">1. 2026-08-29</span>
-      <span class="date-tag">2. 2026-08-27</span>
-      <span class="date-tag">3. 2026-08-26</span>
-      <span class="date-tag">4. 2026-08-25</span>
-      <span class="date-tag">5. 2026-08-24</span>
-      <span class="date-tag">6. 2026-08-21</span>
-      <span class="date-tag">7. 2026-08-20</span>
-      <span class="date-tag">8. 2026-08-19</span>
-      <span class="date-tag">9. 2026-08-18</span>
-      <span class="date-tag">10. 2026-08-17</span>
+      <span class="date-tag">1. 2026-08-31</span>
+      <span class="date-tag">2. 2026-08-28</span>
+      <span class="date-tag">3. 2026-08-27</span>
+      <span class="date-tag">4. 2026-08-26</span>
+      <span class="date-tag">5. 2026-08-25</span>
+      <span class="date-tag">6. 2026-08-24</span>
+      <span class="date-tag">7. 2026-08-21</span>
+      <span class="date-tag">8. 2026-08-20</span>
+      <span class="date-tag">9. 2026-08-19</span>
+      <span class="date-tag">10. 2026-08-18</span>
     </div>
   </div>
   <div class="info-section">
     <h3>🔍 交易日覆盖检查（以 ods_trading_days_insight 为基准）</h3>
     <table class="info-table">
-      <tr><td>基准区间</td><td>2026-08-17 ~ 2026-08-28 (共10个交易日)</td></tr>
-      <tr><td>覆盖情况</td><td><strong>9/10</strong> (90.0%)</td></tr>
+      <tr><td>基准区间</td><td>2026-08-18 ~ 2026-08-31 (共10个交易日)</td></tr>
+      <tr><td>覆盖情况</td><td><strong>10/10</strong> (100.0%)</td></tr>
     </table>
-    <div class="alert alert-warning">
-      <p>⚠️ 缺失日期 (1天):</p>
-      <div class="missing-dates">
-        <span class="missing-tag">❌ 2026-08-28</span>
-      </div>
-      <p class="severity severity-low">🟡 提示：少量缺失，可能是非交易日或数据延迟</p>
+    <div class="alert alert-success">
+      <p>✅ 全部覆盖：最近10个交易日数据完整</p>
     </div>
     <h4>📈 每日数据量明细:</h4>
     <table class="data-table">
       <tr><th>日期</th><th>条数</th><th>状态</th><th>环比</th></tr>
       <tr>
+        <td>2026-08-31</td>
+        <td>1,666</td>
+        <td class="status-ok">✓</td>
+        <td>+0.0%</td>
+      </tr>
+      <tr>
         <td>2026-08-28</td>
-        <td>0</td>
-        <td class="status-error">✗</td>
-        <td>-</td>
+        <td>1,666</td>
+        <td class="status-ok">✓</td>
+        <td>+0.0%</td>
       </tr>
       <tr>
         <td>2026-08-27</td>
@@ -1569,16 +1561,10 @@
         <td>2026-08-18</td>
         <td>1,666</td>
         <td class="status-ok">✓</td>
-        <td>+0.0%</td>
-      </tr>
-      <tr>
-        <td>2026-08-17</td>
-        <td>1,666</td>
-        <td class="status-ok">✓</td>
         <td>-</td>
       </tr>
     </table>
-    <p class="summary-line">10日总计: 14,994 条 | 日均: 1,666.0 条</p>
+    <p class="summary-line">10日总计: 16,660 条 | 日均: 1,666.0 条</p>
   </div>
   <div class="info-section">
     <h3>📝 数据样例（按ymd倒序，前5行）</h3>
@@ -1596,7 +1582,7 @@
   </thead>
   <tbody>
     <tr>
-      <td>2026-08-29</td>
+      <td>2026-08-31</td>
       <td>上证指数(旧)</td>
       <td>991001.TI</td>
       <td>1739</td>
@@ -1604,7 +1590,7 @@
       <td>1991-07-15</td>
     </tr>
     <tr>
-      <td>2026-08-29</td>
+      <td>2026-08-31</td>
       <td>MLCC概念</td>
       <td>886112.TI</td>
       <td>33</td>
@@ -1612,7 +1598,7 @@
       <td>2026-07-31</td>
     </tr>
     <tr>
-      <td>2026-08-29</td>
+      <td>2026-08-31</td>
       <td>玻璃基板</td>
       <td>886111.TI</td>
       <td>54</td>
@@ -1620,7 +1606,7 @@
       <td>2026-07-01</td>
     </tr>
     <tr>
-      <td>2026-08-29</td>
+      <td>2026-08-31</td>
       <td>2026中报预增</td>
       <td>886110.TI</td>
       <td>507</td>
@@ -1628,7 +1614,7 @@
       <td>2026-06-29</td>
     </tr>
     <tr>
-      <td>2026-08-29</td>
+      <td>2026-08-31</td>
       <td>2026一季报预增</td>
       <td>886109.TI</td>
       <td>101</td>
@@ -1643,7 +1629,7 @@
 <section class="table-detail" id="table-ods_tushare_stock_board_concept_index_ths">
   <div class="table-header">
     <div class="table-title-wrap">
-      <h2>【表 8/39】ods_tushare_stock_board_concept_index_ths</h2>
+      <h2>【表 8/38】ods_tushare_stock_board_concept_index_ths</h2>
       <div class="table-tags"><span class="table-tag layer-ods">（一）下午跑 - tushare 行情源</span></div>
     </div>
     <a href="#toc" class="back-to-top" title="返回目录">🔝</a>
@@ -1681,15 +1667,25 @@
   <div class="info-section">
     <h3>🔍 交易日覆盖检查（以 ods_trading_days_insight 为基准）</h3>
     <table class="info-table">
-      <tr><td>基准区间</td><td>2026-08-17 ~ 2026-08-28 (共10个交易日)</td></tr>
-      <tr><td>覆盖情况</td><td><strong>10/10</strong> (100.0%)</td></tr>
+      <tr><td>基准区间</td><td>2026-08-18 ~ 2026-08-31 (共10个交易日)</td></tr>
+      <tr><td>覆盖情况</td><td><strong>9/10</strong> (90.0%)</td></tr>
     </table>
-    <div class="alert alert-success">
-      <p>✅ 全部覆盖：最近10个交易日数据完整</p>
+    <div class="alert alert-warning">
+      <p>⚠️ 缺失日期 (1天):</p>
+      <div class="missing-dates">
+        <span class="missing-tag">❌ 2026-08-31</span>
+      </div>
+      <p class="severity severity-low">🟡 提示：少量缺失，可能是非交易日或数据延迟</p>
     </div>
     <h4>📈 每日数据量明细:</h4>
     <table class="data-table">
       <tr><th>日期</th><th>条数</th><th>状态</th><th>环比</th></tr>
+      <tr>
+        <td>2026-08-31</td>
+        <td>0</td>
+        <td class="status-error">✗</td>
+        <td>-</td>
+      </tr>
       <tr>
         <td>2026-08-28</td>
         <td>1,603</td>
@@ -1742,16 +1738,10 @@
         <td>2026-08-18</td>
         <td>1,613</td>
         <td class="status-ok">✓</td>
-        <td>-0.1%</td>
-      </tr>
-      <tr>
-        <td>2026-08-17</td>
-        <td>1,614</td>
-        <td class="status-ok">✓</td>
         <td>-</td>
       </tr>
     </table>
-    <p class="summary-line">10日总计: 16,053 条 | 日均: 1,605.3 条</p>
+    <p class="summary-line">10日总计: 14,439 条 | 日均: 1,604.3 条</p>
   </div>
   <div class="info-section">
     <h3>📝 数据样例（按ymd倒序，前5行）</h3>
@@ -1834,7 +1824,7 @@
 <section class="table-detail" id="table-ods_tushare_stock_board_concept_maps_ths">
   <div class="table-header">
     <div class="table-title-wrap">
-      <h2>【表 9/39】ods_tushare_stock_board_concept_maps_ths</h2>
+      <h2>【表 9/38】ods_tushare_stock_board_concept_maps_ths</h2>
       <div class="table-tags"><span class="table-tag layer-ods">（一）下午跑 - tushare 行情源</span></div>
     </div>
     <a href="#toc" class="back-to-top" title="返回目录">🔝</a>
@@ -1842,7 +1832,7 @@
   <div class="info-section">
     <h3>📊 基本信息</h3>
     <table class="info-table">
-      <tr><td>行数</td><td>2,997,002</td></tr>
+      <tr><td>行数</td><td>2,622,897</td></tr>
       <tr><td>列数</td><td>9</td></tr>
     </table>
   </div>
@@ -1850,35 +1840,34 @@
     <h3>📅 ymd日期信息</h3>
     <table class="info-table">
       <tr><td>存在ymd列</td><td>✓</td></tr>
-      <tr><td>日期总数</td><td>8</td></tr>
-      <tr><td>全表最早日期</td><td>2026-08-19</td></tr>
-      <tr><td>全表最晚日期</td><td>2026-08-29</td></tr>
-      <tr><td>最近10天范围</td><td>2026-08-19 ~ 2026-08-29</td></tr>
+      <tr><td>日期总数</td><td>7</td></tr>
+      <tr><td>全表最早日期</td><td>2026-08-21</td></tr>
+      <tr><td>全表最晚日期</td><td>2026-08-31</td></tr>
+      <tr><td>最近10天范围</td><td>2026-08-21 ~ 2026-08-31</td></tr>
     </table>
     <p>最近10个日期(倒序):</p>
     <div class="date-list">
-      <span class="date-tag">1. 2026-08-29</span>
-      <span class="date-tag">2. 2026-08-27</span>
-      <span class="date-tag">3. 2026-08-26</span>
-      <span class="date-tag">4. 2026-08-25</span>
-      <span class="date-tag">5. 2026-08-24</span>
-      <span class="date-tag">6. 2026-08-21</span>
-      <span class="date-tag">7. 2026-08-20</span>
-      <span class="date-tag">8. 2026-08-19</span>
+      <span class="date-tag">1. 2026-08-31</span>
+      <span class="date-tag">2. 2026-08-28</span>
+      <span class="date-tag">3. 2026-08-27</span>
+      <span class="date-tag">4. 2026-08-26</span>
+      <span class="date-tag">5. 2026-08-25</span>
+      <span class="date-tag">6. 2026-08-24</span>
+      <span class="date-tag">7. 2026-08-21</span>
     </div>
   </div>
   <div class="info-section">
     <h3>🔍 交易日覆盖检查（以 ods_trading_days_insight 为基准）</h3>
     <table class="info-table">
-      <tr><td>基准区间</td><td>2026-08-17 ~ 2026-08-28 (共10个交易日)</td></tr>
+      <tr><td>基准区间</td><td>2026-08-18 ~ 2026-08-31 (共10个交易日)</td></tr>
       <tr><td>覆盖情况</td><td><strong>7/10</strong> (70.0%)</td></tr>
     </table>
     <div class="alert alert-warning">
       <p>⚠️ 缺失日期 (3天):</p>
       <div class="missing-dates">
-        <span class="missing-tag">❌ 2026-08-28</span>
+        <span class="missing-tag">❌ 2026-08-20</span>
+        <span class="missing-tag">❌ 2026-08-19</span>
         <span class="missing-tag">❌ 2026-08-18</span>
-        <span class="missing-tag">❌ 2026-08-17</span>
       </div>
       <p class="severity severity-medium">🟠 警告：缺失较多，请检查数据同步任务</p>
     </div>
@@ -1886,10 +1875,16 @@
     <table class="data-table">
       <tr><th>日期</th><th>条数</th><th>状态</th><th>环比</th></tr>
       <tr>
+        <td>2026-08-31</td>
+        <td>374,971</td>
+        <td class="status-ok">✓</td>
+        <td>+0.1%</td>
+      </tr>
+      <tr>
         <td>2026-08-28</td>
-        <td>0</td>
-        <td class="status-error">✗</td>
-        <td>-</td>
+        <td>374,678</td>
+        <td class="status-ok">✓</td>
+        <td>+0.0%</td>
       </tr>
       <tr>
         <td>2026-08-27</td>
@@ -1919,18 +1914,18 @@
         <td>2026-08-21</td>
         <td>374,549</td>
         <td class="status-ok">✓</td>
-        <td>+0.0%</td>
+        <td>-</td>
       </tr>
       <tr>
         <td>2026-08-20</td>
-        <td>374,549</td>
-        <td class="status-ok">✓</td>
-        <td>+0.0%</td>
+        <td>0</td>
+        <td class="status-error">✗</td>
+        <td>-</td>
       </tr>
       <tr>
         <td>2026-08-19</td>
-        <td>374,527</td>
-        <td class="status-ok">✓</td>
+        <td>0</td>
+        <td class="status-error">✗</td>
         <td>-</td>
       </tr>
       <tr>
@@ -1939,14 +1934,8 @@
         <td class="status-error">✗</td>
         <td>-</td>
       </tr>
-      <tr>
-        <td>2026-08-17</td>
-        <td>0</td>
-        <td class="status-error">✗</td>
-        <td>-</td>
-      </tr>
     </table>
-    <p class="summary-line">10日总计: 2,622,324 条 | 日均: 374,617.7 条</p>
+    <p class="summary-line">10日总计: 2,622,897 条 | 日均: 374,699.6 条</p>
   </div>
   <div class="info-section">
     <h3>📝 数据样例（按ymd倒序，前5行）</h3>
@@ -1967,7 +1956,7 @@
   </thead>
   <tbody>
     <tr>
-      <td>2026-08-29</td>
+      <td>2026-08-31</td>
       <td>上证指数(旧)</td>
       <td>991001.TI</td>
       <td>900948.SH</td>
@@ -1978,7 +1967,7 @@
       <td>None</td>
     </tr>
     <tr>
-      <td>2026-08-29</td>
+      <td>2026-08-31</td>
       <td>上证指数(旧)</td>
       <td>991001.TI</td>
       <td>900947.SH</td>
@@ -1989,7 +1978,7 @@
       <td>None</td>
     </tr>
     <tr>
-      <td>2026-08-29</td>
+      <td>2026-08-31</td>
       <td>上证指数(旧)</td>
       <td>991001.TI</td>
       <td>900946.SH</td>
@@ -2000,7 +1989,7 @@
       <td>None</td>
     </tr>
     <tr>
-      <td>2026-08-29</td>
+      <td>2026-08-31</td>
       <td>上证指数(旧)</td>
       <td>991001.TI</td>
       <td>900945.SH</td>
@@ -2011,7 +2000,7 @@
       <td>None</td>
     </tr>
     <tr>
-      <td>2026-08-29</td>
+      <td>2026-08-31</td>
       <td>上证指数(旧)</td>
       <td>991001.TI</td>
       <td>900943.SH</td>
@@ -2030,7 +2019,7 @@
 <section class="table-detail" id="table-ods_akshare_stock_yjkb_em">
   <div class="table-header">
     <div class="table-title-wrap">
-      <h2>【表 10/39】ods_akshare_stock_yjkb_em</h2>
+      <h2>【表 10/38】ods_akshare_stock_yjkb_em</h2>
       <div class="table-tags"><span class="table-tag layer-ods">（一）下午跑 - akshare 行情源</span></div>
     </div>
     <a href="#toc" class="back-to-top" title="返回目录">🔝</a>
@@ -2068,19 +2057,19 @@
   <div class="info-section">
     <h3>🔍 交易日覆盖检查（以 ods_trading_days_insight 为基准）</h3>
     <table class="info-table">
-      <tr><td>基准区间</td><td>2026-08-17 ~ 2026-08-28 (共10个交易日)</td></tr>
+      <tr><td>基准区间</td><td>2026-08-18 ~ 2026-08-31 (共10个交易日)</td></tr>
       <tr><td>覆盖情况</td><td><strong>3/10</strong> (30.0%)</td></tr>
     </table>
     <div class="alert alert-warning">
       <p>⚠️ 缺失日期 (7天):</p>
       <div class="missing-dates">
+        <span class="missing-tag">❌ 2026-08-31</span>
         <span class="missing-tag">❌ 2026-08-28</span>
         <span class="missing-tag">❌ 2026-08-27</span>
         <span class="missing-tag">❌ 2026-08-25</span>
         <span class="missing-tag">❌ 2026-08-21</span>
         <span class="missing-tag">❌ 2026-08-20</span>
         <span class="missing-tag">❌ 2026-08-19</span>
-        <span class="missing-tag">❌ 2026-08-17</span>
       </div>
       <p class="severity severity-medium">🟠 警告：缺失较多，请检查数据同步任务</p>
     </div>
@@ -2091,6 +2080,12 @@
     </div>
     <table class="data-table">
       <tr><th>日期</th><th>条数</th><th>状态</th><th>环比</th></tr>
+      <tr>
+        <td>2026-08-31</td>
+        <td>0</td>
+        <td class="status-error">✗</td>
+        <td>-</td>
+      </tr>
       <tr>
         <td>2026-08-28</td>
         <td>0</td>
@@ -2143,12 +2138,6 @@
         <td>2026-08-18</td>
         <td>3</td>
         <td class="status-ok">✓</td>
-        <td>-</td>
-      </tr>
-      <tr>
-        <td>2026-08-17</td>
-        <td>0</td>
-        <td class="status-error">✗</td>
         <td>-</td>
       </tr>
     </table>
@@ -2277,7 +2266,7 @@
 <section class="table-detail" id="table-ods_akshare_stock_yjyg_em">
   <div class="table-header">
     <div class="table-title-wrap">
-      <h2>【表 11/39】ods_akshare_stock_yjyg_em</h2>
+      <h2>【表 11/38】ods_akshare_stock_yjyg_em</h2>
       <div class="table-tags"><span class="table-tag layer-ods">（一）下午跑 - akshare 行情源</span></div>
     </div>
     <a href="#toc" class="back-to-top" title="返回目录">🔝</a>
@@ -2285,7 +2274,7 @@
   <div class="info-section">
     <h3>📊 基本信息</h3>
     <table class="info-table">
-      <tr><td>行数</td><td>39,383</td></tr>
+      <tr><td>行数</td><td>39,387</td></tr>
       <tr><td>列数</td><td>11</td></tr>
     </table>
   </div>
@@ -2295,27 +2284,27 @@
       <tr><td>存在ymd列</td><td>✓</td></tr>
       <tr><td>日期总数</td><td>10</td></tr>
       <tr><td>全表最早日期</td><td>2020-01-16</td></tr>
-      <tr><td>全表最晚日期</td><td>2026-08-28</td></tr>
-      <tr><td>最近10天范围</td><td>2026-08-17 ~ 2026-08-28</td></tr>
+      <tr><td>全表最晚日期</td><td>2026-08-31</td></tr>
+      <tr><td>最近10天范围</td><td>2026-08-18 ~ 2026-08-31</td></tr>
     </table>
     <p>最近10个日期(倒序):</p>
     <div class="date-list">
-      <span class="date-tag">1. 2026-08-28</span>
-      <span class="date-tag">2. 2026-08-27</span>
-      <span class="date-tag">3. 2026-08-26</span>
-      <span class="date-tag">4. 2026-08-25</span>
-      <span class="date-tag">5. 2026-08-24</span>
-      <span class="date-tag">6. 2026-08-21</span>
-      <span class="date-tag">7. 2026-08-20</span>
-      <span class="date-tag">8. 2026-08-19</span>
-      <span class="date-tag">9. 2026-08-18</span>
-      <span class="date-tag">10. 2026-08-17</span>
+      <span class="date-tag">1. 2026-08-31</span>
+      <span class="date-tag">2. 2026-08-28</span>
+      <span class="date-tag">3. 2026-08-27</span>
+      <span class="date-tag">4. 2026-08-26</span>
+      <span class="date-tag">5. 2026-08-25</span>
+      <span class="date-tag">6. 2026-08-24</span>
+      <span class="date-tag">7. 2026-08-21</span>
+      <span class="date-tag">8. 2026-08-20</span>
+      <span class="date-tag">9. 2026-08-19</span>
+      <span class="date-tag">10. 2026-08-18</span>
     </div>
   </div>
   <div class="info-section">
     <h3>🔍 交易日覆盖检查（以 ods_trading_days_insight 为基准）</h3>
     <table class="info-table">
-      <tr><td>基准区间</td><td>2026-08-17 ~ 2026-08-28 (共10个交易日)</td></tr>
+      <tr><td>基准区间</td><td>2026-08-18 ~ 2026-08-31 (共10个交易日)</td></tr>
       <tr><td>覆盖情况</td><td><strong>10/10</strong> (100.0%)</td></tr>
     </table>
     <div class="alert alert-success">
@@ -2323,11 +2312,17 @@
     </div>
     <h4>📈 每日数据量明细:</h4>
     <div class="alert alert-fluctuation">
-      <p>⚠️ 数据量波动警告：相邻日期间波动率达 250.0%</p>
-      <p>从 2 条 → 7 条</p>
+      <p>⚠️ 数据量波动警告：相邻日期间波动率达 200.0%</p>
+      <p>从 1 条 → 3 条</p>
     </div>
     <table class="data-table">
       <tr><th>日期</th><th>条数</th><th>状态</th><th>环比</th></tr>
+      <tr>
+        <td>2026-08-31</td>
+        <td>2</td>
+        <td class="status-ok">✓</td>
+        <td>+0.0%</td>
+      </tr>
       <tr>
         <td>2026-08-28</td>
         <td>2</td>
@@ -2350,13 +2345,13 @@
         <td>2026-08-25</td>
         <td>7</td>
         <td class="status-ok">✓</td>
-        <td><span class="fluctuation-high">+250.0%</span></td>
+        <td><span class="fluctuation-high">+133.3%</span></td>
       </tr>
       <tr>
         <td>2026-08-24</td>
-        <td>2</td>
+        <td>3</td>
         <td class="status-ok">✓</td>
-        <td>+0.0%</td>
+        <td><span class="fluctuation-high">+50.0%</span></td>
       </tr>
       <tr>
         <td>2026-08-21</td>
@@ -2380,16 +2375,10 @@
         <td>2026-08-18</td>
         <td>3</td>
         <td class="status-ok">✓</td>
-        <td><span class="fluctuation-high">+50.0%</span></td>
-      </tr>
-      <tr>
-        <td>2026-08-17</td>
-        <td>2</td>
-        <td class="status-ok">✓</td>
         <td>-</td>
       </tr>
     </table>
-    <p class="summary-line">10日总计: 32 条 | 日均: 3.2 条</p>
+    <p class="summary-line">10日总计: 33 条 | 日均: 3.3 条</p>
   </div>
   <div class="info-section">
     <h3>📝 数据样例（按ymd倒序，前5行）</h3>
@@ -2411,6 +2400,32 @@
     </tr>
   </thead>
   <tbody>
+    <tr>
+      <td>2026-08-31</td>
+      <td>1</td>
+      <td>601123</td>
+      <td>马矿股份</td>
+      <td>归属于上市公司股东的净利润</td>
+      <td>预计2026年1-9月归属于上市公司股东的净利润盈利:53,164万元至58,087万元,同比上年增长:8%至18%。</td>
+      <td>556255000.0</td>
+      <td>13.000</td>
+      <td>None</td>
+      <td>略增</td>
+      <td>492259400.00</td>
+    </tr>
+    <tr>
+      <td>2026-08-31</td>
+      <td>1</td>
+      <td>301697</td>
+      <td>贝特利</td>
+      <td>净利润</td>
+      <td>预计2026年1-12月净利润盈利:11,910.63万元。</td>
+      <td>119106300.0</td>
+      <td>2.630</td>
+      <td>None</td>
+      <td>略增</td>
+      <td>116054131.55</td>
+    </tr>
     <tr>
       <td>2026-08-28</td>
       <td>1</td>
@@ -2450,32 +2465,6 @@
       <td>略增</td>
       <td>54290200.00</td>
     </tr>
-    <tr>
-      <td>2026-08-27</td>
-      <td>6</td>
-      <td>920218</td>
-      <td>新天力</td>
-      <td>净利润</td>
-      <td>预计2026年1-9月净利润有进一步下降的风险。</td>
-      <td>NaN</td>
-      <td>NaN</td>
-      <td>公司报告期内营业收入同比下降4.2%,净利润同比下降55.00%,主要系报告期内,特别是二季度,受美以伊冲突反复、霍尔木兹海峡阶段性封锁影响,国际能源与化工品的供应链体系遭受严重冲击,塑料粒子价格呈现先快速冲高,随后自高位持续震荡行情,原材料成本管控难度显著上升,公司主要原材料(如PP、PS、PET等石化类原料)采购价格同比较大幅度上涨,生产成本上升;同时成本向下游传导存在一定滞后性,导致产品毛利率承压,进而影响净利润水平。</td>
-      <td>续盈</td>
-      <td>73451661.22</td>
-    </tr>
-    <tr>
-      <td>2026-08-27</td>
-      <td>7</td>
-      <td>920130</td>
-      <td>立方控股</td>
-      <td>归属于上市公司股东的净利润</td>
-      <td>预计2026年1-9月经营业绩力争遏制亏损扩大趋势和保持经营整体态势趋于平稳。</td>
-      <td>NaN</td>
-      <td>NaN</td>
-      <td>2026年1-9月受宏观环境及行业周期影响,市场上普遍存在新建项目数量减少的情况。公司通过强化成本管控、优化项目结算与回款等措施,力争遏制亏损扩大趋势和保持经营整体态势趋于平稳。</td>
-      <td>续亏</td>
-      <td>-14221050.34</td>
-    </tr>
   </tbody>
 </table>
     </div>
@@ -2484,7 +2473,7 @@
 <section class="table-detail" id="table-ods_akshare_stock_a_high_low_statistics">
   <div class="table-header">
     <div class="table-title-wrap">
-      <h2>【表 12/39】ods_akshare_stock_a_high_low_statistics</h2>
+      <h2>【表 12/38】ods_akshare_stock_a_high_low_statistics</h2>
       <div class="table-tags"><span class="table-tag layer-ods">（一）下午跑 - akshare 行情源</span></div>
     </div>
     <a href="#toc" class="back-to-top" title="返回目录">🔝</a>
@@ -2492,7 +2481,7 @@
   <div class="info-section">
     <h3>📊 基本信息</h3>
     <table class="info-table">
-      <tr><td>行数</td><td>2,952</td></tr>
+      <tr><td>行数</td><td>2,956</td></tr>
       <tr><td>列数</td><td>9</td></tr>
     </table>
   </div>
@@ -2502,27 +2491,27 @@
       <tr><td>存在ymd列</td><td>✓</td></tr>
       <tr><td>日期总数</td><td>10</td></tr>
       <tr><td>全表最早日期</td><td>2024-01-01</td></tr>
-      <tr><td>全表最晚日期</td><td>2026-08-28</td></tr>
-      <tr><td>最近10天范围</td><td>2026-08-17 ~ 2026-08-28</td></tr>
+      <tr><td>全表最晚日期</td><td>2026-08-31</td></tr>
+      <tr><td>最近10天范围</td><td>2026-08-18 ~ 2026-08-31</td></tr>
     </table>
     <p>最近10个日期(倒序):</p>
     <div class="date-list">
-      <span class="date-tag">1. 2026-08-28</span>
-      <span class="date-tag">2. 2026-08-27</span>
-      <span class="date-tag">3. 2026-08-26</span>
-      <span class="date-tag">4. 2026-08-25</span>
-      <span class="date-tag">5. 2026-08-24</span>
-      <span class="date-tag">6. 2026-08-21</span>
-      <span class="date-tag">7. 2026-08-20</span>
-      <span class="date-tag">8. 2026-08-19</span>
-      <span class="date-tag">9. 2026-08-18</span>
-      <span class="date-tag">10. 2026-08-17</span>
+      <span class="date-tag">1. 2026-08-31</span>
+      <span class="date-tag">2. 2026-08-28</span>
+      <span class="date-tag">3. 2026-08-27</span>
+      <span class="date-tag">4. 2026-08-26</span>
+      <span class="date-tag">5. 2026-08-25</span>
+      <span class="date-tag">6. 2026-08-24</span>
+      <span class="date-tag">7. 2026-08-21</span>
+      <span class="date-tag">8. 2026-08-20</span>
+      <span class="date-tag">9. 2026-08-19</span>
+      <span class="date-tag">10. 2026-08-18</span>
     </div>
   </div>
   <div class="info-section">
     <h3>🔍 交易日覆盖检查（以 ods_trading_days_insight 为基准）</h3>
     <table class="info-table">
-      <tr><td>基准区间</td><td>2026-08-17 ~ 2026-08-28 (共10个交易日)</td></tr>
+      <tr><td>基准区间</td><td>2026-08-18 ~ 2026-08-31 (共10个交易日)</td></tr>
       <tr><td>覆盖情况</td><td><strong>10/10</strong> (100.0%)</td></tr>
     </table>
     <div class="alert alert-success">
@@ -2531,6 +2520,12 @@
     <h4>📈 每日数据量明细:</h4>
     <table class="data-table">
       <tr><th>日期</th><th>条数</th><th>状态</th><th>环比</th></tr>
+      <tr>
+        <td>2026-08-31</td>
+        <td>4</td>
+        <td class="status-ok">✓</td>
+        <td>+0.0%</td>
+      </tr>
       <tr>
         <td>2026-08-28</td>
         <td>4</td>
@@ -2583,12 +2578,6 @@
         <td>2026-08-18</td>
         <td>4</td>
         <td class="status-ok">✓</td>
-        <td>+0.0%</td>
-      </tr>
-      <tr>
-        <td>2026-08-17</td>
-        <td>4</td>
-        <td class="status-ok">✓</td>
         <td>-</td>
       </tr>
     </table>
@@ -2613,6 +2602,50 @@
   </thead>
   <tbody>
     <tr>
+      <td>2026-08-31</td>
+      <td>zz500</td>
+      <td>7952.10</td>
+      <td>50</td>
+      <td>54</td>
+      <td>26</td>
+      <td>9</td>
+      <td>15</td>
+      <td>6</td>
+    </tr>
+    <tr>
+      <td>2026-08-31</td>
+      <td>sz50</td>
+      <td>2936.88</td>
+      <td>13</td>
+      <td>5</td>
+      <td>5</td>
+      <td>1</td>
+      <td>2</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>2026-08-31</td>
+      <td>hs300</td>
+      <td>4625.09</td>
+      <td>47</td>
+      <td>37</td>
+      <td>25</td>
+      <td>6</td>
+      <td>10</td>
+      <td>6</td>
+    </tr>
+    <tr>
+      <td>2026-08-31</td>
+      <td>all</td>
+      <td>3986.30</td>
+      <td>1005</td>
+      <td>247</td>
+      <td>377</td>
+      <td>36</td>
+      <td>77</td>
+      <td>32</td>
+    </tr>
+    <tr>
       <td>2026-08-28</td>
       <td>zz500</td>
       <td>7895.45</td>
@@ -2623,50 +2656,6 @@
       <td>5</td>
       <td>3</td>
     </tr>
-    <tr>
-      <td>2026-08-28</td>
-      <td>sz50</td>
-      <td>2923.33</td>
-      <td>6</td>
-      <td>3</td>
-      <td>3</td>
-      <td>1</td>
-      <td>0</td>
-      <td>1</td>
-    </tr>
-    <tr>
-      <td>2026-08-28</td>
-      <td>hs300</td>
-      <td>4609.18</td>
-      <td>30</td>
-      <td>15</td>
-      <td>13</td>
-      <td>3</td>
-      <td>4</td>
-      <td>3</td>
-    </tr>
-    <tr>
-      <td>2026-08-28</td>
-      <td>all</td>
-      <td>3952.18</td>
-      <td>863</td>
-      <td>137</td>
-      <td>307</td>
-      <td>20</td>
-      <td>50</td>
-      <td>19</td>
-    </tr>
-    <tr>
-      <td>2026-08-27</td>
-      <td>zz500</td>
-      <td>7946.33</td>
-      <td>48</td>
-      <td>20</td>
-      <td>19</td>
-      <td>2</td>
-      <td>5</td>
-      <td>2</td>
-    </tr>
   </tbody>
 </table>
     </div>
@@ -2676,7 +2665,7 @@
 <section class="table-detail" id="table-ods_index_a_share_insight">
   <div class="table-header">
     <div class="table-title-wrap">
-      <h2>【表 13/39】ods_index_a_share_insight</h2>
+      <h2>【表 13/38】ods_index_a_share_insight</h2>
       <div class="table-tags"><span class="table-tag layer-ods">（二）凌晨跑</span></div>
     </div>
     <a href="#toc" class="back-to-top" title="返回目录">🔝</a>
@@ -2714,15 +2703,25 @@
   <div class="info-section">
     <h3>🔍 交易日覆盖检查（以 ods_trading_days_insight 为基准）</h3>
     <table class="info-table">
-      <tr><td>基准区间</td><td>2026-08-17 ~ 2026-08-28 (共10个交易日)</td></tr>
-      <tr><td>覆盖情况</td><td><strong>10/10</strong> (100.0%)</td></tr>
+      <tr><td>基准区间</td><td>2026-08-18 ~ 2026-08-31 (共10个交易日)</td></tr>
+      <tr><td>覆盖情况</td><td><strong>9/10</strong> (90.0%)</td></tr>
     </table>
-    <div class="alert alert-success">
-      <p>✅ 全部覆盖：最近10个交易日数据完整</p>
+    <div class="alert alert-warning">
+      <p>⚠️ 缺失日期 (1天):</p>
+      <div class="missing-dates">
+        <span class="missing-tag">❌ 2026-08-31</span>
+      </div>
+      <p class="severity severity-low">🟡 提示：少量缺失，可能是非交易日或数据延迟</p>
     </div>
     <h4>📈 每日数据量明细:</h4>
     <table class="data-table">
       <tr><th>日期</th><th>条数</th><th>状态</th><th>环比</th></tr>
+      <tr>
+        <td>2026-08-31</td>
+        <td>0</td>
+        <td class="status-error">✗</td>
+        <td>-</td>
+      </tr>
       <tr>
         <td>2026-08-28</td>
         <td>9</td>
@@ -2775,16 +2774,10 @@
         <td>2026-08-18</td>
         <td>9</td>
         <td class="status-ok">✓</td>
-        <td>+0.0%</td>
-      </tr>
-      <tr>
-        <td>2026-08-17</td>
-        <td>9</td>
-        <td class="status-ok">✓</td>
         <td>-</td>
       </tr>
     </table>
-    <p class="summary-line">10日总计: 90 条 | 日均: 9.0 条</p>
+    <p class="summary-line">10日总计: 81 条 | 日均: 9.0 条</p>
   </div>
   <div class="info-section">
     <h3>📝 数据样例（按ymd倒序，前5行）</h3>
@@ -2861,7 +2854,7 @@
 <section class="table-detail" id="table-ods_future_inside_insight">
   <div class="table-header">
     <div class="table-title-wrap">
-      <h2>【表 14/39】ods_future_inside_insight</h2>
+      <h2>【表 14/38】ods_future_inside_insight</h2>
       <div class="table-tags"><span class="table-tag layer-ods">（二）凌晨跑</span></div>
     </div>
     <a href="#toc" class="back-to-top" title="返回目录">🔝</a>
@@ -2899,15 +2892,25 @@
   <div class="info-section">
     <h3>🔍 交易日覆盖检查（以 ods_trading_days_insight 为基准）</h3>
     <table class="info-table">
-      <tr><td>基准区间</td><td>2026-08-17 ~ 2026-08-28 (共10个交易日)</td></tr>
-      <tr><td>覆盖情况</td><td><strong>10/10</strong> (100.0%)</td></tr>
+      <tr><td>基准区间</td><td>2026-08-18 ~ 2026-08-31 (共10个交易日)</td></tr>
+      <tr><td>覆盖情况</td><td><strong>9/10</strong> (90.0%)</td></tr>
     </table>
-    <div class="alert alert-success">
-      <p>✅ 全部覆盖：最近10个交易日数据完整</p>
+    <div class="alert alert-warning">
+      <p>⚠️ 缺失日期 (1天):</p>
+      <div class="missing-dates">
+        <span class="missing-tag">❌ 2026-08-31</span>
+      </div>
+      <p class="severity severity-low">🟡 提示：少量缺失，可能是非交易日或数据延迟</p>
     </div>
     <h4>📈 每日数据量明细:</h4>
     <table class="data-table">
       <tr><th>日期</th><th>条数</th><th>状态</th><th>环比</th></tr>
+      <tr>
+        <td>2026-08-31</td>
+        <td>0</td>
+        <td class="status-error">✗</td>
+        <td>-</td>
+      </tr>
       <tr>
         <td>2026-08-28</td>
         <td>6</td>
@@ -2960,16 +2963,10 @@
         <td>2026-08-18</td>
         <td>6</td>
         <td class="status-ok">✓</td>
-        <td>+0.0%</td>
-      </tr>
-      <tr>
-        <td>2026-08-17</td>
-        <td>6</td>
-        <td class="status-ok">✓</td>
         <td>-</td>
       </tr>
     </table>
-    <p class="summary-line">10日总计: 60 条 | 日均: 6.0 条</p>
+    <p class="summary-line">10日总计: 54 条 | 日均: 6.0 条</p>
   </div>
   <div class="info-section">
     <h3>📝 数据样例（按ymd倒序，前5行）</h3>
@@ -3052,7 +3049,7 @@
 <section class="table-detail" id="table-ods_shareholder_num">
   <div class="table-header">
     <div class="table-title-wrap">
-      <h2>【表 15/39】ods_shareholder_num</h2>
+      <h2>【表 15/38】ods_shareholder_num</h2>
       <div class="table-tags"><span class="table-tag layer-ods">（二）凌晨跑</span></div>
     </div>
     <a href="#toc" class="back-to-top" title="返回目录">🔝</a>
@@ -3060,7 +3057,7 @@
   <div class="info-section">
     <h3>📊 基本信息</h3>
     <table class="info-table">
-      <tr><td>行数</td><td>225,176</td></tr>
+      <tr><td>行数</td><td>225,191</td></tr>
       <tr><td>列数</td><td>7</td></tr>
     </table>
   </div>
@@ -3090,12 +3087,13 @@
   <div class="info-section">
     <h3>🔍 交易日覆盖检查（以 ods_trading_days_insight 为基准）</h3>
     <table class="info-table">
-      <tr><td>基准区间</td><td>2026-08-17 ~ 2026-08-28 (共10个交易日)</td></tr>
-      <tr><td>覆盖情况</td><td><strong>6/10</strong> (60.0%)</td></tr>
+      <tr><td>基准区间</td><td>2026-08-18 ~ 2026-08-31 (共10个交易日)</td></tr>
+      <tr><td>覆盖情况</td><td><strong>5/10</strong> (50.0%)</td></tr>
     </table>
     <div class="alert alert-warning">
-      <p>⚠️ 缺失日期 (4天):</p>
+      <p>⚠️ 缺失日期 (5天):</p>
       <div class="missing-dates">
+        <span class="missing-tag">❌ 2026-08-31</span>
         <span class="missing-tag">❌ 2026-08-28</span>
         <span class="missing-tag">❌ 2026-08-27</span>
         <span class="missing-tag">❌ 2026-08-24</span>
@@ -3105,11 +3103,17 @@
     </div>
     <h4>📈 每日数据量明细:</h4>
     <div class="alert alert-fluctuation">
-      <p>⚠️ 数据量波动警告：相邻日期间波动率达 54500.0%</p>
-      <p>从 1 条 → 546 条</p>
+      <p>⚠️ 数据量波动警告：相邻日期间波动率达 54600.0%</p>
+      <p>从 1 条 → 547 条</p>
     </div>
     <table class="data-table">
       <tr><th>日期</th><th>条数</th><th>状态</th><th>环比</th></tr>
+      <tr>
+        <td>2026-08-31</td>
+        <td>0</td>
+        <td class="status-error">✗</td>
+        <td>-</td>
+      </tr>
       <tr>
         <td>2026-08-28</td>
         <td>0</td>
@@ -3148,9 +3152,9 @@
       </tr>
       <tr>
         <td>2026-08-20</td>
-        <td>546</td>
+        <td>547</td>
         <td class="status-ok">✓</td>
-        <td><span class="fluctuation-high">+54500.0%</span></td>
+        <td><span class="fluctuation-high">+54600.0%</span></td>
       </tr>
       <tr>
         <td>2026-08-19</td>
@@ -3162,16 +3166,10 @@
         <td>2026-08-18</td>
         <td>1</td>
         <td class="status-ok">✓</td>
-        <td>+0.0%</td>
-      </tr>
-      <tr>
-        <td>2026-08-17</td>
-        <td>1</td>
-        <td class="status-ok">✓</td>
         <td>-</td>
       </tr>
     </table>
-    <p class="summary-line">10日总计: 552 条 | 日均: 92.0 条</p>
+    <p class="summary-line">10日总计: 552 条 | 日均: 110.4 条</p>
   </div>
   <div class="info-section">
     <h3>📝 数据样例（按ymd倒序，前5行）</h3>
@@ -3243,7 +3241,7 @@
 <section class="table-detail" id="table-ods_akshare_stock_value_em">
   <div class="table-header">
     <div class="table-title-wrap">
-      <h2>【表 16/39】ods_akshare_stock_value_em</h2>
+      <h2>【表 16/38】ods_akshare_stock_value_em</h2>
       <div class="table-tags"><span class="table-tag layer-ods">（三）周末跑</span></div>
     </div>
     <a href="#toc" class="back-to-top" title="返回目录">🔝</a>
@@ -3281,15 +3279,25 @@
   <div class="info-section">
     <h3>🔍 交易日覆盖检查（以 ods_trading_days_insight 为基准）</h3>
     <table class="info-table">
-      <tr><td>基准区间</td><td>2026-08-17 ~ 2026-08-28 (共10个交易日)</td></tr>
-      <tr><td>覆盖情况</td><td><strong>10/10</strong> (100.0%)</td></tr>
+      <tr><td>基准区间</td><td>2026-08-18 ~ 2026-08-31 (共10个交易日)</td></tr>
+      <tr><td>覆盖情况</td><td><strong>9/10</strong> (90.0%)</td></tr>
     </table>
-    <div class="alert alert-success">
-      <p>✅ 全部覆盖：最近10个交易日数据完整</p>
+    <div class="alert alert-warning">
+      <p>⚠️ 缺失日期 (1天):</p>
+      <div class="missing-dates">
+        <span class="missing-tag">❌ 2026-08-31</span>
+      </div>
+      <p class="severity severity-low">🟡 提示：少量缺失，可能是非交易日或数据延迟</p>
     </div>
     <h4>📈 每日数据量明细:</h4>
     <table class="data-table">
       <tr><th>日期</th><th>条数</th><th>状态</th><th>环比</th></tr>
+      <tr>
+        <td>2026-08-31</td>
+        <td>0</td>
+        <td class="status-error">✗</td>
+        <td>-</td>
+      </tr>
       <tr>
         <td>2026-08-28</td>
         <td>5,345</td>
@@ -3342,16 +3350,10 @@
         <td>2026-08-18</td>
         <td>5,341</td>
         <td class="status-ok">✓</td>
-        <td>+0.0%</td>
-      </tr>
-      <tr>
-        <td>2026-08-17</td>
-        <td>5,340</td>
-        <td class="status-ok">✓</td>
         <td>-</td>
       </tr>
     </table>
-    <p class="summary-line">10日总计: 53,437 条 | 日均: 5,343.7 条</p>
+    <p class="summary-line">10日总计: 48,097 条 | 日均: 5,344.1 条</p>
   </div>
   <div class="info-section">
     <h3>📝 数据样例（按ymd倒序，前5行）</h3>
@@ -3470,7 +3472,7 @@
 <section class="table-detail" id="table-ods_akshare_stock_zh_a_gdhs_detail_em">
   <div class="table-header">
     <div class="table-title-wrap">
-      <h2>【表 17/39】ods_akshare_stock_zh_a_gdhs_detail_em</h2>
+      <h2>【表 17/38】ods_akshare_stock_zh_a_gdhs_detail_em</h2>
       <div class="table-tags"><span class="table-tag layer-ods">（三）周末跑</span></div>
     </div>
     <a href="#toc" class="back-to-top" title="返回目录">🔝</a>
@@ -3508,16 +3510,16 @@
   <div class="info-section">
     <h3>🔍 交易日覆盖检查（以 ods_trading_days_insight 为基准）</h3>
     <table class="info-table">
-      <tr><td>基准区间</td><td>2026-08-17 ~ 2026-08-28 (共10个交易日)</td></tr>
+      <tr><td>基准区间</td><td>2026-08-18 ~ 2026-08-31 (共10个交易日)</td></tr>
       <tr><td>覆盖情况</td><td><strong>6/10</strong> (60.0%)</td></tr>
     </table>
     <div class="alert alert-warning">
       <p>⚠️ 缺失日期 (4天):</p>
       <div class="missing-dates">
+        <span class="missing-tag">❌ 2026-08-31</span>
         <span class="missing-tag">❌ 2026-08-28</span>
         <span class="missing-tag">❌ 2026-08-27</span>
         <span class="missing-tag">❌ 2026-08-21</span>
-        <span class="missing-tag">❌ 2026-08-17</span>
       </div>
       <p class="severity severity-medium">🟠 警告：缺失较多，请检查数据同步任务</p>
     </div>
@@ -3528,6 +3530,12 @@
     </div>
     <table class="data-table">
       <tr><th>日期</th><th>条数</th><th>状态</th><th>环比</th></tr>
+      <tr>
+        <td>2026-08-31</td>
+        <td>0</td>
+        <td class="status-error">✗</td>
+        <td>-</td>
+      </tr>
       <tr>
         <td>2026-08-28</td>
         <td>0</td>
@@ -3580,12 +3588,6 @@
         <td>2026-08-18</td>
         <td>1</td>
         <td class="status-ok">✓</td>
-        <td>-</td>
-      </tr>
-      <tr>
-        <td>2026-08-17</td>
-        <td>0</td>
-        <td class="status-error">✗</td>
         <td>-</td>
       </tr>
     </table>
@@ -3711,7 +3713,7 @@
 <section class="table-detail" id="table-dwd_stock_a_total_plate">
   <div class="table-header">
     <div class="table-title-wrap">
-      <h2>【表 18/39】dwd_stock_a_total_plate</h2>
+      <h2>【表 18/38】dwd_stock_a_total_plate</h2>
       <div class="table-tags"><span class="table-tag layer-2">DWD 层（明细数据）</span></div>
     </div>
     <a href="#toc" class="back-to-top" title="返回目录">🔝</a>
@@ -3719,7 +3721,7 @@
   <div class="info-section">
     <h3>📊 基本信息</h3>
     <table class="info-table">
-      <tr><td>行数</td><td>17,665,726</td></tr>
+      <tr><td>行数</td><td>7,656,067</td></tr>
       <tr><td>列数</td><td>8</td></tr>
     </table>
   </div>
@@ -3728,45 +3730,47 @@
     <table class="info-table">
       <tr><td>存在ymd列</td><td>✓</td></tr>
       <tr><td>日期总数</td><td>10</td></tr>
-      <tr><td>全表最早日期</td><td>2024-10-04</td></tr>
-      <tr><td>全表最晚日期</td><td>2026-08-27</td></tr>
-      <tr><td>最近10天范围</td><td>2026-08-14 ~ 2026-08-27</td></tr>
+      <tr><td>全表最早日期</td><td>2026-08-03</td></tr>
+      <tr><td>全表最晚日期</td><td>2026-08-31</td></tr>
+      <tr><td>最近10天范围</td><td>2026-08-18 ~ 2026-08-31</td></tr>
     </table>
     <p>最近10个日期(倒序):</p>
     <div class="date-list">
-      <span class="date-tag">1. 2026-08-27</span>
-      <span class="date-tag">2. 2026-08-26</span>
-      <span class="date-tag">3. 2026-08-25</span>
-      <span class="date-tag">4. 2026-08-24</span>
-      <span class="date-tag">5. 2026-08-21</span>
-      <span class="date-tag">6. 2026-08-20</span>
-      <span class="date-tag">7. 2026-08-19</span>
-      <span class="date-tag">8. 2026-08-18</span>
-      <span class="date-tag">9. 2026-08-17</span>
-      <span class="date-tag">10. 2026-08-14</span>
+      <span class="date-tag">1. 2026-08-31</span>
+      <span class="date-tag">2. 2026-08-28</span>
+      <span class="date-tag">3. 2026-08-27</span>
+      <span class="date-tag">4. 2026-08-26</span>
+      <span class="date-tag">5. 2026-08-25</span>
+      <span class="date-tag">6. 2026-08-24</span>
+      <span class="date-tag">7. 2026-08-21</span>
+      <span class="date-tag">8. 2026-08-20</span>
+      <span class="date-tag">9. 2026-08-19</span>
+      <span class="date-tag">10. 2026-08-18</span>
     </div>
   </div>
   <div class="info-section">
     <h3>🔍 交易日覆盖检查（以 ods_trading_days_insight 为基准）</h3>
     <table class="info-table">
-      <tr><td>基准区间</td><td>2026-08-17 ~ 2026-08-28 (共10个交易日)</td></tr>
-      <tr><td>覆盖情况</td><td><strong>9/10</strong> (90.0%)</td></tr>
+      <tr><td>基准区间</td><td>2026-08-18 ~ 2026-08-31 (共10个交易日)</td></tr>
+      <tr><td>覆盖情况</td><td><strong>10/10</strong> (100.0%)</td></tr>
     </table>
-    <div class="alert alert-warning">
-      <p>⚠️ 缺失日期 (1天):</p>
-      <div class="missing-dates">
-        <span class="missing-tag">❌ 2026-08-28</span>
-      </div>
-      <p class="severity severity-low">🟡 提示：少量缺失，可能是非交易日或数据延迟</p>
+    <div class="alert alert-success">
+      <p>✅ 全部覆盖：最近10个交易日数据完整</p>
     </div>
     <h4>📈 每日数据量明细:</h4>
     <table class="data-table">
       <tr><th>日期</th><th>条数</th><th>状态</th><th>环比</th></tr>
       <tr>
+        <td>2026-08-31</td>
+        <td>366,701</td>
+        <td class="status-ok">✓</td>
+        <td>+0.1%</td>
+      </tr>
+      <tr>
         <td>2026-08-28</td>
-        <td>0</td>
-        <td class="status-error">✗</td>
-        <td>-</td>
+        <td>366,408</td>
+        <td class="status-ok">✓</td>
+        <td>+0.0%</td>
       </tr>
       <tr>
         <td>2026-08-27</td>
@@ -3814,16 +3818,10 @@
         <td>2026-08-18</td>
         <td>366,257</td>
         <td class="status-ok">✓</td>
-        <td>+0.0%</td>
-      </tr>
-      <tr>
-        <td>2026-08-17</td>
-        <td>366,256</td>
-        <td class="status-ok">✓</td>
         <td>-</td>
       </tr>
     </table>
-    <p class="summary-line">10日总计: 3,296,947 条 | 日均: 366,327.4 条</p>
+    <p class="summary-line">10日总计: 3,663,800 条 | 日均: 366,380.0 条</p>
   </div>
   <div class="info-section">
     <h3>📝 数据样例（按ymd倒序，前5行）</h3>
@@ -3843,7 +3841,7 @@
   </thead>
   <tbody>
     <tr>
-      <td>2026-08-27</td>
+      <td>2026-08-31</td>
       <td>883913.TI</td>
       <td>龙虎榜指数</td>
       <td>920981.BJ</td>
@@ -3853,7 +3851,7 @@
       <td>920981</td>
     </tr>
     <tr>
-      <td>2026-08-27</td>
+      <td>2026-08-31</td>
       <td>883913.TI</td>
       <td>龙虎榜指数</td>
       <td>920976.BJ</td>
@@ -3863,7 +3861,7 @@
       <td>920976</td>
     </tr>
     <tr>
-      <td>2026-08-27</td>
+      <td>2026-08-31</td>
       <td>883913.TI</td>
       <td>龙虎榜指数</td>
       <td>920971.BJ</td>
@@ -3873,7 +3871,7 @@
       <td>920971</td>
     </tr>
     <tr>
-      <td>2026-08-27</td>
+      <td>2026-08-31</td>
       <td>883913.TI</td>
       <td>龙虎榜指数</td>
       <td>920961.BJ</td>
@@ -3883,7 +3881,7 @@
       <td>920961</td>
     </tr>
     <tr>
-      <td>2026-08-27</td>
+      <td>2026-08-31</td>
       <td>883913.TI</td>
       <td>龙虎榜指数</td>
       <td>920953.BJ</td>
@@ -3900,7 +3898,7 @@
 <section class="table-detail" id="table-ods_stock_exchange_market">
   <div class="table-header">
     <div class="table-title-wrap">
-      <h2>【表 19/39】ods_stock_exchange_market</h2>
+      <h2>【表 19/38】ods_stock_exchange_market</h2>
       <div class="table-tags"><span class="table-tag layer-2">DWD 层（明细数据）</span></div>
     </div>
     <a href="#toc" class="back-to-top" title="返回目录">🔝</a>
@@ -3908,7 +3906,7 @@
   <div class="info-section">
     <h3>📊 基本信息</h3>
     <table class="info-table">
-      <tr><td>行数</td><td>809,959</td></tr>
+      <tr><td>行数</td><td>815,307</td></tr>
       <tr><td>列数</td><td>4</td></tr>
     </table>
   </div>
@@ -3918,44 +3916,46 @@
       <tr><td>存在ymd列</td><td>✓</td></tr>
       <tr><td>日期总数</td><td>10</td></tr>
       <tr><td>全表最早日期</td><td>2026-01-01</td></tr>
-      <tr><td>全表最晚日期</td><td>2026-08-29</td></tr>
-      <tr><td>最近10天范围</td><td>2026-08-17 ~ 2026-08-29</td></tr>
+      <tr><td>全表最晚日期</td><td>2026-08-31</td></tr>
+      <tr><td>最近10天范围</td><td>2026-08-18 ~ 2026-08-31</td></tr>
     </table>
     <p>最近10个日期(倒序):</p>
     <div class="date-list">
-      <span class="date-tag">1. 2026-08-29</span>
-      <span class="date-tag">2. 2026-08-27</span>
-      <span class="date-tag">3. 2026-08-26</span>
-      <span class="date-tag">4. 2026-08-25</span>
-      <span class="date-tag">5. 2026-08-24</span>
-      <span class="date-tag">6. 2026-08-21</span>
-      <span class="date-tag">7. 2026-08-20</span>
-      <span class="date-tag">8. 2026-08-19</span>
-      <span class="date-tag">9. 2026-08-18</span>
-      <span class="date-tag">10. 2026-08-17</span>
+      <span class="date-tag">1. 2026-08-31</span>
+      <span class="date-tag">2. 2026-08-28</span>
+      <span class="date-tag">3. 2026-08-27</span>
+      <span class="date-tag">4. 2026-08-26</span>
+      <span class="date-tag">5. 2026-08-25</span>
+      <span class="date-tag">6. 2026-08-24</span>
+      <span class="date-tag">7. 2026-08-21</span>
+      <span class="date-tag">8. 2026-08-20</span>
+      <span class="date-tag">9. 2026-08-19</span>
+      <span class="date-tag">10. 2026-08-18</span>
     </div>
   </div>
   <div class="info-section">
     <h3>🔍 交易日覆盖检查（以 ods_trading_days_insight 为基准）</h3>
     <table class="info-table">
-      <tr><td>基准区间</td><td>2026-08-17 ~ 2026-08-28 (共10个交易日)</td></tr>
-      <tr><td>覆盖情况</td><td><strong>9/10</strong> (90.0%)</td></tr>
+      <tr><td>基准区间</td><td>2026-08-18 ~ 2026-08-31 (共10个交易日)</td></tr>
+      <tr><td>覆盖情况</td><td><strong>10/10</strong> (100.0%)</td></tr>
     </table>
-    <div class="alert alert-warning">
-      <p>⚠️ 缺失日期 (1天):</p>
-      <div class="missing-dates">
-        <span class="missing-tag">❌ 2026-08-28</span>
-      </div>
-      <p class="severity severity-low">🟡 提示：少量缺失，可能是非交易日或数据延迟</p>
+    <div class="alert alert-success">
+      <p>✅ 全部覆盖：最近10个交易日数据完整</p>
     </div>
     <h4>📈 每日数据量明细:</h4>
     <table class="data-table">
       <tr><th>日期</th><th>条数</th><th>状态</th><th>环比</th></tr>
       <tr>
+        <td>2026-08-31</td>
+        <td>5,348</td>
+        <td class="status-ok">✓</td>
+        <td>+0.0%</td>
+      </tr>
+      <tr>
         <td>2026-08-28</td>
-        <td>0</td>
-        <td class="status-error">✗</td>
-        <td>-</td>
+        <td>5,346</td>
+        <td class="status-ok">✓</td>
+        <td>+0.0%</td>
       </tr>
       <tr>
         <td>2026-08-27</td>
@@ -4003,16 +4003,10 @@
         <td>2026-08-18</td>
         <td>5,339</td>
         <td class="status-ok">✓</td>
-        <td>+0.0%</td>
-      </tr>
-      <tr>
-        <td>2026-08-17</td>
-        <td>5,338</td>
-        <td class="status-ok">✓</td>
         <td>-</td>
       </tr>
     </table>
-    <p class="summary-line">10日总计: 48,079 条 | 日均: 5,342.1 条</p>
+    <p class="summary-line">10日总计: 53,435 条 | 日均: 5,343.5 条</p>
   </div>
   <div class="info-section">
     <h3>📝 数据样例（按ymd倒序，前5行）</h3>
@@ -4028,31 +4022,31 @@
   </thead>
   <tbody>
     <tr>
-      <td>2026-08-29</td>
+      <td>2026-08-31</td>
       <td>920992.BJ</td>
       <td>中科美菱</td>
       <td>北交所</td>
     </tr>
     <tr>
-      <td>2026-08-29</td>
+      <td>2026-08-31</td>
       <td>920985.BJ</td>
       <td>海泰新能</td>
       <td>北交所</td>
     </tr>
     <tr>
-      <td>2026-08-29</td>
+      <td>2026-08-31</td>
       <td>920982.BJ</td>
       <td>锦波生物</td>
       <td>北交所</td>
     </tr>
     <tr>
-      <td>2026-08-29</td>
+      <td>2026-08-31</td>
       <td>920981.BJ</td>
       <td>晶赛科技</td>
       <td>北交所</td>
     </tr>
     <tr>
-      <td>2026-08-29</td>
+      <td>2026-08-31</td>
       <td>920978.BJ</td>
       <td>开特股份</td>
       <td>北交所</td>
@@ -4065,7 +4059,7 @@
 <section class="table-detail" id="table-dwd_shareholder_num_latest">
   <div class="table-header">
     <div class="table-title-wrap">
-      <h2>【表 20/39】dwd_shareholder_num_latest</h2>
+      <h2>【表 20/38】dwd_shareholder_num_latest</h2>
       <div class="table-tags"><span class="table-tag layer-2">DWD 层（明细数据）</span></div>
     </div>
     <a href="#toc" class="back-to-top" title="返回目录">🔝</a>
@@ -4073,7 +4067,7 @@
   <div class="info-section">
     <h3>📊 基本信息</h3>
     <table class="info-table">
-      <tr><td>行数</td><td>7,281,032</td></tr>
+      <tr><td>行数</td><td>7,286,580</td></tr>
       <tr><td>列数</td><td>8</td></tr>
     </table>
   </div>
@@ -4083,44 +4077,46 @@
       <tr><td>存在ymd列</td><td>✓</td></tr>
       <tr><td>日期总数</td><td>10</td></tr>
       <tr><td>全表最早日期</td><td>2021-01-04</td></tr>
-      <tr><td>全表最晚日期</td><td>2026-08-29</td></tr>
-      <tr><td>最近10天范围</td><td>2026-08-17 ~ 2026-08-29</td></tr>
+      <tr><td>全表最晚日期</td><td>2026-08-31</td></tr>
+      <tr><td>最近10天范围</td><td>2026-08-18 ~ 2026-08-31</td></tr>
     </table>
     <p>最近10个日期(倒序):</p>
     <div class="date-list">
-      <span class="date-tag">1. 2026-08-29</span>
-      <span class="date-tag">2. 2026-08-27</span>
-      <span class="date-tag">3. 2026-08-26</span>
-      <span class="date-tag">4. 2026-08-25</span>
-      <span class="date-tag">5. 2026-08-24</span>
-      <span class="date-tag">6. 2026-08-21</span>
-      <span class="date-tag">7. 2026-08-20</span>
-      <span class="date-tag">8. 2026-08-19</span>
-      <span class="date-tag">9. 2026-08-18</span>
-      <span class="date-tag">10. 2026-08-17</span>
+      <span class="date-tag">1. 2026-08-31</span>
+      <span class="date-tag">2. 2026-08-28</span>
+      <span class="date-tag">3. 2026-08-27</span>
+      <span class="date-tag">4. 2026-08-26</span>
+      <span class="date-tag">5. 2026-08-25</span>
+      <span class="date-tag">6. 2026-08-24</span>
+      <span class="date-tag">7. 2026-08-21</span>
+      <span class="date-tag">8. 2026-08-20</span>
+      <span class="date-tag">9. 2026-08-19</span>
+      <span class="date-tag">10. 2026-08-18</span>
     </div>
   </div>
   <div class="info-section">
     <h3>🔍 交易日覆盖检查（以 ods_trading_days_insight 为基准）</h3>
     <table class="info-table">
-      <tr><td>基准区间</td><td>2026-08-17 ~ 2026-08-28 (共10个交易日)</td></tr>
-      <tr><td>覆盖情况</td><td><strong>9/10</strong> (90.0%)</td></tr>
+      <tr><td>基准区间</td><td>2026-08-18 ~ 2026-08-31 (共10个交易日)</td></tr>
+      <tr><td>覆盖情况</td><td><strong>10/10</strong> (100.0%)</td></tr>
     </table>
-    <div class="alert alert-warning">
-      <p>⚠️ 缺失日期 (1天):</p>
-      <div class="missing-dates">
-        <span class="missing-tag">❌ 2026-08-28</span>
-      </div>
-      <p class="severity severity-low">🟡 提示：少量缺失，可能是非交易日或数据延迟</p>
+    <div class="alert alert-success">
+      <p>✅ 全部覆盖：最近10个交易日数据完整</p>
     </div>
     <h4>📈 每日数据量明细:</h4>
     <table class="data-table">
       <tr><th>日期</th><th>条数</th><th>状态</th><th>环比</th></tr>
       <tr>
+        <td>2026-08-31</td>
+        <td>5,548</td>
+        <td class="status-ok">✓</td>
+        <td>+0.1%</td>
+      </tr>
+      <tr>
         <td>2026-08-28</td>
-        <td>0</td>
-        <td class="status-error">✗</td>
-        <td>-</td>
+        <td>5,544</td>
+        <td class="status-ok">✓</td>
+        <td>+0.0%</td>
       </tr>
       <tr>
         <td>2026-08-27</td>
@@ -4168,16 +4164,10 @@
         <td>2026-08-18</td>
         <td>5,526</td>
         <td class="status-ok">✓</td>
-        <td>+0.0%</td>
-      </tr>
-      <tr>
-        <td>2026-08-17</td>
-        <td>5,525</td>
-        <td class="status-ok">✓</td>
         <td>-</td>
       </tr>
     </table>
-    <p class="summary-line">10日总计: 49,788 条 | 日均: 5,532.0 条</p>
+    <p class="summary-line">10日总计: 55,355 条 | 日均: 5,535.5 条</p>
   </div>
   <div class="info-section">
     <h3>📝 数据样例（按ymd倒序，前5行）</h3>
@@ -4197,7 +4187,7 @@
   </thead>
   <tbody>
     <tr>
-      <td>2026-08-29</td>
+      <td>2026-08-31</td>
       <td>920992</td>
       <td>中科美菱</td>
       <td>4837</td>
@@ -4207,7 +4197,7 @@
       <td>920992</td>
     </tr>
     <tr>
-      <td>2026-08-29</td>
+      <td>2026-08-31</td>
       <td>920985</td>
       <td>海泰新能</td>
       <td>9583</td>
@@ -4217,7 +4207,7 @@
       <td>920985</td>
     </tr>
     <tr>
-      <td>2026-08-29</td>
+      <td>2026-08-31</td>
       <td>920982</td>
       <td>锦波生物</td>
       <td>9933</td>
@@ -4227,7 +4217,7 @@
       <td>920982</td>
     </tr>
     <tr>
-      <td>2026-08-29</td>
+      <td>2026-08-31</td>
       <td>920981</td>
       <td>晶赛科技</td>
       <td>8940</td>
@@ -4237,7 +4227,7 @@
       <td>920981</td>
     </tr>
     <tr>
-      <td>2026-08-29</td>
+      <td>2026-08-31</td>
       <td>920978</td>
       <td>开特股份</td>
       <td>5909</td>
@@ -4254,7 +4244,7 @@
 <section class="table-detail" id="table-dwd_ashare_stock_base_info">
   <div class="table-header">
     <div class="table-title-wrap">
-      <h2>【表 21/39】dwd_ashare_stock_base_info</h2>
+      <h2>【表 21/38】dwd_ashare_stock_base_info</h2>
       <div class="table-tags"><span class="table-tag layer-2">DWD 层（明细数据）</span></div>
     </div>
     <a href="#toc" class="back-to-top" title="返回目录">🔝</a>
@@ -4262,7 +4252,7 @@
   <div class="info-section">
     <h3>📊 基本信息</h3>
     <table class="info-table">
-      <tr><td>行数</td><td>6,652,709</td></tr>
+      <tr><td>行数</td><td>6,658,256</td></tr>
       <tr><td>列数</td><td>17</td></tr>
     </table>
   </div>
@@ -4272,33 +4262,33 @@
       <tr><td>存在ymd列</td><td>✓</td></tr>
       <tr><td>日期总数</td><td>10</td></tr>
       <tr><td>全表最早日期</td><td>2021-01-04</td></tr>
-      <tr><td>全表最晚日期</td><td>2026-08-27</td></tr>
-      <tr><td>最近10天范围</td><td>2026-08-14 ~ 2026-08-27</td></tr>
+      <tr><td>全表最晚日期</td><td>2026-08-28</td></tr>
+      <tr><td>最近10天范围</td><td>2026-08-17 ~ 2026-08-28</td></tr>
     </table>
     <p>最近10个日期(倒序):</p>
     <div class="date-list">
-      <span class="date-tag">1. 2026-08-27</span>
-      <span class="date-tag">2. 2026-08-26</span>
-      <span class="date-tag">3. 2026-08-25</span>
-      <span class="date-tag">4. 2026-08-24</span>
-      <span class="date-tag">5. 2026-08-21</span>
-      <span class="date-tag">6. 2026-08-20</span>
-      <span class="date-tag">7. 2026-08-19</span>
-      <span class="date-tag">8. 2026-08-18</span>
-      <span class="date-tag">9. 2026-08-17</span>
-      <span class="date-tag">10. 2026-08-14</span>
+      <span class="date-tag">1. 2026-08-28</span>
+      <span class="date-tag">2. 2026-08-27</span>
+      <span class="date-tag">3. 2026-08-26</span>
+      <span class="date-tag">4. 2026-08-25</span>
+      <span class="date-tag">5. 2026-08-24</span>
+      <span class="date-tag">6. 2026-08-21</span>
+      <span class="date-tag">7. 2026-08-20</span>
+      <span class="date-tag">8. 2026-08-19</span>
+      <span class="date-tag">9. 2026-08-18</span>
+      <span class="date-tag">10. 2026-08-17</span>
     </div>
   </div>
   <div class="info-section">
     <h3>🔍 交易日覆盖检查（以 ods_trading_days_insight 为基准）</h3>
     <table class="info-table">
-      <tr><td>基准区间</td><td>2026-08-17 ~ 2026-08-28 (共10个交易日)</td></tr>
+      <tr><td>基准区间</td><td>2026-08-18 ~ 2026-08-31 (共10个交易日)</td></tr>
       <tr><td>覆盖情况</td><td><strong>9/10</strong> (90.0%)</td></tr>
     </table>
     <div class="alert alert-warning">
       <p>⚠️ 缺失日期 (1天):</p>
       <div class="missing-dates">
-        <span class="missing-tag">❌ 2026-08-28</span>
+        <span class="missing-tag">❌ 2026-08-31</span>
       </div>
       <p class="severity severity-low">🟡 提示：少量缺失，可能是非交易日或数据延迟</p>
     </div>
@@ -4306,10 +4296,16 @@
     <table class="data-table">
       <tr><th>日期</th><th>条数</th><th>状态</th><th>环比</th></tr>
       <tr>
-        <td>2026-08-28</td>
+        <td>2026-08-31</td>
         <td>0</td>
         <td class="status-error">✗</td>
         <td>-</td>
+      </tr>
+      <tr>
+        <td>2026-08-28</td>
+        <td>5,547</td>
+        <td class="status-ok">✓</td>
+        <td>+0.0%</td>
       </tr>
       <tr>
         <td>2026-08-27</td>
@@ -4357,16 +4353,10 @@
         <td>2026-08-18</td>
         <td>5,540</td>
         <td class="status-ok">✓</td>
-        <td>+0.0%</td>
-      </tr>
-      <tr>
-        <td>2026-08-17</td>
-        <td>5,539</td>
-        <td class="status-ok">✓</td>
         <td>-</td>
       </tr>
     </table>
-    <p class="summary-line">10日总计: 49,889 条 | 日均: 5,543.2 条</p>
+    <p class="summary-line">10日总计: 49,897 条 | 日均: 5,544.1 条</p>
   </div>
   <div class="info-section">
     <h3>📝 数据样例（按ymd倒序，前5行）</h3>
@@ -4395,97 +4385,97 @@
   </thead>
   <tbody>
     <tr>
-      <td>2026-08-27</td>
+      <td>2026-08-28</td>
       <td>920992.BJ</td>
       <td>中科美菱</td>
-      <td>11.37</td>
-      <td>0.4417</td>
-      <td>4283</td>
-      <td>4837.50360</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
+      <td>11.41</td>
+      <td>0.3518</td>
+      <td>5671</td>
+      <td>6450.05523</td>
+      <td>5.592872e+08</td>
+      <td>1.103700e+09</td>
+      <td>96730934.0</td>
+      <td>49017283.0</td>
       <td>4837</td>
       <td>-3.6454</td>
-      <td>0.0</td>
-      <td>0.0</td>
+      <td>1.76</td>
+      <td>61.70</td>
       <td>北交所</td>
       <td>专业设备制造业指数,专用设备制造业指数,专精特新,减持新规(不可减持),制造业指数,医疗保健(A股),医疗保健设备(A股),医疗保健设备与服务(A股),医疗保健设备与用品(A股),医疗器械,医疗器械概念,医疗设备,医药医疗,华东指数,合肥市指数,同花顺A股微盘,同花顺低动量,同花顺全A(加权),同花顺全A(沪深京),同花顺全A(沪深京等权),同花顺全A(除科创板),同花顺全A(除金融、石油石化),同花顺全A市场,同花顺均衡估值,同花顺均衡动量,同花顺均衡投资,同花顺均衡盈利,同花顺小市值1000(1000),同花顺小市值1500(1000),同花顺小市值200(1000),同花顺小市值400(1000),同花顺小市值600(1000),同花顺小市值800(1000),同花顺小盘,同花顺微盘,国企改革,地方国企医药生物指数,地方国企安徽省指数,地方国企指数,安徽,智能医疗,物联网,融资融券</td>
     </tr>
     <tr>
-      <td>2026-08-27</td>
+      <td>2026-08-28</td>
       <td>920985.BJ</td>
       <td>海泰新能</td>
-      <td>4.56</td>
-      <td>-0.8696</td>
-      <td>12227</td>
-      <td>5548.94325</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
+      <td>4.66</td>
+      <td>2.1930</td>
+      <td>23476</td>
+      <td>10847.99553</td>
+      <td>1.022021e+09</td>
+      <td>1.442159e+09</td>
+      <td>309476200.0</td>
+      <td>219317859.0</td>
       <td>9583</td>
       <td>-8.0326</td>
-      <td>0.0</td>
-      <td>0.0</td>
+      <td>2.78</td>
+      <td>-2.12</td>
       <td>北交所</td>
       <td>HJT电池,TOPCON电池,信息技术(A股),储能,先进制造,光伏概念,光伏电池组件,光伏设备,减持新规(不可减持),制造业指数,华北指数,同花顺A股微盘,同花顺低动量,同花顺低盈利,同花顺保守投资,同花顺全A(加权),同花顺全A(沪深京),同花顺全A(沪深京等权),同花顺全A(除科创板),同花顺全A(除金融、石油石化),同花顺全A市场,同花顺均衡估值,同花顺小市值1000(1000),同花顺小市值1500(1000),同花顺小市值200(1000),同花顺小市值400(1000),同花顺小市值600(1000),同花顺小市值800(1000),同花顺小盘,同花顺微盘,同花顺激进投资,唐山市指数,工业(A股),技术硬件与设备(A股),换电概念,氢能源,河北,电子元件(A股),电子设备、仪器和元件(A股),电气机械和器材制造业指数,石墨电极,融资融券,高应收账款股,高股息股</td>
     </tr>
     <tr>
-      <td>2026-08-27</td>
+      <td>2026-08-28</td>
       <td>920982.BJ</td>
       <td>锦波生物</td>
-      <td>121.16</td>
-      <td>-0.1154</td>
-      <td>6744</td>
-      <td>81315.89916</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
+      <td>120.99</td>
+      <td>-0.1403</td>
+      <td>5707</td>
+      <td>69114.78125</td>
+      <td>6.710723e+09</td>
+      <td>1.392176e+10</td>
+      <td>115065340.0</td>
+      <td>55465106.0</td>
       <td>9933</td>
       <td>-11.4311</td>
-      <td>0.0</td>
-      <td>0.0</td>
+      <td>6.83</td>
+      <td>25.71</td>
       <td>北交所</td>
       <td>AI应用,专精特新,减持新规(不可减持),创新药,制药、生物科技和生命科学(A股),制造业指数,医疗保健(A股),医疗保健用品(A股),医疗保健设备与服务(A股),医疗保健设备与用品(A股),医疗器械概念,医疗美容,医美概念,医药制造业指数,医药医疗,医药电商,华北指数,合成生物,同花顺A股中盘,同花顺低动量,同花顺全A(加权),同花顺全A(沪深京),同花顺全A(沪深京等权),同花顺全A(除科创板),同花顺全A(除金融、石油石化),同花顺全A市场,同花顺大盘,同花顺小盘,同花顺激进投资,同花顺高估值,同花顺高动量,同花顺高盈利,基金重仓股,增发预案指数,太原市指数,山西,山西中部城市群,昨日高振幅,消费,生物科技Ⅲ(A股),生物科技Ⅳ(A股),百元股,社保重仓,美容护理,融资融券,近期并购,近期解禁,重组蛋白,高ROE股</td>
     </tr>
     <tr>
-      <td>2026-08-27</td>
+      <td>2026-08-28</td>
       <td>920981.BJ</td>
       <td>晶赛科技</td>
-      <td>30.49</td>
-      <td>6.1630</td>
-      <td>26744</td>
-      <td>79820.07393</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
+      <td>29.62</td>
+      <td>-2.8534</td>
+      <td>22463</td>
+      <td>67967.31508</td>
+      <td>1.139265e+09</td>
+      <td>2.264982e+09</td>
+      <td>76468000.0</td>
+      <td>38462697.0</td>
       <td>8940</td>
       <td>41.2322</td>
-      <td>0.0</td>
-      <td>0.0</td>
+      <td>4.39</td>
+      <td>148.62</td>
       <td>北交所</td>
-      <td>专精特新,信息技术(A股),元件,共封装光学(CPO),减持计划,制造业指数,半导体产品与设备Ⅱ(A股),华东指数,华为海思概念股,同花顺A股微盘,同花顺低动量,同花顺全A(加权),同花顺全A(沪深京),同花顺全A(沪深京等权),同花顺全A(除科创板),同花顺全A(除金融、石油石化),同花顺全A市场,同花顺均衡动量,同花顺均衡投资,同花顺均衡盈利,同花顺小市值1000(1000),同花顺小市值1000(2000),同花顺小市值1000(3000),同花顺小市值1500(1000),同花顺小市值1500(2000),同花顺小市值1500(3000),同花顺小市值400(2000),同花顺小市值400(3000),同花顺小市值600(1000),同花顺小市值600(2000),同花顺小市值600(3000),同花顺小市值800(1000),同花顺小市值800(2000),同花顺小市值800(3000),同花顺小盘,同花顺激进投资,同花顺高估值,安徽,技术硬件与设备(A股),无人驾驶,昨日高振幅,汽车电子,消费电子概念,电子设备、仪器和元件(A股),电子设备和仪器(A股),百日新高,科技(TMT),股性不活跃,芯片概念,融资融券,被动元件,计算机、通信和其他电子设备制造业指数,计算机通信和其他电子设备制造业指数,近期异动,铜陵市指数,龙虎榜指数</td>
+      <td>专精特新,信息技术(A股),元件,共封装光学(CPO),减持计划,制造业指数,半导体产品与设备Ⅱ(A股),华东指数,华为海思概念股,同花顺A股微盘,同花顺低动量,同花顺全A(加权),同花顺全A(沪深京),同花顺全A(沪深京等权),同花顺全A(除科创板),同花顺全A(除金融、石油石化),同花顺全A市场,同花顺均衡动量,同花顺均衡投资,同花顺均衡盈利,同花顺小市值1000(1000),同花顺小市值1000(2000),同花顺小市值1000(3000),同花顺小市值1500(1000),同花顺小市值1500(2000),同花顺小市值1500(3000),同花顺小市值400(2000),同花顺小市值400(3000),同花顺小市值600(1000),同花顺小市值600(2000),同花顺小市值600(3000),同花顺小市值800(1000),同花顺小市值800(2000),同花顺小市值800(3000),同花顺小盘,同花顺激进投资,同花顺高估值,安徽,技术硬件与设备(A股),无人驾驶,昨日高振幅,汽车电子,消费电子概念,电子设备、仪器和元件(A股),电子</td>
     </tr>
     <tr>
-      <td>2026-08-27</td>
+      <td>2026-08-28</td>
       <td>920978.BJ</td>
       <td>开特股份</td>
-      <td>19.08</td>
-      <td>-4.1688</td>
-      <td>20389</td>
-      <td>39341.27857</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>6564</td>
-      <td>9.6009</td>
-      <td>0.0</td>
-      <td>0.0</td>
+      <td>18.83</td>
+      <td>-1.3103</td>
+      <td>10173</td>
+      <td>19213.82191</td>
+      <td>1.900605e+09</td>
+      <td>3.389936e+09</td>
+      <td>180028468.0</td>
+      <td>100934948.0</td>
+      <td>5909</td>
+      <td>-9.9787</td>
+      <td>4.11</td>
+      <td>21.21</td>
       <td>北交所</td>
       <td>专精特新,传感器,储能,先进制造,制造业指数,券商重仓,华中指数,同花顺A股小盘,同花顺全A(加权),同花顺全A(沪深京),同花顺全A(沪深京等权),同花顺全A(除科创板),同花顺全A(除金融、石油石化),同花顺全A市场,同花顺均衡动量,同花顺小市值1500(1000),同花顺小市值1500(2000),同花顺小市值1500(3000),同花顺小盘,同花顺激进投资,同花顺高估值,同花顺高动量,同花顺高盈利,小米汽车,新能源汽车,昨日高振幅,机器人概念,武汉市指数,比亚迪概念,汽车与汽车零部件(A股),汽车制造业指数,汽车热管理,汽车电子,汽车电子电气系统,汽车零件与设备(A股),汽车零部件,汽车零部件(A股),液冷服务器,湖北,融资融券,长安汽车概念,非日常生活消费品(A股),高股息股</td>
     </tr>
@@ -4497,7 +4487,7 @@
 <section class="table-detail" id="table-dwd_stock_zt_list">
   <div class="table-header">
     <div class="table-title-wrap">
-      <h2>【表 22/39】dwd_stock_zt_list</h2>
+      <h2>【表 22/38】dwd_stock_zt_list</h2>
       <div class="table-tags"><span class="table-tag layer-2">DWD 层（明细数据）</span></div>
     </div>
     <a href="#toc" class="back-to-top" title="返回目录">🔝</a>
@@ -4505,7 +4495,7 @@
   <div class="info-section">
     <h3>📊 基本信息</h3>
     <table class="info-table">
-      <tr><td>行数</td><td>66,358</td></tr>
+      <tr><td>行数</td><td>66,445</td></tr>
       <tr><td>列数</td><td>15</td></tr>
     </table>
   </div>
@@ -4515,27 +4505,27 @@
       <tr><td>存在ymd列</td><td>✓</td></tr>
       <tr><td>日期总数</td><td>10</td></tr>
       <tr><td>全表最早日期</td><td>2021-01-05</td></tr>
-      <tr><td>全表最晚日期</td><td>2026-08-28</td></tr>
-      <tr><td>最近10天范围</td><td>2026-08-17 ~ 2026-08-28</td></tr>
+      <tr><td>全表最晚日期</td><td>2026-08-31</td></tr>
+      <tr><td>最近10天范围</td><td>2026-08-18 ~ 2026-08-31</td></tr>
     </table>
     <p>最近10个日期(倒序):</p>
     <div class="date-list">
-      <span class="date-tag">1. 2026-08-28</span>
-      <span class="date-tag">2. 2026-08-27</span>
-      <span class="date-tag">3. 2026-08-26</span>
-      <span class="date-tag">4. 2026-08-25</span>
-      <span class="date-tag">5. 2026-08-24</span>
-      <span class="date-tag">6. 2026-08-21</span>
-      <span class="date-tag">7. 2026-08-20</span>
-      <span class="date-tag">8. 2026-08-19</span>
-      <span class="date-tag">9. 2026-08-18</span>
-      <span class="date-tag">10. 2026-08-17</span>
+      <span class="date-tag">1. 2026-08-31</span>
+      <span class="date-tag">2. 2026-08-28</span>
+      <span class="date-tag">3. 2026-08-27</span>
+      <span class="date-tag">4. 2026-08-26</span>
+      <span class="date-tag">5. 2026-08-25</span>
+      <span class="date-tag">6. 2026-08-24</span>
+      <span class="date-tag">7. 2026-08-21</span>
+      <span class="date-tag">8. 2026-08-20</span>
+      <span class="date-tag">9. 2026-08-19</span>
+      <span class="date-tag">10. 2026-08-18</span>
     </div>
   </div>
   <div class="info-section">
     <h3>🔍 交易日覆盖检查（以 ods_trading_days_insight 为基准）</h3>
     <table class="info-table">
-      <tr><td>基准区间</td><td>2026-08-17 ~ 2026-08-28 (共10个交易日)</td></tr>
+      <tr><td>基准区间</td><td>2026-08-18 ~ 2026-08-31 (共10个交易日)</td></tr>
       <tr><td>覆盖情况</td><td><strong>10/10</strong> (100.0%)</td></tr>
     </table>
     <div class="alert alert-success">
@@ -4548,6 +4538,12 @@
     </div>
     <table class="data-table">
       <tr><th>日期</th><th>条数</th><th>状态</th><th>环比</th></tr>
+      <tr>
+        <td>2026-08-31</td>
+        <td>87</td>
+        <td class="status-ok">✓</td>
+        <td>+6.1%</td>
+      </tr>
       <tr>
         <td>2026-08-28</td>
         <td>82</td>
@@ -4600,16 +4596,10 @@
         <td>2026-08-18</td>
         <td>79</td>
         <td class="status-ok">✓</td>
-        <td><span class="fluctuation-high">-27.5%</span></td>
-      </tr>
-      <tr>
-        <td>2026-08-17</td>
-        <td>109</td>
-        <td class="status-ok">✓</td>
         <td>-</td>
       </tr>
     </table>
-    <p class="summary-line">10日总计: 696 条 | 日均: 69.6 条</p>
+    <p class="summary-line">10日总计: 674 条 | 日均: 67.4 条</p>
   </div>
   <div class="info-section">
     <h3>📝 数据样例（按ymd倒序，前5行）</h3>
@@ -4636,89 +4626,89 @@
   </thead>
   <tbody>
     <tr>
-      <td>2026-08-28</td>
-      <td>688209.SH</td>
-      <td>英集芯</td>
-      <td>24.62</td>
-      <td>29.54</td>
-      <td>19.98</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>18113</td>
-      <td>0</td>
-      <td>0</td>
-      <td>科创板</td>
-      <td>专精特新,保险重仓,信息技术(A股),减持新规(不可减持),制造业指数,半导体,半导体产品(A股),半导体产品与设备Ⅱ(A股),半导体产品与设备Ⅲ(A股),华南指数,同花顺A股小盘,同花顺全A(加权),同花顺全A(沪深),同花顺全A(沪深京),同花顺全A(沪深京等权),同花顺全A(沪深等权),同花顺全A(除金融、石油石化),同花顺全A市场,同花顺均衡估值,同花顺均衡动量,同花顺均衡盈利,同花顺大盘,同花顺小盘,同花顺拟回购指数,同花顺沪深全A,同花顺沪深全A(除金融、石油石化),同花顺沪股通,同花顺激进投资,同花顺陆股通,同花顺高估值,同花顺高动量,同花顺高盈利,小米概念,无线耳机,昨日高振幅,模拟芯片设计,汽车电子,汽车芯片,沪股通,消费电子概念,深圳,深圳市指数,百日新高,科技(TMT),脑机接口,芯片概念,融资融券,计算机、通信和其他电子设备制造业指数,计算机通信和其他电子设备制造业指数,近期新高,高贝塔值</td>
+      <td>2026-08-31</td>
+      <td>605577.SH</td>
+      <td>龙版传媒</td>
+      <td>9.65</td>
+      <td>10.62</td>
+      <td>10.05</td>
+      <td>4.288889e+09</td>
+      <td>4.288889e+09</td>
+      <td>444444445.0</td>
+      <td>444444445.0</td>
+      <td>17064</td>
+      <td>1.1</td>
+      <td>23.47</td>
+      <td>上海主板</td>
+      <td>IP经济(谷子经济),QFII重仓,一带一路,上证指数(旧),东北指数,减持新规(不可减持),出版,出版(A股),同花顺A股小盘,同花顺主板,同花顺低估值,同花顺低动量,同花顺全A(加权),同花顺全A(沪深),同花顺全A(沪深京),同花顺全A(沪深京等权),同花顺全A(沪深等权),同花顺全A(除科创板),同花顺全A(除金融、石油石化),同花顺全A市场,同花顺均衡投资,同花顺小市值1500,同花顺小市值1500(3000),同花顺小盘,同花顺沪深全A,同花顺沪深全A(除科创板),同花顺沪深全A(除金融、石油石化),同花顺沪股通,同花顺陆股通,同花顺高盈利,哈尔滨市指数,国企改革,在线教育,地方国企传媒指数,地方国企指数,地方国企黑龙江省指数,媒体(A股),媒体与娱乐(A股),文化、体育和娱乐业指数,文化传媒,文化传媒概念,文化体育和娱乐业指数,新闻和出版业指数,沪股通,破净股,科技(TMT),通讯业务(A股),高股息股,黑龙江,黑龙江</td>
     </tr>
     <tr>
-      <td>2026-08-28</td>
-      <td>688152.SH</td>
-      <td>麒麟信安</td>
-      <td>31.70</td>
-      <td>38.04</td>
-      <td>20.00</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>9969</td>
-      <td>0</td>
-      <td>0</td>
-      <td>科创板</td>
-      <td>DeepSeek概念,专精特新,云办公,云计算,互联网服务和基础设施(A股),人形机器人,信创,信息传输、软件和信息技术服务业指数,信息传输软件和信息技术服务业指数,信息技术(A股),信息技术服务(A股),养老概念,减持新规(不可减持),华中指数,华为概念,华为欧拉,华为鲲鹏,同花顺A股小盘,同花顺低动量,同花顺低盈利,同花顺全A(加权),同花顺全A(沪深),同花顺全A(沪深京),同花顺全A(沪深京等权),同花顺全A(沪深等权),同花顺全A(除金融、石油石化),同花顺全A市场,同花顺均衡估值,同花顺均衡投资,同花顺小市值1000,同花顺小市值1000(1000),同花顺小市值1000(2000),同花顺小市值1000(3000),同花顺小市值1500,同花顺小市值1500(1000),同花顺小市值1500(2000),同花顺小市值1500(3000),同花顺小市值800,同花顺小市值800(2000),同花顺小市值800(3000),同花顺小盘,同花顺沪深全A,同花顺沪深全A(除金融、石油石化),商业航天,国产操作系统,数据安全,智能电网,机器人概念,横向通用软件,湖南,科技(TMT)</td>
+      <td>2026-08-31</td>
+      <td>605287.SH</td>
+      <td>德才股份</td>
+      <td>37.80</td>
+      <td>41.58</td>
+      <td>10.00</td>
+      <td>5.292000e+09</td>
+      <td>5.292000e+09</td>
+      <td>140000000.0</td>
+      <td>140000000.0</td>
+      <td>11540</td>
+      <td>3.32</td>
+      <td>88.28</td>
+      <td>上海主板</td>
+      <td>AIGC概念,AI应用,AI视频,QFII重仓,上证指数(旧),乡村振兴,光伏建筑一体化,减持计划,华东指数,同花顺A股小盘,同花顺主板,同花顺保守投资,同花顺全A(加权),同花顺全A(沪深),同花顺全A(沪深京),同花顺全A(沪深京等权),同花顺全A(沪深等权),同花顺全A(除科创板),同花顺全A(除金融、石油石化),同花顺全A市场,同花顺均衡估值,同花顺均衡盈利,同花顺小盘,同花顺情绪指数,同花顺沪深全A,同花顺沪深全A(除科创板),同花顺沪深全A(除金融、石油石化),同花顺沪股通,同花顺陆股通,同花顺高动量,同花顺高盈利,山东,工业(A股),建筑与工程Ⅲ(A股),建筑与工程Ⅳ(A股),建筑业指数,建筑装饰,建筑装饰和其他建筑业指数,建筑装饰装修和其他建筑业指数,文化传媒概念,新型城镇化,昨日打板表现,昨日打首板表现,昨日涨停表现,昨日非ST打板,昨日非ST涨停表现,昨日非ST首板,昨日首板表现,昨日高振幅,最</td>
     </tr>
     <tr>
-      <td>2026-08-28</td>
-      <td>605566.SH</td>
-      <td>福莱蒽特</td>
-      <td>25.92</td>
-      <td>28.51</td>
+      <td>2026-08-31</td>
+      <td>605118.SH</td>
+      <td>力鼎光电</td>
+      <td>29.84</td>
+      <td>32.82</td>
       <td>9.99</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>11448</td>
-      <td>0</td>
-      <td>0</td>
+      <td>1.220064e+10</td>
+      <td>1.227077e+10</td>
+      <td>411219000.0</td>
+      <td>408868500.0</td>
+      <td>15331</td>
+      <td>7.56</td>
+      <td>39.86</td>
       <td>上海主板</td>
-      <td>HJT电池,POE胶膜,上证指数(旧),光伏概念,减持新规(不可减持),创历史新高,制造业指数,化学制品,化学制品(A股),化学原料和化学制品制造业指数,华东指数,原材料(A股),原材料Ⅱ(A股),同花顺A股小盘,同花顺主板,同花顺低估值,同花顺保守投资,同花顺全A(加权),同花顺全A(沪深),同花顺全A(沪深京),同花顺全A(沪深京等权),同花顺全A(沪深等权),同花顺全A(除科创板),同花顺全A(除金融、石油石化),同花顺全A市场,同花顺均衡估值,同花顺均衡盈利,同花顺小市值1000,同花顺小市值1000(3000),同花顺小市值1500,同花顺小市值1500(1000),同花顺小市值1500(2000),同花顺小市值1500(3000),同花顺小盘,同花顺情绪指数,同花顺沪深全A,同花顺沪深全A(除科创板),同花顺沪深全A(除金融、石油石化),同花顺高动量,周期,商品化工(A股),昨日打板表现,昨日打首板表现,昨日涨停表现,昨日非ST打板,昨日非ST涨停表现,昨日非ST首板,昨日首板表现,昨日高振幅,杭州市指数,染料,沪深主板昨日涨停,浙江,消费电子概念,百日新高,纺织化学用品,</td>
+      <td>AI眼镜,QFII重仓,上证指数(旧),专精特新,人工智能,人民币贬值受益,保险重仓,信息技术(A股),减持计划,制造业指数,半导体产品与设备Ⅱ(A股),华东指数,厦门市指数,同花顺A股中盘,同花顺主板,同花顺全A(加权),同花顺全A(沪深),同花顺全A(沪深京),同花顺全A(沪深京等权),同花顺全A(沪深等权),同花顺全A(除科创板),同花顺全A(除金融、石油石化),同花顺全A市场,同花顺均衡投资,同花顺大盘,同花顺小盘,同花顺情绪指数,同花顺沪深全A,同花顺沪深全A(除科创板),同花顺沪深全A(除金融、石油石化),同花顺沪股通,同花顺陆股通,同花顺高估值,同花顺高动量,同花顺高盈利,夏漳泉都市圈,安防,安防设备,富士康概念,技术硬件与设备(A股),无人机,昨日打板表现,昨日打首板表现,昨日涨停表现,昨日非ST打板,昨日非ST涨停表现,昨日非ST首板,昨日首板表现,智能座舱,机器人概念,机器视觉,沪深主板昨</td>
     </tr>
     <tr>
-      <td>2026-08-28</td>
-      <td>605188.SH</td>
-      <td>国光连锁</td>
-      <td>12.15</td>
-      <td>13.37</td>
-      <td>10.04</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>25578</td>
-      <td>0</td>
-      <td>0</td>
+      <td>2026-08-31</td>
+      <td>603989.SH</td>
+      <td>艾华集团</td>
+      <td>28.60</td>
+      <td>31.46</td>
+      <td>10.00</td>
+      <td>1.140510e+10</td>
+      <td>1.140510e+10</td>
+      <td>398779860.0</td>
+      <td>398779860.0</td>
+      <td>35425</td>
+      <td>2.87</td>
+      <td>43.13</td>
       <td>上海主板</td>
-      <td>上证指数(旧),冷链物流,华东指数,同花顺A股小盘,同花顺主板,同花顺低盈利,同花顺全A(加权),同花顺全A(沪深),同花顺全A(沪深京),同花顺全A(沪深京等权),同花顺全A(沪深等权),同花顺全A(除科创板),同花顺全A(除金融、石油石化),同花顺全A市场,同花顺均衡动量,同花顺均衡投资,同花顺大盘,同花顺情绪指数,同花顺沪深全A,同花顺沪深全A(除科创板),同花顺沪深全A(除金融、石油石化),同花顺沪股通,同花顺陆股通,同花顺高估值,同花顺高动量,同花顺高盈利,批发和零售业指数,日常消费品(A股),日常消费品分销和零售Ⅱ(A股),日常消费品分销和零售Ⅲ(A股),日常消费品零售(A股),昨日高振幅,智能物流,江西,沪股通,消费,百货零售,股东户数减少,近期并购,零售,零售业指数,预制菜</td>
+      <td>5G,上证380成份股,上证指数(旧),低空经济,信息技术(A股),储能,元件,充电桩,军工,创历史新高,制造业指数,半导体产品与设备Ⅱ(A股),华中指数,华为概念,同花顺A股小盘,同花顺主板,同花顺低估值,同花顺全A(加权),同花顺全A(沪深),同花顺全A(沪深京),同花顺全A(沪深京等权),同花顺全A(沪深等权),同花顺全A(除科创板),同花顺全A(除金融、石油石化),同花顺全A市场,同花顺均衡估值,同花顺均衡动量,同花顺均衡投资,同花顺均衡盈利,同花顺大盘,同花顺小盘,同花顺情绪指数,同花顺沪深全A,同花顺沪深全A(除科创板),同花顺沪深全A(除金融、石油石化),同花顺沪股通,同花顺陆股通,同花顺高动量,固态电池,技术硬件与设备(A股),数据中心(AIDC),新疆振兴,新能源汽车,昨日打二板以上表现,昨日打板表现,昨日打首板以上表现,昨日打首板表现,昨日涨停表现,昨日炸板股,昨日连板,昨日非ST三板以上</td>
     </tr>
     <tr>
-      <td>2026-08-28</td>
-      <td>605006.SH</td>
-      <td>山东玻纤</td>
-      <td>14.13</td>
-      <td>15.54</td>
-      <td>9.98</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>130527</td>
-      <td>0</td>
-      <td>0</td>
+      <td>2026-08-31</td>
+      <td>603978.SH</td>
+      <td>深圳新星</td>
+      <td>19.02</td>
+      <td>20.92</td>
+      <td>9.99</td>
+      <td>4.015014e+09</td>
+      <td>4.015014e+09</td>
+      <td>211094299.0</td>
+      <td>211094299.0</td>
+      <td>21970</td>
+      <td>2.42</td>
+      <td>-108.66</td>
       <td>上海主板</td>
-      <td>2026中报预增,PCB概念,QFII重仓,上证指数(旧),临沂市指数,减持计划,创历史新高,制造业指数,化学制品(A股),华东指数,原材料(A股),原材料Ⅱ(A股),同花顺A股小盘,同花顺主板,同花顺低估值,同花顺低动量,同花顺低盈利,同花顺全A(加权),同花顺全A(沪深),同花顺全A(沪深京),同花顺全A(沪深京等权),同花顺全A(沪深等权),同花顺全A(除科创板),同花顺全A(除金融、石油石化),同花顺全A市场,同花顺均衡投资,同花顺均衡盈利,同花顺大盘,同花顺小盘,同花顺情绪指数,同花顺沪深全A,同花顺沪深全A(除科创板),同花顺沪深全A(除金融、石油石化),同花顺沪股通,同花顺激进投资,同花顺陆股通,同花顺高估值,同花顺高动量,含可转债,周期,商品化工(A股),国企改革,地方国企山东省指数,地方国企建筑材料指数,地方国企指数,山东,建筑材料,昨日打板表现,昨日打首板表现,昨日涨停表现,昨日炸板股,昨日非ST打板,昨日非ST涨停表现,昨日非ST炸板,昨日非ST首板,昨日首板表现,昨日高振幅,最近多板,沪深主板昨日涨停,沪股通,玻璃玻纤,百日新高,近期并购,近期强势,近期新高,非</td>
+      <td>PVDF概念,QFII重仓,一体化压铸,上证指数(旧),业绩扭亏,保险重仓,储能,其他金属新材料,军工,减持新规(不可减持),制造业指数,华南指数,原材料(A股),原材料Ⅱ(A股),同花顺A股小盘,同花顺主板,同花顺低盈利,同花顺全A(加权),同花顺全A(沪深),同花顺全A(沪深京),同花顺全A(沪深京等权),同花顺全A(沪深等权),同花顺全A(除科创板),同花顺全A(除金融、石油石化),同花顺全A市场,同花顺均衡估值,同花顺均衡投资,同花顺均衡盈利,同花顺小市值1500,同花顺小市值1500(3000),同花顺小盘,同花顺情绪指数,同花顺沪深全A,同花顺沪深全A(除科创板),同花顺沪深全A(除金融、石油石化),同花顺沪股通,同花顺激进投资,同花顺陆股通,同花顺高动量,周期,商业航天,昨日打板表现,昨日打首板表现,昨日炸板股,昨日非ST打板,昨日非ST炸板,昨日高振幅,有色金属冶炼和压延加工业指数,核电,氟化工概念,沪股通,深</td>
     </tr>
   </tbody>
 </table>
@@ -4728,7 +4718,7 @@
 <section class="table-detail" id="table-dwd_stock_dt_list">
   <div class="table-header">
     <div class="table-title-wrap">
-      <h2>【表 23/39】dwd_stock_dt_list</h2>
+      <h2>【表 23/38】dwd_stock_dt_list</h2>
       <div class="table-tags"><span class="table-tag layer-2">DWD 层（明细数据）</span></div>
     </div>
     <a href="#toc" class="back-to-top" title="返回目录">🔝</a>
@@ -4736,7 +4726,7 @@
   <div class="info-section">
     <h3>📊 基本信息</h3>
     <table class="info-table">
-      <tr><td>行数</td><td>18,223</td></tr>
+      <tr><td>行数</td><td>18,235</td></tr>
       <tr><td>列数</td><td>15</td></tr>
     </table>
   </div>
@@ -4746,27 +4736,27 @@
       <tr><td>存在ymd列</td><td>✓</td></tr>
       <tr><td>日期总数</td><td>10</td></tr>
       <tr><td>全表最早日期</td><td>2021-01-05</td></tr>
-      <tr><td>全表最晚日期</td><td>2026-08-28</td></tr>
-      <tr><td>最近10天范围</td><td>2026-08-17 ~ 2026-08-28</td></tr>
+      <tr><td>全表最晚日期</td><td>2026-08-31</td></tr>
+      <tr><td>最近10天范围</td><td>2026-08-18 ~ 2026-08-31</td></tr>
     </table>
     <p>最近10个日期(倒序):</p>
     <div class="date-list">
-      <span class="date-tag">1. 2026-08-28</span>
-      <span class="date-tag">2. 2026-08-27</span>
-      <span class="date-tag">3. 2026-08-26</span>
-      <span class="date-tag">4. 2026-08-25</span>
-      <span class="date-tag">5. 2026-08-24</span>
-      <span class="date-tag">6. 2026-08-21</span>
-      <span class="date-tag">7. 2026-08-20</span>
-      <span class="date-tag">8. 2026-08-19</span>
-      <span class="date-tag">9. 2026-08-18</span>
-      <span class="date-tag">10. 2026-08-17</span>
+      <span class="date-tag">1. 2026-08-31</span>
+      <span class="date-tag">2. 2026-08-28</span>
+      <span class="date-tag">3. 2026-08-27</span>
+      <span class="date-tag">4. 2026-08-26</span>
+      <span class="date-tag">5. 2026-08-25</span>
+      <span class="date-tag">6. 2026-08-24</span>
+      <span class="date-tag">7. 2026-08-21</span>
+      <span class="date-tag">8. 2026-08-20</span>
+      <span class="date-tag">9. 2026-08-19</span>
+      <span class="date-tag">10. 2026-08-18</span>
     </div>
   </div>
   <div class="info-section">
     <h3>🔍 交易日覆盖检查（以 ods_trading_days_insight 为基准）</h3>
     <table class="info-table">
-      <tr><td>基准区间</td><td>2026-08-17 ~ 2026-08-28 (共10个交易日)</td></tr>
+      <tr><td>基准区间</td><td>2026-08-18 ~ 2026-08-31 (共10个交易日)</td></tr>
       <tr><td>覆盖情况</td><td><strong>10/10</strong> (100.0%)</td></tr>
     </table>
     <div class="alert alert-success">
@@ -4779,6 +4769,12 @@
     </div>
     <table class="data-table">
       <tr><th>日期</th><th>条数</th><th>状态</th><th>环比</th></tr>
+      <tr>
+        <td>2026-08-31</td>
+        <td>12</td>
+        <td class="status-ok">✓</td>
+        <td><span class="fluctuation-high">+500.0%</span></td>
+      </tr>
       <tr>
         <td>2026-08-28</td>
         <td>2</td>
@@ -4831,16 +4827,10 @@
         <td>2026-08-18</td>
         <td>6</td>
         <td class="status-ok">✓</td>
-        <td><span class="fluctuation-high">+500.0%</span></td>
-      </tr>
-      <tr>
-        <td>2026-08-17</td>
-        <td>1</td>
-        <td class="status-ok">✓</td>
         <td>-</td>
       </tr>
     </table>
-    <p class="summary-line">10日总计: 185 条 | 日均: 18.5 条</p>
+    <p class="summary-line">10日总计: 196 条 | 日均: 19.6 条</p>
   </div>
   <div class="info-section">
     <h3>📝 数据样例（按ymd倒序，前5行）</h3>
@@ -4867,89 +4857,89 @@
   </thead>
   <tbody>
     <tr>
-      <td>2026-08-28</td>
-      <td>002963.SZ</td>
-      <td>豪尔赛</td>
-      <td>21.28</td>
-      <td>19.15</td>
-      <td>-10.01</td>
-      <td>0.000000e+00</td>
-      <td>0.000000e+00</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>10246</td>
-      <td>0</td>
-      <td>0</td>
-      <td>深圳主板</td>
-      <td>QFII重仓,业绩预亏,储能,充电桩,减持新规(不可减持),北京,北京市指数,华为概念,华北指数,同花顺A股微盘,同花顺主板,同花顺低估值,同花顺低盈利,同花顺保守投资,同花顺全A(加权),同花顺全A(沪深),同花顺全A(沪深京),同花顺全A(沪深京等权),同花顺全A(沪深等权),同花顺全A(除科创板),同花顺全A(除金融、石油石化),同花顺全A市场,同花顺均衡估值,同花顺小市值1000,同花顺小市值1000(1000),同花顺小市值1000(2000),同花顺小市值1000(3000),同花顺小市值1500,同花顺小市值1500(1000),同花顺小市值1500(2000),同花顺小市值1500(3000),同花顺小市值200(3000),同花顺小市值400,同花顺小市值400(1000),同花顺小市值400(2000),同花顺小市值400(3000),同花顺小市值600,同花顺小市值600(1000),同花顺小市值600(2000),同花顺小市值600(3000),同花顺小市值800,同花顺小市值800(1000),同花顺小市值800(2000),同花顺小市值800(3000),同</td>
-    </tr>
-    <tr>
-      <td>2026-08-28</td>
-      <td>002731.SZ</td>
-      <td>None</td>
-      <td>0.94</td>
-      <td>0.85</td>
-      <td>-9.57</td>
-      <td>0.000000e+00</td>
-      <td>0.000000e+00</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>24283</td>
-      <td>0</td>
-      <td>0</td>
-      <td>None</td>
-      <td>IP经济(谷子经济),ST板块,一元股,三胎概念,东北指数,低价股,低市净率,低市盈率,减持新规(不可减持),制造业指数,同花顺主板,同花顺全A(加权),同花顺全A(沪深),同花顺全A(沪深京),同花顺全A(沪深京等权),同花顺全A(沪深等权),同花顺全A(除科创板),同花顺全A(除金融、石油石化),同花顺沪深全A,同花顺沪深全A(除科创板),同花顺沪深全A(除金融、石油石化),微盘股,文教、工美、体育和娱乐用品制造业指数,文教工美体育和娱乐用品制造业指数,昨日ST连板股表现,昨日ST首板股表现,昨日换手前十,昨日涨停表现,昨日连板,昨日首板表现,昨日高振幅,服装、服饰与奢侈品(A股),服装家纺,沈阳市指数,消费,深市新主板,破净股,纺织品、服装与奢侈品(A股),耐用消费品与服装(A股),辽宁,近期复牌,锂电池概念,非日常生活消费品(A股),饰品,高股息股,高贝塔值,黄金概念</td>
-    </tr>
-    <tr>
-      <td>2026-08-27</td>
-      <td>603839.SH</td>
-      <td>安正时尚</td>
-      <td>7.21</td>
-      <td>6.49</td>
-      <td>-9.99</td>
-      <td>2.740075e+09</td>
-      <td>2.740075e+09</td>
-      <td>387016200.0</td>
-      <td>387016200.0</td>
-      <td>14759</td>
-      <td>1.63</td>
-      <td>-15.12</td>
+      <td>2026-08-31</td>
+      <td>601212.SH</td>
+      <td>白银有色</td>
+      <td>7.63</td>
+      <td>6.87</td>
+      <td>-9.96</td>
+      <td>5.649843e+10</td>
+      <td>5.649843e+10</td>
+      <td>7404774511.0</td>
+      <td>7404774511.0</td>
+      <td>414511</td>
+      <td>3.66</td>
+      <td>-100.67</td>
       <td>上海主板</td>
-      <td>2026中报预增,QFII重仓,三胎概念,上证指数(旧),减持新规(不可减持),制造业指数,华东指数,同花顺A股小盘,同花顺主板,同花顺低估值,同花顺低盈利,同花顺保守投资,同花顺全A(加权),同花顺全A(沪深),同花顺全A(沪深京),同花顺全A(沪深京等权),同花顺全A(沪深等权),同花顺全A(除科创板),同花顺全A(除金融、石油石化),同花顺全A市场,同花顺均衡动量,同花顺均衡投资,同花顺均衡盈利,同花顺小市值1000,同花顺小市值1000(1000),同花顺小市值1000(2000),同花顺小市值1000(3000),同花顺小市值1500,同花顺小市值1500(1000),同花顺小市值1500(2000),同花顺小市值1500(3000),同花顺小市值400,同花顺小市值600,同花顺小市值600(1000),同花顺小市值600(2000),同花顺小市值600(3000),同花顺小市值800,同花顺小市值800(1000),同花顺小市值800(2000),同花顺小市值800(3000),同花顺小盘,同花顺情绪指数,同花顺沪深全A,同花顺沪深全A</td>
+      <td>上证指数(旧),业绩扭亏,中证500成份股,兰州西宁城市群,减持计划,制造业指数,原材料(A股),原材料Ⅱ(A股),可控核聚变,同花顺A500,同花顺A500全收益,同花顺A股大盘,同花顺中盘,同花顺主板,同花顺低盈利,同花顺全A(加权),同花顺全A(沪深),同花顺全A(沪深京),同花顺全A(沪深京等权),同花顺全A(沪深等权),同花顺全A(除科创板),同花顺全A(除金融、石油石化),同花顺全A市场,同花顺均衡估值,同花顺均衡投资,同花顺均衡盈利,同花顺大盘,同花顺情绪指数,同花顺沪深全A,同花顺沪深全A(除科创板),同花顺沪深全A(除金融、石油石化),同花顺沪股通,同花顺激进投资,同花顺陆股通,同花顺高动量,周期,地方国企指数,地方国企有色金属指数,地方国企甘肃省指数,小金属概念,工业金属,昨日打板表现,昨日打首板表现,昨日涨停表现,昨日炸板股,昨日非ST打板,昨日非ST炸板,昨日高振幅,有色金属冶炼和</td>
     </tr>
     <tr>
-      <td>2026-08-27</td>
-      <td>003013.SZ</td>
-      <td>地铁设计</td>
-      <td>17.85</td>
-      <td>16.07</td>
+      <td>2026-08-31</td>
+      <td>600721.SH</td>
+      <td>百花医药</td>
+      <td>15.44</td>
+      <td>13.90</td>
       <td>-9.97</td>
-      <td>7.514234e+09</td>
-      <td>8.602348e+09</td>
-      <td>460757801.0</td>
-      <td>402476396.0</td>
-      <td>11459</td>
-      <td>2.55</td>
-      <td>17.9</td>
-      <td>深圳主板</td>
-      <td>PPP概念,一带一路,专业技术服务业指数,乡村振兴,人工智能,低空经济,华南指数,同花顺A股小盘,同花顺主板,同花顺低估值,同花顺低动量,同花顺全A(加权),同花顺全A(沪深),同花顺全A(沪深京),同花顺全A(沪深京等权),同花顺全A(沪深等权),同花顺全A(除科创板),同花顺全A(除金融、石油石化),同花顺全A市场,同花顺均衡估值,同花顺均衡投资,同花顺大盘,同花顺小盘,同花顺情绪指数,同花顺沪深全A,同花顺沪深全A(除科创板),同花顺沪深全A(除金融、石油石化),同花顺深股通,同花顺激进投资,同花顺陆股通,同花顺高盈利,国企改革,地下管网,地方国企广东省指数,地方国企建筑装饰指数,地方国企指数,定增破发,密集调研,工业(A股),工程咨询服务,广东(除深圳),广州市指数,建筑与工程Ⅲ(A股),建筑与工程Ⅳ(A股),建筑装饰,数字孪生,数字经济,数据中心(AIDC),新型城镇化,无人机,时空大数据,昨日</td>
+      <td>5.937415e+09</td>
+      <td>5.937415e+09</td>
+      <td>384547635.0</td>
+      <td>384547635.0</td>
+      <td>32359</td>
+      <td>7.42</td>
+      <td>198.15</td>
+      <td>上海主板</td>
+      <td>CRO概念,QFII重仓,上证指数(旧),减肥药,创新药,制药、生物科技和生命科学(A股),制药Ⅲ(A股),制药Ⅳ(A股),医疗保健(A股),医疗保健提供商与服务(A股),医疗保健设备与服务(A股),医疗服务,医疗研发外包,医药医疗,合成生物,同花顺A股小盘,同花顺主板,同花顺保守投资,同花顺全A(加权),同花顺全A(沪深),同花顺全A(沪深京),同花顺全A(沪深京等权),同花顺全A(沪深等权),同花顺全A(除科创板),同花顺全A(除金融、石油石化),同花顺全A市场,同花顺均衡估值,同花顺均衡动量,同花顺均衡盈利,同花顺小市值1000,同花顺小市值1000(1000),同花顺小市值1000(2000),同花顺小市值1000(3000),同花顺小市值1500,同花顺小市值1500(1000),同花顺小市值1500(2000),同花顺小市值1500(3000),同花顺小市值600,同花顺小市值600(3000),同花顺小市值800,同花顺小市值800(1000),同花顺小市值800(2000),同花顺小市值800(3000),同花顺小盘,同花顺</td>
     </tr>
     <tr>
-      <td>2026-08-27</td>
-      <td>002731.SZ</td>
-      <td>None</td>
-      <td>1.04</td>
-      <td>0.94</td>
-      <td>-9.62</td>
-      <td>0.000000e+00</td>
-      <td>0.000000e+00</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>24283</td>
-      <td>0</td>
-      <td>0</td>
-      <td>None</td>
-      <td>IP经济(谷子经济),ST板块,一元股,三胎概念,东北指数,低价股,低市净率,低市盈率,减持新规(不可减持),制造业指数,同花顺主板,同花顺全A(加权),同花顺全A(沪深),同花顺全A(沪深京),同花顺全A(沪深京等权),同花顺全A(沪深等权),同花顺全A(除科创板),同花顺全A(除金融、石油石化),同花顺沪深全A,同花顺沪深全A(除科创板),同花顺沪深全A(除金融、石油石化),微盘股,文教、工美、体育和娱乐用品制造业指数,文教工美体育和娱乐用品制造业指数,昨日ST连板股表现,昨日ST首板股表现,昨日换手前十,昨日涨停表现,昨日连板,昨日首板表现,昨日高振幅,服装、服饰与奢侈品(A股),服装家纺,沈阳市指数,消费,深市新主板,破净股,纺织品、服装与奢侈品(A股),耐用消费品与服装(A股),辽宁,近期复牌,锂电池概念,非日常生活消费品(A股),饰品,高股息股,高贝塔值,黄金概念</td>
+      <td>2026-08-31</td>
+      <td>600613.SH</td>
+      <td>神奇制药</td>
+      <td>12.40</td>
+      <td>11.16</td>
+      <td>-10.00</td>
+      <td>5.943568e+09</td>
+      <td>6.622488e+09</td>
+      <td>534071628.0</td>
+      <td>479319978.0</td>
+      <td>45433</td>
+      <td>2.88</td>
+      <td>183.28</td>
+      <td>上海主板</td>
+      <td>QFII重仓,上海市指数,上证指数(旧),减持计划,制药、生物科技和生命科学(A股),制药Ⅲ(A股),制药Ⅳ(A股),制造业指数,化学制剂,化学制药,医疗保健(A股),医药制造业指数,医药医疗,医药电商,华东指数,同花顺A股小盘,同花顺主板,同花顺低估值,同花顺低动量,同花顺保守投资,同花顺全A(加权),同花顺全A(沪深),同花顺全A(沪深京),同花顺全A(沪深京等权),同花顺全A(沪深等权),同花顺全A(除科创板),同花顺全A(除金融、石油石化),同花顺全A市场,同花顺均衡盈利,同花顺小市值1000,同花顺小市值1000(1000),同花顺小市值1000(2000),同花顺小市值1000(3000),同花顺小市值1500,同花顺小市值1500(1000),同花顺小市值1500(2000),同花顺小市值1500(3000),同花顺小市值400,同花顺小市值600,同花顺小市值600(2000),同花顺小市值600(3000),同花顺小市值800,同花顺小市值800(1000),同花顺小市值800(2000),同花顺小市值800(3000),同花顺</td>
+    </tr>
+    <tr>
+      <td>2026-08-31</td>
+      <td>600363.SH</td>
+      <td>联创光电</td>
+      <td>18.19</td>
+      <td>16.37</td>
+      <td>-10.01</td>
+      <td>8.201661e+09</td>
+      <td>8.201661e+09</td>
+      <td>450888450.0</td>
+      <td>450888450.0</td>
+      <td>76725</td>
+      <td>1.77</td>
+      <td>18.36</td>
+      <td>上海主板</td>
+      <td>OLED,上证380成份股,上证指数(旧),中证500成份股,低空经济,保险重仓,信息技术(A股),光伏概念,军工,制造业指数,华东指数,华为概念,南昌市指数,可控核聚变,同花顺A股中盘,同花顺主板,同花顺低动量,同花顺全A(加权),同花顺全A(沪深),同花顺全A(沪深京),同花顺全A(沪深京等权),同花顺全A(沪深等权),同花顺全A(除科创板),同花顺全A(除金融、石油石化),同花顺全A市场,同花顺均衡估值,同花顺均衡动量,同花顺均衡投资,同花顺均衡盈利,同花顺大盘,同花顺小盘,同花顺情绪指数,同花顺新质50,同花顺沪深全A,同花顺沪深全A(除科创板),同花顺沪深全A(除金融、石油石化),同花顺沪股通,同花顺陆股通,同花顺高估值,同花顺高盈利,商业航天,技术硬件与设备(A股),新能源汽车,无人机,昨日打板表现,昨日打首板以上表现,昨日打首板表现,昨日涨停表现,昨日资金前十,昨日连板,昨日非ST二板表现,昨日</td>
+    </tr>
+    <tr>
+      <td>2026-08-31</td>
+      <td>600272.SH</td>
+      <td>开开实业</td>
+      <td>20.29</td>
+      <td>18.26</td>
+      <td>-10.00</td>
+      <td>3.246400e+09</td>
+      <td>5.329208e+09</td>
+      <td>262651945.0</td>
+      <td>160000000.0</td>
+      <td>31445</td>
+      <td>6.7</td>
+      <td>231.63</td>
+      <td>上海主板</td>
+      <td>2026中报预增,QFII重仓,上海(除浦东),上海市指数,上证指数(旧),保健护理产品经销商(A股),医疗保健(A股),医疗保健设备与服务(A股),医药商业,医药流通,医药电商,华东指数,参股银行,同花顺A股微盘,同花顺主板,同花顺低动量,同花顺全A(加权),同花顺全A(沪深),同花顺全A(沪深京),同花顺全A(沪深京等权),同花顺全A(沪深等权),同花顺全A(除科创板),同花顺全A(除金融、石油石化),同花顺全A市场,同花顺均衡估值,同花顺均衡盈利,同花顺小市值1000,同花顺小市值1000(1000),同花顺小市值1000(2000),同花顺小市值1000(3000),同花顺小市值1500,同花顺小市值1500(1000),同花顺小市值1500(2000),同花顺小市值1500(3000),同花顺小市值200,同花顺小市值400,同花顺小市值400(2000),同花顺小市值400(3000),同花顺小市值600,同花顺小市值600(1000),同花顺小市值600(2000),同花顺小市值600(3000),同花顺小市值800,同花顺小市值800(1000),</td>
     </tr>
   </tbody>
 </table>
@@ -4959,7 +4949,7 @@
 <section class="table-detail" id="table-dwd_stock_technical_indicators">
   <div class="table-header">
     <div class="table-title-wrap">
-      <h2>【表 24/39】dwd_stock_technical_indicators</h2>
+      <h2>【表 24/38】dwd_stock_technical_indicators</h2>
       <div class="table-tags"><span class="table-tag layer-2">DWD 层（明细数据）</span></div>
     </div>
     <a href="#toc" class="back-to-top" title="返回目录">🔝</a>
@@ -4967,7 +4957,7 @@
   <div class="info-section">
     <h3>📊 基本信息</h3>
     <table class="info-table">
-      <tr><td>行数</td><td>6,658,256</td></tr>
+      <tr><td>行数</td><td>6,663,801</td></tr>
       <tr><td>列数</td><td>22</td></tr>
     </table>
   </div>
@@ -4977,27 +4967,27 @@
       <tr><td>存在ymd列</td><td>✓</td></tr>
       <tr><td>日期总数</td><td>10</td></tr>
       <tr><td>全表最早日期</td><td>2021-01-04</td></tr>
-      <tr><td>全表最晚日期</td><td>2026-08-28</td></tr>
-      <tr><td>最近10天范围</td><td>2026-08-17 ~ 2026-08-28</td></tr>
+      <tr><td>全表最晚日期</td><td>2026-08-31</td></tr>
+      <tr><td>最近10天范围</td><td>2026-08-18 ~ 2026-08-31</td></tr>
     </table>
     <p>最近10个日期(倒序):</p>
     <div class="date-list">
-      <span class="date-tag">1. 2026-08-28</span>
-      <span class="date-tag">2. 2026-08-27</span>
-      <span class="date-tag">3. 2026-08-26</span>
-      <span class="date-tag">4. 2026-08-25</span>
-      <span class="date-tag">5. 2026-08-24</span>
-      <span class="date-tag">6. 2026-08-21</span>
-      <span class="date-tag">7. 2026-08-20</span>
-      <span class="date-tag">8. 2026-08-19</span>
-      <span class="date-tag">9. 2026-08-18</span>
-      <span class="date-tag">10. 2026-08-17</span>
+      <span class="date-tag">1. 2026-08-31</span>
+      <span class="date-tag">2. 2026-08-28</span>
+      <span class="date-tag">3. 2026-08-27</span>
+      <span class="date-tag">4. 2026-08-26</span>
+      <span class="date-tag">5. 2026-08-25</span>
+      <span class="date-tag">6. 2026-08-24</span>
+      <span class="date-tag">7. 2026-08-21</span>
+      <span class="date-tag">8. 2026-08-20</span>
+      <span class="date-tag">9. 2026-08-19</span>
+      <span class="date-tag">10. 2026-08-18</span>
     </div>
   </div>
   <div class="info-section">
     <h3>🔍 交易日覆盖检查（以 ods_trading_days_insight 为基准）</h3>
     <table class="info-table">
-      <tr><td>基准区间</td><td>2026-08-17 ~ 2026-08-28 (共10个交易日)</td></tr>
+      <tr><td>基准区间</td><td>2026-08-18 ~ 2026-08-31 (共10个交易日)</td></tr>
       <tr><td>覆盖情况</td><td><strong>10/10</strong> (100.0%)</td></tr>
     </table>
     <div class="alert alert-success">
@@ -5006,6 +4996,12 @@
     <h4>📈 每日数据量明细:</h4>
     <table class="data-table">
       <tr><th>日期</th><th>条数</th><th>状态</th><th>环比</th></tr>
+      <tr>
+        <td>2026-08-31</td>
+        <td>5,545</td>
+        <td class="status-ok">✓</td>
+        <td>-0.0%</td>
+      </tr>
       <tr>
         <td>2026-08-28</td>
         <td>5,547</td>
@@ -5058,16 +5054,10 @@
         <td>2026-08-18</td>
         <td>5,540</td>
         <td class="status-ok">✓</td>
-        <td>+0.0%</td>
-      </tr>
-      <tr>
-        <td>2026-08-17</td>
-        <td>5,539</td>
-        <td class="status-ok">✓</td>
         <td>-</td>
       </tr>
     </table>
-    <p class="summary-line">10日总计: 55,436 条 | 日均: 5,543.6 条</p>
+    <p class="summary-line">10日总计: 55,442 条 | 日均: 5,544.2 条</p>
   </div>
   <div class="info-section">
     <h3>📝 数据样例（按ymd倒序，前5行）</h3>
@@ -5101,124 +5091,124 @@
   </thead>
   <tbody>
     <tr>
-      <td>2026-08-28</td>
+      <td>2026-08-31</td>
       <td>920992.BJ</td>
       <td>中科美菱</td>
-      <td>11.41</td>
-      <td>5671</td>
-      <td>11.302</td>
-      <td>11.439</td>
-      <td>11.6735</td>
-      <td>11.88150</td>
-      <td>13.35930</td>
-      <td>16.7528</td>
-      <td>4427.0</td>
-      <td>6725.8</td>
-      <td>7390.6</td>
-      <td>9994.28</td>
-      <td>11464.7</td>
-      <td>15766.5</td>
-      <td>0.96</td>
-      <td>-2.26</td>
-      <td>-3.97</td>
-      <td>28.10</td>
-      <td>-23.27</td>
+      <td>11.48</td>
+      <td>5601</td>
+      <td>11.372</td>
+      <td>11.414</td>
+      <td>11.6695</td>
+      <td>11.85080</td>
+      <td>13.32070</td>
+      <td>16.70840</td>
+      <td>4578.8</td>
+      <td>6231.3</td>
+      <td>7293.5</td>
+      <td>9859.65</td>
+      <td>11410.3</td>
+      <td>15651.8</td>
+      <td>0.95</td>
+      <td>-1.62</td>
+      <td>-3.13</td>
+      <td>22.32</td>
+      <td>-23.21</td>
     </tr>
     <tr>
-      <td>2026-08-28</td>
+      <td>2026-08-31</td>
       <td>920985.BJ</td>
       <td>海泰新能</td>
       <td>4.66</td>
-      <td>23476</td>
-      <td>4.574</td>
-      <td>4.625</td>
-      <td>4.6925</td>
-      <td>4.82667</td>
-      <td>5.90667</td>
-      <td>7.4392</td>
-      <td>16196.4</td>
-      <td>21896.7</td>
-      <td>24134.9</td>
-      <td>28971.10</td>
-      <td>40229.1</td>
-      <td>51332.4</td>
-      <td>1.88</td>
-      <td>-0.69</td>
-      <td>-3.45</td>
-      <td>44.95</td>
-      <td>-2.73</td>
+      <td>15533</td>
+      <td>4.606</td>
+      <td>4.621</td>
+      <td>4.6865</td>
+      <td>4.80833</td>
+      <td>5.88058</td>
+      <td>7.41784</td>
+      <td>15870.2</td>
+      <td>21296.0</td>
+      <td>22699.8</td>
+      <td>28212.70</td>
+      <td>39822.1</td>
+      <td>51225.0</td>
+      <td>1.17</td>
+      <td>-0.57</td>
+      <td>-3.08</td>
+      <td>-2.12</td>
+      <td>-31.57</td>
     </tr>
     <tr>
-      <td>2026-08-28</td>
+      <td>2026-08-31</td>
       <td>920982.BJ</td>
       <td>锦波生物</td>
-      <td>120.99</td>
-      <td>5707</td>
-      <td>120.268</td>
-      <td>122.221</td>
-      <td>127.1200</td>
-      <td>132.02900</td>
-      <td>151.80300</td>
-      <td>206.2090</td>
-      <td>6894.0</td>
-      <td>9280.3</td>
-      <td>11336.0</td>
-      <td>11693.00</td>
-      <td>10304.7</td>
-      <td>10301.8</td>
-      <td>0.60</td>
-      <td>-4.82</td>
-      <td>-8.36</td>
-      <td>-17.22</td>
-      <td>-49.66</td>
+      <td>118.50</td>
+      <td>6603</td>
+      <td>120.332</td>
+      <td>121.281</td>
+      <td>126.5960</td>
+      <td>131.42300</td>
+      <td>151.17900</td>
+      <td>205.47500</td>
+      <td>6624.4</td>
+      <td>9003.8</td>
+      <td>11175.5</td>
+      <td>11678.10</td>
+      <td>10191.9</td>
+      <td>10243.2</td>
+      <td>-1.52</td>
+      <td>-6.40</td>
+      <td>-9.83</td>
+      <td>-0.32</td>
+      <td>-40.92</td>
     </tr>
     <tr>
-      <td>2026-08-28</td>
+      <td>2026-08-31</td>
       <td>920981.BJ</td>
       <td>晶赛科技</td>
-      <td>29.62</td>
-      <td>22463</td>
-      <td>29.212</td>
-      <td>29.675</td>
-      <td>29.7455</td>
-      <td>34.94230</td>
-      <td>34.40500</td>
-      <td>35.0762</td>
-      <td>16597.8</td>
-      <td>19777.1</td>
-      <td>23491.8</td>
-      <td>38689.10</td>
-      <td>36469.6</td>
-      <td>27579.5</td>
-      <td>1.40</td>
-      <td>-0.42</td>
-      <td>-15.23</td>
-      <td>35.34</td>
-      <td>-4.38</td>
+      <td>30.09</td>
+      <td>16127</td>
+      <td>29.526</td>
+      <td>29.532</td>
+      <td>29.8880</td>
+      <td>34.73770</td>
+      <td>34.37020</td>
+      <td>35.05140</td>
+      <td>17146.4</td>
+      <td>17523.5</td>
+      <td>23481.8</td>
+      <td>37687.70</td>
+      <td>36426.1</td>
+      <td>27555.6</td>
+      <td>1.91</td>
+      <td>0.68</td>
+      <td>-13.38</td>
+      <td>-5.95</td>
+      <td>-31.32</td>
     </tr>
     <tr>
-      <td>2026-08-28</td>
+      <td>2026-08-31</td>
       <td>920978.BJ</td>
       <td>开特股份</td>
-      <td>18.83</td>
-      <td>10173</td>
-      <td>19.490</td>
-      <td>19.694</td>
-      <td>19.9640</td>
-      <td>20.62220</td>
-      <td>23.37310</td>
-      <td>29.6387</td>
-      <td>10470.6</td>
-      <td>11078.4</td>
-      <td>11241.0</td>
-      <td>19802.60</td>
-      <td>23264.0</td>
-      <td>35278.0</td>
-      <td>-3.39</td>
-      <td>-5.68</td>
-      <td>-8.69</td>
-      <td>-2.84</td>
-      <td>-9.50</td>
+      <td>18.97</td>
+      <td>9416</td>
+      <td>19.372</td>
+      <td>19.599</td>
+      <td>19.8975</td>
+      <td>20.53970</td>
+      <td>23.28940</td>
+      <td>29.62200</td>
+      <td>10735.8</td>
+      <td>11245.2</td>
+      <td>10775.3</td>
+      <td>19141.50</td>
+      <td>23066.4</td>
+      <td>35250.8</td>
+      <td>-2.08</td>
+      <td>-4.66</td>
+      <td>-7.64</td>
+      <td>-12.29</td>
+      <td>-12.61</td>
     </tr>
   </tbody>
 </table>
@@ -5231,7 +5221,7 @@
 <section class="table-detail" id="table-dmart_stock_zt_details">
   <div class="table-header">
     <div class="table-title-wrap">
-      <h2>【表 25/39】dmart_stock_zt_details</h2>
+      <h2>【表 25/38】dmart_stock_zt_details</h2>
       <div class="table-tags"><span class="table-tag layer-3">MART 层（数据集市）</span></div>
     </div>
     <a href="#toc" class="back-to-top" title="返回目录">🔝</a>
@@ -5269,12 +5259,13 @@
   <div class="info-section">
     <h3>🔍 交易日覆盖检查（以 ods_trading_days_insight 为基准）</h3>
     <table class="info-table">
-      <tr><td>基准区间</td><td>2026-08-17 ~ 2026-08-28 (共10个交易日)</td></tr>
+      <tr><td>基准区间</td><td>2026-08-18 ~ 2026-08-31 (共10个交易日)</td></tr>
       <tr><td>覆盖情况</td><td><strong>0/10</strong> (0.0%)</td></tr>
     </table>
     <div class="alert alert-warning">
       <p>⚠️ 缺失日期 (10天):</p>
       <div class="missing-dates">
+        <span class="missing-tag">❌ 2026-08-31</span>
         <span class="missing-tag">❌ 2026-08-28</span>
         <span class="missing-tag">❌ 2026-08-27</span>
         <span class="missing-tag">❌ 2026-08-26</span>
@@ -5284,13 +5275,18 @@
         <span class="missing-tag">❌ 2026-08-20</span>
         <span class="missing-tag">❌ 2026-08-19</span>
         <span class="missing-tag">❌ 2026-08-18</span>
-        <span class="missing-tag">❌ 2026-08-17</span>
       </div>
       <p class="severity severity-high">🔴 严重：最近10个交易日全部缺失！</p>
     </div>
     <h4>📈 每日数据量明细:</h4>
     <table class="data-table">
       <tr><th>日期</th><th>条数</th><th>状态</th><th>环比</th></tr>
+      <tr>
+        <td>2026-08-31</td>
+        <td>0</td>
+        <td class="status-error">✗</td>
+        <td>-</td>
+      </tr>
       <tr>
         <td>2026-08-28</td>
         <td>0</td>
@@ -5341,12 +5337,6 @@
       </tr>
       <tr>
         <td>2026-08-18</td>
-        <td>0</td>
-        <td class="status-error">✗</td>
-        <td>-</td>
-      </tr>
-      <tr>
-        <td>2026-08-17</td>
         <td>0</td>
         <td class="status-error">✗</td>
         <td>-</td>
@@ -5428,11 +5418,11 @@
 </section>
   </div>
   <div class="layer-section" id="layer-99">
-    <h2 class="layer-title">其他表 (14张表)</h2>
+    <h2 class="layer-title">其他表 (13张表)</h2>
 <section class="table-detail" id="table-dwd_factor_summary">
   <div class="table-header">
     <div class="table-title-wrap">
-      <h2>【表 26/39】dwd_factor_summary</h2>
+      <h2>【表 26/38】dwd_factor_summary</h2>
     </div>
     <a href="#toc" class="back-to-top" title="返回目录">🔝</a>
   </div>
@@ -5469,12 +5459,13 @@
   <div class="info-section">
     <h3>🔍 交易日覆盖检查（以 ods_trading_days_insight 为基准）</h3>
     <table class="info-table">
-      <tr><td>基准区间</td><td>2026-08-17 ~ 2026-08-28 (共10个交易日)</td></tr>
+      <tr><td>基准区间</td><td>2026-08-18 ~ 2026-08-31 (共10个交易日)</td></tr>
       <tr><td>覆盖情况</td><td><strong>0/10</strong> (0.0%)</td></tr>
     </table>
     <div class="alert alert-warning">
       <p>⚠️ 缺失日期 (10天):</p>
       <div class="missing-dates">
+        <span class="missing-tag">❌ 2026-08-31</span>
         <span class="missing-tag">❌ 2026-08-28</span>
         <span class="missing-tag">❌ 2026-08-27</span>
         <span class="missing-tag">❌ 2026-08-26</span>
@@ -5484,13 +5475,18 @@
         <span class="missing-tag">❌ 2026-08-20</span>
         <span class="missing-tag">❌ 2026-08-19</span>
         <span class="missing-tag">❌ 2026-08-18</span>
-        <span class="missing-tag">❌ 2026-08-17</span>
       </div>
       <p class="severity severity-high">🔴 严重：最近10个交易日全部缺失！</p>
     </div>
     <h4>📈 每日数据量明细:</h4>
     <table class="data-table">
       <tr><th>日期</th><th>条数</th><th>状态</th><th>环比</th></tr>
+      <tr>
+        <td>2026-08-31</td>
+        <td>0</td>
+        <td class="status-error">✗</td>
+        <td>-</td>
+      </tr>
       <tr>
         <td>2026-08-28</td>
         <td>0</td>
@@ -5541,12 +5537,6 @@
       </tr>
       <tr>
         <td>2026-08-18</td>
-        <td>0</td>
-        <td class="status-error">✗</td>
-        <td>-</td>
-      </tr>
-      <tr>
-        <td>2026-08-17</td>
         <td>0</td>
         <td class="status-error">✗</td>
         <td>-</td>
@@ -5641,7 +5631,7 @@
 <section class="table-detail" id="table-dwd_factor_volume_shrinkage">
   <div class="table-header">
     <div class="table-title-wrap">
-      <h2>【表 27/39】dwd_factor_volume_shrinkage</h2>
+      <h2>【表 27/38】dwd_factor_volume_shrinkage</h2>
     </div>
     <a href="#toc" class="back-to-top" title="返回目录">🔝</a>
   </div>
@@ -5678,12 +5668,13 @@
   <div class="info-section">
     <h3>🔍 交易日覆盖检查（以 ods_trading_days_insight 为基准）</h3>
     <table class="info-table">
-      <tr><td>基准区间</td><td>2026-08-17 ~ 2026-08-28 (共10个交易日)</td></tr>
+      <tr><td>基准区间</td><td>2026-08-18 ~ 2026-08-31 (共10个交易日)</td></tr>
       <tr><td>覆盖情况</td><td><strong>0/10</strong> (0.0%)</td></tr>
     </table>
     <div class="alert alert-warning">
       <p>⚠️ 缺失日期 (10天):</p>
       <div class="missing-dates">
+        <span class="missing-tag">❌ 2026-08-31</span>
         <span class="missing-tag">❌ 2026-08-28</span>
         <span class="missing-tag">❌ 2026-08-27</span>
         <span class="missing-tag">❌ 2026-08-26</span>
@@ -5693,13 +5684,18 @@
         <span class="missing-tag">❌ 2026-08-20</span>
         <span class="missing-tag">❌ 2026-08-19</span>
         <span class="missing-tag">❌ 2026-08-18</span>
-        <span class="missing-tag">❌ 2026-08-17</span>
       </div>
       <p class="severity severity-high">🔴 严重：最近10个交易日全部缺失！</p>
     </div>
     <h4>📈 每日数据量明细:</h4>
     <table class="data-table">
       <tr><th>日期</th><th>条数</th><th>状态</th><th>环比</th></tr>
+      <tr>
+        <td>2026-08-31</td>
+        <td>0</td>
+        <td class="status-error">✗</td>
+        <td>-</td>
+      </tr>
       <tr>
         <td>2026-08-28</td>
         <td>0</td>
@@ -5750,12 +5746,6 @@
       </tr>
       <tr>
         <td>2026-08-18</td>
-        <td>0</td>
-        <td class="status-error">✗</td>
-        <td>-</td>
-      </tr>
-      <tr>
-        <td>2026-08-17</td>
         <td>0</td>
         <td class="status-error">✗</td>
         <td>-</td>
@@ -5886,7 +5876,7 @@
 <section class="table-detail" id="table-ods_exchange_dxy_vantage">
   <div class="table-header">
     <div class="table-title-wrap">
-      <h2>【表 28/39】ods_exchange_dxy_vantage</h2>
+      <h2>【表 28/38】ods_exchange_dxy_vantage</h2>
     </div>
     <a href="#toc" class="back-to-top" title="返回目录">🔝</a>
   </div>
@@ -5907,12 +5897,13 @@
   <div class="info-section">
     <h3>🔍 交易日覆盖检查（以 ods_trading_days_insight 为基准）</h3>
     <table class="info-table">
-      <tr><td>基准区间</td><td>2026-08-17 ~ 2026-08-28 (共10个交易日)</td></tr>
+      <tr><td>基准区间</td><td>2026-08-18 ~ 2026-08-31 (共10个交易日)</td></tr>
       <tr><td>覆盖情况</td><td><strong>0/10</strong> (0.0%)</td></tr>
     </table>
     <div class="alert alert-warning">
       <p>⚠️ 缺失日期 (10天):</p>
       <div class="missing-dates">
+        <span class="missing-tag">❌ 2026-08-31</span>
         <span class="missing-tag">❌ 2026-08-28</span>
         <span class="missing-tag">❌ 2026-08-27</span>
         <span class="missing-tag">❌ 2026-08-26</span>
@@ -5922,13 +5913,18 @@
         <span class="missing-tag">❌ 2026-08-20</span>
         <span class="missing-tag">❌ 2026-08-19</span>
         <span class="missing-tag">❌ 2026-08-18</span>
-        <span class="missing-tag">❌ 2026-08-17</span>
       </div>
       <p class="severity severity-high">🔴 严重：最近10个交易日全部缺失！</p>
     </div>
     <h4>📈 每日数据量明细:</h4>
     <table class="data-table">
       <tr><th>日期</th><th>条数</th><th>状态</th><th>环比</th></tr>
+      <tr>
+        <td>2026-08-31</td>
+        <td>0</td>
+        <td class="status-error">✗</td>
+        <td>-</td>
+      </tr>
       <tr>
         <td>2026-08-28</td>
         <td>0</td>
@@ -5983,12 +5979,6 @@
         <td class="status-error">✗</td>
         <td>-</td>
       </tr>
-      <tr>
-        <td>2026-08-17</td>
-        <td>0</td>
-        <td class="status-error">✗</td>
-        <td>-</td>
-      </tr>
     </table>
     <p class="summary-line">10日总计: 0 条 | 日均: 0 条</p>
   </div>
@@ -6000,7 +5990,7 @@
 <section class="table-detail" id="table-ods_exchange_rate_vantage_detail">
   <div class="table-header">
     <div class="table-title-wrap">
-      <h2>【表 29/39】ods_exchange_rate_vantage_detail</h2>
+      <h2>【表 29/38】ods_exchange_rate_vantage_detail</h2>
     </div>
     <a href="#toc" class="back-to-top" title="返回目录">🔝</a>
   </div>
@@ -6037,12 +6027,13 @@
   <div class="info-section">
     <h3>🔍 交易日覆盖检查（以 ods_trading_days_insight 为基准）</h3>
     <table class="info-table">
-      <tr><td>基准区间</td><td>2026-08-17 ~ 2026-08-28 (共10个交易日)</td></tr>
+      <tr><td>基准区间</td><td>2026-08-18 ~ 2026-08-31 (共10个交易日)</td></tr>
       <tr><td>覆盖情况</td><td><strong>0/10</strong> (0.0%)</td></tr>
     </table>
     <div class="alert alert-warning">
       <p>⚠️ 缺失日期 (10天):</p>
       <div class="missing-dates">
+        <span class="missing-tag">❌ 2026-08-31</span>
         <span class="missing-tag">❌ 2026-08-28</span>
         <span class="missing-tag">❌ 2026-08-27</span>
         <span class="missing-tag">❌ 2026-08-26</span>
@@ -6052,13 +6043,18 @@
         <span class="missing-tag">❌ 2026-08-20</span>
         <span class="missing-tag">❌ 2026-08-19</span>
         <span class="missing-tag">❌ 2026-08-18</span>
-        <span class="missing-tag">❌ 2026-08-17</span>
       </div>
       <p class="severity severity-high">🔴 严重：最近10个交易日全部缺失！</p>
     </div>
     <h4>📈 每日数据量明细:</h4>
     <table class="data-table">
       <tr><th>日期</th><th>条数</th><th>状态</th><th>环比</th></tr>
+      <tr>
+        <td>2026-08-31</td>
+        <td>0</td>
+        <td class="status-error">✗</td>
+        <td>-</td>
+      </tr>
       <tr>
         <td>2026-08-28</td>
         <td>0</td>
@@ -6109,12 +6105,6 @@
       </tr>
       <tr>
         <td>2026-08-18</td>
-        <td>0</td>
-        <td class="status-error">✗</td>
-        <td>-</td>
-      </tr>
-      <tr>
-        <td>2026-08-17</td>
         <td>0</td>
         <td class="status-error">✗</td>
         <td>-</td>
@@ -6185,7 +6175,7 @@
 <section class="table-detail" id="table-ods_stock_kline_daily_insight">
   <div class="table-header">
     <div class="table-title-wrap">
-      <h2>【表 30/39】ods_stock_kline_daily_insight</h2>
+      <h2>【表 30/38】ods_stock_kline_daily_insight</h2>
     </div>
     <a href="#toc" class="back-to-top" title="返回目录">🔝</a>
   </div>
@@ -6222,12 +6212,13 @@
   <div class="info-section">
     <h3>🔍 交易日覆盖检查（以 ods_trading_days_insight 为基准）</h3>
     <table class="info-table">
-      <tr><td>基准区间</td><td>2026-08-17 ~ 2026-08-28 (共10个交易日)</td></tr>
+      <tr><td>基准区间</td><td>2026-08-18 ~ 2026-08-31 (共10个交易日)</td></tr>
       <tr><td>覆盖情况</td><td><strong>0/10</strong> (0.0%)</td></tr>
     </table>
     <div class="alert alert-warning">
       <p>⚠️ 缺失日期 (10天):</p>
       <div class="missing-dates">
+        <span class="missing-tag">❌ 2026-08-31</span>
         <span class="missing-tag">❌ 2026-08-28</span>
         <span class="missing-tag">❌ 2026-08-27</span>
         <span class="missing-tag">❌ 2026-08-26</span>
@@ -6237,13 +6228,18 @@
         <span class="missing-tag">❌ 2026-08-20</span>
         <span class="missing-tag">❌ 2026-08-19</span>
         <span class="missing-tag">❌ 2026-08-18</span>
-        <span class="missing-tag">❌ 2026-08-17</span>
       </div>
       <p class="severity severity-high">🔴 严重：最近10个交易日全部缺失！</p>
     </div>
     <h4>📈 每日数据量明细:</h4>
     <table class="data-table">
       <tr><th>日期</th><th>条数</th><th>状态</th><th>环比</th></tr>
+      <tr>
+        <td>2026-08-31</td>
+        <td>0</td>
+        <td class="status-error">✗</td>
+        <td>-</td>
+      </tr>
       <tr>
         <td>2026-08-28</td>
         <td>0</td>
@@ -6294,12 +6290,6 @@
       </tr>
       <tr>
         <td>2026-08-18</td>
-        <td>0</td>
-        <td class="status-error">✗</td>
-        <td>-</td>
-      </tr>
-      <tr>
-        <td>2026-08-17</td>
         <td>0</td>
         <td class="status-error">✗</td>
         <td>-</td>
@@ -6382,7 +6372,7 @@
 <section class="table-detail" id="table-ods_stock_plate_redbook">
   <div class="table-header">
     <div class="table-title-wrap">
-      <h2>【表 31/39】ods_stock_plate_redbook</h2>
+      <h2>【表 31/38】ods_stock_plate_redbook</h2>
     </div>
     <a href="#toc" class="back-to-top" title="返回目录">🔝</a>
   </div>
@@ -6403,12 +6393,13 @@
   <div class="info-section">
     <h3>🔍 交易日覆盖检查（以 ods_trading_days_insight 为基准）</h3>
     <table class="info-table">
-      <tr><td>基准区间</td><td>2026-08-17 ~ 2026-08-28 (共10个交易日)</td></tr>
+      <tr><td>基准区间</td><td>2026-08-18 ~ 2026-08-31 (共10个交易日)</td></tr>
       <tr><td>覆盖情况</td><td><strong>0/10</strong> (0.0%)</td></tr>
     </table>
     <div class="alert alert-warning">
       <p>⚠️ 缺失日期 (10天):</p>
       <div class="missing-dates">
+        <span class="missing-tag">❌ 2026-08-31</span>
         <span class="missing-tag">❌ 2026-08-28</span>
         <span class="missing-tag">❌ 2026-08-27</span>
         <span class="missing-tag">❌ 2026-08-26</span>
@@ -6418,13 +6409,18 @@
         <span class="missing-tag">❌ 2026-08-20</span>
         <span class="missing-tag">❌ 2026-08-19</span>
         <span class="missing-tag">❌ 2026-08-18</span>
-        <span class="missing-tag">❌ 2026-08-17</span>
       </div>
       <p class="severity severity-high">🔴 严重：最近10个交易日全部缺失！</p>
     </div>
     <h4>📈 每日数据量明细:</h4>
     <table class="data-table">
       <tr><th>日期</th><th>条数</th><th>状态</th><th>环比</th></tr>
+      <tr>
+        <td>2026-08-31</td>
+        <td>0</td>
+        <td class="status-error">✗</td>
+        <td>-</td>
+      </tr>
       <tr>
         <td>2026-08-28</td>
         <td>0</td>
@@ -6479,12 +6475,6 @@
         <td class="status-error">✗</td>
         <td>-</td>
       </tr>
-      <tr>
-        <td>2026-08-17</td>
-        <td>0</td>
-        <td class="status-error">✗</td>
-        <td>-</td>
-      </tr>
     </table>
     <p class="summary-line">10日总计: 0 条 | 日均: 0 条</p>
   </div>
@@ -6496,7 +6486,7 @@
 <section class="table-detail" id="table-ods_tdx_stock_concept_plate">
   <div class="table-header">
     <div class="table-title-wrap">
-      <h2>【表 32/39】ods_tdx_stock_concept_plate</h2>
+      <h2>【表 32/38】ods_tdx_stock_concept_plate</h2>
     </div>
     <a href="#toc" class="back-to-top" title="返回目录">🔝</a>
   </div>
@@ -6525,12 +6515,13 @@
   <div class="info-section">
     <h3>🔍 交易日覆盖检查（以 ods_trading_days_insight 为基准）</h3>
     <table class="info-table">
-      <tr><td>基准区间</td><td>2026-08-17 ~ 2026-08-28 (共10个交易日)</td></tr>
+      <tr><td>基准区间</td><td>2026-08-18 ~ 2026-08-31 (共10个交易日)</td></tr>
       <tr><td>覆盖情况</td><td><strong>0/10</strong> (0.0%)</td></tr>
     </table>
     <div class="alert alert-warning">
       <p>⚠️ 缺失日期 (10天):</p>
       <div class="missing-dates">
+        <span class="missing-tag">❌ 2026-08-31</span>
         <span class="missing-tag">❌ 2026-08-28</span>
         <span class="missing-tag">❌ 2026-08-27</span>
         <span class="missing-tag">❌ 2026-08-26</span>
@@ -6540,13 +6531,18 @@
         <span class="missing-tag">❌ 2026-08-20</span>
         <span class="missing-tag">❌ 2026-08-19</span>
         <span class="missing-tag">❌ 2026-08-18</span>
-        <span class="missing-tag">❌ 2026-08-17</span>
       </div>
       <p class="severity severity-high">🔴 严重：最近10个交易日全部缺失！</p>
     </div>
     <h4>📈 每日数据量明细:</h4>
     <table class="data-table">
       <tr><th>日期</th><th>条数</th><th>状态</th><th>环比</th></tr>
+      <tr>
+        <td>2026-08-31</td>
+        <td>0</td>
+        <td class="status-error">✗</td>
+        <td>-</td>
+      </tr>
       <tr>
         <td>2026-08-28</td>
         <td>0</td>
@@ -6597,12 +6593,6 @@
       </tr>
       <tr>
         <td>2026-08-18</td>
-        <td>0</td>
-        <td class="status-error">✗</td>
-        <td>-</td>
-      </tr>
-      <tr>
-        <td>2026-08-17</td>
         <td>0</td>
         <td class="status-error">✗</td>
         <td>-</td>
@@ -6667,7 +6657,7 @@
 <section class="table-detail" id="table-ods_tdx_stock_index_plate">
   <div class="table-header">
     <div class="table-title-wrap">
-      <h2>【表 33/39】ods_tdx_stock_index_plate</h2>
+      <h2>【表 33/38】ods_tdx_stock_index_plate</h2>
     </div>
     <a href="#toc" class="back-to-top" title="返回目录">🔝</a>
   </div>
@@ -6696,12 +6686,13 @@
   <div class="info-section">
     <h3>🔍 交易日覆盖检查（以 ods_trading_days_insight 为基准）</h3>
     <table class="info-table">
-      <tr><td>基准区间</td><td>2026-08-17 ~ 2026-08-28 (共10个交易日)</td></tr>
+      <tr><td>基准区间</td><td>2026-08-18 ~ 2026-08-31 (共10个交易日)</td></tr>
       <tr><td>覆盖情况</td><td><strong>0/10</strong> (0.0%)</td></tr>
     </table>
     <div class="alert alert-warning">
       <p>⚠️ 缺失日期 (10天):</p>
       <div class="missing-dates">
+        <span class="missing-tag">❌ 2026-08-31</span>
         <span class="missing-tag">❌ 2026-08-28</span>
         <span class="missing-tag">❌ 2026-08-27</span>
         <span class="missing-tag">❌ 2026-08-26</span>
@@ -6711,13 +6702,18 @@
         <span class="missing-tag">❌ 2026-08-20</span>
         <span class="missing-tag">❌ 2026-08-19</span>
         <span class="missing-tag">❌ 2026-08-18</span>
-        <span class="missing-tag">❌ 2026-08-17</span>
       </div>
       <p class="severity severity-high">🔴 严重：最近10个交易日全部缺失！</p>
     </div>
     <h4>📈 每日数据量明细:</h4>
     <table class="data-table">
       <tr><th>日期</th><th>条数</th><th>状态</th><th>环比</th></tr>
+      <tr>
+        <td>2026-08-31</td>
+        <td>0</td>
+        <td class="status-error">✗</td>
+        <td>-</td>
+      </tr>
       <tr>
         <td>2026-08-28</td>
         <td>0</td>
@@ -6768,12 +6764,6 @@
       </tr>
       <tr>
         <td>2026-08-18</td>
-        <td>0</td>
-        <td class="status-error">✗</td>
-        <td>-</td>
-      </tr>
-      <tr>
-        <td>2026-08-17</td>
         <td>0</td>
         <td class="status-error">✗</td>
         <td>-</td>
@@ -6838,7 +6828,7 @@
 <section class="table-detail" id="table-ods_tdx_stock_industry_plate">
   <div class="table-header">
     <div class="table-title-wrap">
-      <h2>【表 34/39】ods_tdx_stock_industry_plate</h2>
+      <h2>【表 34/38】ods_tdx_stock_industry_plate</h2>
     </div>
     <a href="#toc" class="back-to-top" title="返回目录">🔝</a>
   </div>
@@ -6867,12 +6857,13 @@
   <div class="info-section">
     <h3>🔍 交易日覆盖检查（以 ods_trading_days_insight 为基准）</h3>
     <table class="info-table">
-      <tr><td>基准区间</td><td>2026-08-17 ~ 2026-08-28 (共10个交易日)</td></tr>
+      <tr><td>基准区间</td><td>2026-08-18 ~ 2026-08-31 (共10个交易日)</td></tr>
       <tr><td>覆盖情况</td><td><strong>0/10</strong> (0.0%)</td></tr>
     </table>
     <div class="alert alert-warning">
       <p>⚠️ 缺失日期 (10天):</p>
       <div class="missing-dates">
+        <span class="missing-tag">❌ 2026-08-31</span>
         <span class="missing-tag">❌ 2026-08-28</span>
         <span class="missing-tag">❌ 2026-08-27</span>
         <span class="missing-tag">❌ 2026-08-26</span>
@@ -6882,13 +6873,18 @@
         <span class="missing-tag">❌ 2026-08-20</span>
         <span class="missing-tag">❌ 2026-08-19</span>
         <span class="missing-tag">❌ 2026-08-18</span>
-        <span class="missing-tag">❌ 2026-08-17</span>
       </div>
       <p class="severity severity-high">🔴 严重：最近10个交易日全部缺失！</p>
     </div>
     <h4>📈 每日数据量明细:</h4>
     <table class="data-table">
       <tr><th>日期</th><th>条数</th><th>状态</th><th>环比</th></tr>
+      <tr>
+        <td>2026-08-31</td>
+        <td>0</td>
+        <td class="status-error">✗</td>
+        <td>-</td>
+      </tr>
       <tr>
         <td>2026-08-28</td>
         <td>0</td>
@@ -6939,12 +6935,6 @@
       </tr>
       <tr>
         <td>2026-08-18</td>
-        <td>0</td>
-        <td class="status-error">✗</td>
-        <td>-</td>
-      </tr>
-      <tr>
-        <td>2026-08-17</td>
         <td>0</td>
         <td class="status-error">✗</td>
         <td>-</td>
@@ -7009,7 +6999,7 @@
 <section class="table-detail" id="table-ods_tdx_stock_region_plate">
   <div class="table-header">
     <div class="table-title-wrap">
-      <h2>【表 35/39】ods_tdx_stock_region_plate</h2>
+      <h2>【表 35/38】ods_tdx_stock_region_plate</h2>
     </div>
     <a href="#toc" class="back-to-top" title="返回目录">🔝</a>
   </div>
@@ -7038,12 +7028,13 @@
   <div class="info-section">
     <h3>🔍 交易日覆盖检查（以 ods_trading_days_insight 为基准）</h3>
     <table class="info-table">
-      <tr><td>基准区间</td><td>2026-08-17 ~ 2026-08-28 (共10个交易日)</td></tr>
+      <tr><td>基准区间</td><td>2026-08-18 ~ 2026-08-31 (共10个交易日)</td></tr>
       <tr><td>覆盖情况</td><td><strong>0/10</strong> (0.0%)</td></tr>
     </table>
     <div class="alert alert-warning">
       <p>⚠️ 缺失日期 (10天):</p>
       <div class="missing-dates">
+        <span class="missing-tag">❌ 2026-08-31</span>
         <span class="missing-tag">❌ 2026-08-28</span>
         <span class="missing-tag">❌ 2026-08-27</span>
         <span class="missing-tag">❌ 2026-08-26</span>
@@ -7053,13 +7044,18 @@
         <span class="missing-tag">❌ 2026-08-20</span>
         <span class="missing-tag">❌ 2026-08-19</span>
         <span class="missing-tag">❌ 2026-08-18</span>
-        <span class="missing-tag">❌ 2026-08-17</span>
       </div>
       <p class="severity severity-high">🔴 严重：最近10个交易日全部缺失！</p>
     </div>
     <h4>📈 每日数据量明细:</h4>
     <table class="data-table">
       <tr><th>日期</th><th>条数</th><th>状态</th><th>环比</th></tr>
+      <tr>
+        <td>2026-08-31</td>
+        <td>0</td>
+        <td class="status-error">✗</td>
+        <td>-</td>
+      </tr>
       <tr>
         <td>2026-08-28</td>
         <td>0</td>
@@ -7110,12 +7106,6 @@
       </tr>
       <tr>
         <td>2026-08-18</td>
-        <td>0</td>
-        <td class="status-error">✗</td>
-        <td>-</td>
-      </tr>
-      <tr>
-        <td>2026-08-17</td>
         <td>0</td>
         <td class="status-error">✗</td>
         <td>-</td>
@@ -7180,7 +7170,7 @@
 <section class="table-detail" id="table-ods_tdx_stock_style_plate">
   <div class="table-header">
     <div class="table-title-wrap">
-      <h2>【表 36/39】ods_tdx_stock_style_plate</h2>
+      <h2>【表 36/38】ods_tdx_stock_style_plate</h2>
     </div>
     <a href="#toc" class="back-to-top" title="返回目录">🔝</a>
   </div>
@@ -7209,12 +7199,13 @@
   <div class="info-section">
     <h3>🔍 交易日覆盖检查（以 ods_trading_days_insight 为基准）</h3>
     <table class="info-table">
-      <tr><td>基准区间</td><td>2026-08-17 ~ 2026-08-28 (共10个交易日)</td></tr>
+      <tr><td>基准区间</td><td>2026-08-18 ~ 2026-08-31 (共10个交易日)</td></tr>
       <tr><td>覆盖情况</td><td><strong>0/10</strong> (0.0%)</td></tr>
     </table>
     <div class="alert alert-warning">
       <p>⚠️ 缺失日期 (10天):</p>
       <div class="missing-dates">
+        <span class="missing-tag">❌ 2026-08-31</span>
         <span class="missing-tag">❌ 2026-08-28</span>
         <span class="missing-tag">❌ 2026-08-27</span>
         <span class="missing-tag">❌ 2026-08-26</span>
@@ -7224,13 +7215,18 @@
         <span class="missing-tag">❌ 2026-08-20</span>
         <span class="missing-tag">❌ 2026-08-19</span>
         <span class="missing-tag">❌ 2026-08-18</span>
-        <span class="missing-tag">❌ 2026-08-17</span>
       </div>
       <p class="severity severity-high">🔴 严重：最近10个交易日全部缺失！</p>
     </div>
     <h4>📈 每日数据量明细:</h4>
     <table class="data-table">
       <tr><th>日期</th><th>条数</th><th>状态</th><th>环比</th></tr>
+      <tr>
+        <td>2026-08-31</td>
+        <td>0</td>
+        <td class="status-error">✗</td>
+        <td>-</td>
+      </tr>
       <tr>
         <td>2026-08-28</td>
         <td>0</td>
@@ -7281,12 +7277,6 @@
       </tr>
       <tr>
         <td>2026-08-18</td>
-        <td>0</td>
-        <td class="status-error">✗</td>
-        <td>-</td>
-      </tr>
-      <tr>
-        <td>2026-08-17</td>
         <td>0</td>
         <td class="status-error">✗</td>
         <td>-</td>
@@ -7351,7 +7341,7 @@
 <section class="table-detail" id="table-ods_trading_days_insight">
   <div class="table-header">
     <div class="table-title-wrap">
-      <h2>【表 37/39】ods_trading_days_insight</h2>
+      <h2>【表 37/38】ods_trading_days_insight</h2>
     </div>
     <a href="#toc" class="back-to-top" title="返回目录">🔝</a>
   </div>
@@ -7388,7 +7378,7 @@
   <div class="info-section">
     <h3>🔍 交易日覆盖检查（以 ods_trading_days_insight 为基准）</h3>
     <table class="info-table">
-      <tr><td>基准区间</td><td>2026-08-17 ~ 2026-08-28 (共10个交易日)</td></tr>
+      <tr><td>基准区间</td><td>2026-08-18 ~ 2026-08-31 (共10个交易日)</td></tr>
       <tr><td>覆盖情况</td><td><strong>10/10</strong> (100.0%)</td></tr>
     </table>
     <div class="alert alert-success">
@@ -7397,6 +7387,12 @@
     <h4>📈 每日数据量明细:</h4>
     <table class="data-table">
       <tr><th>日期</th><th>条数</th><th>状态</th><th>环比</th></tr>
+      <tr>
+        <td>2026-08-31</td>
+        <td>1</td>
+        <td class="status-ok">✓</td>
+        <td>+0.0%</td>
+      </tr>
       <tr>
         <td>2026-08-28</td>
         <td>1</td>
@@ -7447,12 +7443,6 @@
       </tr>
       <tr>
         <td>2026-08-18</td>
-        <td>1</td>
-        <td class="status-ok">✓</td>
-        <td>+0.0%</td>
-      </tr>
-      <tr>
-        <td>2026-08-17</td>
         <td>1</td>
         <td class="status-ok">✓</td>
         <td>-</td>
@@ -7499,7 +7489,7 @@
 <section class="table-detail" id="table-ods_us_stock_daily_vantage">
   <div class="table-header">
     <div class="table-title-wrap">
-      <h2>【表 38/39】ods_us_stock_daily_vantage</h2>
+      <h2>【表 38/38】ods_us_stock_daily_vantage</h2>
     </div>
     <a href="#toc" class="back-to-top" title="返回目录">🔝</a>
   </div>
@@ -7536,12 +7526,13 @@
   <div class="info-section">
     <h3>🔍 交易日覆盖检查（以 ods_trading_days_insight 为基准）</h3>
     <table class="info-table">
-      <tr><td>基准区间</td><td>2026-08-17 ~ 2026-08-28 (共10个交易日)</td></tr>
+      <tr><td>基准区间</td><td>2026-08-18 ~ 2026-08-31 (共10个交易日)</td></tr>
       <tr><td>覆盖情况</td><td><strong>0/10</strong> (0.0%)</td></tr>
     </table>
     <div class="alert alert-warning">
       <p>⚠️ 缺失日期 (10天):</p>
       <div class="missing-dates">
+        <span class="missing-tag">❌ 2026-08-31</span>
         <span class="missing-tag">❌ 2026-08-28</span>
         <span class="missing-tag">❌ 2026-08-27</span>
         <span class="missing-tag">❌ 2026-08-26</span>
@@ -7551,13 +7542,18 @@
         <span class="missing-tag">❌ 2026-08-20</span>
         <span class="missing-tag">❌ 2026-08-19</span>
         <span class="missing-tag">❌ 2026-08-18</span>
-        <span class="missing-tag">❌ 2026-08-17</span>
       </div>
       <p class="severity severity-high">🔴 严重：最近10个交易日全部缺失！</p>
     </div>
     <h4>📈 每日数据量明细:</h4>
     <table class="data-table">
       <tr><th>日期</th><th>条数</th><th>状态</th><th>环比</th></tr>
+      <tr>
+        <td>2026-08-31</td>
+        <td>0</td>
+        <td class="status-error">✗</td>
+        <td>-</td>
+      </tr>
       <tr>
         <td>2026-08-28</td>
         <td>0</td>
@@ -7608,12 +7604,6 @@
       </tr>
       <tr>
         <td>2026-08-18</td>
-        <td>0</td>
-        <td class="status-error">✗</td>
-        <td>-</td>
-      </tr>
-      <tr>
-        <td>2026-08-17</td>
         <td>0</td>
         <td class="status-error">✗</td>
         <td>-</td>
@@ -7685,120 +7675,6 @@
   </tbody>
 </table>
     </div>
-  </div>
-</section>
-<section class="table-detail" id="table-tmp_plate_2021">
-  <div class="table-header">
-    <div class="table-title-wrap">
-      <h2>【表 39/39】tmp_plate_2021</h2>
-    </div>
-    <a href="#toc" class="back-to-top" title="返回目录">🔝</a>
-  </div>
-  <div class="info-section">
-    <h3>📊 基本信息</h3>
-    <table class="info-table">
-      <tr><td>行数</td><td>0</td></tr>
-      <tr><td>列数</td><td>3</td></tr>
-    </table>
-  </div>
-  <div class="info-section">
-    <h3>📅 ymd日期信息</h3>
-    <table class="info-table">
-      <tr><td>存在ymd列</td><td>✓</td></tr>
-      <tr><td>日期总数</td><td>0</td></tr>
-    </table>
-  </div>
-  <div class="info-section">
-    <h3>🔍 交易日覆盖检查（以 ods_trading_days_insight 为基准）</h3>
-    <table class="info-table">
-      <tr><td>基准区间</td><td>2026-08-17 ~ 2026-08-28 (共10个交易日)</td></tr>
-      <tr><td>覆盖情况</td><td><strong>0/10</strong> (0.0%)</td></tr>
-    </table>
-    <div class="alert alert-warning">
-      <p>⚠️ 缺失日期 (10天):</p>
-      <div class="missing-dates">
-        <span class="missing-tag">❌ 2026-08-28</span>
-        <span class="missing-tag">❌ 2026-08-27</span>
-        <span class="missing-tag">❌ 2026-08-26</span>
-        <span class="missing-tag">❌ 2026-08-25</span>
-        <span class="missing-tag">❌ 2026-08-24</span>
-        <span class="missing-tag">❌ 2026-08-21</span>
-        <span class="missing-tag">❌ 2026-08-20</span>
-        <span class="missing-tag">❌ 2026-08-19</span>
-        <span class="missing-tag">❌ 2026-08-18</span>
-        <span class="missing-tag">❌ 2026-08-17</span>
-      </div>
-      <p class="severity severity-high">🔴 严重：最近10个交易日全部缺失！</p>
-    </div>
-    <h4>📈 每日数据量明细:</h4>
-    <table class="data-table">
-      <tr><th>日期</th><th>条数</th><th>状态</th><th>环比</th></tr>
-      <tr>
-        <td>2026-08-28</td>
-        <td>0</td>
-        <td class="status-error">✗</td>
-        <td>-</td>
-      </tr>
-      <tr>
-        <td>2026-08-27</td>
-        <td>0</td>
-        <td class="status-error">✗</td>
-        <td>-</td>
-      </tr>
-      <tr>
-        <td>2026-08-26</td>
-        <td>0</td>
-        <td class="status-error">✗</td>
-        <td>-</td>
-      </tr>
-      <tr>
-        <td>2026-08-25</td>
-        <td>0</td>
-        <td class="status-error">✗</td>
-        <td>-</td>
-      </tr>
-      <tr>
-        <td>2026-08-24</td>
-        <td>0</td>
-        <td class="status-error">✗</td>
-        <td>-</td>
-      </tr>
-      <tr>
-        <td>2026-08-21</td>
-        <td>0</td>
-        <td class="status-error">✗</td>
-        <td>-</td>
-      </tr>
-      <tr>
-        <td>2026-08-20</td>
-        <td>0</td>
-        <td class="status-error">✗</td>
-        <td>-</td>
-      </tr>
-      <tr>
-        <td>2026-08-19</td>
-        <td>0</td>
-        <td class="status-error">✗</td>
-        <td>-</td>
-      </tr>
-      <tr>
-        <td>2026-08-18</td>
-        <td>0</td>
-        <td class="status-error">✗</td>
-        <td>-</td>
-      </tr>
-      <tr>
-        <td>2026-08-17</td>
-        <td>0</td>
-        <td class="status-error">✗</td>
-        <td>-</td>
-      </tr>
-    </table>
-    <p class="summary-line">10日总计: 0 条 | 日均: 0 条</p>
-  </div>
-  <div class="info-section">
-    <h3>📝 数据样例</h3>
-    <p class="no-data">表为空或无法读取数据</p>
   </div>
 </section>
   </div>

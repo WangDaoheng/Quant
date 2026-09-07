@@ -1,6 +1,7 @@
 # strategy/factor_library.py
 import pandas as pd
 import logging
+import math
 from CommonProperties import Mysql_Utils
 from CommonProperties.Base_utils import timing_decorator, convert_ymd_format
 
@@ -91,6 +92,7 @@ class FactorLibrary:
             logger.error(f"计算PB因子失败：{str(e)}")
             return pd.DataFrame(columns=['ymd', 'stock_code', 'pb_score'])
 
+
     def zt_factor_score(self, start_date, end_date, lookback_days=5, scoring_method='linear', save_to_cache=True):
         """
         计算涨停因子百分制评分（0-100分）
@@ -109,205 +111,85 @@ class FactorLibrary:
             DataFrame: 包含 ymd, stock_code, zt_score 三列
         """
         try:
-            # 1. 获取完整的交易日列表（包含历史数据）
-            # 计算合理的起始查询日期：往前推 lookback_days * 2 + 5 天
-            start_dt = pd.to_datetime(start_date)
-            query_start_dt = start_dt - pd.Timedelta(days=lookback_days * 2 + 5)
-            query_start_date = query_start_dt.strftime('%Y%m%d')
+            # 1. 获取交易日
+            query_start = (pd.to_datetime(start_date) - pd.Timedelta(days=lookback_days * 2 + 10)).strftime('%Y%m%d')
+            all_days = self.get_trading_days(query_start, end_date)
 
-            # 获取从查询起始日期到 end_date 的所有交易日
-            full_trading_days = self.get_trading_days(query_start_date, end_date)
-            if not full_trading_days:
-                logger.warning(f"未获取到交易日数据，范围: {query_start_date} - {end_date}")
-                result_df = pd.DataFrame(columns=['ymd', 'stock_code', 'zt_score'])
+            if not all_days:
+                return pd.DataFrame(columns=['ymd', 'stock_code', 'zt_score'])
+
+            # 2. 确定目标区间
+            # 找到 >= start_date 的第一个交易日
+            start_idx = next((i for i, d in enumerate(all_days) if d >= start_date), None)
+            if start_idx is None:
+                return pd.DataFrame(columns=['ymd', 'stock_code', 'zt_score'])
+
+            # 找到 <= end_date 的最后一个交易日
+            end_idx = next((i for i in range(len(all_days) - 1, -1, -1) if all_days[i] <= end_date), None)
+            if end_idx is None:
+                return pd.DataFrame(columns=['ymd', 'stock_code', 'zt_score'])
+
+            target_days = all_days[start_idx:end_idx + 1]
+
+            # 3. 获取涨停数据（需要回溯 lookback_days-1 天）
+            earliest_idx = max(0, start_idx - lookback_days + 1)
+            query_start_zt = all_days[earliest_idx]
+
+            zt_df = Mysql_Utils.data_from_mysql_to_dataframe(
+                user=self.user, password=self.password, host=self.host, database=self.database,
+                table_name='dwd_stock_zt_list',
+                start_date=query_start_zt, end_date=end_date,
+                cols=['ymd', 'stock_code']
+            )
+
+            # 4. 构建 (date, stock) -> 是否涨停 的标记
+            zt_df['zt'] = 1
+            zt_pivot = zt_df.pivot_table(index='ymd', columns='stock_code', values='zt', fill_value=0)
+
+            # 5. 滚动求和（滑动窗口）
+            # 对齐到完整交易日索引，填充0
+            zt_pivot.index = pd.to_datetime(zt_pivot.index).strftime('%Y%m%d')
+            zt_pivot = zt_pivot.reindex(index=all_days, fill_value=0)
+
+            # 滚动窗口求和（包含当前日，往前 lookback_days 天）
+            rolling_zt = zt_pivot.rolling(window=lookback_days, min_periods=1).sum()
+
+            # 6. 截取目标区间
+            target_rolling = rolling_zt.loc[target_days]
+
+            # 7. 转长格式
+            result = target_rolling.reset_index().melt(
+                id_vars=['ymd'],
+                var_name='stock_code',
+                value_name='zt_count'
+            )
+
+            # 8. 计算得分
+            if scoring_method == 'linear':
+                result['zt_score'] = (result['zt_count'] * (100 / lookback_days)).clip(upper=100).round(2)
+            elif scoring_method == 'log':
+                factor = 100 / math.log2(lookback_days + 1)
+                result['zt_score'] = result['zt_count'].apply(
+                    lambda x: min(round(math.log2(x + 1) * factor, 2), 100) if x > 0 else 0
+                )
+            elif scoring_method == 'binary':
+                result['zt_score'] = result['zt_count'].apply(lambda x: 100 if x > 0 else 0)
             else:
-                logger.info(
-                    f"完整交易日范围: {full_trading_days[0]} 到 {full_trading_days[-1]}, 共{len(full_trading_days)}个交易日")
+                result['zt_score'] = (result['zt_count'] * (100 / lookback_days)).clip(upper=100).round(2)
 
-                # 2. 找到 start_date 在完整交易日列表中的位置
-                try:
-                    start_idx = full_trading_days.index(start_date)
-                except ValueError:
-                    # 如果 start_date 不是交易日，找第一个大于等于 start_date 的交易日
-                    start_idx = None
-                    for i, d in enumerate(full_trading_days):
-                        if d >= start_date:
-                            start_idx = i
-                            break
-                    if start_idx is None:
-                        logger.warning(f"在交易日列表中找不到 {start_date} 及之后的日期")
-                        result_df = pd.DataFrame(columns=['ymd', 'stock_code', 'zt_score'])
-                    else:
-                        # 3. 找到 end_date 在完整交易日列表中的位置
-                        try:
-                            end_idx = full_trading_days.index(end_date)
-                        except ValueError:
-                            # 如果 end_date 不是交易日，找最后一个小于等于 end_date 的交易日
-                            end_idx = len(full_trading_days) - 1
-                            for i in range(len(full_trading_days) - 1, -1, -1):
-                                if full_trading_days[i] <= end_date:
-                                    end_idx = i
-                                    break
+            result = result[['ymd', 'stock_code', 'zt_score']]
 
-                        # 4. 截取需要计算的交易日范围（从 start_date 到 end_date）
-                        target_trading_days = full_trading_days[start_idx:end_idx + 1]
-                        logger.info(
-                            f"目标计算区间: {target_trading_days[0]} 到 {target_trading_days[-1]}, 共{len(target_trading_days)}个交易日")
-
-                        # 5. 计算需要查询涨停记录的起始日期（精确计算回溯期）
-                        # 最早需要回溯的交易日索引
-                        earliest_needed_idx = max(0, start_idx - lookback_days)
-                        actual_query_start = full_trading_days[earliest_needed_idx]
-                        logger.info(
-                            f"实际查询涨停记录范围: {actual_query_start} 到 {end_date} (回溯{lookback_days}个交易日)")
-
-                        # 6. 获取涨停记录
-                        zt_df = Mysql_Utils.data_from_mysql_to_dataframe(
-                            user=self.user,
-                            password=self.password,
-                            host=self.host,
-                            database=self.database,
-                            table_name='dwd_stock_zt_list',
-                            start_date=actual_query_start,
-                            end_date=end_date,
-                            cols=['ymd', 'stock_code']
-                        )
-
-                        if zt_df.empty:
-                            logger.info(f"在范围 {actual_query_start} - {end_date} 内无涨停记录，全部返回0分")
-                            result_df = self._get_zero_scores(target_trading_days, start_date, end_date, 'zt_score')
-                        else:
-                            # 7. 确保日期列是字符串格式
-                            if not pd.api.types.is_string_dtype(zt_df['ymd']):
-                                zt_df['ymd'] = zt_df['ymd'].astype(str)
-
-                            # 8. 获取全量股票列表
-                            stock_base_df = Mysql_Utils.data_from_mysql_to_dataframe(
-                                user=self.user,
-                                password=self.password,
-                                host=self.host,
-                                database=self.database,
-                                table_name='dwd_ashare_stock_base_info',
-                                start_date=target_trading_days[-1],
-                                end_date=target_trading_days[-1],
-                                cols=['stock_code']
-                            )
-
-                            if stock_base_df.empty:
-                                logger.warning("未获取到股票基础信息")
-                                result_df = pd.DataFrame(columns=['ymd', 'stock_code', 'zt_score'])
-                            else:
-                                all_stocks = stock_base_df['stock_code'].unique()
-                                logger.info(f"全量股票数量: {len(all_stocks)}")
-
-                                # 9. 为每只股票构建涨停字典
-                                stock_zt_dict = {}
-                                for _, row in zt_df.iterrows():
-                                    stock = row['stock_code']
-                                    date = row['ymd']
-                                    if stock not in stock_zt_dict:
-                                        stock_zt_dict[stock] = []
-                                    stock_zt_dict[stock].append(date)
-
-                                logger.info(f"有涨停记录的股票数量: {len(stock_zt_dict)}")
-
-                                # 10. 为每个目标交易日预先计算回溯起始日期（使用完整交易日列表）
-                                lookback_start_dates = {}
-                                date_to_idx = {date: idx for idx, date in enumerate(full_trading_days)}
-
-                                for current_date in target_trading_days:
-                                    current_idx = date_to_idx[current_date]
-                                    # 计算回溯起始索引：取前 lookback_days 个交易日
-                                    start_idx = max(0, current_idx - lookback_days + 1)  # +1 是因为要包含当前日
-                                    lookback_start_dates[current_date] = full_trading_days[start_idx]
-
-                                # 11. 根据评分方法计算得分函数
-                                if scoring_method == 'linear':
-                                    # 线性得分：每涨停一次得 100/lookback_days 分
-                                    max_possible_zts = lookback_days
-                                    score_per_zt = 100 / max_possible_zts if max_possible_zts > 0 else 20
-                                    logger.info(f"线性评分: 每涨停一次得 {score_per_zt:.2f} 分")
-
-                                    def calculate_score(zt_count):
-                                        return min(zt_count * score_per_zt, 100)
-
-                                elif scoring_method == 'log':
-                                    # 对数得分：涨停越多边际效应递减
-                                    # 公式：log2(涨停次数+1) * (100/log2(lookback_days+1))
-                                    import math
-                                    max_score_factor = 100 / math.log2(lookback_days + 1) if lookback_days > 0 else 20
-
-                                    def calculate_score(zt_count):
-                                        if zt_count == 0:
-                                            return 0
-                                        score = math.log2(zt_count + 1) * max_score_factor
-                                        return min(round(score, 2), 100)
-
-                                    logger.info(f"对数评分: 最大得分因子 {max_score_factor:.2f}")
-
-                                elif scoring_method == 'binary':
-                                    # 二元得分：有涨停就得100分
-                                    def calculate_score(zt_count):
-                                        return 100 if zt_count > 0 else 0
-
-                                    logger.info("二元评分: 有涨停得100分，无涨停得0分")
-                                else:
-                                    # 默认线性
-                                    score_per_zt = 100 / lookback_days if lookback_days > 0 else 20
-
-                                    def calculate_score(zt_count):
-                                        return min(zt_count * score_per_zt, 100)
-
-                                    logger.info(f"默认线性评分: 每涨停一次得 {score_per_zt:.2f} 分")
-
-                                # 12. 计算每个交易日的得分
-                                result_data = []
-                                total_days = len(target_trading_days)
-
-                                for i, current_date in enumerate(target_trading_days):
-                                    if i % 100 == 0 and i > 0:  # 每100个交易日打印一次进度
-                                        logger.info(f"处理进度: {i}/{total_days}")
-
-                                    lookback_start = lookback_start_dates[current_date]
-
-                                    for stock in all_stocks:
-                                        zt_score = 0
-
-                                        if stock in stock_zt_dict:
-                                            # 统计回溯期内涨停次数（使用字符串比较，精确到日）
-                                            recent_zts = [d for d in stock_zt_dict[stock]
-                                                          if lookback_start <= d <= current_date]
-
-                                            zt_score = calculate_score(len(recent_zts))
-                                            # 四舍五入保留2位小数
-                                            zt_score = round(zt_score, 2)
-
-                                        result_data.append({
-                                            'ymd': current_date,
-                                            'stock_code': stock,
-                                            'zt_score': zt_score
-                                        })
-
-                                result_df = pd.DataFrame(result_data)
-
-                                # 13. 统计得分分布
-                                score_distribution = result_df['zt_score'].value_counts().sort_index()
-                                logger.info(f"得分分布(前10): {dict(list(score_distribution.head(10).items()))}")
-
-            logger.info(
-                f"涨停因子计算完成：共{len(result_df)}条记录，使用{lookback_days}个交易日回溯，评分方法:{scoring_method}")
-
-            # 保存到缓存（只添加这一行，不改变原有逻辑）
             if save_to_cache:
-                self.cached_factors['zt'] = result_df.copy()
+                self.cached_factors['zt'] = result.copy()
 
-            return result_df[['ymd', 'stock_code', 'zt_score']]
+            return result
 
         except Exception as e:
             logger.error(f"计算涨停因子失败：{str(e)}")
             import traceback
             logger.error(traceback.format_exc())
             return pd.DataFrame(columns=['ymd', 'stock_code', 'zt_score'])
+
 
     def shareholder_factor_score(self, start_date, end_date, save_to_cache=True):
         """
@@ -928,20 +810,20 @@ class FactorLibrary:
 
     def setup(self):
 
-        #  pb 因子计算
-        self.pb_factor_score(start_date='20240101', end_date='20260227')
-
-        #  涨停 因子计算
-        self.zt_factor_score(start_date='20240101', end_date='20260227')
+        # #  pb 因子计算
+        # self.pb_factor_score(start_date='20240101', end_date='20260227')
+        #
+        # #  涨停 因子计算
+        self.zt_factor_score(start_date='20260801', end_date='20260827')
 
         #  股东数 因子计算
-        self.shareholder_factor_score(start_date='20240101', end_date='20260227')
+        # self.shareholder_factor_score(start_date='20260801', end_date='20260828')
 
-        #  缩量因子计算
-        self.volume_shrinkage_factor(start_date='20240101', end_date='20260227')
-
-        #  因子汇总
-        self.aggregate_factors(start_date='20240101', end_date='20260227')
+        # #  缩量因子计算
+        # self.volume_shrinkage_factor(start_date='20240101', end_date='20260227')
+        #
+        # #  因子汇总
+        # self.aggregate_factors(start_date='20240101', end_date='20260227')
 
 
 
