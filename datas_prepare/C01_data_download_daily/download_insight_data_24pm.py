@@ -5,7 +5,7 @@ import io
 from insight_python.com.insight import common
 from insight_python.com.insight.query import *
 from insight_python.com.insight.market_service import market_service
-from datetime import datetime
+from datetime import datetime, timedelta
 import contextlib
 import time
 import logging
@@ -208,7 +208,16 @@ class SaveInsightData24PM:
         """
         获取 股东数 & 北向资金情况
         Returns: 写入 ods_shareholder_num
+        改造点：
+          1. ann_date 随插入写入：推断规则 = 运行日 - 1（任务须凌晨执行），且钳制不早于 ymd
+          2. load_time 由 MySQL DEFAULT CURRENT_TIMESTAMP 自动填充，INSERT IGNORE 保证首写不覆盖
         """
+        #  0.调度时间守卫：本方法的 ann_date 推断依赖"凌晨执行"，白天跑会产生前视
+        run_dt = datetime.now()
+        if run_dt.hour >= 6:
+            logging.warning("!! get_shareholder_num 不在凌晨(0-6点)执行，"
+                            "ann_date=运行日-1 的推断会偏早，存在前视风险 !!")
+
         #  1.起止时间 查询起始时间写 2月前的月初
         time_start_date = DateUtility.first_day_of_month(-2)
         #  结束时间必须大于等于当日，这里取明天的日期，如果是凌晨执行，就可以取当日了
@@ -255,8 +264,21 @@ class SaveInsightData24PM:
             #  7.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
             shareholder_num_df = shareholder_num_df.drop_duplicates(subset=['ymd', 'stock_code'], keep='first')
 
+            #  7.5 推断公告日 ann_date（核心改造）
+            #      任务凌晨执行 → 当天披露的记录 load_time 是次日凌晨 → 披露日 = 运行日 - 1
+            ann_date_str = (run_dt - timedelta(days=1)).strftime('%Y%m%d')
+            shareholder_num_df['ann_date'] = ann_date_str
+
+            #  7.6 保险钳制：ann_date 不得早于数据日 ymd（防 Insight 当晚入库次日凌晨抓取时算出前视）
+            shareholder_num_df['ann_date'] = np.where(
+                shareholder_num_df['ann_date'] < shareholder_num_df['ymd'],
+                shareholder_num_df['ymd'],
+                shareholder_num_df['ann_date']
+            )
+
             ############################   文件输出模块     ############################
             # 总是保存到远端数据库
+            # 注意：load_time 不在 df 列中，由 MySQL DEFAULT CURRENT_TIMESTAMP 自动填首写时间
             mysql_utils.data_from_dataframe_to_mysql(
                 user=origin_user,
                 password=origin_password,

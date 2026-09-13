@@ -208,8 +208,6 @@ class FactorLibrary:
             DataFrame: 包含 ymd, stock_code, stock_name, shareholder_score
         """
         try:
-            import math
-
             # 获取股东数据
             shareholder_df = Mysql_Utils.data_from_mysql_to_dataframe(
                 user=self.user,
