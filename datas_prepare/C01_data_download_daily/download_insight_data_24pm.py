@@ -2,6 +2,7 @@
 
 import sys
 import io
+import numpy as np
 from insight_python.com.insight import common
 from insight_python.com.insight.query import *
 from insight_python.com.insight.market_service import market_service
