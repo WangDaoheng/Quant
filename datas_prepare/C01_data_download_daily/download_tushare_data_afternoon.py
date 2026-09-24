@@ -264,7 +264,6 @@ class SaveTushareDailyData:
         result = result.drop_duplicates(subset=['ymd', 'board_code'], keep='first')
 
         date_counts = result['ymd'].value_counts().sort_index()
-        logging.info(f"行情日期分布: {dict(date_counts)}")
 
         mysql_utils.data_from_dataframe_to_mysql(
             user=base_properties.origin_mysql_user,

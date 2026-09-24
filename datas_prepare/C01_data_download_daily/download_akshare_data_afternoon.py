@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import random
-import time
-import requests
 import pandas as pd
 import akshare as ak
 import logging

@@ -42,12 +42,14 @@ class TableDataExporterFull:
         'ods_akshare_stock_zh_a_gdhs_detail_em': (1, 5, 2),
         # DWD 层
         'dwd_stock_a_total_plate': (2, 1, 1),
-        'ods_stock_exchange_market': (2, 1, 2),  # 注意：用户写的是ods开头但放在DWD层
-        'dwd_shareholder_num_latest': (2, 1, 3),
-        'dwd_ashare_stock_base_info': (2, 1, 4),
-        'dwd_stock_zt_list': (2, 1, 5),
-        'dwd_stock_dt_list': (2, 1, 6),
-        'dwd_stock_technical_indicators': (2, 1, 7),
+        'ods_stock_exchange_market': (2, 1, 2),
+        'dwd_shareholder_num_latest': (2, 1, 3),  # 旧表，可注释掉
+        'dwd_shareholder_num_event': (2, 1, 4),  # 股东数事件表
+        'dwd_shareholder_num_daily': (2, 1, 5),  # 股东数每日宽表（紧跟 event 后面）
+        'dwd_ashare_stock_base_info': (2, 1, 6),
+        'dwd_stock_zt_list': (2, 1, 7),
+        'dwd_stock_dt_list': (2, 1, 8),
+        'dwd_stock_technical_indicators': (2, 1, 9),
         # MART 层
         'dmart_stock_zt_details': (3, 1, 1),
     }

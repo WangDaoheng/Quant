@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import pandas as pd
+import numpy as np
 import logging
 
 from CommonProperties import Base_Properties
@@ -144,11 +145,10 @@ class CalDWD:
             database=origin_database,
             sql_statements=sql_statements)
 
-
     @timing_decorator
     def cal_shareholder_num_event(self):
         """
-        计算股东数披露事件表（对齐环比 + 紧邻环比 + 新鲜度特征）
+        计算股东数披露事件表（对齐环比 + 紧邻环比）
         写入 dwd_shareholder_num_event
         逻辑：一行 = 一次披露事件，基于 load_time（可知日）增量处理
         过滤：total_sh/avg_share 为 NULL 或 0 的脏数据
@@ -163,7 +163,7 @@ class CalDWD:
             INSERT INTO quant.dwd_shareholder_num_event
             (stock_code, stock_name, ymd, load_time, total_sh, avg_share,
              base_ymd, base_total_sh, qoq_sh, qoq_avg_sh, gap_days, align_flag,
-             prev_ymd, mom_sh, is_fresh, days_since_load)
+             prev_ymd, mom_sh)
             SELECT 
                 t.stock_code, 
                 t.stock_name, 
@@ -186,9 +186,7 @@ class CalDWD:
                 END AS align_flag,
                 p.ymd AS prev_ymd,
                 CASE WHEN p.total_sh IS NULL OR p.total_sh = 0 THEN NULL
-                     ELSE ROUND((t.total_sh / p.total_sh - 1) * 100, 4) END AS mom_sh,
-                IF(DATEDIFF('{ymd}', t.load_time) <= 3, 1, 0) AS is_fresh,
-                DATEDIFF('{ymd}', t.load_time) AS days_since_load
+                     ELSE ROUND((t.total_sh / p.total_sh - 1) * 100, 4) END AS mom_sh
             FROM quant.ods_shareholder_num t
             LEFT JOIN quant.ods_shareholder_num b
               ON b.stock_code = t.stock_code
@@ -224,27 +222,32 @@ class CalDWD:
             database=origin_database,
             sql_statements=sql_statements)
 
-
     @timing_decorator
     def cal_shareholder_num_daily(self):
         """
         计算股东数每日宽表（策略直接消费）
-        写入 ads_shareholder_num_daily
+        写入 dwd_shareholder_num_daily
         逻辑：一行 = 交易日 × 股票，前向填充最新事件 + 新鲜度衰减
         """
         ymd = DateUtility.today()
 
         sql_statements_template = [
             """
-            DELETE FROM quant.ads_shareholder_num_daily WHERE trade_date = '{ymd}';
+            DELETE FROM quant.dwd_shareholder_num_daily WHERE ymd = '{ymd}';
             """,
             """
-            INSERT INTO quant.ads_shareholder_num_daily
-            (trade_date, stock_code, latest_load_time, latest_total_sh, 
+            INSERT INTO quant.dwd_shareholder_num_daily
+            (ymd, stock_code, latest_load_time, latest_total_sh, 
              latest_qoq_sh, latest_mom_sh, days_since_load, is_fresh, fresh_weight,
              surprise_weighted, sh_pctile_cs)
+            WITH ranked_event AS (
+                SELECT e.*,
+                       ROW_NUMBER() OVER (PARTITION BY e.stock_code ORDER BY e.ymd DESC, e.load_time DESC) as rn
+                FROM quant.dwd_shareholder_num_event e
+                WHERE e.load_time <= '{ymd}'
+            )
             SELECT 
-                '{ymd}' AS trade_date,
+                '{ymd}' AS ymd,
                 e.stock_code,
                 e.load_time AS latest_load_time,
                 e.total_sh AS latest_total_sh,
@@ -255,13 +258,8 @@ class CalDWD:
                 EXP(-DATEDIFF('{ymd}', e.load_time) / 10) AS fresh_weight,
                 e.qoq_sh * EXP(-DATEDIFF('{ymd}', e.load_time) / 10) AS surprise_weighted,
                 PERCENT_RANK() OVER (ORDER BY e.qoq_sh) AS sh_pctile_cs
-            FROM quant.dwd_shareholder_num_event e
-            INNER JOIN (
-                SELECT stock_code, MAX(load_time) as max_load_time
-                FROM quant.dwd_shareholder_num_event
-                WHERE load_time <= '{ymd}'
-                GROUP BY stock_code
-            ) latest ON e.stock_code = latest.stock_code AND e.load_time = latest.max_load_time;
+            FROM ranked_event e
+            WHERE e.rn = 1;
             """
         ]
 
@@ -277,16 +275,14 @@ class CalDWD:
     @timing_decorator
     def cal_shareholder_num_event_batch(self, start_ymd='20210801', end_ymd=None):
         """
-        dwd_shareholder_num_event  历史数据批量更新
+        dwd_shareholder_num_event 历史数据批量更新
         高性能版：一次性读取 -> 内存向量化计算 -> 批量写入
-        预计耗时：5-10 分钟（处理 2021-08 至今全部数据）
         """
         if end_ymd is None:
             end_ymd = DateUtility.today()
 
         logging.info("步骤1/4：一次性读取全部有效数据...")
 
-        # 一次性读取所有股票的历史数据（30万条，内存约 100MB）
         data_sql = f"""
             SELECT stock_code, stock_name, ymd, load_time, total_sh, avg_share
             FROM quant.ods_shareholder_num
@@ -309,32 +305,26 @@ class CalDWD:
 
         logging.info("步骤2/4：内存计算环比（向量化操作）...")
 
-        # 转换为日期类型
         df['ymd'] = pd.to_datetime(df['ymd'])
         df['load_time'] = pd.to_datetime(df['load_time'])
 
-        # 按股票分组，计算紧邻环比（shift 向量化，无循环）
+        # 紧邻环比
         df = df.sort_values(['stock_code', 'ymd'])
         df['prev_ymd'] = df.groupby('stock_code')['ymd'].shift(1)
         df['prev_total_sh'] = df.groupby('stock_code')['total_sh'].shift(1)
         df['mom_sh'] = ((df['total_sh'] / df['prev_total_sh'] - 1) * 100).round(4)
         df.loc[df['prev_total_sh'] == 0, 'mom_sh'] = None
 
-        # 计算季度锚定（向量化：找上季度最后一天）
+        # 季度锚定
         df['quarter'] = df['ymd'].dt.to_period('Q')
-
-        # 找每个股票每个季度的最后一天作为基准
         quarter_last = df.groupby(['stock_code', 'quarter']).agg({
             'ymd': 'max',
             'total_sh': 'last',
             'avg_share': 'last'
         }).reset_index()
         quarter_last.columns = ['stock_code', 'quarter', 'base_ymd', 'base_total_sh', 'base_avg_share']
-
-        # 计算上季度序号（用于关联）
         quarter_last['prev_quarter'] = quarter_last['quarter'] + 1
 
-        # 关联：当前记录的上季度基准
         df = df.merge(
             quarter_last[['stock_code', 'prev_quarter', 'base_ymd', 'base_total_sh', 'base_avg_share']],
             left_on=['stock_code', 'quarter'],
@@ -342,38 +332,30 @@ class CalDWD:
             how='left'
         )
 
-        # 计算对齐环比
         df['gap_days'] = (df['ymd'] - df['base_ymd']).dt.days
         df['qoq_sh'] = ((df['total_sh'] / df['base_total_sh'] - 1) * 100).round(4)
         df['qoq_avg_sh'] = ((df['avg_share'] / df['base_avg_share'] - 1) * 100).round(4)
         df.loc[df['base_total_sh'].isna() | (df['base_total_sh'] == 0), 'qoq_sh'] = None
         df.loc[df['base_avg_share'].isna() | (df['base_avg_share'] == 0), 'qoq_avg_sh'] = None
 
-        # 标记
         df['align_flag'] = 'first'
         df.loc[df['base_ymd'].notna(), 'align_flag'] = 'ok'
         df.loc[df['gap_days'] < 60, 'align_flag'] = 'short_gap'
         df.loc[df['gap_days'] > 200, 'align_flag'] = 'long_gap'
 
-        logging.info("步骤3/4：过滤目标时间范围，计算新鲜度...")
+        logging.info("步骤3/4：过滤目标时间范围...")
 
-        # 只保留目标范围（load_time 在 start_ymd 和 end_ymd 之间）
         mask = (df['load_time'] >= pd.to_datetime(start_ymd)) & (df['load_time'] <= pd.to_datetime(end_ymd))
         result_df = df[mask].copy()
 
-        # 计算新鲜度
-        result_df['is_fresh'] = ((pd.to_datetime(end_ymd) - result_df['load_time']).dt.days <= 3).astype(int)
-        result_df['days_since_load'] = (pd.to_datetime(end_ymd) - result_df['load_time']).dt.days
-
-        # 选择输出列
+        # 去掉 is_fresh 和 days_since_load（event 表不存这些相对属性）
         output_columns = [
             'stock_code', 'stock_name', 'ymd', 'load_time', 'total_sh', 'avg_share',
             'base_ymd', 'base_total_sh', 'qoq_sh', 'qoq_avg_sh', 'gap_days', 'align_flag',
-            'prev_ymd', 'mom_sh', 'is_fresh', 'days_since_load'
+            'prev_ymd', 'mom_sh'
         ]
         result_df = result_df[output_columns]
 
-        # 转换回字符串格式用于写入
         result_df['ymd'] = result_df['ymd'].dt.strftime('%Y-%m-%d')
         result_df['load_time'] = result_df['load_time'].dt.strftime('%Y-%m-%d')
         result_df['prev_ymd'] = result_df['prev_ymd'].dt.strftime('%Y-%m-%d')
@@ -383,7 +365,6 @@ class CalDWD:
 
         logging.info("步骤4/4：清空目标范围并批量写入...")
 
-        # 清空目标范围（确保幂等）
         delete_sql = f"""
             DELETE FROM quant.dwd_shareholder_num_event 
             WHERE load_time BETWEEN '{start_ymd}' AND '{end_ymd}';
@@ -393,7 +374,6 @@ class CalDWD:
             database=origin_database, sql_statements=[delete_sql]
         )
 
-        # 批量写入
         mysql_utils.data_from_dataframe_to_mysql(
             user=origin_user, password=origin_password, host=origin_host,
             database=origin_database, df=result_df,
@@ -406,10 +386,13 @@ class CalDWD:
     @timing_decorator
     def cal_shareholder_num_daily_batch(self, start_ymd='20200101', end_ymd=None):
         """
-        批量回填历史每日宽表（首次初始化用）
+        批量回填历史每日宽表（Python 高性能版）
+        逻辑：读取 event 表 -> 按交易日生成快照 -> 批量写入
         """
         if end_ymd is None:
             end_ymd = DateUtility.today()
+
+        logging.info("步骤1/4：读取交易日历...")
 
         trading_days_sql = f"""
             SELECT ymd 
@@ -426,59 +409,109 @@ class CalDWD:
             logging.warning(f"未找到 {start_ymd} 到 {end_ymd} 之间的交易日")
             return
 
-        trading_days = trading_days_df['ymd'].astype(str).tolist()
+        trading_days = trading_days_df['ymd'].tolist()
         total_days = len(trading_days)
-        logging.info(f"共需回填 {total_days} 个交易日的 daily 宽表")
+        logging.info(f"共需回填 {total_days} 个交易日")
 
-        success_count = 0
-        fail_count = 0
-        fail_days = []
+        logging.info("步骤2/4：读取全部 event 数据...")
 
-        for idx, day_ymd in enumerate(trading_days, 1):
-            logging.info(f"【{idx}/{total_days}】回填 daily 宽表：{day_ymd}")
-            try:
-                sql_stmts = [
-                    f"DELETE FROM quant.ads_shareholder_num_daily WHERE trade_date = '{day_ymd}';",
-                    f"""
-                    INSERT INTO quant.ads_shareholder_num_daily
-                    (trade_date, stock_code, latest_load_time, latest_total_sh, 
-                     latest_qoq_sh, latest_mom_sh, days_since_load, is_fresh, fresh_weight,
-                     surprise_weighted, sh_pctile_cs)
-                    SELECT 
-                        '{day_ymd}' AS trade_date,
-                        e.stock_code,
-                        e.load_time AS latest_load_time,
-                        e.total_sh AS latest_total_sh,
-                        e.qoq_sh AS latest_qoq_sh,
-                        e.mom_sh AS latest_mom_sh,
-                        DATEDIFF('{day_ymd}', e.load_time) AS days_since_load,
-                        IF(DATEDIFF('{day_ymd}', e.load_time) <= 3, 1, 0) AS is_fresh,
-                        EXP(-DATEDIFF('{day_ymd}', e.load_time) / 10) AS fresh_weight,
-                        e.qoq_sh * EXP(-DATEDIFF('{day_ymd}', e.load_time) / 10) AS surprise_weighted,
-                        PERCENT_RANK() OVER (ORDER BY e.qoq_sh) AS sh_pctile_cs
-                    FROM quant.dwd_shareholder_num_event e
-                    INNER JOIN (
-                        SELECT stock_code, MAX(load_time) as max_load_time
-                        FROM quant.dwd_shareholder_num_event
-                        WHERE load_time <= '{day_ymd}'
-                        GROUP BY stock_code
-                    ) latest ON e.stock_code = latest.stock_code AND e.load_time = latest.max_load_time;
-                    """
-                ]
-                mysql_utils.execute_sql_statements(
-                    user=origin_user, password=origin_password, host=origin_host,
-                    database=origin_database, sql_statements=sql_stmts
-                )
-                success_count += 1
-            except Exception as e:
-                fail_count += 1
-                fail_days.append(day_ymd)
-                logging.error(f"日期 {day_ymd} 回填失败：{e}")
+        event_sql = """
+            SELECT stock_code, ymd, load_time, total_sh, qoq_sh, mom_sh
+            FROM quant.dwd_shareholder_num_event
+            ORDER BY stock_code, ymd;
+        """
+        event_df = mysql_utils.execute_query(
+            user=origin_user, password=origin_password, host=origin_host,
+            database=origin_database, sql=event_sql
+        )
+
+        if event_df.empty:
+            logging.warning("event 表无数据")
+            return
+
+        logging.info(f"读取完成：{len(event_df)} 条 event 记录")
+
+        # 转换日期类型
+        event_df['ymd'] = pd.to_datetime(event_df['ymd'])
+        event_df['load_time'] = pd.to_datetime(event_df['load_time'])
+
+        logging.info("步骤3/4：按交易日生成快照（向量化计算）...")
+
+        all_daily = []
+
+        for i, trade_day in enumerate(trading_days, 1):
+            trade_dt = pd.to_datetime(trade_day)
+
+            # 找每个股票最新的一条（load_time <= 当前交易日，ymd 最新）
+            # 先过滤 load_time <= 当前交易日
+            available = event_df[event_df['load_time'] <= trade_dt].copy()
+
+            if available.empty:
                 continue
 
-        logging.info(f"daily 宽表回填完成：成功 {success_count} 天，失败 {fail_count} 天")
-        if fail_days:
-            logging.warning(f"失败日期：{fail_days}")
+            # 按股票分组，取 ymd 最新的一条
+            idx = available.groupby('stock_code')['ymd'].idxmax()
+            latest = available.loc[idx].copy()
+
+            # 计算新鲜度
+            latest['ymd'] = trade_dt  # 当前交易日
+            latest['days_since_load'] = (trade_dt - latest['load_time']).dt.days
+            latest['is_fresh'] = (latest['days_since_load'] <= 3).astype(int)
+            latest['fresh_weight'] = np.exp(-latest['days_since_load'] / 10)
+            latest['surprise_weighted'] = latest['qoq_sh'] * latest['fresh_weight']
+
+            # 横截面分位（按 qoq_sh 排序）
+            latest['sh_pctile_cs'] = latest['qoq_sh'].rank(pct=True)
+
+            # 选择输出列
+            daily_df = latest[[
+                'ymd', 'stock_code', 'load_time', 'total_sh', 'qoq_sh', 'mom_sh',
+                'days_since_load', 'is_fresh', 'fresh_weight', 'surprise_weighted', 'sh_pctile_cs'
+            ]].copy()
+
+            # 重命名列以匹配表结构
+            daily_df.columns = [
+                'ymd', 'stock_code', 'latest_load_time', 'latest_total_sh',
+                'latest_qoq_sh', 'latest_mom_sh', 'days_since_load', 'is_fresh',
+                'fresh_weight', 'surprise_weighted', 'sh_pctile_cs'
+            ]
+
+            all_daily.append(daily_df)
+
+            if i % 50 == 0 or i == total_days:
+                logging.info(f"已处理 {i}/{total_days} 个交易日...")
+
+        if not all_daily:
+            logging.warning("无数据可写入")
+            return
+
+        final_df = pd.concat(all_daily, ignore_index=True)
+
+        # 转换日期格式
+        final_df['ymd'] = final_df['ymd'].dt.strftime('%Y-%m-%d')
+        final_df['latest_load_time'] = final_df['latest_load_time'].dt.strftime('%Y-%m-%d')
+
+        logging.info(f"计算完成：{len(final_df)} 条 daily 记录")
+
+        logging.info("步骤4/4：清空目标范围并批量写入...")
+
+        delete_sql = f"""
+            DELETE FROM quant.dwd_shareholder_num_daily 
+            WHERE ymd BETWEEN '{start_ymd}' AND '{end_ymd}';
+        """
+        mysql_utils.execute_sql_statements(
+            user=origin_user, password=origin_password, host=origin_host,
+            database=origin_database, sql_statements=[delete_sql]
+        )
+
+        mysql_utils.data_from_dataframe_to_mysql(
+            user=origin_user, password=origin_password, host=origin_host,
+            database=origin_database, df=final_df,
+            table_name="dwd_shareholder_num_daily",
+            merge_on=['ymd', 'stock_code']
+        )
+
+        logging.info(f"完成！共写入 {len(final_df)} 条 daily 记录")
 
 
     @timing_decorator
@@ -486,6 +519,9 @@ class CalDWD:
         """
         计算股票基础信息，汇总表，名称、编码、板块、股本、市值、净资产
         写入 dwd_ashare_stock_base_info
+        修复：
+          1. 市值/股本单位从元转换为亿（除以1e8）
+          2. 市值数据按股票取最近可用日期（<=当前交易日），避免前视
         """
         if ymd is None:
             ymd = DateUtility.today()
@@ -504,10 +540,10 @@ class CalDWD:
                 tkline.change_pct,
                 tkline.volume,
                 tkline.trading_amount,
-                IFNULL(tpepb.circulation_market, 0)                 AS market_value,
-                IFNULL(tpepb.total_market, 0)                       AS total_value,
-                IFNULL(tpepb.total_shares, 0)                       AS total_capital,
-                IFNULL(tpepb.circulation_shares, 0)                 AS float_capital,
+                ROUND(IFNULL(tpepb.circulation_market, 0) / 100000000, 2) AS market_value,
+                ROUND(IFNULL(tpepb.total_market, 0) / 100000000, 2)       AS total_value,
+                ROUND(IFNULL(tpepb.total_shares, 0) / 100000000, 2)       AS total_capital,
+                ROUND(IFNULL(tpepb.circulation_shares, 0) / 100000000, 2) AS float_capital,
                 tshare.latest_total_sh                              AS shareholder_num,
                 tshare.latest_qoq_sh                                AS pct_of_total_sh,
                 IFNULL(tpepb.pb, 0)                                 AS pb,
@@ -533,28 +569,26 @@ class CalDWD:
             ) tcode
                 ON tkline.stock_code = tcode.stock_code
             LEFT JOIN (
-                SELECT 
-                    ymd,
-                    stock_code,         
-                    total_market,
-                    circulation_market,
-                    total_shares,
-                    circulation_shares,
-                    pe_ttm,
-                    pb,
-                    peg
-                FROM quant.ods_akshare_stock_value_em
-                WHERE ymd = (SELECT MAX(ymd) FROM quant.ods_akshare_stock_value_em)
+                -- 修复：按股票取最近一个有市值数据的日期（<=当前交易日），避免前视
+                SELECT a.ymd, a.stock_code, a.total_market, a.circulation_market, 
+                       a.total_shares, a.circulation_shares, a.pe_ttm, a.pb, a.peg
+                FROM quant.ods_akshare_stock_value_em a
+                INNER JOIN (
+                    SELECT stock_code, MAX(ymd) as max_ymd
+                    FROM quant.ods_akshare_stock_value_em
+                    WHERE ymd <= '{ymd}'
+                    GROUP BY stock_code
+                ) b ON a.stock_code = b.stock_code AND a.ymd = b.max_ymd
             ) tpepb
                 ON tkline.stock_code_pure = tpepb.stock_code      
             LEFT JOIN (
                 SELECT 
-                    trade_date,
+                    ymd,
                     stock_code,
                     latest_total_sh,
                     latest_qoq_sh
-                FROM quant.ads_shareholder_num_daily
-                WHERE trade_date = '{ymd}'
+                FROM quant.dwd_shareholder_num_daily
+                WHERE ymd = '{ymd}'
             ) tshare
                 ON tkline.stock_code = tshare.stock_code
             LEFT JOIN (
@@ -586,11 +620,11 @@ class CalDWD:
             sql_statements=sql_statements
         )
 
-
     @timing_decorator
-    def cal_stock_base_info_batch(self, start_ymd='20260501', end_ymd=None):
+    def cal_stock_base_info_batch(self, start_ymd='20240801', end_ymd=None):
         """
         批量重跑 dwd_ashare_stock_base_info
+        修复：市值单位已改为亿，历史数据需要重跑才能生效
         """
         if end_ymd is None:
             end_ymd = DateUtility.today()
@@ -643,6 +677,7 @@ class CalDWD:
             'fail': fail_count,
             'fail_days': fail_days
         }
+
 
 
     @timing_decorator
@@ -986,19 +1021,21 @@ class CalDWD:
         # 计算行情衍生指标  均线等
         self.cal_technical_indicators()
 
-        # 补录 base_info 的历史数据
-        self.cal_stock_base_info_batch()
+        # # 补录 base_info 的历史数据
+        # self.cal_stock_base_info_batch()
 
 
 if __name__ == '__main__':
     save_insight_data = CalDWD()
 
     # ===== 首次初始化（跑一次后注释掉）=====
-    # 第一步：回填 event 表历史数据
-    save_insight_data.cal_shareholder_num_event_batch('20260918')
+    # # 第一步：回填 event 表历史数据
+    # save_insight_data.cal_shareholder_num_event_batch('20260918')
 
-    # 第二步：回填 daily 宽表历史数据
-    # save_insight_data.cal_shareholder_num_daily_batch('20200101')
+    # # 第二步：回填 daily 宽表历史数据
+    # save_insight_data.cal_shareholder_num_daily_batch('20240801')
+
+    # save_insight_data.cal_stock_base_info_batch()
 
     # # ===== 日常调度（每天跑）=====
-    # save_insight_data.setup()
+    save_insight_data.setup()
