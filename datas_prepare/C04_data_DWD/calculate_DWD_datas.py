@@ -517,11 +517,11 @@ class CalDWD:
     @timing_decorator
     def cal_stock_base_info(self, ymd=None):
         """
-        计算股票基础信息，汇总表，名称、编码、板块、股本、市值、净资产
-        写入 dwd_ashare_stock_base_info
+        计算股票基础信息，汇总表，写入 dwd_ashare_stock_base_info
         修复：
-          1. 市值/股本单位从元转换为亿（除以1e8）
-          2. 市值数据按股票取最近可用日期（<=当前交易日），避免前视
+          1. 市值/股本单位：元 -> 亿
+          2. 市值数据：按股票取最近可用日期（<=当前交易日），避免前视
+          3. 股票名称：按股票取各自最新一天的名称（修复退市/停牌股关联不上导致的 NULL）
         """
         if ymd is None:
             ymd = DateUtility.today()
@@ -552,24 +552,23 @@ class CalDWD:
                 tplate.plate_names                                  AS plate_names
             FROM (
                 SELECT 
-                    stock_code,
-                    stock_code_pure,    
-                    ymd,
-                    close,
-                    change_pct,
-                    volume,
-                    trading_amount
+                    stock_code, stock_code_pure, ymd, close, change_pct, volume, trading_amount
                 FROM quant.ods_stock_kline_daily_ts
                 WHERE ymd = '{ymd}'
             ) tkline
+            -- 修复3：按股票取各自最新一天的名称
             LEFT JOIN (
-                SELECT ymd, stock_code, stock_name
-                FROM quant.ods_stock_code_daily_insight
-                WHERE ymd = (SELECT MAX(ymd) FROM quant.ods_stock_code_daily_insight)
+                SELECT a.ymd, a.stock_code, a.stock_name
+                FROM quant.ods_stock_code_daily_insight a
+                INNER JOIN (
+                    SELECT stock_code, MAX(ymd) AS max_ymd
+                    FROM quant.ods_stock_code_daily_insight
+                    GROUP BY stock_code
+                ) b ON a.stock_code = b.stock_code AND a.ymd = b.max_ymd
             ) tcode
                 ON tkline.stock_code = tcode.stock_code
+            -- 修复2：按股票取最近一个有市值数据的日期
             LEFT JOIN (
-                -- 修复：按股票取最近一个有市值数据的日期（<=当前交易日），避免前视
                 SELECT a.ymd, a.stock_code, a.total_market, a.circulation_market, 
                        a.total_shares, a.circulation_shares, a.pe_ttm, a.pb, a.peg
                 FROM quant.ods_akshare_stock_value_em a
@@ -582,11 +581,7 @@ class CalDWD:
             ) tpepb
                 ON tkline.stock_code_pure = tpepb.stock_code      
             LEFT JOIN (
-                SELECT 
-                    ymd,
-                    stock_code,
-                    latest_total_sh,
-                    latest_qoq_sh
+                SELECT ymd, stock_code, latest_total_sh, latest_qoq_sh
                 FROM quant.dwd_shareholder_num_daily
                 WHERE ymd = '{ymd}'
             ) tshare
@@ -598,10 +593,8 @@ class CalDWD:
             ) texchange
                 ON tkline.stock_code = texchange.stock_code
             LEFT JOIN (
-                SELECT 
-                    ymd,
-                    stock_code_pure,
-                    GROUP_CONCAT(board_name ORDER BY board_name SEPARATOR ',') AS plate_names
+                SELECT ymd, stock_code_pure,
+                       GROUP_CONCAT(board_name ORDER BY board_name SEPARATOR ',') AS plate_names
                 FROM quant.dwd_stock_a_total_plate
                 WHERE ymd = (SELECT MAX(ymd) FROM quant.dwd_stock_a_total_plate)
                 GROUP BY ymd, stock_code_pure                      
@@ -619,6 +612,7 @@ class CalDWD:
             database=origin_database,
             sql_statements=sql_statements
         )
+
 
     @timing_decorator
     def cal_stock_base_info_batch(self, start_ymd='20240801', end_ymd=None):
@@ -679,7 +673,6 @@ class CalDWD:
         }
 
 
-
     @timing_decorator
     def cal_ZT_DT(self):
         """
@@ -690,7 +683,7 @@ class CalDWD:
         import time
         start_time = time.time()
 
-        time_start_date = '20260501'
+        time_start_date = DateUtility.first_day_of_month()
         time_end_date = DateUtility.today()
 
         logging.info("=" * 60)
@@ -907,7 +900,7 @@ class CalDWD:
         计算股票技术指标（均线等）并存入 dwd_stock_technical_indicators 表
         """
         try:
-            start_date = '20260501'
+            start_date = DateUtility.first_day_of_month()
             end_date = DateUtility.today()
 
             start_dt = pd.to_datetime(start_date)
@@ -1037,5 +1030,5 @@ if __name__ == '__main__':
 
     # save_insight_data.cal_stock_base_info_batch()
 
-    # # ===== 日常调度（每天跑）=====
+    # ===== 日常调度（每天跑）=====
     save_insight_data.setup()

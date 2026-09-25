@@ -61,8 +61,6 @@ class SaveInsightData:
 
         #  1.获取日期
         formatted_date = DateUtility.today()
-        # formatted_date = '20240930'
-
         #  2.请求insight数据   get_all_stocks_info
         stock_all_df = get_all_stocks_info(listing_state="上市交易")
         #  3.日期格式转换
@@ -390,7 +388,6 @@ class SaveInsightData:
             logging.info('    get_chouma_datas 的返回值为空值')
 
 
-
     @timing_decorator
     def get_Ashare_industry_overview(self):
         """
@@ -538,11 +535,7 @@ class SaveInsightData:
         self.get_Ashare_industry_detail()
 
 
-
-
-
 if __name__ == '__main__':
     downloader = SaveInsightData()
     downloader.setup()
-
 

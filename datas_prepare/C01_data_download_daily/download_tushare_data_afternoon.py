@@ -407,12 +407,12 @@ class SaveTushareDailyData:
         return result
 
 
-    # @script_run(script_name="download_tushare_data_afternoon.py")
+    @script_run(script_name="download_tushare_data_afternoon.py")
     def setup(self):
-        # self.get_stock_kline_tushare()
-        # self.download_board_list()
+        self.get_stock_kline_tushare()
+        self.download_board_list()
         self.download_board_daily()
-        # self.download_board_members()
+        self.download_board_members()
 
 
 if __name__ == '__main__':

@@ -67,8 +67,6 @@ class SaveInsightData24PM:
         #  1.当月数据的起止时间
         start_date = DateUtility.first_day_of_month()
         end_date = DateUtility.next_day(-1)
-        # start_date = '20240901'
-        # end_date = '20240930'
 
         start_date = datetime.strptime(start_date, '%Y%m%d')
         end_date = datetime.strptime(end_date, '%Y%m%d').replace(hour=23, minute=59, second=59)
@@ -310,9 +308,7 @@ class SaveInsightData24PM:
         self.get_shareholder_num()
 
 
-
 if __name__ == '__main__':
     downloader = SaveInsightData24PM()
     downloader.setup()
-
 
