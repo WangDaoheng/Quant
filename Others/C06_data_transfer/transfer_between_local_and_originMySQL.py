@@ -44,11 +44,6 @@ table_all_list = ['ods_stock_code_daily_insight',
                   'ods_exchange_dxy_vantage',
                   'ods_exchange_rate_vantage_detail',
                   'ods_stock_plate_redbook',
-                  'ods_tdx_stock_concept_plate',
-                  'ods_tdx_stock_index_plate',
-                  'ods_tdx_stock_industry_plate',
-                  'ods_tdx_stock_region_plate',
-                  'ods_tdx_stock_style_plate',
                   'ods_trading_days_insight',
                   'ods_us_stock_daily_vantage']
 
