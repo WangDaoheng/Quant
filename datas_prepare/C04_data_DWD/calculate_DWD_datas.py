@@ -615,7 +615,7 @@ class CalDWD:
 
 
     @timing_decorator
-    def cal_stock_base_info_batch(self, start_ymd='20240801', end_ymd=None):
+    def cal_stock_base_info_batch(self, start_ymd='20260922', end_ymd=None):
         """
         批量重跑 dwd_ashare_stock_base_info
         修复：市值单位已改为亿，历史数据需要重跑才能生效
@@ -1014,21 +1014,21 @@ class CalDWD:
         # 计算行情衍生指标  均线等
         self.cal_technical_indicators()
 
-        # # 补录 base_info 的历史数据
-        # self.cal_stock_base_info_batch()
-
 
 if __name__ == '__main__':
     save_insight_data = CalDWD()
 
-    # ===== 首次初始化（跑一次后注释掉）=====
-    # # 第一步：回填 event 表历史数据
-    # save_insight_data.cal_shareholder_num_event_batch('20260918')
-
-    # # 第二步：回填 daily 宽表历史数据
-    # save_insight_data.cal_shareholder_num_daily_batch('20240801')
-
-    # save_insight_data.cal_stock_base_info_batch()
-
     # ===== 日常调度（每天跑）=====
     save_insight_data.setup()
+
+    # ===== 历史数据补录 =====
+    # #  补录 event 表历史数据
+    # save_insight_data.cal_shareholder_num_event_batch('20260918')
+
+    # #  补录 daily 宽表历史数据
+    # save_insight_data.cal_shareholder_num_daily_batch('20240801')
+
+    # #  补录 base_info 历史数据
+    # save_insight_data.cal_stock_base_info_batch('20260922')
+
+

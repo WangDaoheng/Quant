@@ -1,5 +1,6 @@
 # strategy/factor_library.py
 import pandas as pd
+import numpy as np
 import logging
 import math
 from CommonProperties import Mysql_Utils
@@ -16,17 +17,19 @@ class FactorLibrary:
         self.password = Mysql_Utils.origin_password
         self.host = Mysql_Utils.origin_host
         self.database = Mysql_Utils.origin_database
-
         # 简单缓存，不强制依赖
         self.cached_factors = {}
-
         # 获取全量股票列表（stock_code, stock_name）
         self.stocks_df = Mysql_Utils.get_stock_codes_latest()
 
+
     def pb_factor_score(self, start_date, end_date, reverse=True, save_to_cache=True):
         """
-        计算PB因子百分制评分（0-100分）
-        简化版：有数据的计算排名，无数据的给0分
+        计算 PB 因子百分制评分
+        source_table: dwd_ashare_stock_base_info
+        简化版：对于 pb >0 的股票，根据每日截面计算 pb 排名。
+        reverse为 True（默认）, pb升序排名, pb越小, 排名越小, 打分越高（有效数据得分[1, 100]，无效数据得分0）
+        reverse为 False, pb降序排名, pb越大, 排名越小, 打分越高（有效数据得分[1, 100]，无效数据得分0）
         """
         try:
             # 获取PB数据
@@ -46,6 +49,9 @@ class FactorLibrary:
 
             # 转换数值，无效值变为NaN
             pb_df['pb'] = pd.to_numeric(pb_df['pb'], errors='coerce')
+            # 新增：pb<=0 视为无效（0 是 dwd 层缺失填充值，负 PB 是净资产为负的困难企业）
+            # 之后Pe也要这么处理，pe<=视为无效
+            pb_df['pb'] = pb_df['pb'].mask(pb_df['pb'] <= 0)
 
             # 按日期分组计算排名
             result_dfs = []
@@ -68,8 +74,8 @@ class FactorLibrary:
                         valid_data['pb_rank'] = valid_data['pb'].rank(method='min', ascending=False)
 
                     max_rank = valid_data['pb_rank'].max()
-                    valid_data['pb_score'] = ((max_rank - valid_data['pb_rank']) / max_rank * 100).round(2)
-
+                    valid_data['pb_score'] = (100.0 if max_rank == 1 else (
+                                1 + 99 * (max_rank - valid_data['pb_rank']) / (max_rank - 1)).round(2))
                     # 将得分合并回原数据框
                     for idx in valid_data.index:
                         date_df.loc[idx, 'pb_score'] = valid_data.loc[idx, 'pb_score']
@@ -194,54 +200,68 @@ class FactorLibrary:
     def shareholder_factor_score(self, start_date, end_date, save_to_cache=True):
         """
         计算筹码因子百分制评分（0-100分）
-        使用 dwd_shareholder_num_latest 表
-
-        评分逻辑：股东人数减少得高分，增加得低分
-        使用平滑的 sigmoid 函数
-
-        Args:
-            start_date: 开始日期 (YYYYMMDD)
-            end_date: 结束日期 (YYYYMMDD)
-            save_to_cache: 是否保存到缓存
-
-        Returns:
-            DataFrame: 包含 ymd, stock_code, stock_name, shareholder_score
+        评分逻辑（两阶段）：
+        1. 基础分（0~100）：对 latest_qoq_sh（季度对齐环比%）做 sigmoid 变换
+           - 股东数大幅减少（筹码集中）→ 高分
+           - 股东数大幅增加（筹码分散）→ 低分
+        2. 新鲜度调整：score × (0.6 + 0.4 × fresh_weight)
+           - fresh_weight = exp(-days_since_load/10)，刚披露 ≈ 1.0，越久越低
+           - 体现"刚发布的突变价值更大"，但不把季度披露的股票清零（保底 0.6 系数）
+        可选增强（字段已查出来，按需启用）：
+        - latest_mom_sh < 0（季内二次披露仍在减少）→ 边际加速 +5 分
+        - sh_pctile_cs：当日横截面分位，可直接 (1-x)*100 作为替代评分口径
         """
         try:
-            # 获取股东数据
+            # 获取股东数据（新宽表：每日前向填充 + 新鲜度特征）
             shareholder_df = Mysql_Utils.data_from_mysql_to_dataframe(
                 user=self.user,
                 password=self.password,
                 host=self.host,
                 database=self.database,
-                table_name='dwd_shareholder_num_latest',
+                table_name='dwd_shareholder_num_daily',
                 start_date=start_date,
                 end_date=end_date,
-                cols=['ymd', 'stock_code', 'stock_name', 'pct_of_total_sh']
+                cols=['ymd', 'stock_code', 'latest_qoq_sh', 'latest_mom_sh',
+                      'days_since_load', 'fresh_weight']
             )
 
             if shareholder_df.empty:
-                result_df = pd.DataFrame(columns=['ymd', 'stock_code', 'stock_name', 'shareholder_score'])
+                result_df = pd.DataFrame(columns=['ymd', 'stock_code', 'shareholder_score'])
             else:
                 # 转换数值
-                shareholder_df['pct_of_total_sh'] = pd.to_numeric(shareholder_df['pct_of_total_sh'], errors='coerce')
+                for col in ['latest_qoq_sh', 'latest_mom_sh', 'days_since_load', 'fresh_weight']:
+                    shareholder_df[col] = pd.to_numeric(shareholder_df[col], errors='coerce')
 
-                # 定义平滑得分函数
-                def smooth_score(pct):
-                    if pd.isna(pct):
+                def sigmoid_score(qoq):
+                    """股东数下降(qoq<0) → 高分；上升 → 低分"""
+                    if pd.isna(qoq):
                         return 0.0
-                    # sigmoid 变换: 股东减少(-) → 高分，股东增加(+) → 低分
-                    x = pct * 0.15  # 0.15 控制曲线陡峭程度
+                    x = qoq * 0.15  # 0.15 控制曲线陡峭程度（沿用原参数）
                     sigmoid = 1 / (1 + math.exp(-x))
-                    return round(100 * (1 - sigmoid), 2)
+                    return 100 * (1 - sigmoid)
 
-                # 计算得分
-                shareholder_df['shareholder_score'] = shareholder_df['pct_of_total_sh'].apply(smooth_score)
-                result_df = shareholder_df[['ymd', 'stock_code', 'stock_name', 'shareholder_score']]
+                # 1. 基础分：基于季度对齐环比（口径已统一，横截面可比）
+                shareholder_df['base_score'] = shareholder_df['latest_qoq_sh'].apply(sigmoid_score)
+
+                # 2. 新鲜度系数：0.6 ~ 1.0（刚披露满分权重，陈旧数据保底 60%）
+                shareholder_df['fresh_coef'] = (
+                    0.6 + 0.4 * shareholder_df['fresh_weight'].fillna(0)
+                ).clip(upper=1.0)
+
+                shareholder_df['shareholder_score'] = (
+                    shareholder_df['base_score'] * shareholder_df['fresh_coef']
+                ).round(2)
+
+                # 3. 边际加速加分：季内最新一次披露仍在减少（mom_sh < 0）
+                mask_accel = shareholder_df['latest_mom_sh'] < 0
+                shareholder_df.loc[mask_accel, 'shareholder_score'] = (
+                    shareholder_df.loc[mask_accel, 'shareholder_score'] + 5
+                ).clip(upper=100).round(2)
+
+                result_df = shareholder_df[['ymd', 'stock_code', 'shareholder_score']]
 
             logger.info(f"股东人数因子计算完成：共{len(result_df)}条记录")
 
-            # 保存到缓存
             if save_to_cache:
                 self.cached_factors['shareholder'] = result_df.copy()
 
@@ -249,43 +269,8 @@ class FactorLibrary:
 
         except Exception as e:
             logger.error(f"计算股东数因子失败：{str(e)}")
-            return pd.DataFrame(columns=['ymd', 'stock_code', 'stock_name', 'shareholder_score'])
+            return pd.DataFrame(columns=['ymd', 'stock_code', 'shareholder_score'])
 
-
-    def _get_zero_scores(self, trading_days, start_date, end_date, score_col):
-        """生成全0分数据"""
-        try:
-            # 获取股票列表
-            stock_base_df = Mysql_Utils.data_from_mysql_to_dataframe(
-                user=self.user,
-                password=self.password,
-                host=self.host,
-                database=self.database,
-                table_name='dwd_ashare_stock_base_info',
-                start_date=trading_days[-1] if trading_days else end_date,
-                end_date=trading_days[-1] if trading_days else end_date,
-                cols=['stock_code']
-            )
-
-            if stock_base_df.empty:
-                return pd.DataFrame(columns=['ymd', 'stock_code', score_col])
-
-            all_stocks = stock_base_df['stock_code'].unique()
-
-            result_data = []
-            for date_str in trading_days:
-                for stock in all_stocks:
-                    result_data.append({
-                        'ymd': date_str,
-                        'stock_code': stock,
-                        score_col: 0.0
-                    })
-
-            return pd.DataFrame(result_data)
-
-        except Exception as e:
-            logger.error(f"生成零分数据失败：{str(e)}")
-            return pd.DataFrame(columns=['ymd', 'stock_code', score_col])
 
     def get_trading_days(self, start_date, end_date):
         """获取交易日列表"""
@@ -808,11 +793,11 @@ class FactorLibrary:
 
     def setup(self):
 
-        # #  pb 因子计算
-        # self.pb_factor_score(start_date='20240101', end_date='20260227')
+        #  pb 因子计算
+        self.pb_factor_score(start_date='20260901', end_date='20260928')
         #
         # #  涨停 因子计算
-        self.zt_factor_score(start_date='20260801', end_date='20260827')
+        # self.zt_factor_score(start_date='20260801', end_date='20260827')
 
         #  股东数 因子计算
         # self.shareholder_factor_score(start_date='20260801', end_date='20260828')
