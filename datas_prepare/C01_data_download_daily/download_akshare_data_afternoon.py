@@ -85,49 +85,6 @@ class SaveAkshareDailyData:
 
 
     @timing_decorator
-    def download_stock_value_em(self):
-        """
-        下载股票估值数据 - ods_akshare_stock_value_em
-        接口: stock_value_em
-        说明: 个股的全量历史数据，需要逐个股票获取    封堵IP  不可用
-        """
-
-        # 根据实际列名进行映射
-        column_mapping = {
-            '数据日期': 'ymd',
-            '当日收盘价': 'close',
-            '当日涨跌幅': 'change_pct',
-            '总市值': 'total_market',
-            '流通市值': 'circulation_market',
-            '总股本': 'total_shares',
-            '流通股本': 'circulation_shares',
-            'PE(TTM)': 'pe_ttm',
-            'PE(静)': 'pe_static',
-            '市净率': 'pb',
-            'PEG值': 'peg',
-            '市现率': 'pcf',
-            '市销率': 'ps'
-        }
-
-        # 需要转化为数字类型的列
-        numeric_columns = [
-            'close', 'change_pct', 'total_market', 'circulation_market',
-            'total_shares', 'circulation_shares', 'pe_ttm', 'pe_static',
-            'pb', 'peg', 'pcf', 'ps'
-        ]
-
-        return self.downloader.download_to_mysql(
-            ak_function_name='stock_value_em',
-            table_name='ods_akshare_stock_value_em',
-            column_mapping=column_mapping,
-            numeric_columns=numeric_columns,
-            date_format='%Y-%m-%d',
-            merge_on=['ymd', 'stock_code'],
-            auto_add_stock_code=True
-        )
-
-
-    @timing_decorator
     def download_stock_zh_a_gdhs_detail_em(self):
         """
         下载股东户数数据 - ods_akshare_stock_zh_a_gdhs_detail_em
@@ -398,9 +355,6 @@ class SaveAkshareDailyData:
         # 1. 获取股票代码列表（用于需要股票代码的接口）
         self.get_stock_codes()
 
-        # # 2. 下载股票估值数据            封堵IP 办公IP可用 但下载800w+ 记录 【周末跑】
-        # self.download_stock_value_em()
-        #
         # # 3. 下载股东户数数据（需要股票代码，分批次处理）   可用              【周末跑】
         # self.download_stock_zh_a_gdhs_detail_em()
 
@@ -414,17 +368,7 @@ class SaveAkshareDailyData:
         self.download_stock_a_high_low_statistics()
 
 
-        # # 12. 同花顺板块码值                  废弃改用tushare    日跑
-        # self.download_stock_board_concept_name_ths()
-        #
-        # # 13. 同花顺板块日K行情数据            废弃改用tushare    日跑
-        # self.download_stock_board_concept_index_ths()
-
-
-
 if __name__ == '__main__':
     downloader = SaveAkshareDailyData()
     downloader.setup()
-
-
 
