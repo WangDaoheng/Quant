@@ -43,7 +43,6 @@ class TableDataExporterFull:
         # DWD 层
         'dwd_stock_a_total_plate': (2, 1, 1),
         'ods_stock_exchange_market': (2, 1, 2),
-        'dwd_shareholder_num_latest': (2, 1, 3),  # 旧表，可注释掉
         'dwd_shareholder_num_event': (2, 1, 4),  # 股东数事件表
         'dwd_shareholder_num_daily': (2, 1, 5),  # 股东数每日宽表（紧跟 event 后面）
         'dwd_ashare_stock_base_info': (2, 1, 6),

@@ -72,23 +72,6 @@ CREATE TABLE quant.dwd_stock_dt_list (
 ) COMMENT='跌停股票清单';
 
 
-
---1.4
-------------------  dwd_shareholder_num_latest   个股的股东数(全量最新数据表)
-CREATE TABLE quant.dwd_shareholder_num_latest (
-       ymd                    DATE                    COMMENT '交易日期'
-      ,stock_code             varchar(100)            COMMENT '股票代码'
-      ,stock_name             varchar(50)             COMMENT '股票名称'
-      ,total_sh               DOUBLE                  COMMENT '总股东数'
-      ,avg_share              DOUBLE(10, 4)           COMMENT '每个股东平均持股数'
-      ,pct_of_total_sh        DOUBLE(10, 4)           COMMENT '股东数较上期环比波动百分比'
-      ,pct_of_avg_sh          DOUBLE(10, 4)           COMMENT '每个股东平均持股数较上期环比波动百分比'
-      ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
-) COMMENT='个股的股东数(全量最新数据表)';
-
-
-
-
 --1.5
 ------------------  dwd_stock_technical_indicators   股票技术指标预计算表（均线等）
 CREATE TABLE quant.dwd_stock_technical_indicators (

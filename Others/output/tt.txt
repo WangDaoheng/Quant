@@ -34,7 +34,6 @@ ods_akshare_stock_zh_a_gdhs_detail_em
 DWD 层
 dwd_stock_a_total_plate
 ods_stock_exchange_market
-dwd_shareholder_num_latest
 dwd_ashare_stock_base_info
 dwd_stock_zt_list
 dwd_stock_dt_list
