@@ -152,7 +152,7 @@
         .index-item-title .value.down { color: #3fb950; }
         .index-chart {
             width: 100%;
-            height: 220px;
+            height: 280px;
         }
 
         .modal {
@@ -511,22 +511,99 @@
             renderKlineChart('kcChart', daily.map(d => d.indices.kc50), dates, 'kcIndexValue', '#d29922');
         }
 
+        // function renderKlineChart(domId, data, dates, valueId, color) {
+        //     const chart = echarts.init(document.getElementById(domId));
+        //
+        //     // 计算涨跌幅
+        //     const firstClose = data[0].close;
+        //     const lastClose = data[data.length-1].close;
+        //     const change = ((lastClose - firstClose) / firstClose * 100).toFixed(2);
+        //
+        //     // 更新标题
+        //     const valueEl = document.getElementById(valueId);
+        //     valueEl.textContent = `${lastClose} (${change}%)`;
+        //     valueEl.className = 'value ' + (change >= 0 ? 'up' : 'down');
+        //
+        //     // K线数据 [open, close, low, high]
+        //     const klineData = data.map(d => ({
+        //         value: [d.open, d.close, d.low, d.high],
+        //         itemStyle: {
+        //             color: d.close >= d.open ? '#f85149' : '#3fb950',
+        //             color0: d.close >= d.open ? '#f85149' : '#3fb950',
+        //             borderColor: d.close >= d.open ? '#f85149' : '#3fb950',
+        //             borderColor0: d.close >= d.open ? '#f85149' : '#3fb950'
+        //         }
+        //     }));
+        //
+        //     // 成交量颜色
+        //     const volumeColors = data.map(d =>
+        //         d.close >= d.open ? 'rgba(248, 81, 73, 0.6)' : 'rgba(63, 185, 80, 0.6)'
+        //     );
+        //
+        //     chart.setOption({
+        //         tooltip: {
+        //             trigger: 'axis',
+        //             backgroundColor: '#1c2128',
+        //             borderColor: '#30363d',
+        //             textStyle: { color: '#c9d1d9' },
+        //             axisPointer: { type: 'cross' },
+        //             formatter: function(params) {
+        //                 const kline = params.find(p => p.seriesType === 'candlestick');
+        //                 const vol = params.find(p => p.seriesName === '成交量');
+        //                 if (!kline) return '';
+        //                 const d = kline.data.value;
+        //                 const change = ((d[1] - d[0]) / d[0] * 100).toFixed(2);
+        //                 const changeColor = change >= 0 ? '#f85149' : '#3fb950';
+        //                 let result = `${kline.name}<br/>`;
+        //                 result += `开盘: ${d[0]}<br/>`;
+        //                 result += `收盘: <span style="color:${changeColor}">${d[1]} (${change}%)</span><br/>`;
+        //                 result += `最低: ${d[2]}<br/>`;
+        //                 result += `最高: ${d[3]}<br/>`;
+        //                 if (vol) result += `成交量: <span style="color:#d29922">${vol.data}万亿</span>`;
+        //                 return result;
+        //             }
+        //         },
+        //         grid: [
+        //             { left: '3%', right: '4%', top: '4%', height: '68%' },
+        //             { left: '3%', right: '4%', top: '76%', height: '18%' }
+        //         ],
+        //         xAxis: [
+        //             { type: 'category', data: dates, gridIndex: 0, axisLine: { lineStyle: { color: '#30363d' } }, axisLabel: { show: false } },
+        //             { type: 'category', data: dates, gridIndex: 1, axisLine: { lineStyle: { color: '#30363d' } }, axisLabel: { color: '#8b949e', fontSize: 9 } }
+        //         ],
+        //         yAxis: [
+        //             { type: 'value', scale: true, gridIndex: 0, splitLine: { lineStyle: { color: '#21262d' } }, axisLabel: { color: '#8b949e', fontSize: 9 } },
+        //             { type: 'value', gridIndex: 1, splitLine: { show: false }, axisLabel: { color: '#8b949e', fontSize: 9, formatter: '{value}万亿' } }
+        //         ],
+        //         series: [
+        //             { type: 'candlestick', data: klineData, barWidth: '60%', xAxisIndex: 0, yAxisIndex: 0 },
+        //             { name: '成交量', type: 'bar', data: data.map((d, i) => ({ value: d.volume, itemStyle: { color: volumeColors[i] } })), barWidth: '60%', xAxisIndex: 1, yAxisIndex: 1 }
+        //         ]
+        //     });
+        //
+        //     charts[domId] = chart;
+        // }
+
+        
         function renderKlineChart(domId, data, dates, valueId, color) {
             const chart = echarts.init(document.getElementById(domId));
 
-            // 计算涨跌幅
+            // 以首日开盘为基准，归一化为涨跌幅%
+            const baseline = data[0].open;
+            const norm = v => +((v / baseline - 1) * 100).toFixed(2);
+
             const firstClose = data[0].close;
-            const lastClose = data[data.length-1].close;
+            const lastClose = data[data.length - 1].close;
             const change = ((lastClose - firstClose) / firstClose * 100).toFixed(2);
 
-            // 更新标题
             const valueEl = document.getElementById(valueId);
-            valueEl.textContent = `${lastClose} (${change}%)`;
+            valueEl.textContent = `${lastClose} (${change >= 0 ? '+' : ''}${change}%)`;
             valueEl.className = 'value ' + (change >= 0 ? 'up' : 'down');
 
-            // K线数据 [open, close, low, high]
+            // K线数据转为 [开%, 收%, 低%, 高%]，同时保留真实价格用于tooltip
             const klineData = data.map(d => ({
-                value: [d.open, d.close, d.low, d.high],
+                value: [norm(d.open), norm(d.close), norm(d.low), norm(d.high)],
+                raw: d,  // 原始价格存这里
                 itemStyle: {
                     color: d.close >= d.open ? '#f85149' : '#3fb950',
                     color0: d.close >= d.open ? '#f85149' : '#3fb950',
@@ -535,7 +612,6 @@
                 }
             }));
 
-            // 成交量颜色
             const volumeColors = data.map(d =>
                 d.close >= d.open ? 'rgba(248, 81, 73, 0.6)' : 'rgba(63, 185, 80, 0.6)'
             );
@@ -551,33 +627,47 @@
                         const kline = params.find(p => p.seriesType === 'candlestick');
                         const vol = params.find(p => p.seriesName === '成交量');
                         if (!kline) return '';
-                        const d = kline.data.value;
-                        const change = ((d[1] - d[0]) / d[0] * 100).toFixed(2);
-                        const changeColor = change >= 0 ? '#f85149' : '#3fb950';
+                        const d = kline.data.raw;      // 真实价格
+                        const pct = kline.data.value;  // 涨跌幅
+                        const dayChange = ((d.close - d.open) / d.open * 100).toFixed(2);
+                        const cc = dayChange >= 0 ? '#f85149' : '#3fb950';
                         let result = `${kline.name}<br/>`;
-                        result += `开盘: ${d[0]}<br/>`;
-                        result += `收盘: <span style="color:${changeColor}">${d[1]} (${change}%)</span><br/>`;
-                        result += `最低: ${d[2]}<br/>`;
-                        result += `最高: ${d[3]}<br/>`;
+                        result += `开盘: ${d.open} (${pct[0]}%)<br/>`;
+                        result += `收盘: ${d.close} <span style="color:${cc}">(${dayChange >= 0 ? '+' : ''}${dayChange}%)</span><br/>`;
+                        result += `最低: ${d.low} (${pct[2]}%)<br/>`;
+                        result += `最高: ${d.high} (${pct[3]}%)<br/>`;
                         if (vol) result += `成交量: <span style="color:#d29922">${vol.data}万亿</span>`;
                         return result;
                     }
                 },
                 grid: [
-                    { left: '3%', right: '4%', top: '5%', height: '55%' },
-                    { left: '3%', right: '4%', top: '68%', height: '22%' }
+                    { left: '3%', right: '4%', top: '4%', height: '68%' },
+                    { left: '3%', right: '4%', top: '76%', height: '18%' }
                 ],
                 xAxis: [
-                    { type: 'category', data: dates, gridIndex: 0, axisLine: { lineStyle: { color: '#30363d' } }, axisLabel: { show: false } },
-                    { type: 'category', data: dates, gridIndex: 1, axisLine: { lineStyle: { color: '#30363d' } }, axisLabel: { color: '#8b949e', fontSize: 9 } }
+                    { type: 'category', data: dates, gridIndex: 0,
+                      axisLine: { lineStyle: { color: '#30363d' } }, axisLabel: { show: false } },
+                    { type: 'category', data: dates, gridIndex: 1,
+                      axisLine: { lineStyle: { color: '#30363d' } },
+                      axisLabel: { color: '#8b949e', fontSize: 9 } }
                 ],
                 yAxis: [
-                    { type: 'value', scale: true, gridIndex: 0, splitLine: { lineStyle: { color: '#21262d' } }, axisLabel: { color: '#8b949e', fontSize: 9 } },
-                    { type: 'value', gridIndex: 1, splitLine: { show: false }, axisLabel: { color: '#8b949e', fontSize: 9, formatter: '{value}万亿' } }
+                    {
+                        type: 'value', scale: true, gridIndex: 0,
+                        splitLine: { lineStyle: { color: '#21262d' } },
+                        axisLabel: { color: '#8b949e', fontSize: 9, formatter: '{value}%' }
+                    },
+                    {
+                        type: 'value', gridIndex: 1, splitLine: { show: false },
+                        axisLabel: { color: '#8b949e', fontSize: 9, formatter: '{value}万亿' }
+                    }
                 ],
                 series: [
-                    { type: 'candlestick', data: klineData, barWidth: '60%', xAxisIndex: 0, yAxisIndex: 0 },
-                    { name: '成交量', type: 'bar', data: data.map((d, i) => ({ value: d.volume, itemStyle: { color: volumeColors[i] } })), barWidth: '60%', xAxisIndex: 1, yAxisIndex: 1 }
+                    { type: 'candlestick', data: klineData, barWidth: '60%',
+                      xAxisIndex: 0, yAxisIndex: 0 },
+                    { name: '成交量', type: 'bar',
+                      data: data.map((d, i) => ({ value: d.volume, itemStyle: { color: volumeColors[i] } })),
+                      barWidth: '60%', xAxisIndex: 1, yAxisIndex: 1 }
                 ]
             });
 
