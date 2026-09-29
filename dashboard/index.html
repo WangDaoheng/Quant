@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A股大盘情绪仪表盘</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 20px;
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+            border-radius: 12px;
+            border: 1px solid #30363d;
+        }
+        .header-left h1 { font-size: 24px; color: #f0f6fc; margin-bottom: 4px; }
+        .header-left .date { font-size: 13px; color: #8b949e; }
+        .score-container {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+        .score-container:hover { background: rgba(255,255,255,0.1); }
+        .score-number {
+            font-size: 42px;
+            font-weight: bold;
+            color: #f0f6fc;
+        }
+        .score-label {
+            padding: 6px 14px;
+            border-radius: 16px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .score-cold { background: #1f6feb; }
+        .score-cool { background: #388bfd; }
+        .score-normal { background: #3fb950; }
+        .score-warm { background: #d29922; }
+        .score-hot { background: #f85149; }
+        .nav-btn {
+            padding: 8px 16px;
+            background: #21262d;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            color: #58a6ff;
+            text-decoration: none;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+        .nav-btn:hover { background: #30363d; border-color: #58a6ff; }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+            margin-bottom: 20px;
+        }
+        .card {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 10px;
+            padding: 14px;
+            transition: transform 0.2s;
+        }
+        .card:hover { transform: translateY(-2px); border-color: #58a6ff; }
+        .card-title {
+            font-size: 12px;
+            color: #8b949e;
+            margin-bottom: 6px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .card-value {
+            font-size: 22px;
+            font-weight: bold;
+            color: #f0f6fc;
+        }
+        .card-value.up { color: #f85149; }
+        .card-value.down { color: #3fb950; }
+        .card-sub {
+            font-size: 11px;
+            color: #8b949e;
+            margin-top: 4px;
+        }
+
+        .chart-section {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+        .chart-title {
+            font-size: 14px;
+            color: #8b949e;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #30363d;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .chart-title .hint {
+            font-size: 11px;
+            color: #58a6ff;
+        }
+        .chart-container {
+            width: 100%;
+            height: 280px;
+        }
+        .chart-container.tall {
+            height: 320px;
+        }
+        .index-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+        .index-item {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-radius: 8px;
+            padding: 12px;
+        }
+        .index-item-title {
+            font-size: 13px;
+            color: #8b949e;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .index-item-title .value {
+            font-weight: bold;
+            color: #f0f6fc;
+        }
+        .index-item-title .value.up { color: #f85149; }
+        .index-item-title .value.down { color: #3fb950; }
+        .index-chart {
+            width: 100%;
+            height: 220px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal.show {
+            display: flex;
+        }
+        .modal-content {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 20px;
+            width: 90%;
+            max-width: 1000px;
+            max-height: 80vh;
+            overflow: auto;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #30363d;
+        }
+        .modal-header h2 {
+            font-size: 18px;
+            color: #f0f6fc;
+        }
+        .close-btn {
+            background: none;
+            border: none;
+            color: #8b949e;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+        }
+        .close-btn:hover { background: #30363d; color: #f0f6fc; }
+        #scoreChart {
+            width: 100%;
+            height: 400px;
+        }
+
+        .footer {
+            text-align: center;
+            color: #8b949e;
+            font-size: 11px;
+            margin-top: 20px;
+            padding: 16px;
+            border-top: 1px solid #30363d;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #8b949e;
+        }
+        .error {
+            text-align: center;
+            padding: 40px;
+            color: #f85149;
+        }
+        @media (max-width: 1200px) {
+            .grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-left">
+            <h1>📊 A股大盘情绪仪表盘</h1>
+            <div class="date" id="dataDate">数据加载中...</div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 20px;">
+            <div class="score-container" onclick="showScoreModal()" title="点击查看情绪得分走势">
+                <div class="score-number" id="scoreNumber">--</div>
+                <div class="score-label score-cool" id="scoreLabel">加载中</div>
+            </div>
+            <a href="plates.html" class="nav-btn">📈 板块轮动 →</a>
+        </div>
+    </div>
+
+    <div id="loading" class="loading">正在加载数据...</div>
+    <div id="error" class="error" style="display: none;"></div>
+
+    <div id="content" style="display: none;">
+        <!-- 指标卡片 -->
+        <div class="grid">
+            <div class="card">
+                <div class="card-title"><span>今日涨停</span><span>🔥</span></div>
+                <div class="card-value up" id="ztValue">--</div>
+                <div class="card-sub" id="ztSub">--</div>
+            </div>
+            <div class="card">
+                <div class="card-title"><span>今日跌停</span><span>❄️</span></div>
+                <div class="card-value down" id="dtValue">--</div>
+                <div class="card-sub" id="dtSub">--</div>
+            </div>
+            <div class="card">
+                <div class="card-title"><span>最高连板</span><span>📈</span></div>
+                <div class="card-value" id="boardValue">--</div>
+                <div class="card-sub" id="boardSub">--</div>
+            </div>
+            <div class="card">
+                <div class="card-title"><span>打板溢价</span><span>💰</span></div>
+                <div class="card-value down" id="premiumValue">--</div>
+                <div class="card-sub">昨日涨停今日平均涨幅</div>
+            </div>
+            <div class="card">
+                <div class="card-title"><span>20日新高-新低</span><span>📊</span></div>
+                <div class="card-value down" id="hlValue">--</div>
+                <div class="card-sub" id="hlSub">--</div>
+            </div>
+            <div class="card">
+                <div class="card-title"><span>全市场成交额</span><span>💵</span></div>
+                <div class="card-value" id="amountValue">--</div>
+                <div class="card-sub" id="amountSub">--</div>
+            </div>
+            <div class="card">
+                <div class="card-title"><span>量能分位</span><span>📉</span></div>
+                <div class="card-value" id="volPctValue">--</div>
+                <div class="card-sub">近一年百分位</div>
+            </div>
+            <div class="card">
+                <div class="card-title"><span>涨跌家数</span><span>⚖️</span></div>
+                <div class="card-value" id="upDownValue">--</div>
+                <div class="card-sub">上涨/下跌（估算）</div>
+            </div>
+        </div>
+
+        <!-- 涨跌停大横格 -->
+        <div class="chart-section">
+            <div class="chart-title">
+                <span>涨跌停数（近40个交易日）</span>
+                <span class="hint">👇 底部共享滑块控制下方所有图表</span>
+            </div>
+            <div id="ztDtChart" class="chart-container tall"></div>
+        </div>
+
+        <!-- 指数独立K线图 -->
+        <div class="chart-section">
+            <div class="chart-title">
+                <span>核心指数K线 + 成交量（近40个交易日）</span>
+                <span class="hint">红涨绿跌 | 各指数独立坐标 | 下方柱为成交量（万亿）</span>
+            </div>
+            <div class="index-grid">
+                <div class="index-item">
+                    <div class="index-item-title">
+                        <span>上证指数 (000001.SH)</span>
+                        <span class="value" id="shIndexValue">--</span>
+                    </div>
+                    <div id="shChart" class="index-chart"></div>
+                </div>
+                <div class="index-item">
+                    <div class="index-item-title">
+                        <span>创业板指 (399006.SZ)</span>
+                        <span class="value" id="cybIndexValue">--</span>
+                    </div>
+                    <div id="cybChart" class="index-chart"></div>
+                </div>
+                <div class="index-item">
+                    <div class="index-item-title">
+                        <span>科创50 (000688.SH)</span>
+                        <span class="value" id="kcIndexValue">--</span>
+                    </div>
+                    <div id="kcChart" class="index-chart"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 共享滑块 -->
+        <div class="chart-section" style="padding: 12px 16px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <span style="font-size: 12px; color: #8b949e; white-space: nowrap;">📅 时间范围：</span>
+                <div id="sharedZoom" style="flex: 1; height: 40px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 情绪得分弹窗 -->
+    <div id="scoreModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📈 情绪得分走势（近40个交易日）</h2>
+                <button class="close-btn" onclick="closeScoreModal()">×</button>
+            </div>
+            <div id="scoreChart"></div>
+            <div style="margin-top: 12px; padding: 12px; background: #0d1117; border-radius: 8px; font-size: 12px; color: #8b949e;">
+                <b style="color: #c9d1d9;">计算公式：</b><br>
+                情绪得分 = 涨跌停比×30% + 打板溢价×25% + 新高新低差×20% + 量能分位×25%<br>
+                <span style="color: #1f6feb;">■</span> 0-20 冰点 |
+                <span style="color: #388bfd;">■</span> 20-40 偏冷 |
+                <span style="color: #3fb950;">■</span> 40-60 正常 |
+                <span style="color: #d29922;">■</span> 60-80 偏热 |
+                <span style="color: #f85149;">■</span> 80-100 亢奋
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        数据来源：quant 数据库 | 生成文件：data_jsons/sentiment.json | 全市场成交额 = 000001.SH volume × 100
+    </div>
+
+    <script>
+        // 全局数据
+        let sentimentData = null;
+        let charts = {};
+
+        // 加载数据
+        fetch('./data_jsons/sentiment.json')
+            .then(res => {
+                if (!res.ok) throw new Error('sentiment.json 不存在，请先运行 dapan_qingxu.py');
+                return res.json();
+            })
+            .then(data => {
+                sentimentData = data;
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('content').style.display = 'block';
+                renderAll(data);
+            })
+            .catch(err => {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('error').style.display = 'block';
+                document.getElementById('error').textContent = '数据加载失败：' + err.message;
+            });
+
+        function renderAll(data) {
+            const daily = data.daily;
+            const lastIdx = daily.length - 1;
+            const last = daily[lastIdx];
+            const prev = daily[lastIdx - 1] || last;
+
+            // 更新头部
+            document.getElementById('dataDate').textContent =
+                `数据日期：${last.ymd} | 生成时间：${data.meta.generated_at}`;
+
+            // 情绪得分
+            const score = last.emotion.score;
+            document.getElementById('scoreNumber').textContent = score;
+            const scoreLabel = document.getElementById('scoreLabel');
+            scoreLabel.textContent = getScoreLevel(score);
+            scoreLabel.className = 'score-label ' + getScoreClass(score);
+
+            // 指标卡
+            document.getElementById('ztValue').textContent = last.zt;
+            document.getElementById('ztSub').textContent = `昨日：${prev.zt}（${((last.zt-prev.zt)/prev.zt*100).toFixed(0)}%）`;
+
+            document.getElementById('dtValue').textContent = last.dt;
+            document.getElementById('dtSub').textContent = `昨日：${prev.dt}（${((last.dt-prev.dt)/prev.dt*100).toFixed(0)}%）`;
+
+            document.getElementById('boardValue').textContent = last.max_board + '板';
+            document.getElementById('boardSub').textContent = '最高连板';
+
+            document.getElementById('premiumValue').textContent = last.premium + '%';
+            document.getElementById('premiumValue').className = 'card-value ' + (last.premium >= 0 ? 'up' : 'down');
+
+            document.getElementById('hlValue').textContent = last.hl_diff;
+            document.getElementById('hlSub').textContent = `新高${last.high20} / 新低${last.low20}`;
+
+            document.getElementById('amountValue').textContent = (last.amount_yi/10000).toFixed(2) + '万亿';
+            document.getElementById('amountSub').textContent = `量能分位：${last.emotion.vol_score}%`;
+
+            document.getElementById('volPctValue').textContent = last.emotion.vol_score + '%';
+
+            // 涨跌家数（估算）
+            const upEst = Math.round(5366 * 0.35); // 简化估算
+            const downEst = 5366 - upEst;
+            document.getElementById('upDownValue').textContent = upEst + ' / ' + downEst;
+
+            // 渲染图表
+            renderZtDtChart(daily);
+            renderIndexCharts(daily);
+            renderSharedZoom(daily);
+        }
+
+        function getScoreLevel(score) {
+            if (score < 20) return '冰点';
+            if (score < 40) return '偏冷';
+            if (score < 60) return '正常';
+            if (score < 80) return '偏热';
+            return '亢奋';
+        }
+
+        function getScoreClass(score) {
+            if (score < 20) return 'score-cold';
+            if (score < 40) return 'score-cool';
+            if (score < 60) return 'score-normal';
+            if (score < 80) return 'score-warm';
+            return 'score-hot';
+        }
+
+        function renderZtDtChart(daily) {
+            const dates = daily.map(d => d.date);
+            const ztData = daily.map(d => d.zt);
+            const dtData = daily.map(d => -d.dt);
+
+            charts.ztDt = echarts.init(document.getElementById('ztDtChart'));
+            charts.ztDt.setOption({
+                tooltip: {
+                    trigger: 'axis',
+                    backgroundColor: '#1c2128',
+                    borderColor: '#30363d',
+                    textStyle: { color: '#c9d1d9' },
+                    formatter: function(params) {
+                        let result = params[0].name + '<br/>';
+                        params.forEach(p => {
+                            const val = p.value > 0 ? p.value : -p.value;
+                            result += p.marker + ' ' + p.seriesName + ': ' + val + '家<br/>';
+                        });
+                        return result;
+                    }
+                },
+                legend: { data: ['涨停', '跌停'], textStyle: { color: '#8b949e' }, top: 0 },
+                grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+                xAxis: {
+                    type: 'category',
+                    data: dates,
+                    axisLine: { lineStyle: { color: '#30363d' } },
+                    axisLabel: { color: '#8b949e', fontSize: 10 }
+                },
+                yAxis: {
+                    type: 'value',
+                    splitLine: { lineStyle: { color: '#21262d' } },
+                    axisLabel: { color: '#8b949e' }
+                },
+                series: [
+                    { name: '涨停', type: 'bar', stack: 'total', data: ztData, itemStyle: { color: '#f85149' }, barWidth: '60%' },
+                    { name: '跌停', type: 'bar', stack: 'total', data: dtData, itemStyle: { color: '#3fb950' }, barWidth: '60%' }
+                ]
+            });
+        }
+
+        function renderIndexCharts(daily) {
+            const dates = daily.map(d => d.date);
+
+            // 上证指数
+            renderKlineChart('shChart', daily.map(d => d.indices.sh), dates, 'shIndexValue', '#f85149');
+            // 创业板指
+            renderKlineChart('cybChart', daily.map(d => d.indices.cyb), dates, 'cybIndexValue', '#58a6ff');
+            // 科创50
+            renderKlineChart('kcChart', daily.map(d => d.indices.kc50), dates, 'kcIndexValue', '#d29922');
+        }
+
+        function renderKlineChart(domId, data, dates, valueId, color) {
+            const chart = echarts.init(document.getElementById(domId));
+
+            // 计算涨跌幅
+            const firstClose = data[0].close;
+            const lastClose = data[data.length-1].close;
+            const change = ((lastClose - firstClose) / firstClose * 100).toFixed(2);
+
+            // 更新标题
+            const valueEl = document.getElementById(valueId);
+            valueEl.textContent = `${lastClose} (${change}%)`;
+            valueEl.className = 'value ' + (change >= 0 ? 'up' : 'down');
+
+            // K线数据 [open, close, low, high]
+            const klineData = data.map(d => ({
+                value: [d.open, d.close, d.low, d.high],
+                itemStyle: {
+                    color: d.close >= d.open ? '#f85149' : '#3fb950',
+                    color0: d.close >= d.open ? '#f85149' : '#3fb950',
+                    borderColor: d.close >= d.open ? '#f85149' : '#3fb950',
+                    borderColor0: d.close >= d.open ? '#f85149' : '#3fb950'
+                }
+            }));
+
+            // 成交量颜色
+            const volumeColors = data.map(d =>
+                d.close >= d.open ? 'rgba(248, 81, 73, 0.6)' : 'rgba(63, 185, 80, 0.6)'
+            );
+
+            chart.setOption({
+                tooltip: {
+                    trigger: 'axis',
+                    backgroundColor: '#1c2128',
+                    borderColor: '#30363d',
+                    textStyle: { color: '#c9d1d9' },
+                    axisPointer: { type: 'cross' },
+                    formatter: function(params) {
+                        const kline = params.find(p => p.seriesType === 'candlestick');
+                        const vol = params.find(p => p.seriesName === '成交量');
+                        if (!kline) return '';
+                        const d = kline.data.value;
+                        const change = ((d[1] - d[0]) / d[0] * 100).toFixed(2);
+                        const changeColor = change >= 0 ? '#f85149' : '#3fb950';
+                        let result = `${kline.name}<br/>`;
+                        result += `开盘: ${d[0]}<br/>`;
+                        result += `收盘: <span style="color:${changeColor}">${d[1]} (${change}%)</span><br/>`;
+                        result += `最低: ${d[2]}<br/>`;
+                        result += `最高: ${d[3]}<br/>`;
+                        if (vol) result += `成交量: <span style="color:#d29922">${vol.data}万亿</span>`;
+                        return result;
+                    }
+                },
+                grid: [
+                    { left: '3%', right: '4%', top: '5%', height: '55%' },
+                    { left: '3%', right: '4%', top: '68%', height: '22%' }
+                ],
+                xAxis: [
+                    { type: 'category', data: dates, gridIndex: 0, axisLine: { lineStyle: { color: '#30363d' } }, axisLabel: { show: false } },
+                    { type: 'category', data: dates, gridIndex: 1, axisLine: { lineStyle: { color: '#30363d' } }, axisLabel: { color: '#8b949e', fontSize: 9 } }
+                ],
+                yAxis: [
+                    { type: 'value', scale: true, gridIndex: 0, splitLine: { lineStyle: { color: '#21262d' } }, axisLabel: { color: '#8b949e', fontSize: 9 } },
+                    { type: 'value', gridIndex: 1, splitLine: { show: false }, axisLabel: { color: '#8b949e', fontSize: 9, formatter: '{value}万亿' } }
+                ],
+                series: [
+                    { type: 'candlestick', data: klineData, barWidth: '60%', xAxisIndex: 0, yAxisIndex: 0 },
+                    { name: '成交量', type: 'bar', data: data.map((d, i) => ({ value: d.volume, itemStyle: { color: volumeColors[i] } })), barWidth: '60%', xAxisIndex: 1, yAxisIndex: 1 }
+                ]
+            });
+
+            charts[domId] = chart;
+        }
+
+        function renderSharedZoom(daily) {
+            const dates = daily.map(d => d.date);
+
+            charts.sharedZoom = echarts.init(document.getElementById('sharedZoom'));
+            charts.sharedZoom.setOption({
+                xAxis: { type: 'category', data: dates, show: false },
+                yAxis: { show: false },
+                dataZoom: [{
+                    type: 'slider',
+                    height: 30,
+                    borderColor: '#30363d',
+                    backgroundColor: '#161b22',
+                    fillerColor: 'rgba(88,166,255,0.3)',
+                    handleStyle: { color: '#58a6ff' },
+                    textStyle: { color: '#8b949e' },
+                    start: 0,
+                    end: 100
+                }],
+                series: [{ type: 'line', data: [] }]
+            });
+
+            // 同步所有图
+            const allCharts = [charts.ztDt, charts.shChart, charts.cybChart, charts.kcChart];
+            charts.sharedZoom.on('dataZoom', function() {
+                const zoom = charts.sharedZoom.getOption().dataZoom[0];
+                allCharts.forEach(chart => {
+                    if (chart) chart.dispatchAction({ type: 'dataZoom', start: zoom.start, end: zoom.end });
+                });
+            });
+        }
+
+        // 情绪得分弹窗
+        let scoreChartInstance = null;
+        function showScoreModal() {
+            if (!sentimentData) return;
+
+            document.getElementById('scoreModal').classList.add('show');
+            if (!scoreChartInstance) {
+                scoreChartInstance = echarts.init(document.getElementById('scoreChart'));
+            }
+
+            const daily = sentimentData.daily;
+            const dates = daily.map(d => d.date);
+            const scores = daily.map(d => d.emotion.score);
+
+            scoreChartInstance.setOption({
+                tooltip: {
+                    trigger: 'axis',
+                    backgroundColor: '#1c2128',
+                    borderColor: '#30363d',
+                    textStyle: { color: '#c9d1d9' },
+                    formatter: function(params) {
+                        const p = params[0];
+                        const score = p.value;
+                        return `${p.name}<br/>情绪得分：<b>${score}</b>（${getScoreLevel(score)}）`;
+                    }
+                },
+                grid: { left: '3%', right: '4%', bottom: '10%', containLabel: true },
+                xAxis: {
+                    type: 'category',
+                    data: dates,
+                    axisLine: { lineStyle: { color: '#30363d' } },
+                    axisLabel: { color: '#8b949e', fontSize: 10 }
+                },
+                yAxis: {
+                    type: 'value',
+                    min: 0,
+                    max: 100,
+                    splitLine: { lineStyle: { color: '#21262d' } },
+                    axisLabel: { color: '#8b949e' }
+                },
+                dataZoom: [{ type: 'inside' }, { type: 'slider', height: 20, bottom: 0, borderColor: '#30363d', backgroundColor: '#161b22', fillerColor: 'rgba(88,166,255,0.2)' }],
+                series: [{
+                    type: 'line',
+                    data: scores,
+                    smooth: true,
+                    symbol: 'circle',
+                    symbolSize: 6,
+                    lineStyle: { color: '#58a6ff', width: 3 },
+                    itemStyle: { color: '#58a6ff' },
+                    areaStyle: {
+                        color: {
+                            type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
+                            colorStops: [
+                                { offset: 0, color: 'rgba(88,166,255,0.4)' },
+                                { offset: 1, color: 'rgba(88,166,255,0.05)' }
+                            ]
+                        }
+                    },
+                    markLine: {
+                        silent: true,
+                        symbol: 'none',
+                        data: [
+                            { yAxis: 20, lineStyle: { color: '#1f6feb', type: 'dashed' }, label: { formatter: '冰点', color: '#1f6feb' } },
+                            { yAxis: 40, lineStyle: { color: '#388bfd', type: 'dashed' }, label: { formatter: '偏冷', color: '#388bfd' } },
+                            { yAxis: 60, lineStyle: { color: '#3fb950', type: 'dashed' }, label: { formatter: '正常', color: '#3fb950' } },
+                            { yAxis: 80, lineStyle: { color: '#d29922', type: 'dashed' }, label: { formatter: '偏热', color: '#d29922' } }
+                        ]
+                    }
+                }]
+            });
+            setTimeout(() => scoreChartInstance.resize(), 100);
+        }
+        function closeScoreModal() {
+            document.getElementById('scoreModal').classList.remove('show');
+        }
+
+        // 响应式
+        window.addEventListener('resize', () => {
+            Object.values(charts).forEach(chart => chart && chart.resize());
+            if (scoreChartInstance) scoreChartInstance.resize();
+        });
+    </script>
+</body>
+</html>
