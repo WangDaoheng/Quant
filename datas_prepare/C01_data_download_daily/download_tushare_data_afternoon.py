@@ -181,13 +181,15 @@ class SaveTushareDailyData:
         logging.info(f"板块列表: {len(df)} 个")
 
 
-    @timing_decorator
+    # @timing_decorator
     def download_board_daily(self, start_date=None, end_date=None):
         """下载同花顺板块行情，写入 ods_tushare_stock_board_concept_index_ths"""
         if not end_date:
-            end_date = DateUtility.today()
+            # end_date = DateUtility.today()
+            end_date = '20260701'
         if not start_date:
-            start_date = DateUtility.first_day_of_month()
+            # start_date = DateUtility.first_day_of_month()
+            start_date = '20260701'
 
         logging.info(f"板块行情: {start_date} ~ {end_date}")
 
@@ -407,12 +409,12 @@ class SaveTushareDailyData:
         return result
 
 
-    @script_run(script_name="download_tushare_data_afternoon.py")
+    # @script_run(script_name="download_tushare_data_afternoon.py")
     def setup(self):
-        self.get_stock_kline_tushare()
-        self.download_board_list()
+        # self.get_stock_kline_tushare()
+        # self.download_board_list()
         self.download_board_daily()
-        self.download_board_members()
+        # self.download_board_members()
 
 
 if __name__ == '__main__':

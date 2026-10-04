@@ -177,7 +177,7 @@ class TableDataExporterFull:
                 WHERE ymd IS NOT NULL 
                 AND ymd <= :today
                 ORDER BY ymd DESC 
-                LIMIT 10
+                LIMIT 70
             """)
             result = connection.execute(query, {"today": today})
 
@@ -254,7 +254,7 @@ class TableDataExporterFull:
                 FROM `{table_name}` 
                 WHERE ymd IS NOT NULL 
                 ORDER BY ymd DESC 
-                LIMIT 10
+                LIMIT 70
             """)
 
             result = connection.execute(query)
