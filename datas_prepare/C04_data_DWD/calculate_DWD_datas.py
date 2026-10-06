@@ -37,6 +37,7 @@ class CalDWD:
         聚合股票的板块，把各个板块数据聚合在一起
         写入 dwd_stock_a_total_plate
         """
+
         ymd = DateUtility.today()
 
         sql_statements_template = [
@@ -145,6 +146,7 @@ class CalDWD:
             database=origin_database,
             sql_statements=sql_statements)
 
+
     @timing_decorator
     def cal_shareholder_num_event(self):
         """
@@ -222,6 +224,7 @@ class CalDWD:
             database=origin_database,
             sql_statements=sql_statements)
 
+
     @timing_decorator
     def cal_shareholder_num_daily(self):
         """
@@ -271,6 +274,7 @@ class CalDWD:
             host=origin_host,
             database=origin_database,
             sql_statements=sql_statements)
+
 
     @timing_decorator
     def cal_shareholder_num_event_batch(self, start_ymd='20210801', end_ymd=None):
@@ -382,6 +386,7 @@ class CalDWD:
         )
 
         logging.info(f"完成！共写入 {len(result_df)} 条股东数事件")
+
 
     @timing_decorator
     def cal_shareholder_num_daily_batch(self, start_ymd='20200101', end_ymd=None):

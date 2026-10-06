@@ -91,39 +91,45 @@ class SaveAkshareDailyData:
         接口: stock_zh_a_gdhs_detail_em
         说明: 个股的全量历史数据，不可选定日期   建议周末跑
         """
-        column_mapping = {
-            '股东户数统计截止日': 'ymd',
-            '代码': 'stock_code',
-            '名称': 'stock_name',
-            '区间涨跌幅': 'range_change_pct',
-            '股东户数-本次': 'holder_num_current',
-            '股东户数-上次': 'holder_num_last',
-            '股东户数-增减': 'holder_num_change',
-            '股东户数-增减比例': 'holder_num_change_pct',
-            '户均持股市值': 'avg_holder_market',
-            '户均持股数量': 'avg_holder_share_num',
-            '总市值': 'total_market',
-            '总股本': 'total_shares',
-            '股本变动': 'share_change',
-            '股本变动原因': 'share_change_reason',
-            '股东户数公告日期': 'holder_num_announce_date'
-        }
 
-        numeric_columns = [
-            'range_change_pct', 'holder_num_current', 'holder_num_last',
-            'holder_num_change', 'holder_num_change_pct', 'avg_holder_market',
-            'avg_holder_share_num', 'total_market', 'total_shares', 'share_change'
-        ]
+        try:
+            column_mapping = {
+                '股东户数统计截止日': 'ymd',
+                '代码': 'stock_code',
+                '名称': 'stock_name',
+                '区间涨跌幅': 'range_change_pct',
+                '股东户数-本次': 'holder_num_current',
+                '股东户数-上次': 'holder_num_last',
+                '股东户数-增减': 'holder_num_change',
+                '股东户数-增减比例': 'holder_num_change_pct',
+                '户均持股市值': 'avg_holder_market',
+                '户均持股数量': 'avg_holder_share_num',
+                '总市值': 'total_market',
+                '总股本': 'total_shares',
+                '股本变动': 'share_change',
+                '股本变动原因': 'share_change_reason',
+                '股东户数公告日期': 'holder_num_announce_date'
+            }
 
-        return self.downloader.download_to_mysql(
-            ak_function_name='stock_zh_a_gdhs_detail_em',
-            table_name='ods_akshare_stock_zh_a_gdhs_detail_em',
-            column_mapping=column_mapping,
-            numeric_columns=numeric_columns,
-            date_format='%Y-%m-%d',
-            merge_on=['ymd', 'stock_code'],
-            auto_add_stock_code=False
-        )
+            numeric_columns = [
+                'range_change_pct', 'holder_num_current', 'holder_num_last',
+                'holder_num_change', 'holder_num_change_pct', 'avg_holder_market',
+                'avg_holder_share_num', 'total_market', 'total_shares', 'share_change'
+            ]
+
+            return self.downloader.download_to_mysql(
+                ak_function_name='stock_zh_a_gdhs_detail_em',
+                table_name='ods_akshare_stock_zh_a_gdhs_detail_em',
+                column_mapping=column_mapping,
+                numeric_columns=numeric_columns,
+                date_format='%Y-%m-%d',
+                merge_on=['ymd', 'stock_code'],
+                auto_add_stock_code=False
+            )
+
+        except Exception as e:
+            logging.error(f"下载 ods_akshare_stock_zh_a_gdhs_detail_em 失败: {str(e)}")
+            return False
 
 
     @timing_decorator
@@ -136,7 +142,7 @@ class SaveAkshareDailyData:
         try:
             # 获取当前年份和过去几年的数据
             current_year = int(DateUtility.today()[:4])
-            years = list(range(2025, current_year + 1))  # 从2025年开始，库里已有2020数据
+            years = list(range(2026, current_year + 1))  # 从2026年开始，库里已有2020数据
 
             # 季度对应的日期后缀
             quarter_dates = ["0331", "0630", "0930", "1231"]
@@ -288,60 +294,65 @@ class SaveAkshareDailyData:
         下载大盘高低统计数据 - ods_akshare_stock_a_high_low_statistics
         下载所有市场类型：全部A股、上证50、沪深300、中证500
         """
-        # 复用通用的数据处理和保存逻辑
-        markets = ["all", "sz50", "hs300", "zz500"]
+        try:
+            # 复用通用的数据处理和保存逻辑
+            markets = ["all", "sz50", "hs300", "zz500"]
 
-        # 获取数据
-        all_data = pd.DataFrame()
-        for market in markets:
-            try:
-                df = ak.stock_a_high_low_statistics(symbol=market)
-                if df is not None and not df.empty:
-                    df['market'] = market
-                    all_data = pd.concat([all_data, df], ignore_index=True)
-            except Exception as e:
-                logging.warning(f"获取 {market} 数据失败: {str(e)[:100]}")
-                continue
+            # 获取数据
+            all_data = pd.DataFrame()
+            for market in markets:
+                try:
+                    df = ak.stock_a_high_low_statistics(symbol=market)
+                    if df is not None and not df.empty:
+                        df['market'] = market
+                        all_data = pd.concat([all_data, df], ignore_index=True)
+                except Exception as e:
+                    logging.warning(f"获取 {market} 数据失败: {str(e)[:100]}")
+                    continue
 
-        if all_data.empty:
-            logging.warning("大盘高低统计数据为空")
+            if all_data.empty:
+                logging.warning("大盘高低统计数据为空")
+                return False
+
+            # 直接使用downloader的数据处理和保存方法
+            column_mapping = {
+                'date': 'ymd',
+                'close': 'close',
+                'high20': 'high20',
+                'low20': 'low20',
+                'high60': 'high60',
+                'low60': 'low60',
+                'high120': 'high120',
+                'low120': 'low120'
+            }
+
+            numeric_columns = [
+                'close', 'high20', 'low20', 'high60',
+                'low60', 'high120', 'low120'
+            ]
+
+            # 使用_process_data处理数据
+            processed_df = self.downloader._process_data(
+                all_data=all_data,
+                column_mapping=column_mapping,
+                date_column='ymd',
+                date_format='%Y%m%d',
+                numeric_columns=numeric_columns,
+                table_name='ods_akshare_stock_a_high_low_statistics'
+            )
+
+            # 使用_save_to_mysql保存数据
+            if not processed_df.empty:
+                return self.downloader._save_to_mysql(
+                    df=processed_df,
+                    table_name='ods_akshare_stock_a_high_low_statistics',
+                    merge_on=['ymd', 'market']
+                )
             return False
 
-        # 直接使用downloader的数据处理和保存方法
-        column_mapping = {
-            'date': 'ymd',
-            'close': 'close',
-            'high20': 'high20',
-            'low20': 'low20',
-            'high60': 'high60',
-            'low60': 'low60',
-            'high120': 'high120',
-            'low120': 'low120'
-        }
-
-        numeric_columns = [
-            'close', 'high20', 'low20', 'high60',
-            'low60', 'high120', 'low120'
-        ]
-
-        # 使用_process_data处理数据
-        processed_df = self.downloader._process_data(
-            all_data=all_data,
-            column_mapping=column_mapping,
-            date_column='ymd',
-            date_format='%Y%m%d',
-            numeric_columns=numeric_columns,
-            table_name='ods_akshare_stock_a_high_low_statistics'
-        )
-
-        # 使用_save_to_mysql保存数据
-        if not processed_df.empty:
-            return self.downloader._save_to_mysql(
-                df=processed_df,
-                table_name='ods_akshare_stock_a_high_low_statistics',
-                merge_on=['ymd', 'market']
-            )
-        return False
+        except Exception as e:
+            logging.error(f"下载大盘高低统计数据失败: {str(e)}")
+            return False
 
 
     @script_run(script_name="download_akshare_data_afternoon.py")

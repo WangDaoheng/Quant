@@ -87,38 +87,43 @@ class SaveAkshareWeekendData:
         下载股票估值数据 - ods_akshare_stock_value_em
         流式处理：边下载边处理边保存，避免内存溢出
         """
-        column_mapping = {
-            '数据日期': 'ymd',
-            '当日收盘价': 'close',
-            '当日涨跌幅': 'change_pct',
-            '总市值': 'total_market',
-            '流通市值': 'circulation_market',
-            '总股本': 'total_shares',
-            '流通股本': 'circulation_shares',
-            'PE(TTM)': 'pe_ttm',
-            'PE(静)': 'pe_static',
-            '市净率': 'pb',
-            'PEG值': 'peg',
-            '市现率': 'pcf',
-            '市销率': 'ps'
-        }
+        try:
+            column_mapping = {
+                '数据日期': 'ymd',
+                '当日收盘价': 'close',
+                '当日涨跌幅': 'change_pct',
+                '总市值': 'total_market',
+                '流通市值': 'circulation_market',
+                '总股本': 'total_shares',
+                '流通股本': 'circulation_shares',
+                'PE(TTM)': 'pe_ttm',
+                'PE(静)': 'pe_static',
+                '市净率': 'pb',
+                'PEG值': 'peg',
+                '市现率': 'pcf',
+                '市销率': 'ps'
+            }
 
-        numeric_columns = [
-            'close', 'change_pct', 'total_market', 'circulation_market',
-            'total_shares', 'circulation_shares', 'pe_ttm', 'pe_static',
-            'pb', 'peg', 'pcf', 'ps'
-        ]
+            numeric_columns = [
+                'close', 'change_pct', 'total_market', 'circulation_market',
+                'total_shares', 'circulation_shares', 'pe_ttm', 'pe_static',
+                'pb', 'peg', 'pcf', 'ps'
+            ]
 
-        # 直接调用优化后的下载方法
-        return self.downloader.download_to_mysql_stream(
-            ak_function_name='stock_value_em',
-            table_name='ods_akshare_stock_value_em',
-            column_mapping=column_mapping,
-            numeric_columns=numeric_columns,
-            date_format='%Y-%m-%d',
-            merge_on=['ymd', 'stock_code'],
-            auto_add_stock_code=True
-        )
+            # 直接调用优化后的下载方法
+            return self.downloader.download_to_mysql_stream(
+                ak_function_name='stock_value_em',
+                table_name='ods_akshare_stock_value_em',
+                column_mapping=column_mapping,
+                numeric_columns=numeric_columns,
+                date_format='%Y-%m-%d',
+                merge_on=['ymd', 'stock_code'],
+                auto_add_stock_code=True
+            )
+
+        except Exception as e:
+            logging.error(f"下载 ods_akshare_stock_value_em 失败: {str(e)}")
+            return False
 
 
     @timing_decorator
@@ -128,39 +133,45 @@ class SaveAkshareWeekendData:
         接口: stock_zh_a_gdhs_detail_em
         说明: 个股的全量历史数据，不可选定日期   建议周末跑
         """
-        column_mapping = {
-            '股东户数统计截止日': 'ymd',
-            '代码': 'stock_code',
-            '名称': 'stock_name',
-            '区间涨跌幅': 'range_change_pct',
-            '股东户数-本次': 'holder_num_current',
-            '股东户数-上次': 'holder_num_last',
-            '股东户数-增减': 'holder_num_change',
-            '股东户数-增减比例': 'holder_num_change_pct',
-            '户均持股市值': 'avg_holder_market',
-            '户均持股数量': 'avg_holder_share_num',
-            '总市值': 'total_market',
-            '总股本': 'total_shares',
-            '股本变动': 'share_change',
-            '股本变动原因': 'share_change_reason',
-            '股东户数公告日期': 'holder_num_announce_date'
-        }
 
-        numeric_columns = [
-            'range_change_pct', 'holder_num_current', 'holder_num_last',
-            'holder_num_change', 'holder_num_change_pct', 'avg_holder_market',
-            'avg_holder_share_num', 'total_market', 'total_shares', 'share_change'
-        ]
+        try:
+            column_mapping = {
+                '股东户数统计截止日': 'ymd',
+                '代码': 'stock_code',
+                '名称': 'stock_name',
+                '区间涨跌幅': 'range_change_pct',
+                '股东户数-本次': 'holder_num_current',
+                '股东户数-上次': 'holder_num_last',
+                '股东户数-增减': 'holder_num_change',
+                '股东户数-增减比例': 'holder_num_change_pct',
+                '户均持股市值': 'avg_holder_market',
+                '户均持股数量': 'avg_holder_share_num',
+                '总市值': 'total_market',
+                '总股本': 'total_shares',
+                '股本变动': 'share_change',
+                '股本变动原因': 'share_change_reason',
+                '股东户数公告日期': 'holder_num_announce_date'
+            }
 
-        return self.downloader.download_to_mysql(
-            ak_function_name='stock_zh_a_gdhs_detail_em',
-            table_name='ods_akshare_stock_zh_a_gdhs_detail_em',
-            column_mapping=column_mapping,
-            numeric_columns=numeric_columns,
-            date_format='%Y-%m-%d',
-            merge_on=['ymd', 'stock_code'],
-            auto_add_stock_code=False
-        )
+            numeric_columns = [
+                'range_change_pct', 'holder_num_current', 'holder_num_last',
+                'holder_num_change', 'holder_num_change_pct', 'avg_holder_market',
+                'avg_holder_share_num', 'total_market', 'total_shares', 'share_change'
+            ]
+
+            return self.downloader.download_to_mysql(
+                ak_function_name='stock_zh_a_gdhs_detail_em',
+                table_name='ods_akshare_stock_zh_a_gdhs_detail_em',
+                column_mapping=column_mapping,
+                numeric_columns=numeric_columns,
+                date_format='%Y-%m-%d',
+                merge_on=['ymd', 'stock_code'],
+                auto_add_stock_code=False
+            )
+
+        except Exception as e:
+            logging.error(f"下载 ods_akshare_stock_zh_a_gdhs_detail_em 失败: {str(e)}")
+            return False
 
 
     @script_run(script_name="download_akshare_history_data_weekend.py")

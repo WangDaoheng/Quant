@@ -64,64 +64,69 @@ class SaveInsightData24PM:
              index_a_share   [htsc_code 	time	frequency	open	close	high	low	volume	value]
         """
 
-        #  1.当月数据的起止时间
-        start_date = DateUtility.first_day_of_month()
-        end_date = DateUtility.next_day(-1)
+        try:
+            #  1.当月数据的起止时间
+            start_date = DateUtility.first_day_of_month()
+            end_date = DateUtility.next_day(-1)
 
-        start_date = datetime.strptime(start_date, '%Y%m%d')
-        end_date = datetime.strptime(end_date, '%Y%m%d').replace(hour=23, minute=59, second=59)
+            start_date = datetime.strptime(start_date, '%Y%m%d')
+            end_date = datetime.strptime(end_date, '%Y%m%d').replace(hour=23, minute=59, second=59)
 
-        #  2.查询标的
-        index_dict = {"000001.SH": "上证指数"
-            , "399002.SZ": "深成指"
-            , "399006.SZ": "创业板指"
-            , "000016.SH": "上证50"
-            , "000300.SH": "沪深300"
-            , "000849.SH": "300非银"
-            , "000905.SH": "中证500"
-            , "399852.SZ": "中证1000"
-            , "000688.SH": "科创50"}
-        index_list = list(index_dict.keys())
+            #  2.查询标的
+            index_dict = {"000001.SH": "上证指数"
+                , "399002.SZ": "深成指"
+                , "399006.SZ": "创业板指"
+                , "000016.SH": "上证50"
+                , "000300.SH": "沪深300"
+                , "000849.SH": "300非银"
+                , "000905.SH": "中证500"
+                , "399852.SZ": "中证1000"
+                , "000688.SH": "科创50"}
+            index_list = list(index_dict.keys())
 
-        #  3.index_a_share 的总和dataframe
-        index_df = pd.DataFrame()
+            #  3.index_a_share 的总和dataframe
+            index_df = pd.DataFrame()
 
-        #  4.请求insight数据   get_kline
-        res = get_kline(htsc_code=index_list, time=[start_date, end_date],
-                        frequency="daily", fq="pre")
-        index_df = pd.concat([index_df, res], ignore_index=True)
+            #  4.请求insight数据   get_kline
+            res = get_kline(htsc_code=index_list, time=[start_date, end_date],
+                            frequency="daily", fq="pre")
+            index_df = pd.concat([index_df, res], ignore_index=True)
 
-        ##  insight 返回值的非空判断
-        if not index_df.empty:
+            ##  insight 返回值的非空判断
+            if not index_df.empty:
 
-            #  5.日期格式转换
-            index_df['time'] = pd.to_datetime(index_df['time']).dt.strftime('%Y%m%d')
-            index_df.rename(columns={'time': 'ymd', 'htsc_code': 'index_code', 'name': 'index_name'}, inplace=True)
+                #  5.日期格式转换
+                index_df['time'] = pd.to_datetime(index_df['time']).dt.strftime('%Y%m%d')
+                index_df.rename(columns={'time': 'ymd', 'htsc_code': 'index_code', 'name': 'index_name'}, inplace=True)
 
-            #  6.根据映射关系，添加stock_name
-            index_df['index_name'] = index_df['index_code'].map(index_dict)
+                #  6.根据映射关系，添加stock_name
+                index_df['index_name'] = index_df['index_code'].map(index_dict)
 
-            #  7.声明所有的列名，去除多余列
-            index_df = index_df[['index_code', 'index_name', 'ymd', 'open', 'close', 'high', 'low', 'volume']]
+                #  7.声明所有的列名，去除多余列
+                index_df = index_df[['index_code', 'index_name', 'ymd', 'open', 'close', 'high', 'low', 'volume']]
 
-            #  8.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
-            index_df = index_df.drop_duplicates(subset=['ymd', 'index_code'], keep='first')
+                #  8.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
+                index_df = index_df.drop_duplicates(subset=['ymd', 'index_code'], keep='first')
 
-            ############################   文件输出模块     ############################
-            # 总是保存到远端数据库
-            mysql_utils.data_from_dataframe_to_mysql(
-                user=origin_user,
-                password=origin_password,
-                host=origin_host,
-                database=origin_database,
-                df=index_df,
-                table_name="ods_index_a_share_insight",
-                merge_on=['ymd', 'index_code']
-            )
+                ############################   文件输出模块     ############################
+                # 总是保存到远端数据库
+                mysql_utils.data_from_dataframe_to_mysql(
+                    user=origin_user,
+                    password=origin_password,
+                    host=origin_host,
+                    database=origin_database,
+                    df=index_df,
+                    table_name="ods_index_a_share_insight",
+                    merge_on=['ymd', 'index_code']
+                )
 
-        else:
-            ## insight 返回为空值
-            logging.info('    get_index_a_share 的返回值为空值')
+            else:
+                ## insight 返回为空值
+                logging.info('    get_index_a_share 的返回值为空值')
+
+        except Exception as e:
+            logging.error(f"下载 ods_index_a_share_insight 失败: {str(e)}")
+            return False
 
 
     @timing_decorator
@@ -150,147 +155,161 @@ class SaveInsightData24PM:
 
         Returns:写入 ods_future_inside_insight
         """
-        #  1.起止时间 查询起始时间写2月前的月初第1天
-        time_start_date = DateUtility.first_day_of_month(-2)
-        time_end_date = DateUtility.next_day(-1)
 
-        time_start_date = datetime.strptime(time_start_date, '%Y%m%d')
-        time_end_date = datetime.strptime(time_end_date, '%Y%m%d').replace(hour=23, minute=59, second=59)
+        try:
+            #  1.起止时间 查询起始时间写2月前的月初第1天
+            time_start_date = DateUtility.first_day_of_month(-2)
+            time_end_date = DateUtility.next_day(-1)
 
-        #  2.查询标的
-        index_list = ["AU{}.SHF", "AG{}.SHF", "CU{}.SHF", "EC{}.INE", "SC{}.INE", "V{}.DCE"]
-        replacement = DateUtility.first_day_of_month(2)[2:6]
+            time_start_date = datetime.strptime(time_start_date, '%Y%m%d')
+            time_end_date = datetime.strptime(time_end_date, '%Y%m%d').replace(hour=23, minute=59, second=59)
 
-        future_index_list = [index.format(replacement) for index in index_list]
+            #  2.查询标的
+            index_list = ["AU{}.SHF", "AG{}.SHF", "CU{}.SHF", "EC{}.INE", "SC{}.INE", "V{}.DCE"]
+            replacement = DateUtility.first_day_of_month(2)[2:6]
 
-        #  3.future_inside 的总和dataframe
-        future_inside_df = pd.DataFrame()
+            future_index_list = [index.format(replacement) for index in index_list]
 
-        #  4.请求insight数据   get_kline
-        res = get_kline(htsc_code=future_index_list, time=[time_start_date, time_end_date],
-                        frequency="daily", fq="pre")
-        future_inside_df = pd.concat([future_inside_df, res], ignore_index=True)
+            #  3.future_inside 的总和dataframe
+            future_inside_df = pd.DataFrame()
 
-        ##  insight 返回值的非空判断
-        if not future_inside_df.empty:
+            #  4.请求insight数据   get_kline
+            res = get_kline(htsc_code=future_index_list, time=[time_start_date, time_end_date],
+                            frequency="daily", fq="pre")
+            future_inside_df = pd.concat([future_inside_df, res], ignore_index=True)
 
-            #  5.日期格式转换
-            future_inside_df['time'] = pd.to_datetime(future_inside_df['time']).dt.strftime('%Y%m%d')
-            future_inside_df.rename(columns={'time': 'ymd', 'htsc_code': 'stock_code'}, inplace=True)
+            ##  insight 返回值的非空判断
+            if not future_inside_df.empty:
 
-            #  6.声明所有的列名，去除多余列
-            future_inside_df = future_inside_df[
-                ['stock_code', 'ymd', 'open', 'close', 'high', 'low', 'volume', 'open_interest', 'settle']]
+                #  5.日期格式转换
+                future_inside_df['time'] = pd.to_datetime(future_inside_df['time']).dt.strftime('%Y%m%d')
+                future_inside_df.rename(columns={'time': 'ymd', 'htsc_code': 'stock_code'}, inplace=True)
 
-            #  7.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
-            future_inside_df = future_inside_df.drop_duplicates(subset=['ymd', 'stock_code'], keep='first')
+                #  6.声明所有的列名，去除多余列
+                future_inside_df = future_inside_df[
+                    ['stock_code', 'ymd', 'open', 'close', 'high', 'low', 'volume', 'open_interest', 'settle']]
 
-            ############################   文件输出模块     ############################
-            # 总是保存到远端数据库
-            mysql_utils.data_from_dataframe_to_mysql(
-                user=origin_user,
-                password=origin_password,
-                host=origin_host,
-                database=origin_database,
-                df=future_inside_df,
-                table_name="ods_future_inside_insight",
-                merge_on=['ymd', 'stock_code']
-            )
+                #  7.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
+                future_inside_df = future_inside_df.drop_duplicates(subset=['ymd', 'stock_code'], keep='first')
 
-        else:
-            ## insight 返回为空值
-            logging.info('    get_future_inside 的返回值为空值')
+                ############################   文件输出模块     ############################
+                # 总是保存到远端数据库
+                mysql_utils.data_from_dataframe_to_mysql(
+                    user=origin_user,
+                    password=origin_password,
+                    host=origin_host,
+                    database=origin_database,
+                    df=future_inside_df,
+                    table_name="ods_future_inside_insight",
+                    merge_on=['ymd', 'stock_code']
+                )
+
+            else:
+                ## insight 返回为空值
+                logging.info('    get_future_inside 的返回值为空值')
+
+        except Exception as e:
+            logging.error(f"下载 ods_future_inside_insight 失败: {str(e)}")
+            return False
 
 
     @timing_decorator
     def get_shareholder_num(self):
         """
-        获取 股东数 & 北向资金情况
+        获取 股东数
         Returns: 写入 ods_shareholder_num
         改造点：
           1. ann_date 随插入写入：推断规则 = 运行日 - 1（任务须凌晨执行），且钳制不早于 ymd
           2. load_time 由 MySQL DEFAULT CURRENT_TIMESTAMP 自动填充，INSERT IGNORE 保证首写不覆盖
         """
-        #  0.调度时间守卫：本方法的 ann_date 推断依赖"凌晨执行"，白天跑会产生前视
-        run_dt = datetime.now()
-        if run_dt.hour >= 6:
-            logging.warning("!! get_shareholder_num 不在凌晨(0-6点)执行，"
-                            "ann_date=运行日-1 的推断会偏早，存在前视风险 !!")
+        try:
+            #  0.调度时间守卫：本方法的 ann_date 推断依赖"凌晨执行"，白天跑会产生前视
+            run_dt = datetime.now()
+            if run_dt.hour >= 6:
+                logging.warning("!! get_shareholder_num 不在凌晨(0-6点)执行，"
+                                "ann_date=运行日-1 的推断会偏早，存在前视风险 !!")
 
-        #  1.起止时间 查询起始时间写 2月前的月初
-        time_start_date = DateUtility.first_day_of_month(-2)
-        #  结束时间必须大于等于当日，这里取明天的日期，如果是凌晨执行，就可以取当日了
-        time_end_date = DateUtility.next_day(-1)
+            #  1.起止时间 查询起始时间写 2月前的月初
+            time_start_date = DateUtility.first_day_of_month(-2)
+            #  结束时间必须大于等于当日，这里取明天的日期，如果是凌晨执行，就可以取当日了
+            time_end_date = DateUtility.next_day(-1)
 
-        time_start_date = datetime.strptime(time_start_date, '%Y%m%d')
-        time_end_date = datetime.strptime(time_end_date, '%Y%m%d').replace(hour=23, minute=59, second=59)
+            time_start_date = datetime.strptime(time_start_date, '%Y%m%d')
+            time_end_date = datetime.strptime(time_end_date, '%Y%m%d').replace(hour=23, minute=59, second=59)
 
-        #  2.行业信息的总和dataframe
-        shareholder_num_df = pd.DataFrame()
+            #  2.行业信息的总和dataframe
+            shareholder_num_df = pd.DataFrame()
 
-        #  3.获取最新的stock_codes 数据
-        code_list = mysql_utils.get_stock_codes_latest()['stock_code'].tolist()
+            #  3.获取最新的stock_codes 数据
+            code_list = mysql_utils.get_stock_codes_latest()['stock_code'].tolist()
 
-        #  4.请求insight  个股股东数   数据
-        total_xunhuan = len(code_list)
-        i = 1                       # 总循环标记
+            #  4.请求insight  个股股东数   数据
+            total_xunhuan = len(code_list)
+            i = 1  # 总循环标记
 
-        for stock_code in code_list:
-            # 屏蔽 stdout 和 stderr
-            with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
-                res_shareholder = get_shareholder_num(htsc_code=stock_code, end_date=[time_start_date, time_end_date])
-                valid_shareholder = shareholder_num_df.shape[0]
-            if res_shareholder is not None:
-                shareholder_num_df = pd.concat([shareholder_num_df, res_shareholder], ignore_index=True)
-                sys.stdout.write(f"\r当前执行 get_shareholder_num  第 {i} 次循环，总共 {total_xunhuan} 个批次, {valid_shareholder}个有效股东数据")
-                sys.stdout.flush()
+            for stock_code in code_list:
+                # 屏蔽 stdout 和 stderr
+                with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+                    res_shareholder = get_shareholder_num(htsc_code=stock_code,
+                                                          end_date=[time_start_date, time_end_date])
+                    valid_shareholder = shareholder_num_df.shape[0]
+                if res_shareholder is not None:
+                    shareholder_num_df = pd.concat([shareholder_num_df, res_shareholder], ignore_index=True)
+                    sys.stdout.write(
+                        f"\r当前执行 get_shareholder_num  第 {i} 次循环，总共 {total_xunhuan} 个批次, {valid_shareholder}个有效股东数据")
+                    sys.stdout.flush()
 
-            time.sleep(0.03)
-            i += 1
-        sys.stdout.write("\n")
+                time.sleep(0.03)
+                i += 1
+            sys.stdout.write("\n")
 
-        ##  insight 返回值的非空判断
-        if not shareholder_num_df.empty:
+            ##  insight 返回值的非空判断
+            if not shareholder_num_df.empty:
 
-            #  5.日期格式转换
-            shareholder_num_df.rename(columns={'end_date': 'ymd', 'htsc_code': 'stock_code', 'name': 'stock_name'}, inplace=True)
-            shareholder_num_df['ymd'] = pd.to_datetime(shareholder_num_df['ymd']).dt.strftime('%Y%m%d')
+                #  5.日期格式转换
+                shareholder_num_df.rename(columns={'end_date': 'ymd', 'htsc_code': 'stock_code', 'name': 'stock_name'},
+                                          inplace=True)
+                shareholder_num_df['ymd'] = pd.to_datetime(shareholder_num_df['ymd']).dt.strftime('%Y%m%d')
 
-            #  6.声明所有的列名，去除多余列
-            shareholder_num_df = shareholder_num_df[
-                ['stock_code', 'stock_name', 'ymd', 'total_sh', 'avg_share', 'pct_of_total_sh', 'pct_of_avg_sh']]
+                #  6.声明所有的列名，去除多余列
+                shareholder_num_df = shareholder_num_df[
+                    ['stock_code', 'stock_name', 'ymd', 'total_sh', 'avg_share', 'pct_of_total_sh', 'pct_of_avg_sh']]
 
-            #  7.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
-            shareholder_num_df = shareholder_num_df.drop_duplicates(subset=['ymd', 'stock_code'], keep='first')
+                #  7.删除重复记录，只保留每组 (ymd, stock_code) 中的第一个记录
+                shareholder_num_df = shareholder_num_df.drop_duplicates(subset=['ymd', 'stock_code'], keep='first')
 
-            #  7.5 推断公告日 ann_date（核心改造）
-            #      任务凌晨执行 → 当天披露的记录 load_time 是次日凌晨 → 披露日 = 运行日 - 1
-            ann_date_str = (run_dt - timedelta(days=1)).strftime('%Y%m%d')
-            shareholder_num_df['ann_date'] = ann_date_str
+                #  7.5 推断公告日 ann_date（核心改造）
+                #      任务凌晨执行 → 当天披露的记录 load_time 是次日凌晨 → 披露日 = 运行日 - 1
+                ann_date_str = (run_dt - timedelta(days=1)).strftime('%Y%m%d')
+                shareholder_num_df['ann_date'] = ann_date_str
 
-            #  7.6 保险钳制：ann_date 不得早于数据日 ymd（防 Insight 当晚入库次日凌晨抓取时算出前视）
-            shareholder_num_df['ann_date'] = np.where(
-                shareholder_num_df['ann_date'] < shareholder_num_df['ymd'],
-                shareholder_num_df['ymd'],
-                shareholder_num_df['ann_date']
-            )
+                #  7.6 保险钳制：ann_date 不得早于数据日 ymd（防 Insight 当晚入库次日凌晨抓取时算出前视）
+                shareholder_num_df['ann_date'] = np.where(
+                    shareholder_num_df['ann_date'] < shareholder_num_df['ymd'],
+                    shareholder_num_df['ymd'],
+                    shareholder_num_df['ann_date']
+                )
 
-            ############################   文件输出模块     ############################
-            # 总是保存到远端数据库
-            # 注意：load_time 不在 df 列中，由 MySQL DEFAULT CURRENT_TIMESTAMP 自动填首写时间
-            mysql_utils.data_from_dataframe_to_mysql(
-                user=origin_user,
-                password=origin_password,
-                host=origin_host,
-                database=origin_database,
-                df=shareholder_num_df,
-                table_name="ods_shareholder_num",
-                merge_on=['ymd', 'stock_code']
-            )
+                ############################   文件输出模块     ############################
+                # 总是保存到远端数据库
+                # 注意：load_time 不在 df 列中，由 MySQL DEFAULT CURRENT_TIMESTAMP 自动填首写时间
+                mysql_utils.data_from_dataframe_to_mysql(
+                    user=origin_user,
+                    password=origin_password,
+                    host=origin_host,
+                    database=origin_database,
+                    df=shareholder_num_df,
+                    table_name="ods_shareholder_num",
+                    merge_on=['ymd', 'stock_code']
+                )
 
-        else:
-            ## insight 返回为空值
-            logging.info('    get_shareholder_num 的返回值为空值')
+            else:
+                ## insight 返回为空值
+                logging.info('    get_shareholder_num 的返回值为空值')
+
+        except Exception as e:
+            logging.error(f"下载 ods_shareholder_num 失败: {str(e)}")
+            return False
 
 
     @script_run(script_name="download_insight_data_24pm.py")
