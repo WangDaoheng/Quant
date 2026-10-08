@@ -65,9 +65,22 @@ class SaveInsightData24PM:
         """
 
         try:
-            #  1.当月数据的起止时间
-            start_date = DateUtility.first_day_of_month()
-            end_date = DateUtility.next_day(-1)
+            #  1. 确定查询的时间范围
+            yesterday = DateUtility.next_day(-1)
+            yesterday_dt = datetime.strptime(yesterday, '%Y%m%d')
+            today_dt = datetime.today()
+
+            # 核心逻辑：如果昨天是上个月，则使用上月的时间范围
+            if yesterday_dt.month != today_dt.month:
+                # 昨天是月末最后一天，使用上月的范围
+                start_date = DateUtility.first_day_of_month(-1)
+                end_date = yesterday
+                logging.info(f'检测到跨月，使用上月范围: {start_date} ~ {end_date}')
+            else:
+                # 昨天在本月，使用本月至今的范围
+                start_date = DateUtility.first_day_of_month(0)
+                end_date = yesterday
+                logging.info(f'本月内，使用本月范围: {start_date} ~ {end_date}')
 
             start_date = datetime.strptime(start_date, '%Y%m%d')
             end_date = datetime.strptime(end_date, '%Y%m%d').replace(hour=23, minute=59, second=59)

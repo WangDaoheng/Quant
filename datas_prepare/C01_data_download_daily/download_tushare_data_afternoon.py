@@ -189,7 +189,6 @@ class SaveTushareDailyData:
         if not end_date:
             end_date = DateUtility.today()
 
-
         logging.info(f"板块行情: {start_date} ~ {end_date}")
 
         board_df = mysql_utils.data_from_mysql_to_dataframe_latest(

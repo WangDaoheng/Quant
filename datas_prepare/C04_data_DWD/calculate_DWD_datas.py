@@ -1031,7 +1031,7 @@ if __name__ == '__main__':
     # save_insight_data.cal_shareholder_num_event_batch('20260918')
 
     # #  补录 daily 宽表历史数据
-    # save_insight_data.cal_shareholder_num_daily_batch('20240801')
+    # save_insight_data.cal_shareholder_num_daily_batch(start_ymd='20260701', end_ymd='20260720')
 
     # #  补录 base_info 历史数据
     # save_insight_data.cal_stock_base_info_batch('20260922')

@@ -1,0 +1,661 @@
+-- Database: quant
+-- Export Time: 2026-10-08 14:21:10
+-- Total Tables: 35
+
+-- Table: dmart_stock_zt_details
+DROP TABLE IF EXISTS `dmart_stock_zt_details`;
+CREATE TABLE `dmart_stock_zt_details` (
+  `ymd` date DEFAULT NULL COMMENT '日期',
+  `stock_code` varchar(50) DEFAULT NULL COMMENT '代码',
+  `stock_name` varchar(50) DEFAULT NULL COMMENT '名称',
+  `concept_plate` varchar(500) DEFAULT NULL COMMENT '概念板块',
+  `index_plate` varchar(500) DEFAULT NULL COMMENT '指数板块',
+  `industry_plate` varchar(500) DEFAULT NULL COMMENT '行业板块',
+  `style_plate` varchar(500) DEFAULT NULL COMMENT '风格板块',
+  `out_plate` varchar(500) DEFAULT NULL COMMENT '外部数据板块',
+  UNIQUE KEY `unique_ymd_stock_code` (`ymd`,`stock_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='股票涨停明细';
+
+-- Table: dwd_ashare_stock_base_info
+DROP TABLE IF EXISTS `dwd_ashare_stock_base_info`;
+CREATE TABLE `dwd_ashare_stock_base_info` (
+  `ymd` date DEFAULT NULL COMMENT '日期',
+  `stock_code` varchar(50) DEFAULT NULL COMMENT '代码',
+  `stock_name` varchar(50) DEFAULT NULL COMMENT '名称',
+  `close` double(12,2) DEFAULT NULL COMMENT '最新收盘价',
+  `change_pct` float DEFAULT NULL COMMENT '当日涨跌幅(%)',
+  `volume` bigint DEFAULT NULL COMMENT '成交量',
+  `trading_amount` double DEFAULT NULL COMMENT '成交额',
+  `market_value` double DEFAULT NULL COMMENT '流通市值(亿)',
+  `total_value` double DEFAULT NULL COMMENT '总市值(亿)',
+  `total_capital` double DEFAULT NULL COMMENT '总股本(亿)',
+  `float_capital` double DEFAULT NULL COMMENT '流通股(亿)',
+  `shareholder_num` bigint DEFAULT NULL COMMENT '股东人数',
+  `pct_of_total_sh` double(12,4) DEFAULT NULL COMMENT '股东数较上期环比波动百分比',
+  `pb` float(12,2) DEFAULT NULL COMMENT '市净率',
+  `pe` float(12,2) DEFAULT NULL COMMENT '市盈(动)',
+  `market` varchar(50) DEFAULT NULL COMMENT '市场特征主板创业板等',
+  `plate_names` varchar(2000) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '板块名称',
+  UNIQUE KEY `unique_ymd_stock_code` (`ymd`,`stock_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='股票基本信息大宽表'
+/*!50500 PARTITION BY RANGE  COLUMNS(ymd)
+(PARTITION p2024q3 VALUES LESS THAN ('2024-10-01') ENGINE = InnoDB,
+ PARTITION p2024q4 VALUES LESS THAN ('2025-01-01') ENGINE = InnoDB,
+ PARTITION p2025q1 VALUES LESS THAN ('2025-04-01') ENGINE = InnoDB,
+ PARTITION p2025q2 VALUES LESS THAN ('2025-07-01') ENGINE = InnoDB,
+ PARTITION p2025q3 VALUES LESS THAN ('2025-10-01') ENGINE = InnoDB,
+ PARTITION p2025q4 VALUES LESS THAN ('2026-01-01') ENGINE = InnoDB,
+ PARTITION p2026q1 VALUES LESS THAN ('2026-04-01') ENGINE = InnoDB,
+ PARTITION p2026q2 VALUES LESS THAN ('2026-07-01') ENGINE = InnoDB,
+ PARTITION p2026q3 VALUES LESS THAN ('2026-10-01') ENGINE = InnoDB,
+ PARTITION p2026q4 VALUES LESS THAN ('2027-01-01') ENGINE = InnoDB,
+ PARTITION p2027 VALUES LESS THAN ('2028-01-01') ENGINE = InnoDB,
+ PARTITION p2028 VALUES LESS THAN ('2029-01-01') ENGINE = InnoDB,
+ PARTITION p2029 VALUES LESS THAN ('2030-01-01') ENGINE = InnoDB,
+ PARTITION p2030 VALUES LESS THAN ('2031-01-01') ENGINE = InnoDB,
+ PARTITION p2031 VALUES LESS THAN ('2032-01-01') ENGINE = InnoDB,
+ PARTITION pmax VALUES LESS THAN (MAXVALUE) ENGINE = InnoDB) */;
+
+-- Table: dwd_factor_summary
+DROP TABLE IF EXISTS `dwd_factor_summary`;
+CREATE TABLE `dwd_factor_summary` (
+  `ymd` date NOT NULL COMMENT '交易日期',
+  `stock_code` varchar(50) NOT NULL COMMENT '股票代码',
+  `stock_name` varchar(50) DEFAULT NULL COMMENT '股票名称',
+  `pb_score` decimal(5,2) DEFAULT '0.00' COMMENT 'PB因子得分(0-100)',
+  `zt_score` decimal(5,2) DEFAULT '0.00' COMMENT '涨停因子得分(0-100)',
+  `shareholder_score` decimal(5,2) DEFAULT '0.00' COMMENT '股东数因子得分(0-100)',
+  `volume_score` decimal(5,2) DEFAULT '0.00' COMMENT '缩量因子得分(0-60)',
+  `price_score` decimal(5,2) DEFAULT '0.00' COMMENT '下跌因子得分(0-40)',
+  `composite_score` decimal(5,2) DEFAULT '0.00' COMMENT '缩量下跌综合得分(0-100)',
+  `signal_level` char(1) DEFAULT NULL COMMENT '缩量下跌信号等级(A/B/C/D/E)',
+  UNIQUE KEY `unique_ymd_stock` (`ymd`,`stock_code`),
+  KEY `idx_composite` (`composite_score`),
+  KEY `idx_pb` (`pb_score`),
+  KEY `idx_zt` (`zt_score`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='因子汇总表（所有因子得分）';
+
+-- Table: dwd_factor_volume_shrinkage
+DROP TABLE IF EXISTS `dwd_factor_volume_shrinkage`;
+CREATE TABLE `dwd_factor_volume_shrinkage` (
+  `ymd` date NOT NULL COMMENT '交易日期',
+  `stock_code` varchar(50) NOT NULL COMMENT '股票代码',
+  `stock_name` varchar(50) DEFAULT NULL COMMENT '股票名称',
+  `close` float DEFAULT NULL COMMENT '收盘价',
+  `volume` bigint DEFAULT NULL COMMENT '成交量',
+  `vol_ma5` float DEFAULT NULL COMMENT '5日均量',
+  `vol_ma60` float DEFAULT NULL COMMENT '60日均量',
+  `volume_vs_ma5` decimal(10,2) DEFAULT NULL COMMENT '成交量/5日均量-1, 单位%',
+  `is_shrink_today` tinyint(1) DEFAULT NULL COMMENT '当日是否缩量(1:是,0:否)',
+  `consecutive_shrink_days` int DEFAULT NULL COMMENT '连续缩量天数',
+  `is_down` tinyint(1) DEFAULT NULL COMMENT '当日是否阴线(1:是,0:否)',
+  `consecutive_down_days` int DEFAULT NULL COMMENT '连续阴线天数',
+  `volume_score` decimal(5,2) DEFAULT NULL COMMENT '缩量因子得分(0-60)',
+  `price_score` decimal(5,2) DEFAULT NULL COMMENT '下跌因子得分(0-40)',
+  `composite_score` decimal(5,2) DEFAULT NULL COMMENT '缩量下跌综合得分(0-100)',
+  `signal_level` char(1) DEFAULT NULL COMMENT '信号等级(A/B/C/D/E)',
+  UNIQUE KEY `unique_ymd_stock` (`ymd`,`stock_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='缩量下跌因子明细表';
+
+-- Table: dwd_shareholder_num_daily
+DROP TABLE IF EXISTS `dwd_shareholder_num_daily`;
+CREATE TABLE `dwd_shareholder_num_daily` (
+  `ymd` date NOT NULL COMMENT '交易日',
+  `stock_code` varchar(100) NOT NULL COMMENT '股票代码（带后缀）',
+  `latest_load_time` date DEFAULT NULL COMMENT '最新可知日',
+  `latest_total_sh` bigint DEFAULT NULL COMMENT '最新总股东数',
+  `latest_qoq_sh` float DEFAULT NULL COMMENT '最新对齐环比%（股东数）',
+  `latest_mom_sh` float DEFAULT NULL COMMENT '最新紧邻环比%（股东数）',
+  `days_since_load` int DEFAULT NULL COMMENT '距最新披露天数',
+  `is_fresh` tinyint DEFAULT '0' COMMENT '3日内（1=是，0=否）',
+  `fresh_weight` float DEFAULT NULL COMMENT '新鲜度权重 exp(-days/10)',
+  `surprise_weighted` float DEFAULT NULL COMMENT 'surprise = qoq_sh × fresh_weight',
+  `sh_pctile_cs` float DEFAULT NULL COMMENT '当日横截面分位（0~1，越小越集中）',
+  PRIMARY KEY (`ymd`,`stock_code`) USING BTREE,
+  KEY `idx_code_date` (`stock_code`,`ymd`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='股东数每日宽表（策略消费层）';
+
+-- Table: dwd_shareholder_num_event
+DROP TABLE IF EXISTS `dwd_shareholder_num_event`;
+CREATE TABLE `dwd_shareholder_num_event` (
+  `stock_code` varchar(100) NOT NULL COMMENT '股票代码（带后缀，如 000008.SZ）',
+  `stock_name` varchar(50) DEFAULT NULL COMMENT '股票名称',
+  `ymd` date NOT NULL COMMENT '数据截止日（原始记录日期，如中报为6/30）',
+  `load_time` date NOT NULL COMMENT '可知日（=ann_date，已统一为公告日）',
+  `total_sh` bigint DEFAULT NULL COMMENT '总股东数',
+  `avg_share` float DEFAULT NULL COMMENT '每个股东平均持股数',
+  `base_ymd` date DEFAULT NULL COMMENT '环比基准日（上一季度内最近一条的ymd）',
+  `base_total_sh` bigint DEFAULT NULL COMMENT '基准期股东数',
+  `qoq_sh` float DEFAULT NULL COMMENT '季度对齐环比%（股东数）',
+  `qoq_avg_sh` float DEFAULT NULL COMMENT '季度对齐环比%（户均持股）',
+  `gap_days` int DEFAULT NULL COMMENT '与基准的间隔天数（ymd差）',
+  `align_flag` varchar(20) DEFAULT NULL COMMENT 'ok/first/short_gap/long_gap',
+  `prev_ymd` date DEFAULT NULL COMMENT '上一条记录日期（紧邻）',
+  `mom_sh` float DEFAULT NULL COMMENT '紧邻环比%（股东数，vs prev_ymd）',
+  `stock_code_pure` varchar(50) GENERATED ALWAYS AS (substring_index(`stock_code`,_utf8mb4'.',1)) VIRTUAL,
+  PRIMARY KEY (`stock_code`,`ymd`),
+  KEY `idx_load_time` (`load_time`),
+  KEY `idx_ymd_pure` (`ymd`,`stock_code_pure`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='股东数披露事件表（对齐口径+新鲜度）';
+
+-- Table: dwd_stock_a_total_plate
+DROP TABLE IF EXISTS `dwd_stock_a_total_plate`;
+CREATE TABLE `dwd_stock_a_total_plate` (
+  `ymd` date NOT NULL COMMENT '日期',
+  `board_code` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '板块代码',
+  `board_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '板块名称',
+  `stock_code` varchar(50) DEFAULT NULL COMMENT '标的代码',
+  `stock_name` varchar(50) DEFAULT NULL COMMENT '标的名称',
+  `source_table` varchar(50) DEFAULT NULL COMMENT '来源表',
+  `remark` varchar(50) DEFAULT NULL COMMENT '备注',
+  `stock_code_pure` varchar(50) GENERATED ALWAYS AS (substring_index(`stock_code`,_utf8mb4'.',1)) VIRTUAL,
+  UNIQUE KEY `unique_ymd_board_code` (`ymd`,`board_name`,`stock_code`),
+  KEY `idx_ymd_stock_board` (`ymd`,`stock_code`,`board_name`),
+  KEY `idx_ymd_pure_board` (`ymd`,`stock_code_pure`,`board_name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='多渠道板块数据 -- 多渠道汇总'
+/*!50500 PARTITION BY RANGE  COLUMNS(ymd)
+(PARTITION p202609 VALUES LESS THAN ('2026-10-01') ENGINE = InnoDB,
+ PARTITION p202610 VALUES LESS THAN ('2026-11-01') ENGINE = InnoDB,
+ PARTITION p202611 VALUES LESS THAN ('2026-12-01') ENGINE = InnoDB,
+ PARTITION p202612 VALUES LESS THAN ('2027-01-01') ENGINE = InnoDB,
+ PARTITION p202701 VALUES LESS THAN ('2027-02-01') ENGINE = InnoDB,
+ PARTITION p202702 VALUES LESS THAN ('2027-03-01') ENGINE = InnoDB,
+ PARTITION p202703 VALUES LESS THAN ('2027-04-01') ENGINE = InnoDB,
+ PARTITION p2027q2 VALUES LESS THAN ('2027-07-01') ENGINE = InnoDB,
+ PARTITION p2027h2 VALUES LESS THAN ('2028-01-01') ENGINE = InnoDB,
+ PARTITION p2028 VALUES LESS THAN ('2029-01-01') ENGINE = InnoDB,
+ PARTITION pmax VALUES LESS THAN (MAXVALUE) ENGINE = InnoDB) */;
+
+-- Table: dwd_stock_dt_list
+DROP TABLE IF EXISTS `dwd_stock_dt_list`;
+CREATE TABLE `dwd_stock_dt_list` (
+  `ymd` date NOT NULL COMMENT '交易日期',
+  `stock_code` varchar(50) NOT NULL COMMENT '股票代码',
+  `stock_name` varchar(50) DEFAULT NULL COMMENT '股票名称',
+  `last_close` float DEFAULT NULL COMMENT '昨日收盘价',
+  `close` float DEFAULT NULL COMMENT '收盘价',
+  `rate` float DEFAULT NULL COMMENT '涨幅',
+  `market_value` double DEFAULT NULL COMMENT '流通市值(亿)',
+  `total_value` double DEFAULT NULL COMMENT '总市值(亿)',
+  `total_capital` double DEFAULT NULL COMMENT '总股本(亿)',
+  `float_capital` double DEFAULT NULL COMMENT '流通股(亿)',
+  `shareholder_num` bigint DEFAULT NULL COMMENT '股东人数',
+  `pb` varchar(50) DEFAULT NULL COMMENT '市净率',
+  `pe` varchar(50) DEFAULT NULL COMMENT '市盈(动)',
+  `market` varchar(50) DEFAULT NULL COMMENT '市场特征主板创业板等',
+  `plate_names` varchar(500) DEFAULT NULL COMMENT '板块名称',
+  UNIQUE KEY `unique_ymd_stock_code` (`ymd`,`stock_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='跌停股票清单';
+
+-- Table: dwd_stock_technical_indicators
+DROP TABLE IF EXISTS `dwd_stock_technical_indicators`;
+CREATE TABLE `dwd_stock_technical_indicators` (
+  `ymd` date NOT NULL COMMENT '交易日期',
+  `stock_code` varchar(50) NOT NULL COMMENT '股票代码',
+  `stock_name` varchar(50) DEFAULT NULL COMMENT '股票名称',
+  `close` float DEFAULT NULL COMMENT '收盘价',
+  `volume` bigint DEFAULT NULL COMMENT '成交量',
+  `ma5` float DEFAULT NULL COMMENT '5日均线',
+  `ma10` float DEFAULT NULL COMMENT '10日均线',
+  `ma20` float DEFAULT NULL COMMENT '20日均线',
+  `ma60` float DEFAULT NULL COMMENT '60日均线',
+  `ma120` float DEFAULT NULL COMMENT '120日均线（半年线）',
+  `ma250` float DEFAULT NULL COMMENT '250日均线（年线）',
+  `vol_ma5` float DEFAULT NULL COMMENT '5日均量',
+  `vol_ma10` float DEFAULT NULL COMMENT '10日均量',
+  `vol_ma20` float DEFAULT NULL COMMENT '20日均量',
+  `vol_ma60` float DEFAULT NULL COMMENT '60日均量',
+  `vol_ma120` float DEFAULT NULL COMMENT '120日均量',
+  `vol_ma250` float DEFAULT NULL COMMENT '250日均量',
+  `price_vs_ma5` decimal(10,2) DEFAULT NULL COMMENT '价格/5日均线-1, 单位%',
+  `price_vs_ma20` decimal(10,2) DEFAULT NULL COMMENT '价格/20日均线-1, 单位%',
+  `price_vs_ma60` decimal(10,2) DEFAULT NULL COMMENT '价格/60日均线-1, 单位%',
+  `volume_vs_ma5` decimal(10,2) DEFAULT NULL COMMENT '成交量/5日均量-1, 单位%',
+  `volume_vs_ma20` decimal(10,2) DEFAULT NULL COMMENT '成交量/20日均量-1, 单位%',
+  UNIQUE KEY `unique_ymd_stock_code` (`ymd`,`stock_code`),
+  KEY `idx_stock_code` (`stock_code`),
+  KEY `idx_ma5` (`ma5`),
+  KEY `idx_vol_ma5` (`vol_ma5`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='股票技术指标预计算表（均线等）'
+/*!50500 PARTITION BY RANGE  COLUMNS(ymd)
+(PARTITION p2021 VALUES LESS THAN ('2022-01-01') ENGINE = InnoDB,
+ PARTITION p2022 VALUES LESS THAN ('2023-01-01') ENGINE = InnoDB,
+ PARTITION p2023 VALUES LESS THAN ('2024-01-01') ENGINE = InnoDB,
+ PARTITION p2024 VALUES LESS THAN ('2025-01-01') ENGINE = InnoDB,
+ PARTITION p2025 VALUES LESS THAN ('2026-01-01') ENGINE = InnoDB,
+ PARTITION p2026 VALUES LESS THAN ('2027-01-01') ENGINE = InnoDB,
+ PARTITION p2027 VALUES LESS THAN ('2028-01-01') ENGINE = InnoDB,
+ PARTITION p2028 VALUES LESS THAN ('2029-01-01') ENGINE = InnoDB,
+ PARTITION p2029 VALUES LESS THAN ('2030-01-01') ENGINE = InnoDB,
+ PARTITION p2030 VALUES LESS THAN ('2031-01-01') ENGINE = InnoDB,
+ PARTITION p2031 VALUES LESS THAN ('2032-01-01') ENGINE = InnoDB,
+ PARTITION pmax VALUES LESS THAN (MAXVALUE) ENGINE = InnoDB) */;
+
+-- Table: dwd_stock_zt_list
+DROP TABLE IF EXISTS `dwd_stock_zt_list`;
+CREATE TABLE `dwd_stock_zt_list` (
+  `ymd` date NOT NULL COMMENT '交易日期',
+  `stock_code` varchar(50) NOT NULL COMMENT '股票代码',
+  `stock_name` varchar(50) DEFAULT NULL COMMENT '股票名称',
+  `last_close` float DEFAULT NULL COMMENT '昨日收盘价',
+  `close` float DEFAULT NULL COMMENT '收盘价',
+  `rate` float DEFAULT NULL COMMENT '涨幅',
+  `market_value` double DEFAULT NULL COMMENT '流通市值(亿)',
+  `total_value` double DEFAULT NULL COMMENT '总市值(亿)',
+  `total_capital` double DEFAULT NULL COMMENT '总股本(亿)',
+  `float_capital` double DEFAULT NULL COMMENT '流通股(亿)',
+  `shareholder_num` bigint DEFAULT NULL COMMENT '股东人数',
+  `pb` varchar(50) DEFAULT NULL COMMENT '市净率',
+  `pe` varchar(50) DEFAULT NULL COMMENT '市盈(动)',
+  `market` varchar(50) DEFAULT NULL COMMENT '市场特征主板创业板等',
+  `plate_names` varchar(500) DEFAULT NULL COMMENT '板块名称',
+  UNIQUE KEY `unique_ymd_stock_code` (`ymd`,`stock_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='涨停股票清单';
+
+-- Table: ods_akshare_stock_a_high_low_statistics
+DROP TABLE IF EXISTS `ods_akshare_stock_a_high_low_statistics`;
+CREATE TABLE `ods_akshare_stock_a_high_low_statistics` (
+  `ymd` date DEFAULT NULL COMMENT '交易日',
+  `market` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '市场类型：\r\nall: "全部A股", \r\nsz50: "上证50",\r\nhs300: "沪深300", \r\nzz500: "中证500"',
+  `close` float DEFAULT NULL COMMENT '相关指数收盘价',
+  `high20` int DEFAULT NULL COMMENT '20日新高',
+  `low20` int DEFAULT NULL COMMENT '20日新低',
+  `high60` int DEFAULT NULL COMMENT '60日新高',
+  `low60` int DEFAULT NULL COMMENT '60日新低',
+  `high120` int DEFAULT NULL COMMENT '120日新高',
+  `low120` int DEFAULT NULL COMMENT '120日新低',
+  UNIQUE KEY `unique_ymd_market` (`ymd`,`market`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='大盘情绪数据_大盘区间内的新低新高股票数';
+
+-- Table: ods_akshare_stock_value_em
+DROP TABLE IF EXISTS `ods_akshare_stock_value_em`;
+CREATE TABLE `ods_akshare_stock_value_em` (
+  `ymd` date DEFAULT NULL COMMENT '数据日期',
+  `stock_code` varchar(50) DEFAULT NULL COMMENT '股票代码',
+  `close` float DEFAULT NULL COMMENT '当日收盘价(元)',
+  `change_pct` float DEFAULT NULL COMMENT '当日涨跌幅(%)',
+  `total_market` double DEFAULT NULL COMMENT '总市值(元)',
+  `circulation_market` double DEFAULT NULL COMMENT '流通市值(元)',
+  `total_shares` double DEFAULT NULL COMMENT '总股本(股)',
+  `circulation_shares` double DEFAULT NULL COMMENT '流通股本(股)',
+  `pe_ttm` float(12,2) DEFAULT NULL COMMENT 'PE(TTM)',
+  `pe_static` float(12,2) DEFAULT NULL COMMENT 'PE(静)',
+  `pb` float(12,2) DEFAULT NULL COMMENT '市净率',
+  `peg` float(12,2) DEFAULT NULL COMMENT 'PEG值',
+  `pcf` float(12,2) DEFAULT NULL COMMENT '市现率',
+  `ps` float(12,2) DEFAULT NULL COMMENT '市销率',
+  `stock_code_pure` varchar(50) GENERATED ALWAYS AS (`stock_code`) VIRTUAL,
+  UNIQUE KEY `unique_ymd_stock_code` (`ymd`,`stock_code`),
+  KEY `idx_ymd` (`ymd`),
+  KEY `idx_ymd_pure` (`ymd`,`stock_code_pure`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='股票基本面数据_估值数据'
+/*!50500 PARTITION BY RANGE  COLUMNS(ymd)
+(PARTITION p2018 VALUES LESS THAN ('2019-01-01') ENGINE = InnoDB,
+ PARTITION p2019 VALUES LESS THAN ('2020-01-01') ENGINE = InnoDB,
+ PARTITION p2020 VALUES LESS THAN ('2021-01-01') ENGINE = InnoDB,
+ PARTITION p2021 VALUES LESS THAN ('2022-01-01') ENGINE = InnoDB,
+ PARTITION p2022 VALUES LESS THAN ('2023-01-01') ENGINE = InnoDB,
+ PARTITION p2023 VALUES LESS THAN ('2024-01-01') ENGINE = InnoDB,
+ PARTITION p2024 VALUES LESS THAN ('2025-01-01') ENGINE = InnoDB,
+ PARTITION p2025 VALUES LESS THAN ('2026-01-01') ENGINE = InnoDB,
+ PARTITION p2026 VALUES LESS THAN ('2027-01-01') ENGINE = InnoDB,
+ PARTITION p2027 VALUES LESS THAN ('2028-01-01') ENGINE = InnoDB,
+ PARTITION p2028 VALUES LESS THAN ('2029-01-01') ENGINE = InnoDB,
+ PARTITION p2029 VALUES LESS THAN ('2030-01-01') ENGINE = InnoDB,
+ PARTITION p2030 VALUES LESS THAN ('2031-01-01') ENGINE = InnoDB,
+ PARTITION p2031 VALUES LESS THAN ('2032-01-01') ENGINE = InnoDB,
+ PARTITION pmax VALUES LESS THAN (MAXVALUE) ENGINE = InnoDB) */;
+
+-- Table: ods_akshare_stock_yjkb_em
+DROP TABLE IF EXISTS `ods_akshare_stock_yjkb_em`;
+CREATE TABLE `ods_akshare_stock_yjkb_em` (
+  `ymd` date DEFAULT NULL COMMENT '公告日期（核心日期维度）',
+  `serial_num` varchar(50) DEFAULT NULL COMMENT '序号',
+  `stock_code` varchar(50) DEFAULT NULL COMMENT '股票代码',
+  `stock_name` varchar(50) DEFAULT NULL COMMENT '股票简称',
+  `eps` double DEFAULT NULL COMMENT '每股收益',
+  `income` double DEFAULT NULL COMMENT '营业收入-营业收入',
+  `income_last_year` double DEFAULT NULL COMMENT '营业收入-去年同期',
+  `income_yoy` varchar(50) DEFAULT NULL COMMENT '营业收入-同比增长',
+  `income_qoq` double DEFAULT NULL COMMENT '营业收入-季度环比增长',
+  `profit` double DEFAULT NULL COMMENT '净利润-净利润',
+  `profit_last_year` double DEFAULT NULL COMMENT '净利润-去年同期',
+  `profit_yoy` varchar(50) DEFAULT NULL COMMENT '净利润-同比增长',
+  `profit_qoq` double DEFAULT NULL COMMENT '净利润-季度环比增长',
+  `asset_per_share` float DEFAULT NULL COMMENT '每股净资产',
+  `roe` double DEFAULT NULL COMMENT '净资产收益率',
+  `industry` varchar(100) DEFAULT NULL COMMENT '所处行业',
+  UNIQUE KEY `unique_ymd_stock_code` (`ymd`,`stock_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='股票基本面数据_业绩快报数据';
+
+-- Table: ods_akshare_stock_yjyg_em
+DROP TABLE IF EXISTS `ods_akshare_stock_yjyg_em`;
+CREATE TABLE `ods_akshare_stock_yjyg_em` (
+  `ymd` date DEFAULT NULL COMMENT '公告日期',
+  `serial_num` varchar(50) DEFAULT NULL COMMENT '序号',
+  `stock_code` varchar(50) DEFAULT NULL COMMENT '股票代码',
+  `stock_name` varchar(50) DEFAULT NULL COMMENT '股票简称',
+  `forecast_index` varchar(200) DEFAULT NULL COMMENT '预测指标',
+  `performance_change` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT '业绩变动',
+  `forecast_value` double DEFAULT NULL COMMENT '预测数值(元)',
+  `change_pct` double DEFAULT NULL COMMENT '业绩变动幅度(%)',
+  `change_reason` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT '业绩变动原因',
+  `forecast_type` varchar(50) DEFAULT NULL COMMENT '预告类型',
+  `last_year_value` double DEFAULT NULL COMMENT '上年同期值(元)',
+  UNIQUE KEY `unique_ymd_stock_code` (`ymd`,`stock_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='股票基本面数据_业绩预告数据';
+
+-- Table: ods_akshare_stock_zh_a_gdhs_detail_em
+DROP TABLE IF EXISTS `ods_akshare_stock_zh_a_gdhs_detail_em`;
+CREATE TABLE `ods_akshare_stock_zh_a_gdhs_detail_em` (
+  `ymd` date DEFAULT NULL COMMENT '股东户数统计截止日（对应核心日期维度）',
+  `stock_code` varchar(50) DEFAULT NULL COMMENT '股票代码',
+  `stock_name` varchar(50) DEFAULT NULL COMMENT '股票名称',
+  `range_change_pct` float DEFAULT NULL COMMENT '区间涨跌幅(%)',
+  `holder_num_current` bigint DEFAULT NULL COMMENT '股东户数-本次',
+  `holder_num_last` bigint DEFAULT NULL COMMENT '股东户数-上次',
+  `holder_num_change` bigint DEFAULT NULL COMMENT '股东户数-增减',
+  `holder_num_change_pct` float(10,2) DEFAULT NULL COMMENT '股东户数-增减比例(%)',
+  `avg_holder_market` double DEFAULT NULL COMMENT '户均持股市值',
+  `avg_holder_share_num` float DEFAULT NULL COMMENT '户均持股数量',
+  `total_market` double DEFAULT NULL COMMENT '总市值',
+  `total_shares` bigint DEFAULT NULL COMMENT '总股本',
+  `share_change` bigint DEFAULT NULL COMMENT '股本变动',
+  `share_change_reason` varchar(255) DEFAULT NULL COMMENT '股本变动原因',
+  `holder_num_announce_date` date DEFAULT NULL COMMENT '股东户数公告日期',
+  UNIQUE KEY `unique_ymd_stock_code` (`ymd`,`stock_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='股票基本面数据_股东数据';
+
+-- Table: ods_astock_industry_detail
+DROP TABLE IF EXISTS `ods_astock_industry_detail`;
+CREATE TABLE `ods_astock_industry_detail` (
+  `ymd` date DEFAULT NULL COMMENT '交易日期',
+  `stock_code` varchar(100) DEFAULT NULL COMMENT '股票代码',
+  `stock_name` varchar(50) DEFAULT NULL COMMENT '股票名称',
+  `industry_name` varchar(100) DEFAULT NULL COMMENT '行业名称',
+  `industry_code` varchar(100) DEFAULT NULL COMMENT '行业代码',
+  `l1_code` varchar(100) DEFAULT NULL COMMENT '一级行业代码',
+  `l1_name` varchar(100) DEFAULT NULL COMMENT '一级行业名称',
+  `l2_code` varchar(100) DEFAULT NULL COMMENT '二级行业代码',
+  `l2_name` varchar(100) DEFAULT NULL COMMENT '二级行业名称',
+  `l3_code` varchar(100) DEFAULT NULL COMMENT '三级行业代码',
+  `l3_name` varchar(100) DEFAULT NULL COMMENT '三级行业名称',
+  UNIQUE KEY `unique_stock_code` (`ymd`,`stock_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='股票&行业的关联';
+
+-- Table: ods_astock_industry_overview
+DROP TABLE IF EXISTS `ods_astock_industry_overview`;
+CREATE TABLE `ods_astock_industry_overview` (
+  `ymd` date DEFAULT NULL COMMENT '交易日期',
+  `classified` varchar(100) DEFAULT NULL COMMENT '行业分类',
+  `industry_name` varchar(100) DEFAULT NULL COMMENT '行业名称',
+  `industry_code` varchar(100) DEFAULT NULL COMMENT '行业代码',
+  `l1_code` varchar(100) DEFAULT NULL COMMENT '一级行业代码',
+  `l1_name` varchar(100) DEFAULT NULL COMMENT '一级行业名称',
+  `l2_code` varchar(100) DEFAULT NULL COMMENT '二级行业代码',
+  `l2_name` varchar(100) DEFAULT NULL COMMENT '二级行业名称',
+  `l3_code` varchar(100) DEFAULT NULL COMMENT '三级行业代码',
+  `l3_name` varchar(100) DEFAULT NULL COMMENT '三级行业名称',
+  UNIQUE KEY `unique_industry_code` (`ymd`,`industry_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='行业分类，申万三级分类';
+
+-- Table: ods_exchange_dxy_vantage
+DROP TABLE IF EXISTS `ods_exchange_dxy_vantage`;
+CREATE TABLE `ods_exchange_dxy_vantage` (
+  `ymd` date NOT NULL COMMENT '交易日期',
+  `stock_name` varchar(50) NOT NULL COMMENT '货币对',
+  UNIQUE KEY `unique_ymd_name` (`ymd`,`stock_name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='美元指数 日K';
+
+-- Table: ods_exchange_rate_vantage_detail
+DROP TABLE IF EXISTS `ods_exchange_rate_vantage_detail`;
+CREATE TABLE `ods_exchange_rate_vantage_detail` (
+  `stock_name` varchar(50) NOT NULL COMMENT '货币对',
+  `ymd` date NOT NULL COMMENT '交易日期',
+  `open` float DEFAULT NULL COMMENT '开盘价',
+  `high` float DEFAULT NULL COMMENT '最高价',
+  `low` float DEFAULT NULL COMMENT '最低价',
+  `close` float DEFAULT NULL COMMENT '收盘价',
+  UNIQUE KEY `unique_ymd_name` (`stock_name`,`ymd`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='汇率&美元指数 日K';
+
+-- Table: ods_future_inside_insight
+DROP TABLE IF EXISTS `ods_future_inside_insight`;
+CREATE TABLE `ods_future_inside_insight` (
+  `stock_code` varchar(50) NOT NULL COMMENT '期货标的代码',
+  `ymd` date NOT NULL COMMENT '交易日期',
+  `open` float DEFAULT NULL COMMENT '开盘价',
+  `close` float DEFAULT NULL COMMENT '收盘价',
+  `high` float DEFAULT NULL COMMENT '最高价',
+  `low` float DEFAULT NULL COMMENT '最低价',
+  `volume` bigint DEFAULT NULL COMMENT '成交量',
+  `open_interest` bigint DEFAULT NULL COMMENT '持仓量',
+  `settle` bigint DEFAULT NULL COMMENT '结算价',
+  UNIQUE KEY `unique_ymd_stock_code` (`ymd`,`stock_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='内盘主要期货数据日K(历史表)';
+
+-- Table: ods_index_a_share_insight
+DROP TABLE IF EXISTS `ods_index_a_share_insight`;
+CREATE TABLE `ods_index_a_share_insight` (
+  `index_code` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '指数代码',
+  `index_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '指数名称',
+  `ymd` date NOT NULL COMMENT '交易日期',
+  `open` float DEFAULT NULL COMMENT '开盘价',
+  `close` float DEFAULT NULL COMMENT '收盘价',
+  `high` float DEFAULT NULL COMMENT '最高价',
+  `low` float DEFAULT NULL COMMENT '最低价',
+  `volume` bigint DEFAULT NULL COMMENT '成交量',
+  UNIQUE KEY `unique_ymd_index_code` (`ymd`,`index_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='大A的主要指数日K(历史表)';
+
+-- Table: ods_shareholder_num
+DROP TABLE IF EXISTS `ods_shareholder_num`;
+CREATE TABLE `ods_shareholder_num` (
+  `stock_code` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '股票代码',
+  `stock_name` varchar(50) DEFAULT NULL COMMENT '股票名称',
+  `ymd` date DEFAULT NULL COMMENT '交易日期',
+  `total_sh` double DEFAULT NULL COMMENT '总股东数',
+  `avg_share` double(10,4) DEFAULT NULL COMMENT '每个股东平均持股数',
+  `pct_of_total_sh` double(10,4) DEFAULT NULL COMMENT '股东数较上期环比波动百分比',
+  `pct_of_avg_sh` double(10,4) DEFAULT NULL COMMENT '每个股东平均持股数较上期环比波动百分比',
+  `load_time` date DEFAULT (curdate()) COMMENT '记录首次写入日期(yyyy-mm-dd)',
+  `ann_date` date DEFAULT NULL COMMENT '公告日期/可知日',
+  UNIQUE KEY `unique_ymd_stock_code` (`ymd`,`stock_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='个股的股东数(历史表)';
+
+-- Table: ods_stock_chouma_insight
+DROP TABLE IF EXISTS `ods_stock_chouma_insight`;
+CREATE TABLE `ods_stock_chouma_insight` (
+  `stock_code` varchar(50) NOT NULL COMMENT '证券代码',
+  `ymd` date NOT NULL COMMENT '交易日',
+  `exchange` varchar(50) DEFAULT NULL COMMENT '交易所',
+  `close` float DEFAULT NULL COMMENT '最新价格',
+  `prev_close` float DEFAULT NULL COMMENT '昨收价格',
+  `total_shares` bigint DEFAULT NULL COMMENT '总股本（股）',
+  `a_total_share` bigint DEFAULT NULL COMMENT 'A股总数(股)',
+  `a_listed_share` bigint DEFAULT NULL COMMENT '流通a股（万股）',
+  `listed_share` bigint DEFAULT NULL COMMENT '流通股总数',
+  `restricted_share` bigint DEFAULT NULL COMMENT '限售股总数',
+  `cost_5pct` float DEFAULT NULL COMMENT '5分位持仓成本（持仓成本最低的 5%的持仓成本）',
+  `cost_15pct` float DEFAULT NULL COMMENT '15分位持仓成本',
+  `cost_50pct` float DEFAULT NULL COMMENT '50分位持仓成本',
+  `cost_85pct` float DEFAULT NULL COMMENT '85分位持仓成本',
+  `cost_95pct` float DEFAULT NULL COMMENT '95分位持仓成本',
+  `avg_cost` float DEFAULT NULL COMMENT '流通股加权平均持仓成本',
+  `max_cost` float DEFAULT NULL COMMENT '流通股最大持仓成本',
+  `min_cost` float DEFAULT NULL COMMENT '流通股最小持仓成本',
+  `winner_rate` float DEFAULT NULL COMMENT '流通股获利胜率',
+  `diversity` float DEFAULT NULL COMMENT '流通股筹码分散程度百分比',
+  `pre_winner_rate` float DEFAULT NULL COMMENT '流通股昨日获利胜率',
+  `restricted_avg_cost` float DEFAULT NULL COMMENT '限售股平均持仓成本',
+  `restricted_max_cost` float DEFAULT NULL COMMENT '限售股最大持仓成本',
+  `restricted_min_cost` float DEFAULT NULL COMMENT '限售股最小持仓成本',
+  `large_shareholders_avg_cost` float DEFAULT NULL COMMENT '大流通股股东持股平均持仓成本',
+  `large_shareholders_total_share` float DEFAULT NULL COMMENT '大流通股股东持股总数',
+  `large_shareholders_total_share_pct` float DEFAULT NULL COMMENT '大流通股股东持股占总股本的比例',
+  UNIQUE KEY `unique_ymd_stock_code` (`stock_code`,`ymd`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='A股的筹码分布数据';
+
+-- Table: ods_stock_code_daily_insight
+DROP TABLE IF EXISTS `ods_stock_code_daily_insight`;
+CREATE TABLE `ods_stock_code_daily_insight` (
+  `ymd` date NOT NULL COMMENT '交易日期',
+  `stock_code` varchar(50) NOT NULL COMMENT '股票代码',
+  `stock_name` varchar(50) DEFAULT NULL COMMENT '股票名',
+  `exchange` varchar(50) DEFAULT NULL COMMENT '交易所名称',
+  UNIQUE KEY `unique_ymd_stock_code` (`ymd`,`stock_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='当日已上市股票码表';
+
+-- Table: ods_stock_exchange_market
+DROP TABLE IF EXISTS `ods_stock_exchange_market`;
+CREATE TABLE `ods_stock_exchange_market` (
+  `ymd` date NOT NULL COMMENT '日期',
+  `stock_code` varchar(50) DEFAULT NULL COMMENT '标的代码',
+  `stock_name` varchar(50) DEFAULT NULL COMMENT '标的名称',
+  `market` varchar(50) DEFAULT NULL COMMENT '市场特征主板创业板等',
+  UNIQUE KEY `unique_ymd_stock_code` (`ymd`,`stock_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='股票基本面数据_所属交易所，主板/创业板/科创板/北证';
+
+-- Table: ods_stock_kline_daily_insight
+DROP TABLE IF EXISTS `ods_stock_kline_daily_insight`;
+CREATE TABLE `ods_stock_kline_daily_insight` (
+  `stock_code` varchar(50) NOT NULL COMMENT '股票代码',
+  `ymd` date NOT NULL COMMENT '交易日期',
+  `open` float DEFAULT NULL COMMENT '开盘价',
+  `close` float DEFAULT NULL COMMENT '收盘价',
+  `high` float DEFAULT NULL COMMENT '最高价',
+  `low` float DEFAULT NULL COMMENT '最低价',
+  `num_trades` bigint DEFAULT NULL COMMENT '交易笔数',
+  `volume` bigint DEFAULT NULL COMMENT '成交量',
+  UNIQUE KEY `unique_ymd_stock_code` (`ymd`,`stock_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='当日已上市股票的历史日K(历史表)';
+
+-- Table: ods_stock_kline_daily_ts
+DROP TABLE IF EXISTS `ods_stock_kline_daily_ts`;
+CREATE TABLE `ods_stock_kline_daily_ts` (
+  `stock_code` varchar(50) NOT NULL COMMENT '股票代码',
+  `ymd` date NOT NULL COMMENT '交易日期',
+  `open` float DEFAULT NULL COMMENT '开盘价',
+  `close` float DEFAULT NULL COMMENT '收盘价',
+  `high` float DEFAULT NULL COMMENT '最高价',
+  `low` float DEFAULT NULL COMMENT '最低价',
+  `change_pct` float DEFAULT NULL COMMENT '当日涨跌幅(%)',
+  `volume` bigint DEFAULT NULL COMMENT '成交量',
+  `trading_amount` double DEFAULT NULL COMMENT '成交额',
+  `today_pct` decimal(10,2) DEFAULT NULL COMMENT '当日涨跌幅(%), (close-open)/open*100',
+  `is_down` tinyint(1) DEFAULT NULL COMMENT '是否阴线, 1:是(close<open), 0:否(close>=open)',
+  `stock_code_pure` varchar(50) GENERATED ALWAYS AS (substring_index(`stock_code`,_utf8mb4'.',1)) VIRTUAL,
+  UNIQUE KEY `unique_ymd_stock_code` (`ymd`,`stock_code`),
+  KEY `idx_ymd_pure` (`ymd`,`stock_code_pure`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='行情数据_A股历史日K线的tushare数据'
+/*!50500 PARTITION BY RANGE  COLUMNS(ymd)
+(PARTITION p2021 VALUES LESS THAN ('2022-01-01') ENGINE = InnoDB,
+ PARTITION p2022 VALUES LESS THAN ('2023-01-01') ENGINE = InnoDB,
+ PARTITION p2023 VALUES LESS THAN ('2024-01-01') ENGINE = InnoDB,
+ PARTITION p2024 VALUES LESS THAN ('2025-01-01') ENGINE = InnoDB,
+ PARTITION p2025 VALUES LESS THAN ('2026-01-01') ENGINE = InnoDB,
+ PARTITION p2026 VALUES LESS THAN ('2027-01-01') ENGINE = InnoDB,
+ PARTITION p2027 VALUES LESS THAN ('2028-01-01') ENGINE = InnoDB,
+ PARTITION p2028 VALUES LESS THAN ('2029-01-01') ENGINE = InnoDB,
+ PARTITION p2029 VALUES LESS THAN ('2030-01-01') ENGINE = InnoDB,
+ PARTITION p2030 VALUES LESS THAN ('2031-01-01') ENGINE = InnoDB,
+ PARTITION p2031 VALUES LESS THAN ('2032-01-01') ENGINE = InnoDB,
+ PARTITION pmax VALUES LESS THAN (MAXVALUE) ENGINE = InnoDB) */;
+
+-- Table: ods_stock_limit_summary_insight
+DROP TABLE IF EXISTS `ods_stock_limit_summary_insight`;
+CREATE TABLE `ods_stock_limit_summary_insight` (
+  `ymd` date NOT NULL COMMENT '日期',
+  `name` varchar(50) NOT NULL COMMENT '市场名称',
+  `today_ZT` int DEFAULT NULL COMMENT '今日涨停股票数',
+  `today_DT` int DEFAULT NULL COMMENT '今日跌停股票数',
+  `yesterday_ZT` int DEFAULT NULL COMMENT '昨日涨停股票数',
+  `yesterday_DT` int DEFAULT NULL COMMENT '昨日跌停股票数',
+  `yesterday_ZT_rate` float DEFAULT NULL COMMENT '昨日涨停股票的今日平均涨幅',
+  UNIQUE KEY `unique_ymd_name` (`ymd`,`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='当日大A行情温度(历史表)';
+
+-- Table: ods_stock_plate_redbook
+DROP TABLE IF EXISTS `ods_stock_plate_redbook`;
+CREATE TABLE `ods_stock_plate_redbook` (
+  `ymd` date NOT NULL COMMENT '日期',
+  `plate_name` varchar(50) NOT NULL COMMENT '板块名称',
+  `stock_code` varchar(50) DEFAULT NULL COMMENT '标的代码',
+  `stock_name` varchar(50) DEFAULT NULL COMMENT '标的名称',
+  `remark` varchar(50) DEFAULT NULL COMMENT '备注'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='多渠道板块数据 -- 小红书';
+
+-- Table: ods_trading_days_insight
+DROP TABLE IF EXISTS `ods_trading_days_insight`;
+CREATE TABLE `ods_trading_days_insight` (
+  `exchange` varchar(50) DEFAULT NULL COMMENT '交易所名称',
+  `ymd` date NOT NULL COMMENT '交易日期',
+  UNIQUE KEY `unique_ymd_exchange` (`exchange`,`ymd`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='交易所的交易日历';
+
+-- Table: ods_tushare_board_concept_name_ths
+DROP TABLE IF EXISTS `ods_tushare_board_concept_name_ths`;
+CREATE TABLE `ods_tushare_board_concept_name_ths` (
+  `ymd` date DEFAULT NULL COMMENT '数据日期（核心日期维度，适配量化数据统一归档）',
+  `board_name` varchar(100) DEFAULT NULL COMMENT '板块名称',
+  `board_code` varchar(50) DEFAULT NULL COMMENT '板块代码',
+  `component_count` int DEFAULT NULL COMMENT '成分股数量',
+  `market` varchar(10) DEFAULT NULL COMMENT '市场',
+  `list_date` date DEFAULT NULL COMMENT '上市日期',
+  UNIQUE KEY `unique_ymd_board_code` (`ymd`,`board_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='板块数据_同花顺板块码值';
+
+-- Table: ods_tushare_holdernumber
+DROP TABLE IF EXISTS `ods_tushare_holdernumber`;
+CREATE TABLE `ods_tushare_holdernumber` (
+  `ts_code` varchar(20) DEFAULT NULL,
+  `ann_date` date DEFAULT NULL,
+  `end_date` date DEFAULT NULL,
+  `holder_num` bigint DEFAULT NULL,
+  `load_time` datetime DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY `uk_code_end` (`ts_code`,`end_date`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='tushare股东人数(用于回填披露日)';
+
+-- Table: ods_tushare_stock_board_concept_index_ths
+DROP TABLE IF EXISTS `ods_tushare_stock_board_concept_index_ths`;
+CREATE TABLE `ods_tushare_stock_board_concept_index_ths` (
+  `ymd` date DEFAULT NULL COMMENT '数据日期（核心日期维度，用于归档和跨表关联）',
+  `board_name` varchar(100) DEFAULT NULL COMMENT '板块名称',
+  `board_code` varchar(50) DEFAULT NULL COMMENT '板块代码',
+  `open` float DEFAULT NULL COMMENT '今开',
+  `high` float DEFAULT NULL COMMENT '最高',
+  `low` float DEFAULT NULL COMMENT '最低',
+  `close` float DEFAULT NULL COMMENT '最新价',
+  `trading_volume` float DEFAULT NULL COMMENT '成交量(手)',
+  `trading_amount` float DEFAULT NULL COMMENT '成交额',
+  UNIQUE KEY `unique_ymd_board_code` (`ymd`,`board_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='行情数据_板块内个股的行情数据';
+
+-- Table: ods_tushare_stock_board_concept_maps_ths
+DROP TABLE IF EXISTS `ods_tushare_stock_board_concept_maps_ths`;
+CREATE TABLE `ods_tushare_stock_board_concept_maps_ths` (
+  `ymd` date DEFAULT NULL COMMENT '数据日期（核心日期维度，用于归档和跨表关联）',
+  `board_name` varchar(100) DEFAULT NULL COMMENT '板块名称',
+  `board_code` varchar(50) DEFAULT NULL COMMENT '板块代码',
+  `stock_code` varchar(50) DEFAULT NULL COMMENT '股票代码',
+  `stock_name` varchar(100) DEFAULT NULL COMMENT '股票名称',
+  `weight` float DEFAULT NULL COMMENT '权重',
+  `in_date` varchar(8) DEFAULT NULL COMMENT '纳入日期YYYYMMDD',
+  `out_date` varchar(8) DEFAULT NULL COMMENT '剔除日期YYYYMMDD',
+  `is_new` varchar(1) DEFAULT NULL COMMENT '是否最新(Y/N)',
+  UNIQUE KEY `unique_ymd_board_stock` (`ymd`,`board_code`,`stock_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='行情数据_同花顺板块内含股票_Tushare';
+
+-- Table: ods_us_stock_daily_vantage
+DROP TABLE IF EXISTS `ods_us_stock_daily_vantage`;
+CREATE TABLE `ods_us_stock_daily_vantage` (
+  `stock_name` varchar(50) NOT NULL COMMENT '股票名称',
+  `ymd` date NOT NULL COMMENT '交易日期',
+  `open` float DEFAULT NULL COMMENT '开盘价',
+  `high` float DEFAULT NULL COMMENT '最高价',
+  `low` float DEFAULT NULL COMMENT '最低价',
+  `close` float DEFAULT NULL COMMENT '收盘价',
+  `volume` bigint DEFAULT NULL COMMENT '成交量',
+  UNIQUE KEY `unique_ymd_stock_code` (`ymd`,`stock_name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='美股 日K';
+
