@@ -265,7 +265,10 @@ class GenerateSentimentData:
         }
 
         for ymd in self.trading_days:
-            date_str = f"{ymd[4:6]}/{ymd[6:8]}"
+            # 统一日期格式：去掉横线，兼容 2026-07-06 和 20260706
+            ymd_clean = str(ymd).replace('-', '').replace('/', '')
+            # 格式：0706（MMDD，无斜杠，更紧凑）
+            date_str = ymd_clean[4:8]
 
             limit_row = self.limit_df.loc[ymd] if ymd in self.limit_df.index else pd.Series()
             hl_row = self.hl_df.loc[ymd] if ymd in self.hl_df.index else pd.Series()
@@ -284,7 +287,7 @@ class GenerateSentimentData:
             max_board = int(self.zt_consecutive.get(ymd, 0))
 
             daily_data = {
-                'ymd': ymd,
+                'ymd': ymd_clean,
                 'date': date_str,
                 'zt': int(limit_row.get('today_ZT', 0)),
                 'dt': int(limit_row.get('today_DT', 0)),
@@ -327,6 +330,7 @@ class GenerateSentimentData:
             json.dump(result, f, ensure_ascii=False, indent=2)
 
         logging.info(f"生成 {output_file}，共 {len(result['daily'])} 天数据")
+
 
     @timing_decorator
     def generate_plates_json(self):
