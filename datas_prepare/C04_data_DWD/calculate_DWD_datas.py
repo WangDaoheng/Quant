@@ -2,6 +2,7 @@
 
 import pandas as pd
 import numpy as np
+import time
 import logging
 
 from CommonProperties import Base_Properties
@@ -678,226 +679,420 @@ class CalDWD:
         }
 
 
+    # @timing_decorator
+    # def cal_ZT_DT(self):
+    #     """
+    #     计算一只股票是否 涨停 / 跌停
+    #     写入  dwd_stock_zt_list
+    #          dwd_stock_dt_list
+    #     """
+    #     import time
+    #     start_time = time.time()
+    #
+    #     time_start_date = DateUtility.first_day_of_month()
+    #     time_end_date = DateUtility.today()
+    #
+    #     logging.info("=" * 60)
+    #     logging.info(f"开始计算涨跌停数据，日期范围: {time_start_date} 至 {time_end_date}")
+    #     logging.info("=" * 60)
+    #
+    #     logging.info(f"【步骤1/7】正在从 ods_stock_kline_daily_ts 读取K线数据...")
+    #     step_start = time.time()
+    #
+    #     df = mysql_utils.data_from_mysql_to_dataframe(
+    #         user=origin_user, password=origin_password, host=origin_host,
+    #         database=origin_database,
+    #         table_name='ods_stock_kline_daily_ts',
+    #         start_date=time_start_date, end_date=time_end_date)
+    #
+    #     step_time = time.time() - step_start
+    #     logging.info(f"[完成] 读取完成，获取到 {len(df)} 条K线记录，耗时: {step_time:.2f}秒")
+    #
+    #     if df.empty:
+    #         logging.warning(f"[警告] {time_start_date} - {time_end_date} 日期的K线数据为空，终止运行！")
+    #         return
+    #
+    #     logging.info(f"【步骤2/7】正在对K线数据进行排序和计算昨收价...")
+    #     step_start = time.time()
+    #
+    #     unique_stocks = df['stock_code'].nunique()
+    #     unique_dates = df['ymd'].nunique()
+    #     logging.info(f"   - 涉及股票数量: {unique_stocks} 只")
+    #     logging.info(f"   - 涉及交易日: {unique_dates} 天")
+    #
+    #     latest_15_days = df.sort_values(by=['stock_code', 'ymd'])
+    #     latest_15_days['last_close'] = latest_15_days.groupby('stock_code')['close'].shift(1)
+    #
+    #     before_drop = len(latest_15_days)
+    #     latest_15_days = latest_15_days.dropna(subset=['last_close'])
+    #     after_drop = len(latest_15_days)
+    #
+    #     step_time = time.time() - step_start
+    #     logging.info(f"[完成] 预处理完成，删除了 {before_drop - after_drop} 条无昨收数据的记录")
+    #     logging.info(f"  剩余 {after_drop} 条有效记录，耗时: {step_time:.2f}秒")
+    #
+    #     if latest_15_days.empty:
+    #         logging.warning(f"[警告] {time_start_date} - {time_end_date} 日期的日期差值时间为空，终止运行！")
+    #         return
+    #
+    #     logging.info(f"【步骤3/7】正在获取股票基础信息...")
+    #     step_start = time.time()
+    #
+    #     stock_market_init = mysql_utils.data_from_mysql_to_dataframe_latest(
+    #         user=origin_user, password=origin_password, host=origin_host,
+    #         database=origin_database, table_name='dwd_ashare_stock_base_info')
+    #
+    #     step_time = time.time() - step_start
+    #     logging.info(f"[完成] 获取到 {len(stock_market_init)} 条股票基础信息，耗时: {step_time:.2f}秒")
+    #
+    #     if not stock_market_init.empty:
+    #         latest_date = stock_market_init['ymd'].max() if 'ymd' in stock_market_init.columns else '未知'
+    #         logging.info(f"   - 基础信息最新日期: {latest_date}")
+    #         logging.info(f"   - 股票代码示例: {stock_market_init['stock_code'].head(3).tolist()}")
+    #
+    #     stock_base_info = stock_market_init[['stock_code', 'stock_name', 'market_value', 'total_value',
+    #                                          'total_capital', 'float_capital', 'shareholder_num',
+    #                                          'pb', 'pe', 'market', 'plate_names']]
+    #
+    #     logging.info(f"【步骤4/7】正在合并K线数据和股票基础信息...")
+    #     step_start = time.time()
+    #
+    #     latest_15_days = latest_15_days[['ymd', 'stock_code', 'close', 'last_close']]
+    #     logging.info(f"   - K线数据中的股票代码示例: {latest_15_days['stock_code'].head(3).tolist()}")
+    #
+    #     latest_15_days = pd.merge(
+    #         latest_15_days,
+    #         stock_base_info,
+    #         on='stock_code',
+    #         how='left'
+    #     )
+    #
+    #     step_time = time.time() - step_start
+    #     logging.info(f"[完成] 合并完成，结果数据量: {len(latest_15_days)} 条，耗时: {step_time:.2f}秒")
+    #
+    #     missing_names = latest_15_days['stock_name'].isna().sum()
+    #     missing_percent = (missing_names / len(latest_15_days)) * 100
+    #     logging.info(f"   - 股票名称缺失: {missing_names} 条 ({missing_percent:.2f}%)")
+    #
+    #     if missing_names > 0:
+    #         missing_stocks = latest_15_days[latest_15_days['stock_name'].isna()]['stock_code'].unique()[:5]
+    #         logging.info(f"   - 缺失信息的股票代码示例: {missing_stocks.tolist()}")
+    #
+    #     logging.info(f"【步骤5/7】正在计算涨跌停价格...")
+    #     step_start = time.time()
+    #
+    #     market_counts = latest_15_days['market'].value_counts()
+    #     logging.info(f"   - 市场类型分布: {dict(market_counts)}")
+    #
+    #     def calculate_ZT_DT(row):
+    #         if pd.isna(row['market']):
+    #             up_limit = row['last_close'] * 1.10
+    #             down_limit = row['last_close'] * 0.90
+    #         elif row['market'] in ['创业板', '科创板']:
+    #             up_limit = row['last_close'] * 1.20
+    #             down_limit = row['last_close'] * 0.80
+    #         else:
+    #             up_limit = row['last_close'] * 1.10
+    #             down_limit = row['last_close'] * 0.90
+    #         return pd.Series([up_limit, down_limit])
+    #
+    #     latest_15_days[['昨日ZT价', '昨日DT价']] = latest_15_days.apply(
+    #         calculate_ZT_DT, axis=1, result_type='expand')
+    #
+    #     step_time = time.time() - step_start
+    #     logging.info(f"[完成] 涨跌停价格计算完成，耗时: {step_time:.2f}秒")
+    #
+    #     logging.info(f"【步骤6/7】正在判断涨跌停...")
+    #     step_start = time.time()
+    #
+    #     def ZT_DT_orz(price, target_price):
+    #         if pd.isna(target_price):
+    #             return False
+    #         if abs(target_price - price) <= 0.01:
+    #             left_price = price - 0.01
+    #             right_price = price + 0.01
+    #             left_delta = abs(left_price - target_price)
+    #             mid_delta = abs(price - target_price)
+    #             right_delta = abs(right_price - target_price)
+    #             min_delta = min(left_delta, mid_delta, right_delta)
+    #             if mid_delta == min_delta:
+    #                 return True
+    #         return False
+    #
+    #     latest_15_days['是否涨停'] = latest_15_days.apply(
+    #         lambda row: ZT_DT_orz(row['close'], row['昨日ZT价']), axis=1)
+    #     latest_15_days['是否跌停'] = latest_15_days.apply(
+    #         lambda row: ZT_DT_orz(row['close'], row['昨日DT价']), axis=1)
+    #
+    #     step_time = time.time() - step_start
+    #     logging.info(f"[完成] 涨跌停判断完成，耗时: {step_time:.2f}秒")
+    #
+    #     logging.info(f"【步骤7/7】正在筛选和保存结果...")
+    #     step_start = time.time()
+    #
+    #     zt_records = latest_15_days[latest_15_days['是否涨停'] == True].copy()
+    #     zt_count = len(zt_records)
+    #     logging.info(f"   - 发现涨停记录: {zt_count} 条")
+    #
+    #     if zt_count > 0:
+    #         zt_records['rate'] = ((zt_records['close'] - zt_records['last_close']) /
+    #                               zt_records['last_close'] * 100).round(2)
+    #         zt_df = zt_records[
+    #             ['ymd', 'stock_code', 'stock_name', 'last_close', 'close', 'rate',
+    #              'market_value', 'total_value', 'total_capital', 'float_capital',
+    #              'shareholder_num', 'pb', 'pe', 'market', 'plate_names']]
+    #         zt_df = zt_df.sort_values(by=['ymd', 'stock_code'])
+    #
+    #         zt_dates = zt_df['ymd'].value_counts().sort_index()
+    #         logging.info(f"   - 涨停日期分布: {dict(list(zt_dates.head().items()))}...")
+    #
+    #         save_start = time.time()
+    #         mysql_utils.data_from_dataframe_to_mysql(
+    #             user=origin_user,
+    #             password=origin_password,
+    #             host=origin_host,
+    #             database=origin_database,
+    #             df=zt_df,
+    #             table_name="dwd_stock_zt_list",
+    #             merge_on=['ymd', 'stock_code'])
+    #         logging.info(f"   [完成] 涨停数据保存完成，耗时: {time.time() - save_start:.2f}秒")
+    #
+    #     dt_records = latest_15_days[latest_15_days['是否跌停'] == True].copy()
+    #     dt_count = len(dt_records)
+    #     logging.info(f"   - 发现跌停记录: {dt_count} 条")
+    #
+    #     if dt_count > 0:
+    #         dt_records['rate'] = ((dt_records['close'] - dt_records['last_close']) /
+    #                               dt_records['last_close'] * 100).round(2)
+    #         dt_df = dt_records[
+    #             ['ymd', 'stock_code', 'stock_name', 'last_close', 'close', 'rate',
+    #              'market_value', 'total_value', 'total_capital', 'float_capital',
+    #              'shareholder_num', 'pb', 'pe', 'market', 'plate_names']]
+    #         dt_df = dt_df.sort_values(by=['ymd', 'stock_code'])
+    #
+    #         dt_dates = dt_df['ymd'].value_counts().sort_index()
+    #         logging.info(f"   - 跌停日期分布: {dict(list(dt_dates.head().items()))}...")
+    #
+    #         save_start = time.time()
+    #         mysql_utils.data_from_dataframe_to_mysql(
+    #             user=origin_user,
+    #             password=origin_password,
+    #             host=origin_host,
+    #             database=origin_database,
+    #             df=dt_df,
+    #             table_name="dwd_stock_dt_list",
+    #             merge_on=['ymd', 'stock_code'])
+    #         logging.info(f"   [完成] 跌停数据保存完成，耗时: {time.time() - save_start:.2f}秒")
+    #
+    #     total_time = time.time() - start_time
+    #     logging.info("=" * 60)
+    #     logging.info(f"【处理完成】总耗时: {total_time:.2f}秒")
+    #     logging.info(f"   - 处理总记录数: {len(latest_15_days)} 条")
+    #     logging.info(f"   - 涨停记录: {zt_count} 条")
+    #     logging.info(f"   - 跌停记录: {dt_count} 条")
+    #     if zt_count > 0 or dt_count > 0:
+    #         logging.info(f"   - 涨跌停合计: {zt_count + dt_count} 条")
+    #     logging.info("=" * 60)
+    #
+    #     logging.info(f"【数据质量检查】")
+    #     logging.info(f"   - 股票名称匹配率: {(1 - missing_percent / 100) * 100:.2f}%")
+    #     if missing_names > 0:
+    #         logging.info(f"   - 建议检查缺失的股票代码，可能需要更新基础信息表")
+
     @timing_decorator
-    def cal_ZT_DT(self):
+    def cal_ZT_DT(self, start_date=None, end_date=None):
         """
-        计算一只股票是否 涨停 / 跌停
-        写入  dwd_stock_zt_list
-             dwd_stock_dt_list
+        计算涨跌停明细（严格逻辑版），写入 dwd_stock_zt_list_v2 / dwd_stock_dt_list_v2
+        核心逻辑：价格均为2位小数，理论涨停价round(2)，严格 >= 判断，无容差
+        新增字段：zt_type, zt_price, open, high, low, volume, turnover_rate
         """
         import time
+        import numpy as np
         start_time = time.time()
 
-        time_start_date = DateUtility.first_day_of_month()
-        time_end_date = DateUtility.today()
+        # 日期范围：默认当月，支持传入参数回填历史
+        if not start_date:
+            start_date = DateUtility.first_day_of_month()
+        if not end_date:
+            end_date = DateUtility.today()
 
         logging.info("=" * 60)
-        logging.info(f"开始计算涨跌停数据，日期范围: {time_start_date} 至 {time_end_date}")
+        logging.info(f"开始计算涨跌停数据（严格逻辑版），日期范围: {start_date} 至 {end_date}")
         logging.info("=" * 60)
 
-        logging.info(f"【步骤1/7】正在从 ods_stock_kline_daily_ts 读取K线数据...")
+        # 【步骤1】读取K线数据（优先使用Tushare官方pre_close作为昨收）
+        logging.info(f"【步骤1/6】正在从 ods_stock_kline_daily_ts 读取K线数据...")
         step_start = time.time()
 
         df = mysql_utils.data_from_mysql_to_dataframe(
             user=origin_user, password=origin_password, host=origin_host,
             database=origin_database,
             table_name='ods_stock_kline_daily_ts',
-            start_date=time_start_date, end_date=time_end_date)
-
-        step_time = time.time() - step_start
-        logging.info(f"[完成] 读取完成，获取到 {len(df)} 条K线记录，耗时: {step_time:.2f}秒")
-
-        if df.empty:
-            logging.warning(f"[警告] {time_start_date} - {time_end_date} 日期的K线数据为空，终止运行！")
-            return
-
-        logging.info(f"【步骤2/7】正在对K线数据进行排序和计算昨收价...")
-        step_start = time.time()
-
-        unique_stocks = df['stock_code'].nunique()
-        unique_dates = df['ymd'].nunique()
-        logging.info(f"   - 涉及股票数量: {unique_stocks} 只")
-        logging.info(f"   - 涉及交易日: {unique_dates} 天")
-
-        latest_15_days = df.sort_values(by=['stock_code', 'ymd'])
-        latest_15_days['last_close'] = latest_15_days.groupby('stock_code')['close'].shift(1)
-
-        before_drop = len(latest_15_days)
-        latest_15_days = latest_15_days.dropna(subset=['last_close'])
-        after_drop = len(latest_15_days)
-
-        step_time = time.time() - step_start
-        logging.info(f"[完成] 预处理完成，删除了 {before_drop - after_drop} 条无昨收数据的记录")
-        logging.info(f"  剩余 {after_drop} 条有效记录，耗时: {step_time:.2f}秒")
-
-        if latest_15_days.empty:
-            logging.warning(f"[警告] {time_start_date} - {time_end_date} 日期的日期差值时间为空，终止运行！")
-            return
-
-        logging.info(f"【步骤3/7】正在获取股票基础信息...")
-        step_start = time.time()
-
-        stock_market_init = mysql_utils.data_from_mysql_to_dataframe_latest(
-            user=origin_user, password=origin_password, host=origin_host,
-            database=origin_database, table_name='dwd_ashare_stock_base_info')
-
-        step_time = time.time() - step_start
-        logging.info(f"[完成] 获取到 {len(stock_market_init)} 条股票基础信息，耗时: {step_time:.2f}秒")
-
-        if not stock_market_init.empty:
-            latest_date = stock_market_init['ymd'].max() if 'ymd' in stock_market_init.columns else '未知'
-            logging.info(f"   - 基础信息最新日期: {latest_date}")
-            logging.info(f"   - 股票代码示例: {stock_market_init['stock_code'].head(3).tolist()}")
-
-        stock_base_info = stock_market_init[['stock_code', 'stock_name', 'market_value', 'total_value',
-                                             'total_capital', 'float_capital', 'shareholder_num',
-                                             'pb', 'pe', 'market', 'plate_names']]
-
-        logging.info(f"【步骤4/7】正在合并K线数据和股票基础信息...")
-        step_start = time.time()
-
-        latest_15_days = latest_15_days[['ymd', 'stock_code', 'close', 'last_close']]
-        logging.info(f"   - K线数据中的股票代码示例: {latest_15_days['stock_code'].head(3).tolist()}")
-
-        latest_15_days = pd.merge(
-            latest_15_days,
-            stock_base_info,
-            on='stock_code',
-            how='left'
+            start_date=start_date, end_date=end_date
         )
 
-        step_time = time.time() - step_start
-        logging.info(f"[完成] 合并完成，结果数据量: {len(latest_15_days)} 条，耗时: {step_time:.2f}秒")
+        if df.empty:
+            logging.warning(f"【警告】{start_date} - {end_date} 日期的K线数据为空，终止运行！")
+            return
 
-        missing_names = latest_15_days['stock_name'].isna().sum()
-        missing_percent = (missing_names / len(latest_15_days)) * 100
-        logging.info(f"   - 股票名称缺失: {missing_names} 条 ({missing_percent:.2f}%)")
+        # 昨收价：优先用Tushare官方pre_close（除权除息已处理），否则用shift(1)计算
+        if 'pre_close' in df.columns:
+            df['last_close'] = df['pre_close']
+            logging.info("使用 Tushare 官方 pre_close 作为昨收价")
+        else:
+            df = df.sort_values(by=['stock_code', 'ymd'])
+            df['last_close'] = df.groupby('stock_code')['close'].shift(1)
+            logging.info("使用 shift(1) 计算昨收价（无pre_close字段）")
 
-        if missing_names > 0:
-            missing_stocks = latest_15_days[latest_15_days['stock_name'].isna()]['stock_code'].unique()[:5]
-            logging.info(f"   - 缺失信息的股票代码示例: {missing_stocks.tolist()}")
+        # 统一ymd格式为字符串，防止datetime类型
+        df['ymd'] = df['ymd'].astype(str).str.replace('-', '').str[:8]
 
-        logging.info(f"【步骤5/7】正在计算涨跌停价格...")
-        step_start = time.time()
+        logging.info(f"[完成] 读取 {len(df)} 条K线记录，耗时: {time.time() - step_start:.2f}秒")
 
-        market_counts = latest_15_days['market'].value_counts()
-        logging.info(f"   - 市场类型分布: {dict(market_counts)}")
+        # 【步骤2】数据清洗
+        logging.info(f"【步骤2/6】正在清洗数据...")
+        before_drop = len(df)
+        df = df.dropna(subset=['last_close'])
+        logging.info(f"  删除 {before_drop - len(df)} 条无昨收记录，剩余 {len(df)} 条")
 
-        def calculate_ZT_DT(row):
-            if pd.isna(row['market']):
-                up_limit = row['last_close'] * 1.10
-                down_limit = row['last_close'] * 0.90
-            elif row['market'] in ['创业板', '科创板']:
-                up_limit = row['last_close'] * 1.20
-                down_limit = row['last_close'] * 0.80
-            else:
-                up_limit = row['last_close'] * 1.10
-                down_limit = row['last_close'] * 0.90
-            return pd.Series([up_limit, down_limit])
+        # 【步骤3】获取市场类型（20cm vs 10cm vs ST 5cm）
+        logging.info(f"【步骤3/6】正在获取股票市场类型...")
+        stock_market = mysql_utils.data_from_mysql_to_dataframe_latest(
+            user=origin_user, password=origin_password, host=origin_host,
+            database=origin_database, table_name='dwd_ashare_stock_base_info',
+            cols=['stock_code', 'market', 'stock_name', 'market_value', 'total_value',
+                  'total_capital', 'float_capital', 'shareholder_num', 'pb', 'pe', 'plate_names']
+        )
 
-        latest_15_days[['昨日ZT价', '昨日DT价']] = latest_15_days.apply(
-            calculate_ZT_DT, axis=1, result_type='expand')
+        if stock_market.empty:
+            logging.warning("基础信息为空，使用默认10cm规则")
+            df['market'] = '主板'
+        else:
+            market_map = dict(zip(stock_market['stock_code'], stock_market['market']))
+            df['market'] = df['stock_code'].map(market_map).fillna('主板')
 
-        step_time = time.time() - step_start
-        logging.info(f"[完成] 涨跌停价格计算完成，耗时: {step_time:.2f}秒")
+        # 【步骤4】计算涨停价、跌停价、换手率（向量化，严格round2）
+        logging.info(f"【步骤4/6】正在计算涨跌停价格（含北交所30%）...")
 
-        logging.info(f"【步骤6/7】正在判断涨跌停...")
-        step_start = time.time()
+        # 市场类型判断
+        is_20cm = df['market'].isin(['创业板', '科创板'])
+        is_30cm = df['market'] == '北交所'  # 北交所 30cm
+        is_st = df['stock_name'].str.contains('ST', na=False) if 'stock_name' in df.columns else False
 
-        def ZT_DT_orz(price, target_price):
-            if pd.isna(target_price):
-                return False
-            if abs(target_price - price) <= 0.01:
-                left_price = price - 0.01
-                right_price = price + 0.01
-                left_delta = abs(left_price - target_price)
-                mid_delta = abs(price - target_price)
-                right_delta = abs(right_price - target_price)
-                min_delta = min(left_delta, mid_delta, right_delta)
-                if mid_delta == min_delta:
-                    return True
-            return False
+        # 涨停价计算（优先级：ST 5% > 北交所 30% > 创业板/科创板 20% > 主板 10%）
+        df['zt_price'] = np.select(
+            [is_st, is_30cm, is_20cm],
+            [
+                (df['last_close'] * 1.05).round(2),
+                (df['last_close'] * 1.30).round(2),
+                (df['last_close'] * 1.20).round(2)
+            ],
+            default=(df['last_close'] * 1.10).round(2)
+        )
 
-        latest_15_days['是否涨停'] = latest_15_days.apply(
-            lambda row: ZT_DT_orz(row['close'], row['昨日ZT价']), axis=1)
-        latest_15_days['是否跌停'] = latest_15_days.apply(
-            lambda row: ZT_DT_orz(row['close'], row['昨日DT价']), axis=1)
+        # 跌停价计算
+        df['dt_price'] = np.select(
+            [is_st, is_30cm, is_20cm],
+            [
+                (df['last_close'] * 0.95).round(2),
+                (df['last_close'] * 0.70).round(2),
+                (df['last_close'] * 0.80).round(2)
+            ],
+            default=(df['last_close'] * 0.90).round(2)
+        )
 
-        step_time = time.time() - step_start
-        logging.info(f"[完成] 涨跌停判断完成，耗时: {step_time:.2f}秒")
+        # 换手率 = 成交量(手) / (流通股本(亿股) * 10000)
+        float_cap_map = dict(zip(stock_market['stock_code'], stock_market['float_capital']))
+        df['float_capital_calc'] = df['stock_code'].map(float_cap_map)
+        df['turnover_rate'] = np.where(
+            df['float_capital_calc'] > 0,
+            (df['volume'] / (df['float_capital_calc'] * 10000)).round(2),
+            0
+        )
 
-        logging.info(f"【步骤7/7】正在筛选和保存结果...")
-        step_start = time.time()
+        # 【步骤5】严格判断涨跌停及类型（无容差，严格 >= 或 <=）
+        logging.info(f"【步骤5/6】正在严格判断涨跌停类型（无容差）...")
 
-        zt_records = latest_15_days[latest_15_days['是否涨停'] == True].copy()
-        zt_count = len(zt_records)
-        logging.info(f"   - 发现涨停记录: {zt_count} 条")
+        # 涨停：收盘价 >= 理论涨停价（严格）
+        df['is_zt'] = df['close'] >= df['zt_price']
+        # 跌停：收盘价 <= 理论跌停价（严格）
+        df['is_dt'] = df['close'] <= df['dt_price']
+        # 炸板：盘中最高价 >= 涨停价（触板），但收盘价 < 涨停价（未封住）
+        df['is_zha'] = (df['high'] >= df['zt_price']) & (df['close'] < df['zt_price'])
 
-        if zt_count > 0:
-            zt_records['rate'] = ((zt_records['close'] - zt_records['last_close']) /
-                                  zt_records['last_close'] * 100).round(2)
-            zt_df = zt_records[
-                ['ymd', 'stock_code', 'stock_name', 'last_close', 'close', 'rate',
-                 'market_value', 'total_value', 'total_capital', 'float_capital',
-                 'shareholder_num', 'pb', 'pe', 'market', 'plate_names']]
-            zt_df = zt_df.sort_values(by=['ymd', 'stock_code'])
+        # 涨停类型分类（严格逻辑）
+        conditions = [
+            df['is_zha'],  # 炸板
+            (df['is_zt']) & (df['low'] >= df['zt_price']),  # 一字板：全天最低 >= 涨停价（从未打开）
+            (df['is_zt']) & (df['open'] >= df['zt_price']) & (df['low'] < df['zt_price']),  # T字板：开盘>=涨停价，但盘中打开过
+            (df['is_zt']) & (df['open'] < df['zt_price'])  # 实体板：开盘<涨停价，收盘>=涨停价
+        ]
+        choices = ['zha', 'yizi', 'tzi', 'shiti']
+        df['zt_type'] = np.select(conditions, choices, default=None)
 
-            zt_dates = zt_df['ymd'].value_counts().sort_index()
-            logging.info(f"   - 涨停日期分布: {dict(list(zt_dates.head().items()))}...")
+        logging.info(f"  涨停分布: {df[df['is_zt']]['zt_type'].value_counts().to_dict()}")
+        logging.info(f"  炸板数量: {df['is_zha'].sum()} 条")
 
-            save_start = time.time()
+        # 【步骤6】筛选输出并写入
+        logging.info(f"【步骤6/6】正在筛选和保存结果...")
+
+        # 删除临时列，避免与stock_market的float_capital冲突
+        if 'float_capital_calc' in df.columns:
+            df = df.drop(columns=['float_capital_calc'])
+
+        # 合并基础信息
+        df = pd.merge(
+            df,
+            stock_market[['stock_code', 'stock_name', 'market_value', 'total_value',
+                          'total_capital', 'float_capital', 'shareholder_num', 'pb', 'pe', 'plate_names']],
+            on='stock_code', how='left'
+        )
+
+        # 涨停输出（含炸板，zt_type区分）
+        zt_df = df[df['is_zt'] | df['is_zha']].copy()
+        if not zt_df.empty:
+            zt_df['rate'] = ((zt_df['close'] - zt_df['last_close']) / zt_df['last_close'] * 100).round(2)
+
+            zt_output = zt_df[[
+                'ymd', 'stock_code', 'stock_name',
+                'open', 'high', 'low', 'close', 'volume',
+                'last_close', 'rate', 'zt_type', 'zt_price', 'turnover_rate',
+                'market_value', 'total_value', 'total_capital', 'float_capital',
+                'shareholder_num', 'pb', 'pe', 'market', 'plate_names'
+            ]].sort_values(by=['ymd', 'stock_code'])
+
             mysql_utils.data_from_dataframe_to_mysql(
-                user=origin_user,
-                password=origin_password,
-                host=origin_host,
-                database=origin_database,
-                df=zt_df,
-                table_name="dwd_stock_zt_list",
-                merge_on=['ymd', 'stock_code'])
-            logging.info(f"   [完成] 涨停数据保存完成，耗时: {time.time() - save_start:.2f}秒")
+                user=origin_user, password=origin_password, host=origin_host,
+                database=origin_database, df=zt_output,
+                table_name="dwd_stock_zt_list_v2", merge_on=['ymd', 'stock_code']
+            )
+            logging.info(f"  写入涨停/炸板: {len(zt_output)} 条")
 
-        dt_records = latest_15_days[latest_15_days['是否跌停'] == True].copy()
-        dt_count = len(dt_records)
-        logging.info(f"   - 发现跌停记录: {dt_count} 条")
+        # 跌停输出
+        dt_df = df[df['is_dt']].copy()
+        if not dt_df.empty:
+            dt_df['rate'] = ((dt_df['close'] - dt_df['last_close']) / dt_df['last_close'] * 100).round(2)
 
-        if dt_count > 0:
-            dt_records['rate'] = ((dt_records['close'] - dt_records['last_close']) /
-                                  dt_records['last_close'] * 100).round(2)
-            dt_df = dt_records[
-                ['ymd', 'stock_code', 'stock_name', 'last_close', 'close', 'rate',
-                 'market_value', 'total_value', 'total_capital', 'float_capital',
-                 'shareholder_num', 'pb', 'pe', 'market', 'plate_names']]
-            dt_df = dt_df.sort_values(by=['ymd', 'stock_code'])
+            dt_output = dt_df[[
+                'ymd', 'stock_code', 'stock_name',
+                'open', 'high', 'low', 'close', 'volume',
+                'last_close', 'rate', 'dt_price', 'turnover_rate',
+                'market_value', 'total_value', 'total_capital', 'float_capital',
+                'shareholder_num', 'pb', 'pe', 'market', 'plate_names'
+            ]].sort_values(by=['ymd', 'stock_code'])
 
-            dt_dates = dt_df['ymd'].value_counts().sort_index()
-            logging.info(f"   - 跌停日期分布: {dict(list(dt_dates.head().items()))}...")
-
-            save_start = time.time()
             mysql_utils.data_from_dataframe_to_mysql(
-                user=origin_user,
-                password=origin_password,
-                host=origin_host,
-                database=origin_database,
-                df=dt_df,
-                table_name="dwd_stock_dt_list",
-                merge_on=['ymd', 'stock_code'])
-            logging.info(f"   [完成] 跌停数据保存完成，耗时: {time.time() - save_start:.2f}秒")
+                user=origin_user, password=origin_password, host=origin_host,
+                database=origin_database, df=dt_output,
+                table_name="dwd_stock_dt_list_v2", merge_on=['ymd', 'stock_code']
+            )
+            logging.info(f"  写入跌停: {len(dt_output)} 条")
 
         total_time = time.time() - start_time
         logging.info("=" * 60)
         logging.info(f"【处理完成】总耗时: {total_time:.2f}秒")
-        logging.info(f"   - 处理总记录数: {len(latest_15_days)} 条")
-        logging.info(f"   - 涨停记录: {zt_count} 条")
-        logging.info(f"   - 跌停记录: {dt_count} 条")
-        if zt_count > 0 or dt_count > 0:
-            logging.info(f"   - 涨跌停合计: {zt_count + dt_count} 条")
+        logging.info(f"  - 涨停/炸板: {len(zt_df)} 条，跌停: {len(dt_df)} 条")
         logging.info("=" * 60)
-
-        logging.info(f"【数据质量检查】")
-        logging.info(f"   - 股票名称匹配率: {(1 - missing_percent / 100) * 100:.2f}%")
-        if missing_names > 0:
-            logging.info(f"   - 建议检查缺失的股票代码，可能需要更新基础信息表")
-
 
     @timing_decorator
     def cal_technical_indicators(self):
@@ -995,29 +1190,29 @@ class CalDWD:
             return pd.DataFrame()
 
 
-    @script_run(script_name="calculate_DWD_datas.py")
+    # @script_run(script_name="calculate_DWD_datas.py")
     def setup(self):
 
-        # 聚合股票的板块，把各个板块数据聚合在一起   周末手动执行
-        self.cal_ashare_plate()
-
-        # 计算股票所归属的交易所，判断其是主办、创业板、科创板、北交所等等
-        self.cal_stock_exchange()
-
-        # 股东数事件表（对齐环比 + 紧邻环比 + 新鲜度）
-        self.cal_shareholder_num_event()
-
-        # 股东数每日宽表（策略直接消费）
-        self.cal_shareholder_num_daily()
-
-        # 计算股票基础信息，汇总表，名称、编码、板块、股本、市值、净资产
-        self.cal_stock_base_info()
+        # # 聚合股票的板块，把各个板块数据聚合在一起   周末手动执行
+        # self.cal_ashare_plate()
+        #
+        # # 计算股票所归属的交易所，判断其是主办、创业板、科创板、北交所等等
+        # self.cal_stock_exchange()
+        #
+        # # 股东数事件表（对齐环比 + 紧邻环比 + 新鲜度）
+        # self.cal_shareholder_num_event()
+        #
+        # # 股东数每日宽表（策略直接消费）
+        # self.cal_shareholder_num_daily()
+        #
+        # # 计算股票基础信息，汇总表，名称、编码、板块、股本、市值、净资产
+        # self.cal_stock_base_info()
 
         # 计算一只股票是否 涨停 / 跌停
-        self.cal_ZT_DT()
+        self.cal_ZT_DT(start_date='20260101', end_date='20260930')
 
-        # 计算行情衍生指标  均线等
-        self.cal_technical_indicators()
+        # # 计算行情衍生指标  均线等
+        # self.cal_technical_indicators()
 
 
 if __name__ == '__main__':
