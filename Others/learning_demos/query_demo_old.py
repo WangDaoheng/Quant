@@ -13,7 +13,6 @@ from urllib3.exceptions import InsecureRequestWarning
 urllib3.disable_warnings(InsecureRequestWarning)
 
 
-
 # 查询证券的分钟K，日K，周K，月K数据
 def get_kline_demo():
     """

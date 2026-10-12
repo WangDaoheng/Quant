@@ -9,8 +9,6 @@ import shutil
 import pandas as pd
 import logging
 import requests
-import platform
-import json
 
 from CommonProperties.set_config import setup_logging_config
 
