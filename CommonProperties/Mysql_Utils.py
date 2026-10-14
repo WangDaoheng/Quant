@@ -72,6 +72,11 @@ def data_from_dataframe_to_mysql(user, password, host, database='quant', df=pd.D
     if total_rows == 0:
         return 0
 
+    # ===== 新增：日志补充最大ymd（在drop_duplicates之后取，才是实际插入的口径）=====
+    max_ymd_str = ''
+    if 'ymd' in df.columns and df['ymd'].notna().any():
+        max_ymd_str = f"，最大日期为 {df['ymd'].max()}"
+
     # 分批插入
     db_url = f'mysql+pymysql://{user}:{password}@{host}:3306/{database}'
     engine = create_engine(db_url)
@@ -100,7 +105,7 @@ def data_from_dataframe_to_mysql(user, password, host, database='quant', df=pd.D
             logging.info(f"该批次已处理 {total_rows} 条，累计插入 {inserted} 条")
 
     engine.dispose()
-    logging.info(f"完成：共插入 {inserted} 条到 {table_name}")
+    logging.info(f"完成：共插入 {inserted} 条到 {table_name}{max_ymd_str}")
     return inserted
 
 

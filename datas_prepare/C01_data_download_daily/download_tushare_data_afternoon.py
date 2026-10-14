@@ -133,7 +133,7 @@ class SaveTushareDailyData:
                 host=base_properties.origin_mysql_host,
                 database=base_properties.origin_mysql_database,
                 df=kline_total_df,
-                table_name="ods_stock_kline_daily_ts",
+                table_name="ods_stock_kline_daily_ts_v2",
                 merge_on=['ymd', 'stock_code']
             )
             logging.info(f"K线写入完成: {len(kline_total_df)} 条")
@@ -409,10 +409,10 @@ class SaveTushareDailyData:
 
     @script_run(script_name="download_tushare_data_afternoon.py")
     def setup(self):
-        self.get_stock_kline_tushare()
-        self.download_board_list()
+        # self.get_stock_kline_tushare()
+        # self.download_board_list()
         self.download_board_daily()
-        self.download_board_members()
+        # self.download_board_members()
 
 
 if __name__ == '__main__':
