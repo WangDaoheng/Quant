@@ -1099,11 +1099,8 @@ class CalDWD:
         计算股票技术指标（均线等）并存入 dwd_stock_technical_indicators 表
         """
         try:
-            # start_date = DateUtility.first_day_of_month()
-            # end_date = DateUtility.today()
-
-            start_date = '20240101'
-            end_date = '20261016'
+            start_date = DateUtility.first_day_of_month()
+            end_date = DateUtility.today()
 
             start_dt = pd.to_datetime(start_date)
             query_start = (start_dt - pd.Timedelta(days=400)).strftime('%Y%m%d')
@@ -1195,23 +1192,23 @@ class CalDWD:
     @script_run(script_name="calculate_DWD_datas.py")
     def setup(self):
 
-        # # 聚合股票的板块，把各个板块数据聚合在一起   周末手动执行
-        # self.cal_ashare_plate()
-        #
-        # # 计算股票所归属的交易所，判断其是主办、创业板、科创板、北交所等等
-        # self.cal_stock_exchange()
-        #
-        # # 股东数事件表（对齐环比 + 紧邻环比 + 新鲜度）
-        # self.cal_shareholder_num_event()
-        #
-        # # 股东数每日宽表（策略直接消费）
-        # self.cal_shareholder_num_daily()
-        #
-        # # 计算股票基础信息，汇总表，名称、编码、板块、股本、市值、净资产
-        # self.cal_stock_base_info()
-        #
-        # # 计算一只股票是否 涨停 / 跌停
-        # self.cal_ZT_DT()
+        # 聚合股票的板块，把各个板块数据聚合在一起   周末手动执行
+        self.cal_ashare_plate()
+
+        # 计算股票所归属的交易所，判断其是主办、创业板、科创板、北交所等等
+        self.cal_stock_exchange()
+
+        # 股东数事件表（对齐环比 + 紧邻环比 + 新鲜度）
+        self.cal_shareholder_num_event()
+
+        # 股东数每日宽表（策略直接消费）
+        self.cal_shareholder_num_daily()
+
+        # 计算股票基础信息，汇总表，名称、编码、板块、股本、市值、净资产
+        self.cal_stock_base_info()
+
+        # 计算一只股票是否 涨停 / 跌停
+        self.cal_ZT_DT()
 
         # 计算行情衍生指标  均线等
         self.cal_technical_indicators()
@@ -1220,8 +1217,8 @@ class CalDWD:
 if __name__ == '__main__':
     save_insight_data = CalDWD()
 
-    # # ===== 日常调度（每天跑）=====
-    # save_insight_data.setup()
+    # ===== 日常调度（每天跑）=====
+    save_insight_data.setup()
 
     # ===== 历史数据补录 =====
     # #  补录 event 表历史数据
@@ -1231,6 +1228,6 @@ if __name__ == '__main__':
     # save_insight_data.cal_shareholder_num_daily_batch(start_ymd='20260701', end_ymd='20260720')
 
     #  补录 base_info 历史数据
-    save_insight_data.cal_stock_base_info_batch('20240801')
+    # save_insight_data.cal_stock_base_info_batch('20260807')
 
 
