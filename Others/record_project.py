@@ -404,6 +404,8 @@ def main():
 
     # 示例2：完全不包含 datas_prepare（但仍会包含 C00_SQL）
     selected_dirs = ["backtest", "CommonProperties", "dashboard", "monitor", "review", "strategy"]
+    selected_dirs = ["backtest", "CommonProperties", "dashboard",  "strategy"]
+
     # ===============================================================
 
     # 检查项目目录是否存在

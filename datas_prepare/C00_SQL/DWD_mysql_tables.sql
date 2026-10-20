@@ -2,23 +2,22 @@
 ------------------  dwd_ashare_stock_base_info   股票基本信息大宽表
 CREATE TABLE quant.dwd_ashare_stock_base_info (
        ymd                DATE                     COMMENT '日期'
-      ,stock_code         varchar(50)              COMMENT '代码'
-      ,stock_name         varchar(50)              COMMENT '名称'
-      ,close              double(12,2)             COMMENT '最新收盘价'
-      ,change_pct         float                    COMMENT '当日涨跌幅(%)'
+      ,stock_code         VARCHAR(50)              COMMENT '代码'
+      ,stock_name         VARCHAR(50)              COMMENT '名称'
+      ,close              DOUBLE(12,2)             COMMENT '最新收盘价'
+      ,change_pct         FLOAT                    COMMENT '当日涨跌幅(%)'
       ,volume             BIGINT                   COMMENT '成交量'
-      ,trading_amount     double                   COMMENT '成交额'
-      ,market_value       double                   COMMENT '流通市值(亿)'
-      ,total_value        double                   COMMENT '总市值(亿)'
-      ,total_asset        double                   COMMENT '总资产(亿)'
-      ,net_asset          double                   COMMENT '净资产(亿)'
-      ,total_capital      double                   COMMENT '总股本(亿)'
-      ,float_capital      double                   COMMENT '流通股(亿)'
-      ,shareholder_num    bigint                   COMMENT '股东人数'
-      ,pb                 float(12,2)              COMMENT '市净率'
-      ,pe                 float(12,2)              COMMENT '市盈(动)'
+      ,trading_amount     DOUBLE                   COMMENT '成交额'
+      ,market_value       DOUBLE                   COMMENT '流通市值(亿)'
+      ,total_value        DOUBLE                   COMMENT '总市值(亿)'
+      ,total_capital      DOUBLE                   COMMENT '总股本(亿)'
+      ,float_capital      DOUBLE                   COMMENT '流通股(亿)'
+      ,shareholder_num    BIGINT                   COMMENT '股东人数'
+      ,pct_of_total_sh    DOUBLE(12,4)             COMMENT '股东数较上期环比波动百分比'
+      ,pb                 FLOAT(12,2)              COMMENT '市净率'
+      ,pe                 FLOAT(12,2)              COMMENT '市盈(动)'
       ,market             VARCHAR(50)              COMMENT '市场特征主板创业板等'
-      ,plate_names        VARCHAR(500)             COMMENT '板块名称'
+      ,plate_names        VARCHAR(2000)            COMMENT '板块名称'
       ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
 ) COMMENT='股票基本信息大宽表';
 
@@ -27,49 +26,60 @@ CREATE TABLE quant.dwd_ashare_stock_base_info (
 ------------------  dwd_stock_zt_list   涨停股票清单
 CREATE TABLE quant.dwd_stock_zt_list (
        ymd                DATE          NOT NULL   COMMENT '交易日期'
-      ,stock_code         VARCHAR(50)   NOT NULL   COMMENT '股票代码'
+      ,stock_code         VARCHAR(20)   NOT NULL   COMMENT '股票代码'
       ,stock_name         VARCHAR(50)              COMMENT '股票名称'
-      ,last_close         FLOAT                    COMMENT '昨日收盘价'
-      ,close              FLOAT                    COMMENT '收盘价'
-      ,rate               FLOAT                    COMMENT '涨幅'
-      ,market_value       double                   COMMENT '流通市值(亿)'
-      ,total_value        double                   COMMENT '总市值(亿)'
-      ,total_asset        double                   COMMENT '总资产(亿)'
-      ,net_asset          double                   COMMENT '净资产(亿)'
-      ,total_capital      double                   COMMENT '总股本(亿)'
-      ,float_capital      double                   COMMENT '流通股(亿)'
-      ,shareholder_num    bigint                   COMMENT '股东人数'
-      ,pb                 varchar(50)              COMMENT '市净率'
-      ,pe                 varchar(50)              COMMENT '市盈(动)'
-      ,market             VARCHAR(50)              COMMENT '市场特征主板创业板等'
-      ,plate_names        VARCHAR(500)             COMMENT '板块名称'
+      ,open               DECIMAL(10,2)            COMMENT '开盘价'
+      ,high               DECIMAL(10,2)            COMMENT '最高价'
+      ,low                DECIMAL(10,2)            COMMENT '最低价'
+      ,close              DECIMAL(10,2)            COMMENT '收盘价'
+      ,volume             BIGINT                   COMMENT '成交量（手）'
+      ,last_close         DECIMAL(10,2)            COMMENT '昨日收盘价'
+      ,rate               DECIMAL(10,2)            COMMENT '涨跌幅（%）'
+      ,zt_type            VARCHAR(10)              COMMENT '涨停类型：yizi/tzi/shiti/zha'
+      ,zt_price           DECIMAL(10,2)            COMMENT '理论涨停价'
+      ,turnover_rate      DECIMAL(10,2)            COMMENT '换手率（%）'
+      ,market_value       DECIMAL(20,2)            COMMENT '流通市值（亿）'
+      ,total_value        DECIMAL(20,2)            COMMENT '总市值（亿）'
+      ,total_capital      DECIMAL(20,2)            COMMENT '总股本（亿）'
+      ,float_capital      DECIMAL(20,2)            COMMENT '流通股（亿）'
+      ,shareholder_num    INT                      COMMENT '股东人数'
+      ,pb                 DECIMAL(10,2)            COMMENT '市净率'
+      ,pe                 DECIMAL(10,2)            COMMENT '市盈（动）'
+      ,market             VARCHAR(20)              COMMENT '市场特征（主板/创业板/科创板）'
+      ,plate_names        TEXT                     COMMENT '所属板块（逗号分隔）'
+      ,created_at         TIMESTAMP                COMMENT '写入时间'
       ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
-) COMMENT='涨停股票清单';
+) COMMENT='涨停明细表v2（含类型分类）';
 
 
 --1.3
 ------------------  dwd_stock_dt_list   跌停股票清单
 CREATE TABLE quant.dwd_stock_dt_list (
        ymd                DATE          NOT NULL   COMMENT '交易日期'
-      ,stock_code         VARCHAR(50)   NOT NULL   COMMENT '股票代码'
+      ,stock_code         VARCHAR(20)   NOT NULL   COMMENT '股票代码'
       ,stock_name         VARCHAR(50)              COMMENT '股票名称'
-      ,last_close         FLOAT                    COMMENT '昨日收盘价'
-      ,close              FLOAT                    COMMENT '收盘价'
-      ,rate               FLOAT                    COMMENT '涨幅'
-      ,market_value       double                   COMMENT '流通市值(亿)'
-      ,total_value        double                   COMMENT '总市值(亿)'
-      ,total_asset        double                   COMMENT '总资产(亿)'
-      ,net_asset          double                   COMMENT '净资产(亿)'
-      ,total_capital      double                   COMMENT '总股本(亿)'
-      ,float_capital      double                   COMMENT '流通股(亿)'
-      ,shareholder_num    bigint                   COMMENT '股东人数'
-      ,pct_of_total_sh    DOUBLE(10, 4)            COMMENT '股东数较上期环比波动百分比'
-      ,pb                 varchar(50)              COMMENT '市净率'
-      ,pe                 varchar(50)              COMMENT '市盈(动)'
-      ,market             VARCHAR(50)              COMMENT '市场特征主板创业板等'
-      ,plate_names        VARCHAR(500)             COMMENT '板块名称'
+      ,open               DECIMAL(10,2)            COMMENT '开盘价'
+      ,high               DECIMAL(10,2)            COMMENT '最高价'
+      ,low                DECIMAL(10,2)            COMMENT '最低价'
+      ,close              DECIMAL(10,2)            COMMENT '收盘价'
+      ,volume             BIGINT                   COMMENT '成交量（手）'
+      ,last_close         DECIMAL(10,2)            COMMENT '昨日收盘价'
+      ,rate               DECIMAL(10,2)            COMMENT '涨跌幅（%）'
+      ,dt_price           DECIMAL(10,2)            COMMENT '理论跌停价'
+      ,turnover_rate      DECIMAL(10,2)            COMMENT '换手率（%）'
+      ,market_value       DECIMAL(20,2)            COMMENT '流通市值（亿）'
+      ,total_value        DECIMAL(20,2)            COMMENT '总市值（亿）'
+      ,total_capital      DECIMAL(20,2)            COMMENT '总股本（亿）'
+      ,float_capital      DECIMAL(20,2)            COMMENT '流通股（亿）'
+      ,shareholder_num    INT                      COMMENT '股东人数'
+      ,pb                 DECIMAL(10,2)            COMMENT '市净率'
+      ,pe                 DECIMAL(10,2)            COMMENT '市盈（动）'
+      ,market             VARCHAR(20)              COMMENT '市场特征'
+      ,plate_names        TEXT                     COMMENT '所属板块'
+      ,created_at         TIMESTAMP                COMMENT '写入时间'
       ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
-) COMMENT='跌停股票清单';
+) COMMENT='跌停明细表v2';
+
 
 
 --1.5
@@ -80,7 +90,7 @@ CREATE TABLE quant.dwd_stock_technical_indicators (
     ,stock_name               varchar(50)             COMMENT '股票名称'
     ,close                    FLOAT                   COMMENT '收盘价'
     ,volume                   BIGINT                  COMMENT '成交量'
-    -- 成交量均线
+    -- 价格均线
     ,ma5                      FLOAT                   COMMENT '5日均线'
     ,ma10                     FLOAT                   COMMENT '10日均线'
     ,ma20                     FLOAT                   COMMENT '20日均线'
@@ -107,11 +117,6 @@ CREATE TABLE quant.dwd_stock_technical_indicators (
     ,INDEX idx_vol_ma5 (vol_ma5)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
 COMMENT='股票技术指标预计算表（均线等）';
-
-
-
-
-
 
 
 --2.1
@@ -169,25 +174,20 @@ CREATE TABLE IF NOT EXISTS quant.dwd_factor_summary (
 COMMENT='因子汇总表（所有因子得分）';
 
 
-
-
-
-
-
-
-
 --4.2        多渠道板块数据 -- 多渠道汇总
 ------------------  dwd_stock_a_total_plate
 CREATE TABLE quant.dwd_stock_a_total_plate (
        ymd                DATE          NOT NULL   COMMENT '日期'
-      ,board_code         VARCHAR(50)   NOT NULL   COMMENT '板块代码'
+      ,board_code         VARCHAR(50)              COMMENT '板块代码'
       ,board_name         VARCHAR(50)   NOT NULL   COMMENT '板块名称'
       ,stock_code         VARCHAR(50)              COMMENT '标的代码'
       ,stock_name         VARCHAR(50)              COMMENT '标的名称'
       ,source_table       VARCHAR(50)              COMMENT '来源表'
       ,remark             VARCHAR(50)              COMMENT '备注'
+      ,stock_code_pure    VARCHAR(50) GENERATED ALWAYS AS (SUBSTRING_INDEX(stock_code, '.', 1)) VIRTUAL COMMENT '纯股票代码（生成列）'
       ,UNIQUE KEY unique_ymd_board_code (ymd, board_name, stock_code)
       ,INDEX idx_ymd_stock_board (ymd, stock_code, board_name)
+      ,INDEX idx_ymd_pure_board (ymd, stock_code_pure, board_name)
 ) COMMENT='多渠道板块数据 -- 多渠道汇总';
 
 
