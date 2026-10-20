@@ -902,7 +902,7 @@ class CalDWD:
     @timing_decorator
     def cal_ZT_DT(self, start_date=None, end_date=None):
         """
-        计算涨跌停明细（严格逻辑版），写入 dwd_stock_zt_list_v2 / dwd_stock_dt_list_v2
+        计算涨跌停明细（严格逻辑版），写入 dwd_stock_zt_list / dwd_stock_dt_list
         核心逻辑：价格均为2位小数，理论涨停价round(2)，严格 >= 判断，无容差
         新增字段：zt_type, zt_price, open, high, low, volume, turnover_rate
         """

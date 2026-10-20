@@ -49,7 +49,7 @@ CREATE TABLE quant.dwd_stock_zt_list (
       ,plate_names        TEXT                     COMMENT '所属板块（逗号分隔）'
       ,created_at         TIMESTAMP                COMMENT '写入时间'
       ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
-) COMMENT='涨停明细表v2（含类型分类）';
+) COMMENT='涨停明细表（含类型分类）';
 
 
 --1.3
@@ -78,7 +78,7 @@ CREATE TABLE quant.dwd_stock_dt_list (
       ,plate_names        TEXT                     COMMENT '所属板块'
       ,created_at         TIMESTAMP                COMMENT '写入时间'
       ,UNIQUE KEY unique_ymd_stock_code (ymd, stock_code)
-) COMMENT='跌停明细表v2';
+) COMMENT='跌停明细表';
 
 
 

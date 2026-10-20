@@ -133,7 +133,7 @@ class SaveTushareDailyData:
                 host=base_properties.origin_mysql_host,
                 database=base_properties.origin_mysql_database,
                 df=kline_total_df,
-                table_name="ods_stock_kline_daily_ts_v2",
+                table_name="ods_stock_kline_daily_ts",
                 merge_on=['ymd', 'stock_code']
             )
             logging.info(f"K线写入完成: {len(kline_total_df)} 条")

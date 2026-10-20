@@ -15,7 +15,6 @@ from CommonProperties.set_config import setup_logging_config
 # ************************************************************************
 # 本代码的作用是周末使用akshare数据源下载历史数据, 写入mysql表
 # 需要下载的akshare数据表（从ODS层SQL定义）:
-# 1. ods_akshare_stock_value_em          股票基本面数据_估值数据
 # 2. ods_akshare_stock_zh_a_gdhs_detail_em 股票基本面数据_股东数据
 # 4. ods_akshare_stock_yjkb_em           股票基本面数据_业绩快报数据
 # 5. ods_akshare_stock_yjyg_em           股票基本面数据_业绩预告数据
