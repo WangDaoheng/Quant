@@ -23,7 +23,6 @@ class TableDataExporterFull:
         'ods_stock_limit_summary_insight': (1, 1, 2),
         'ods_stock_chouma_insight': (1, 1, 3),
         'ods_astock_industry_overview': (1, 1, 4),
-        'ods_astock_industry_detail': (1, 1, 5),
         # ODS 层 - 下午跑 - tushare 行情源
         'ods_stock_kline_daily_ts': (1, 2, 1),
         'ods_tushare_board_concept_name_ths': (1, 2, 2),
@@ -40,6 +39,8 @@ class TableDataExporterFull:
         # ODS 层 - 周末跑
         'ods_akshare_stock_value_em': (1, 5, 1),
         'ods_akshare_stock_zh_a_gdhs_detail_em': (1, 5, 2),
+        # ODS 层 - 周五跑（只在周五更新，单独一组）
+        'ods_astock_industry_detail': (1, 6, 1),
         # DWD 层
         'dwd_stock_a_total_plate': (2, 1, 1),
         'ods_stock_exchange_market': (2, 1, 2),
@@ -65,6 +66,17 @@ class TableDataExporterFull:
         'ods_us_stock_daily_vantage'
     }
 
+    # ======================================================================
+    # 缺失汇总排除名单：这些表即使缺数据，也不出现在《缺失数据表汇总》里
+    # （仅排除汇总区的展示，表详情里仍会正常显示缺失情况）
+    # ======================================================================
+    MISSING_SUMMARY_EXCLUDE = {
+        'ods_astock_industry_detail',        # 只在周五跑，日常缺失属正常
+        'ods_stock_plate_redbook',
+        'dwd_factor_summary',
+        'dwd_factor_volume_shrinkage',
+    }
+
     # 层级展示名称
     LAYER_NAMES = {
         1: 'ODS 层（原始数据）',
@@ -80,6 +92,7 @@ class TableDataExporterFull:
         (1, 3): '（一）下午跑 - akshare 行情源',
         (1, 4): '（二）凌晨跑',
         (1, 5): '（三）周末跑',
+        (1, 6): '（四）周五跑',
     }
 
     def __init__(self):
@@ -975,9 +988,11 @@ class TableDataExporterFull:
                 export_layer_groups[99].append(table)
         export_layer_groups = {k: v for k, v in export_layer_groups.items() if v}
 
-        # 收集缺失数据表信息，用于汇总展示
+        # 收集缺失数据表信息，用于汇总展示（排除名单中的表跳过，仅作用于汇总区）
         missing_summary = []
         for info in all_table_infos:
+            if info['table_name'] in self.MISSING_SUMMARY_EXCLUDE:
+                continue
             coverage = info.get('trading_coverage')
             if coverage and coverage.get('missing_days'):
                 missing_summary.append({
@@ -1095,7 +1110,7 @@ class TableDataExporterFull:
             print(f"输出文件: {self.output_file}")
             print(f"文件大小: {file_size:.1f} KB")
             print(f"导出表数: {total_exported}/{len(tables_to_export)}")
-            print(f"缺失数据表: {len(missing_summary)} 张")
+            print(f"缺失数据表: {len(missing_summary)} 张（已排除 {len(self.MISSING_SUMMARY_EXCLUDE)} 张白名单表）")
             print("=" * 60)
 
             print("\n展示顺序:")
@@ -1106,6 +1121,7 @@ class TableDataExporterFull:
             print("        · akshare 行情源")
             print("    （二）凌晨跑")
             print("    （三）周末跑")
+            print("    （四）周五跑")
             print("2️⃣  DWD 层")
             print("3️⃣  MART 层")
             print("4️⃣  其他表（按字母顺序）")
@@ -1121,7 +1137,7 @@ class TableDataExporterFull:
             print("✅ 全表真实最早/最晚日期（非近70天）")
             print("✅ 交易日覆盖检查（只比对已发生的交易日，18点前当天不计入）")
             print("✅ 每日数据量明细 + 波动检测（>20%标红）")
-            print("✅ 缺失数据表汇总（点击表名跳转详情）")
+            print("✅ 缺失数据表汇总（点击表名跳转详情；白名单表不进汇总）")
             print("✅ 排除名单：EXCLUDED_TABLES 中的表不参与统计")
             print("✅ 响应式设计，支持手机查看")
 
@@ -1143,12 +1159,12 @@ def main():
     print("=" * 60)
     print("输出格式: HTML（带目录导航、超链接、表折叠）")
     print("展示顺序: ODS → DWD → MART → 其他")
-    print("ODS子分组: 下午跑(insight/tushare/akshare) → 凌晨跑 → 周末跑")
+    print("ODS子分组: 下午跑(insight/tushare/akshare) → 凌晨跑 → 周末跑 → 周五跑")
     print("折叠功能: 每张表可折叠，有问题的表默认展开")
     print("日期修复: 全表真实最早/最晚日期（非近70天）")
     print("交易日历: 只比对今天及之前的已发生交易日（18点前当天不计入）")
     print("波动检测: 相邻日期间数据量波动超过20%会标红提示")
-    print("缺失汇总: 自动汇总缺失数据表，点击可跳转详情")
+    print("缺失汇总: 自动汇总缺失数据表，点击可跳转详情（白名单表除外）")
     print("排除名单: EXCLUDED_TABLES 中的表不参与统计")
     print("=" * 60)
 

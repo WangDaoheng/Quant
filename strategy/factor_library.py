@@ -23,12 +23,38 @@ class FactorLibrary:
         self.stocks_df = Mysql_Utils.get_stock_codes_latest()
 
 
+    def get_trading_days(self, start_date, end_date):
+        """获取交易日列表"""
+        try:
+            trading_days_df = Mysql_Utils.data_from_mysql_to_dataframe(
+                user=self.user,
+                password=self.password,
+                host=self.host,
+                database=self.database,
+                table_name='ods_trading_days_insight',
+                start_date=start_date,
+                end_date=end_date,
+                cols=['ymd']
+            )
+
+            if trading_days_df.empty:
+                return []
+
+            # 直接返回排序后的日期列表
+            trading_days = sorted(trading_days_df['ymd'].unique())
+            return [d.strftime('%Y%m%d') for d in trading_days]
+
+        except Exception as e:
+            logger.error(f"获取交易日失败：{str(e)}")
+            return []
+
+
     def pb_factor_score(self, start_date, end_date, reverse=True, save_to_cache=True):
         """
         计算 PB 因子百分制评分
         source_table: dwd_ashare_stock_base_info
         简化版：对于 pb >0 的股票，根据每日截面计算 pb 排名。
-        reverse为 True（默认）, pb升序排名, pb越小, 排名越小, 打分越高（有效数据得分[1, 100]，无效数据得分0）
+        reverse为 True（默认）, pb升序排名, pb越小, 排名值越小, 打分越高（有效数据得分[1, 100]，无效数据得分0）
         reverse为 False, pb降序排名, pb越大, 排名越小, 打分越高（有效数据得分[1, 100]，无效数据得分0）
         """
         try:
@@ -99,96 +125,167 @@ class FactorLibrary:
             return pd.DataFrame(columns=['ymd', 'stock_code', 'pb_score'])
 
 
-    def zt_factor_score(self, start_date, end_date, lookback_days=5, scoring_method='linear', save_to_cache=True):
+    def zt_factor_score(self, start_date, end_date, lookback_days=10,
+                        type_weight=None, decay='exp', half_life=5,
+                        streak_bonus=5, max_streak=5,
+                        reverse=False, save_to_cache=True):
         """
-        计算涨停因子百分制评分（0-100分）
-
-        Args:
-            start_date: 开始日期，格式'YYYYMMDD'
-            end_date: 结束日期，格式'YYYYMMDD'
-            lookback_days: 回溯交易日数量，默认5天
-            scoring_method: 评分方法
-                - 'linear': 线性得分，每涨停一次得 100/lookback_days 分
-                - 'log': 对数得分，涨停越多边际效应递减
-                - 'binary': 二元得分，有涨停就得100分
-            save_to_cache: 是否保存到缓存
-
-        Returns:
-            DataFrame: 包含 ymd, stock_code, zt_score 三列
+        计算涨停因子百分制评分
+        source_table: dwd_stock_zt_list
+        逻辑：统计每只股票过去 lookback_days 个交易日内的涨停强度 raw_score，由三部分构成：
+            1) 【涨停类型】：一字板 yizi=1.0 / T字板 tzi=0.9 / 实体板 shiti=0.8 / 炸板 zha=0.2
+               （封板质量越高分越高；炸板为弱势涨停，大幅弱化但仍保留少量动量信息）；
+            2) 【时间衰减】：距今越近权重越高。decay='exp' 指数衰减 exp(-age/half_life)，
+               其中，age 指某次涨停事件距离"当前打分日"隔了几个交易日,
+               half_life 半衰期,影响力衰减到原来一半所需要的交易日数。
+               decay='linear' 线性衰减 (lookback_days-age)/lookback_days，
+               decay='none' 不衰减；
+            3) 【连板加成】：截至当日连续封板天数 streak（炸板打断连板），首板无加成，每多一板加 streak_bonus 分，封顶 max_streak 板
+               （连板高度是短线最强信号，边际递增）。
+                连板加成 = (连板高度 - 1) × streak_bonus，封顶 max_streak
+                streak_bonus：每一板值多少分
+                max_streak：连板加成的封顶板数（防止极端值垄断）
+        raw_score(t) = Σ [ 涨停类型权重 × 时间衰减权重 ]   ← 对窗口内每次涨停求和
+                       + 连板加成                       ← 独立相加
+        每日截面上对 raw_score 排名映射到 [1,100]：
+            reverse=False（默认）：raw_score 越大，排名越靠前，得分越高；
+            reverse=True：反向打分（用于观察涨停后的反转/回落效应）。
+        异常值处理：
+            - zt_type 缺失的涨停记录按实体板 shiti=0.8 计；
+            - 区间内无任何涨停记录的股票得分 0（与 pb_score 的无效=0 口径一致）；
+            - 仅炸板(zha)无封板的股票 raw_score 很低，截面排名自然靠后。
+        股票池：以 ods_stock_code_daily_insight（每日已上市股票码表）为全量底表，
+            窗口内无涨停记录的股票 raw_score 补 0，保证输出覆盖全市场，
+            与 pb_score 等因子的股票池口径一致，便于合成。
         """
         try:
-            # 1. 获取交易日
-            query_start = (pd.to_datetime(start_date) - pd.Timedelta(days=lookback_days * 2 + 10)).strftime('%Y%m%d')
-            all_days = self.get_trading_days(query_start, end_date)
+            if type_weight is None:
+                type_weight = {'yizi': 1.0, 'tzi': 0.9, 'shiti': 0.8, 'zha': 0.2}
 
+            # ========== 1. 交易日与目标区间 ==========
+            query_start = (pd.to_datetime(start_date)
+                           - pd.Timedelta(days=lookback_days * 2 + 20)).strftime('%Y%m%d')
+            all_days = self.get_trading_days(query_start, end_date)
             if not all_days:
                 return pd.DataFrame(columns=['ymd', 'stock_code', 'zt_score'])
 
-            # 2. 确定目标区间
-            # 找到 >= start_date 的第一个交易日
             start_idx = next((i for i, d in enumerate(all_days) if d >= start_date), None)
-            if start_idx is None:
-                return pd.DataFrame(columns=['ymd', 'stock_code', 'zt_score'])
-
-            # 找到 <= end_date 的最后一个交易日
             end_idx = next((i for i in range(len(all_days) - 1, -1, -1) if all_days[i] <= end_date), None)
-            if end_idx is None:
+            if start_idx is None or end_idx is None:
                 return pd.DataFrame(columns=['ymd', 'stock_code', 'zt_score'])
 
             target_days = all_days[start_idx:end_idx + 1]
-
-            # 3. 获取涨停数据（需要回溯 lookback_days-1 天）
-            earliest_idx = max(0, start_idx - lookback_days + 1)
+            # 连板计算需要额外回溯（连板最长可能超过 lookback_days）
+            earliest_idx = max(0, start_idx - lookback_days - max_streak)
             query_start_zt = all_days[earliest_idx]
 
+            # ========== 2. 读取涨停数据 ==========
             zt_df = Mysql_Utils.data_from_mysql_to_dataframe(
                 user=self.user, password=self.password, host=self.host, database=self.database,
                 table_name='dwd_stock_zt_list',
                 start_date=query_start_zt, end_date=end_date,
+                cols=['ymd', 'stock_code', 'zt_type']
+            )
+            if zt_df.empty:
+                return pd.DataFrame(columns=['ymd', 'stock_code', 'zt_score'])
+
+            zt_df['ymd'] = pd.to_datetime(zt_df['ymd']).dt.strftime('%Y%m%d')
+            # zt_type 缺失按实体板计
+            zt_df['type_w'] = zt_df['zt_type'].map(type_weight).fillna(type_weight['shiti'])
+            # 封板标记：炸板不算封板（用于连板计算，炸板会打断连板）
+            zt_df['is_sealed'] = (zt_df['zt_type'] != 'zha').astype(int)
+
+            # ========== 3. 构建事件矩阵（行=交易日，列=股票） ==========
+            event = zt_df.pivot_table(index='ymd', columns='stock_code',
+                                      values='type_w', aggfunc='max')
+            event = event.reindex(index=all_days).fillna(0)
+
+            sealed = zt_df.pivot_table(index='ymd', columns='stock_code',
+                                       values='is_sealed', aggfunc='max')
+            sealed = sealed.reindex(index=all_days).fillna(0)
+
+            # ========== 4. 时间衰减加权的涨停强度 ==========
+            lags = np.arange(lookback_days)
+            if decay == 'exp':
+                decay_w = np.exp(-lags / half_life)
+            elif decay == 'linear':
+                decay_w = (lookback_days - lags) / lookback_days
+            else:  # 'none'
+                decay_w = np.ones(lookback_days)
+
+            # raw = Σ_lag 事件权重(lag天前) × 衰减(lag)，向量化实现
+            raw = pd.DataFrame(0.0, index=all_days, columns=event.columns)
+            for lag in range(lookback_days):
+                raw = raw.add(event.shift(lag).fillna(0) * decay_w[lag], fill_value=0)
+
+            # ========== 5. 连板加成 ==========
+            def _streak(s):
+                # 截至当日的连续封板天数：0/1 序列上的连续1计数
+                return s * s.groupby((s == 0).cumsum()).cumsum()
+
+            streak = sealed.apply(_streak, axis=0)
+            # 首板不加成，每多一板 +streak_bonus，封顶 max_streak 板
+            raw = raw + (streak - 1).clip(lower=0).clip(upper=max_streak - 1) * streak_bonus
+
+            # ========== 6. 截取目标区间并转长格式 ==========
+            target_raw = raw.loc[target_days]
+            long_df = (target_raw.rename_axis('ymd')
+                       .reset_index()
+                       .melt(id_vars='ymd', var_name='stock_code', value_name='raw_score'))
+
+            # ========== 6.1 取全量股票底表（每日已上市股票） ==========
+            universe_df = Mysql_Utils.data_from_mysql_to_dataframe(
+                user=self.user, password=self.password, host=self.host, database=self.database,
+                table_name='ods_stock_code_daily_insight',
+                start_date=target_days[0], end_date=target_days[-1],
                 cols=['ymd', 'stock_code']
             )
-
-            # 4. 构建 (date, stock) -> 是否涨停 的标记
-            zt_df['zt'] = 1
-            zt_pivot = zt_df.pivot_table(index='ymd', columns='stock_code', values='zt', fill_value=0)
-
-            # 5. 滚动求和（滑动窗口）
-            # 对齐到完整交易日索引，填充0
-            zt_pivot.index = pd.to_datetime(zt_pivot.index).strftime('%Y%m%d')
-            zt_pivot = zt_pivot.reindex(index=all_days, fill_value=0)
-
-            # 滚动窗口求和（包含当前日，往前 lookback_days 天）
-            rolling_zt = zt_pivot.rolling(window=lookback_days, min_periods=1).sum()
-
-            # 6. 截取目标区间
-            target_rolling = rolling_zt.loc[target_days]
-
-            # 7. 转长格式
-            result = target_rolling.reset_index().melt(
-                id_vars=['ymd'],
-                var_name='stock_code',
-                value_name='zt_count'
-            )
-
-            # 8. 计算得分
-            if scoring_method == 'linear':
-                result['zt_score'] = (result['zt_count'] * (100 / lookback_days)).clip(upper=100).round(2)
-            elif scoring_method == 'log':
-                factor = 100 / math.log2(lookback_days + 1)
-                result['zt_score'] = result['zt_count'].apply(
-                    lambda x: min(round(math.log2(x + 1) * factor, 2), 100) if x > 0 else 0
-                )
-            elif scoring_method == 'binary':
-                result['zt_score'] = result['zt_count'].apply(lambda x: 100 if x > 0 else 0)
+            if universe_df.empty:
+                # 码表不可用时退化为只输出有涨停记录的股票
+                logger.warning("ods_stock_code_daily_insight 无数据，因子仅覆盖窗口内有涨停记录的股票")
             else:
-                result['zt_score'] = (result['zt_count'] * (100 / lookback_days)).clip(upper=100).round(2)
+                universe_df['ymd'] = pd.to_datetime(universe_df['ymd']).dt.strftime('%Y%m%d')
+                universe_df = universe_df[['ymd', 'stock_code']].drop_duplicates()
+                # 左连接到底表：窗口内无涨停记录的股票 raw_score 补 0
+                long_df = universe_df.merge(long_df, on=['ymd', 'stock_code'], how='left')
+                long_df['raw_score'] = long_df['raw_score'].fillna(0)
 
-            result = result[['ymd', 'stock_code', 'zt_score']]
+            # ========== 7. 每日截面排名 → [1,100]，无涨停记录=0 ==========
+            result_dfs = []
+            for date, date_df in long_df.groupby('ymd'):
+                date_df = date_df.copy()
+                valid_mask = date_df['raw_score'] > 0
+                valid_count = valid_mask.sum()
+
+                if valid_count > 0:
+                    valid = date_df.loc[valid_mask].copy()
+                    # rank 升序：raw 越大 rank 越大
+                    valid['raw_rank'] = valid['raw_score'].rank(method='min', ascending=True)
+                    max_rank = valid['raw_rank'].max()
+
+                    if max_rank == 1:
+                        valid['zt_score'] = 100.0
+                    elif reverse:
+                        # 反向：raw 越大得分越低
+                        valid['zt_score'] = (1 + 99 * (max_rank - valid['raw_rank'])
+                                             / (max_rank - 1)).round(2)
+                    else:
+                        # 正向：raw 越大得分越高
+                        valid['zt_score'] = (1 + 99 * (valid['raw_rank'] - 1)
+                                             / (max_rank - 1)).round(2)
+
+                    date_df.loc[valid.index, 'zt_score'] = valid['zt_score']
+
+                date_df.loc[~valid_mask, 'zt_score'] = 0.0
+                result_dfs.append(date_df[['ymd', 'stock_code', 'zt_score']])
+
+            result_df = pd.concat(result_dfs, ignore_index=True)
+            logger.info(f"涨停因子百分制计算完成：共{len(result_df)}条记录")
 
             if save_to_cache:
-                self.cached_factors['zt'] = result.copy()
+                self.cached_factors['zt'] = result_df.copy()
 
-            return result
+            return result_df
 
         except Exception as e:
             logger.error(f"计算涨停因子失败：{str(e)}")
@@ -199,17 +296,33 @@ class FactorLibrary:
 
     def shareholder_factor_score(self, start_date, end_date, save_to_cache=True):
         """
-        计算筹码因子百分制评分（0-100分）
-        评分逻辑（两阶段）：
-        1. 基础分（0~100）：对 latest_qoq_sh（季度对齐环比%）做 sigmoid 变换
-           - 股东数大幅减少（筹码集中）→ 高分
-           - 股东数大幅增加（筹码分散）→ 低分
-        2. 新鲜度调整：score × (0.6 + 0.4 × fresh_weight)
-           - fresh_weight = exp(-days_since_load/10)，刚披露 ≈ 1.0，越久越低
-           - 体现"刚发布的突变价值更大"，但不把季度披露的股票清零（保底 0.6 系数）
-        可选增强（字段已查出来，按需启用）：
-        - latest_mom_sh < 0（季内二次披露仍在减少）→ 边际加速 +5 分
-        - sh_pctile_cs：当日横截面分位，可直接 (1-x)*100 作为替代评分口径
+        计算股东户数因子百分制评分（0-100分）
+        source_table: dwd_shareholder_num_daily
+        评分逻辑（三阶段）：
+        1) 【截面分位基础分】：每日在全部股票内，对 latest_qoq_sh
+           （季度对齐环比%）升序排名——股东数降幅越大排名越靠前——映射到 [1,100]。
+           截面排名而非固定 sigmoid，保证不同交易日的得分分布可比（与 pb_score 口径一致）；
+        2) 【新鲜度衰减】：score × (0.5 + 0.5 × fresh_weight)
+           fresh_weight = exp(-days_since_load/10)，刚披露权重 1.0，之后指数衰减，
+           陈旧数据保底 50%（季度数据本身时效性有限，不清零）；
+        3) 【边际加速】：latest_mom_sh < 0（季内最新一次披露仍在减少）→ 得分 × 1.1，
+           体现"筹码持续集中"的确认信号。
+        shareholder_score(t) = ( 1 + 99 × (max_rank − qoq_rank) / (max_rank − 1) )  ← 第1阶段：截面分位基础分
+                               × ( 0.5 + 0.5 × exp(−days_since_load / 10) )         ← 第2阶段：新鲜度衰减（保底0.5）
+                               × 1.1（若 latest_mom_sh < 0，否则 × 1.0）              ← 第3阶段：边际加速
+                               全程封顶 100
+        其中：qoq_rank = 当日截面内 latest_qoq_sh 升序排名（降幅最大者 rank=1）；
+              max_rank = 当日参与排名的股票总数。
+        股票池（重要）：全市场覆盖。dwd_shareholder_num_daily 是每日对全量股票的
+           前向填充快照（5000+ 只，绝大多数股票的值为最近一次披露，陈旧度由
+           days_since_load / fresh_weight 刻画）；仅过滤 latest_qoq_sh 为 NULL 的股票
+           （首次披露、无季度基期，align_flag='first'），这类股票当日不参与打分。
+           与其他因子（pb/zt）输出同为全市场口径，可直接按 (ymd, stock_code) 合成。
+        数据特性提示：股东数披露随财报季聚集（4月底/8月底/10月底为高峰），
+           因子信号强度呈脉冲式，回测时建议按月份分层观察 IC。
+        异常值处理：
+           - latest_qoq_sh 缺失的股票跳过，不出现在输出中；
+           - 加速系数作用后封顶 100 分。
         """
         try:
             # 获取股东数据（新宽表：每日前向填充 + 新鲜度特征）
@@ -232,31 +345,40 @@ class FactorLibrary:
                 for col in ['latest_qoq_sh', 'latest_mom_sh', 'days_since_load', 'fresh_weight']:
                     shareholder_df[col] = pd.to_numeric(shareholder_df[col], errors='coerce')
 
-                def sigmoid_score(qoq):
-                    """股东数下降(qoq<0) → 高分；上升 → 低分"""
-                    if pd.isna(qoq):
-                        return 0.0
-                    x = qoq * 0.15  # 0.15 控制曲线陡峭程度（沿用原参数）
-                    sigmoid = 1 / (1 + math.exp(-x))
-                    return 100 * (1 - sigmoid)
+                # 仅过滤无有效环比的股票（首次披露、无季度基期），其余全量参与
+                shareholder_df = shareholder_df[shareholder_df['latest_qoq_sh'].notna()].copy()
 
-                # 1. 基础分：基于季度对齐环比（口径已统一，横截面可比）
-                shareholder_df['base_score'] = shareholder_df['latest_qoq_sh'].apply(sigmoid_score)
+                # ========== 1. 截面分位基础分 [1,100] ==========
+                # qoq 越小（户数降幅越大）→ rank 越靠前 → 得分越高
+                shareholder_df['qoq_rank'] = shareholder_df.groupby('ymd')['latest_qoq_sh'].rank(
+                    method='min', ascending=True)
+                shareholder_df['max_rank'] = shareholder_df.groupby('ymd')['qoq_rank'].transform('max')
 
-                # 2. 新鲜度系数：0.6 ~ 1.0（刚披露满分权重，陈旧数据保底 60%）
+                shareholder_df['base_score'] = 100.0
+                mask_multi = shareholder_df['max_rank'] > 1
+                # rank=1（户数降幅最大）→ 100 分；rank=max（户数增加最多）→ 1 分
+                shareholder_df.loc[mask_multi, 'base_score'] = (
+                        1 + 99 * (shareholder_df.loc[mask_multi, 'max_rank']
+                                  - shareholder_df.loc[mask_multi, 'qoq_rank'])
+                        / (shareholder_df.loc[mask_multi, 'max_rank'] - 1)
+                ).round(2)
+
+                # ========== 2. 新鲜度衰减系数：0.5 ~ 1.0 ==========
                 shareholder_df['fresh_coef'] = (
-                    0.6 + 0.4 * shareholder_df['fresh_weight'].fillna(0)
+                        0.5 + 0.5 * shareholder_df['fresh_weight'].fillna(0)
                 ).clip(upper=1.0)
 
                 shareholder_df['shareholder_score'] = (
-                    shareholder_df['base_score'] * shareholder_df['fresh_coef']
-                ).round(2)
+                        shareholder_df['base_score'] * shareholder_df['fresh_coef']
+                )
 
-                # 3. 边际加速加分：季内最新一次披露仍在减少（mom_sh < 0）
+                # ========== 3. 边际加速：季内最新披露仍在减少 → ×1.1 ==========
                 mask_accel = shareholder_df['latest_mom_sh'] < 0
                 shareholder_df.loc[mask_accel, 'shareholder_score'] = (
-                    shareholder_df.loc[mask_accel, 'shareholder_score'] + 5
-                ).clip(upper=100).round(2)
+                        shareholder_df.loc[mask_accel, 'shareholder_score'] * 1.1
+                ).clip(upper=100)
+
+                shareholder_df['shareholder_score'] = shareholder_df['shareholder_score'].round(2)
 
                 result_df = shareholder_df[['ymd', 'stock_code', 'shareholder_score']]
 
@@ -271,417 +393,250 @@ class FactorLibrary:
             logger.error(f"计算股东数因子失败：{str(e)}")
             return pd.DataFrame(columns=['ymd', 'stock_code', 'shareholder_score'])
 
-
-    def get_trading_days(self, start_date, end_date):
-        """获取交易日列表"""
-        try:
-            trading_days_df = Mysql_Utils.data_from_mysql_to_dataframe(
-                user=self.user,
-                password=self.password,
-                host=self.host,
-                database=self.database,
-                table_name='ods_trading_days_insight',
-                start_date=start_date,
-                end_date=end_date,
-                cols=['ymd']
-            )
-
-            if trading_days_df.empty:
-                return []
-
-            # 直接返回排序后的日期列表
-            trading_days = sorted(trading_days_df['ymd'].unique())
-            return [d.strftime('%Y%m%d') for d in trading_days]
-
-        except Exception as e:
-            logger.error(f"获取交易日失败：{str(e)}")
-            return []
-
-    def volume_shrinkage_factor(self, start_date, end_date,  save_to_cache=True):
+    def volume_shrink_factor(self, start_date, end_date, baseline='ma20',
+                             max_streak=5, reverse=False, save_to_cache=True):
         """
-        计算缩量下跌因子（0-100分）
-        使用预计算的均线表，固定使用60日均量作为长期基准
-
-        评分逻辑：
-        1. 成交量条件（60分）：
-           - 近5日均量低于60日均量（30分）
-           - 近1-3天连续缩量（30分）
-        2. 价格条件（40分）：
-           - 连续阴线天数越多，得分越高
-           - 连续3天阴线得满分40分
+        计算连续缩量因子百分制评分（0-100分）
+        source_table: dwd_stock_technical_indicators
+        定义：连续缩量 = 连续 n 个交易日，每日成交量均低于均量基准线
+              （不要求每日比前一日低，只看是否持续处于低量状态）。
+        参数：
+            baseline: 均量基准线，'ma5'（最松）/ 'ma20'（推荐）/ 'ma60'（最严）。
+                      注意 vol_ma10 不在预计算表中，如需请自行 rolling 计算；
+            max_streak: 连缩天数封顶（防止极端长缩量垄断排名），默认 5 天；
+        逻辑：
+            raw_score = min(截至当日连续缩量天数, max_streak)
+            每日截面上对 raw_score 排名映射到 [1,100]：
+                无缩量（raw=0）的股票得 0 分；
+                raw 越大（连缩越久）得分越高；reverse=True 反向。
+        异常值处理：
+            - 停牌日无数据，打断连续计数（视为未缩量），属合理处理；
+            - 基准均线为 NULL（上市不足期）时该日不计缩量。
         """
         try:
-            # 1. 从技术指标表获取数据
+            baseline_col = {'ma5': 'vol_ma5', 'ma20': 'vol_ma20', 'ma60': 'vol_ma60'}.get(baseline)
+            if baseline_col is None:
+                raise ValueError(f"baseline 必须是 'ma5'/'ma20'/'ma60'，收到: {baseline}")
+
+            # ========== 1. 交易日与目标区间 ==========
+            query_start = (pd.to_datetime(start_date)
+                           - pd.Timedelta(days=max_streak * 2 + 20)).strftime('%Y%m%d')
+            all_days = self.get_trading_days(query_start, end_date)
+            if not all_days:
+                return pd.DataFrame(columns=['ymd', 'stock_code', 'volume_shrink_score'])
+
+            start_idx = next((i for i, d in enumerate(all_days) if d >= start_date), None)
+            end_idx = next((i for i in range(len(all_days) - 1, -1, -1) if all_days[i] <= end_date), None)
+            if start_idx is None or end_idx is None:
+                return pd.DataFrame(columns=['ymd', 'stock_code', 'volume_shrink_score'])
+
+            target_days = all_days[start_idx:end_idx + 1]
+            # 连缩计算需要回溯 max_streak 天
+            earliest_idx = max(0, start_idx - max_streak)
+            query_start_data = all_days[earliest_idx]
+
+            # ========== 2. 读取均量数据 ==========
             tech_df = Mysql_Utils.data_from_mysql_to_dataframe(
-                user=self.user,
-                password=self.password,
-                host=self.host,
-                database=self.database,
+                user=self.user, password=self.password, host=self.host, database=self.database,
                 table_name='dwd_stock_technical_indicators',
-                start_date=start_date,
-                end_date=end_date,
-                cols=['ymd', 'stock_code', 'stock_name', 'close', 'volume',
-                      'vol_ma5', 'vol_ma60', 'volume_vs_ma5']
+                start_date=query_start_data, end_date=end_date,
+                cols=['ymd', 'stock_code', 'volume', baseline_col]
             )
-
-            # 定义固定的列顺序（与表结构完全一致）
-            fixed_columns = [
-                'ymd', 'stock_code', 'stock_name',
-                'close', 'volume',
-                'vol_ma5', 'vol_ma60', 'volume_vs_ma5',
-                'is_shrink_today', 'consecutive_shrink_days',
-                'is_down', 'consecutive_down_days',
-                'volume_score', 'price_score', 'composite_score', 'signal_level'
-            ]
-
             if tech_df.empty:
-                logger.warning(f"技术指标数据为空: {start_date}~{end_date}")
-                return pd.DataFrame(columns=fixed_columns)
+                return pd.DataFrame(columns=['ymd', 'stock_code', 'volume_shrink_score'])
 
-            # 2. 获取阴线数据   关于引线 todo  最好是连阴但累计跌幅却有限的
-            down_df = self.get_down_days(start_date, end_date)
+            tech_df['ymd'] = pd.to_datetime(tech_df['ymd']).dt.strftime('%Y%m%d')
+            # 缩量日标记：当日量 < 基准均量（基准为 NULL 时不计）
+            tech_df['is_shrink'] = (tech_df['volume'] < tech_df[baseline_col]).astype(float)
+            tech_df.loc[tech_df[baseline_col].isna(), 'is_shrink'] = 0.0
 
-            if down_df.empty:
-                logger.warning(f"阴线数据为空: {start_date}~{end_date}")
-                return pd.DataFrame(columns=fixed_columns)
+            # ========== 3. 事件矩阵 + 连续计数（向量化） ==========
+            event = tech_df.pivot_table(index='ymd', columns='stock_code',
+                                        values='is_shrink', aggfunc='max')
+            event = event.reindex(index=all_days).fillna(0)
 
-            # 3. 合并数据
-            merged_df = pd.merge(
-                tech_df,
-                down_df[['ymd', 'stock_code', 'is_down']],
-                on=['ymd', 'stock_code'],
-                how='inner'
+            def _streak(s):
+                return s * s.groupby((s == 0).cumsum()).cumsum()
+
+            streak = event.apply(_streak, axis=0)
+            raw = streak.clip(upper=max_streak)
+
+            # ========== 4. 截目标区间、转长格式、补全市场 ==========
+            target_raw = raw.loc[target_days]
+            long_df = (target_raw.rename_axis('ymd')
+                       .reset_index()
+                       .melt(id_vars='ymd', var_name='stock_code', value_name='raw_score'))
+
+            universe_df = Mysql_Utils.data_from_mysql_to_dataframe(
+                user=self.user, password=self.password, host=self.host, database=self.database,
+                table_name='ods_stock_code_daily_insight',
+                start_date=target_days[0], end_date=target_days[-1],
+                cols=['ymd', 'stock_code']
             )
+            if universe_df.empty:
+                logger.warning("ods_stock_code_daily_insight 无数据，因子仅覆盖窗口内有记录的股票")
+            else:
+                universe_df['ymd'] = pd.to_datetime(universe_df['ymd']).dt.strftime('%Y%m%d')
+                universe_df = universe_df[['ymd', 'stock_code']].drop_duplicates()
+                long_df = universe_df.merge(long_df, on=['ymd', 'stock_code'], how='left')
+                long_df['raw_score'] = long_df['raw_score'].fillna(0)
 
-            # 4. 按股票分组计算连续指标
+            # ========== 5. 每日截面排名 → [1,100]，无缩量=0 ==========
             result_dfs = []
+            for date, date_df in long_df.groupby('ymd'):
+                date_df = date_df.copy()
+                valid_mask = date_df['raw_score'] > 0
+                if valid_mask.sum() > 0:
+                    valid = date_df.loc[valid_mask].copy()
+                    valid['raw_rank'] = valid['raw_score'].rank(method='min', ascending=True)
+                    max_rank = valid['raw_rank'].max()
+                    if max_rank == 1:
+                        valid['volume_shrink_score'] = 100.0
+                    elif reverse:
+                        valid['volume_shrink_score'] = (1 + 99 * (max_rank - valid['raw_rank'])
+                                                        / (max_rank - 1)).round(2)
+                    else:
+                        valid['volume_shrink_score'] = (1 + 99 * (valid['raw_rank'] - 1)
+                                                        / (max_rank - 1)).round(2)
+                    date_df.loc[valid.index, 'volume_shrink_score'] = valid['volume_shrink_score']
+                date_df.loc[~valid_mask, 'volume_shrink_score'] = 0.0
+                result_dfs.append(date_df[['ymd', 'stock_code', 'volume_shrink_score']])
 
-            for stock, stock_df in merged_df.groupby('stock_code'):
-                stock_df = stock_df.copy()
-                stock_df = stock_df.sort_values('ymd')
+            result_df = pd.concat(result_dfs, ignore_index=True)
+            logger.info(f"连续缩量因子计算完成：共{len(result_df)}条记录")
 
-                # 计算连续缩量（volume_vs_ma5 < 0 表示当日成交量低于5日均量）
-                stock_df['is_shrink_today'] = stock_df['volume_vs_ma5'] < 0
-
-                # 计算连续缩量天数
-                def count_consecutive(series):
-                    """计算连续True的天数（从最新往旧统计）"""
-                    count = 0
-                    for val in series[::-1]:
-                        if val:
-                            count += 1
-                        else:
-                            break
-                    return count
-
-                # 连续缩量天数（最近5天内）
-                stock_df['consecutive_shrink_days'] = 0
-                for i in range(len(stock_df)):
-                    start_idx = max(0, i - 4)  # 最近5天
-                    window = stock_df['is_shrink_today'].iloc[start_idx:i + 1]
-                    stock_df.iloc[i, stock_df.columns.get_loc('consecutive_shrink_days')] = \
-                        count_consecutive(window.values)
-
-                # 连续阴线天数（最近5天内）
-                stock_df['consecutive_down_days'] = 0
-                for i in range(len(stock_df)):
-                    start_idx = max(0, i - 4)  # 最近5天
-                    window = stock_df['is_down'].iloc[start_idx:i + 1]
-                    stock_df.iloc[i, stock_df.columns.get_loc('consecutive_down_days')] = \
-                        count_consecutive(window.values)
-
-                result_dfs.append(stock_df)
-
-            final_df = pd.concat(result_dfs, ignore_index=True)
-
-            # 5. 计算成交量得分（0-60分）
-            def calculate_volume_score(row):
-                score = 0
-
-                # 条件1：5日均量 < 60日均量（30分）
-                if not pd.isna(row['vol_ma5']) and not pd.isna(row['vol_ma60']):
-                    if row['vol_ma5'] < row['vol_ma60'] * 0.8:  # 低于80%
-                        score += 30
-                    elif row['vol_ma5'] < row['vol_ma60']:  # 低于100%
-                        score += 20
-                    elif row['vol_ma5'] < row['vol_ma60'] * 1.2:  # 低于120%
-                        score += 10
-
-                # 条件2：连续缩量天数（30分）
-                if row['consecutive_shrink_days'] >= 3:
-                    score += 30
-                elif row['consecutive_shrink_days'] == 2:
-                    score += 20
-                elif row['consecutive_shrink_days'] == 1:
-                    score += 10
-
-                return min(score, 60)
-
-            # 6. 计算价格得分（0-40分）
-            def calculate_price_score(row):
-                if row['consecutive_down_days'] >= 3:
-                    return 40
-                elif row['consecutive_down_days'] == 2:
-                    return 30
-                elif row['consecutive_down_days'] == 1:
-                    return 20
-                else:
-                    return 0
-
-            final_df['volume_score'] = final_df.apply(calculate_volume_score, axis=1)
-            final_df['price_score'] = final_df.apply(calculate_price_score, axis=1)
-            final_df['composite_score'] = (final_df['volume_score'] + final_df['price_score']).round(2)
-
-            # 7. 添加评分等级
-            def get_score_level(score):
-                if score >= 80:
-                    return 'A'  # 强烈信号
-                elif score >= 60:
-                    return 'B'  # 明显信号
-                elif score >= 40:
-                    return 'C'  # 一般信号
-                elif score >= 20:
-                    return 'D'  # 弱信号
-                else:
-                    return 'E'  # 无信号
-
-            final_df['signal_level'] = final_df['composite_score'].apply(get_score_level)
-
-            # 6. 按固定列顺序选择数据
-            result_df = final_df[fixed_columns].copy()
-            logger.info(f"缩量下跌因子计算完成：共{len(result_df)}条记录")
-
-            # 7. 保存到缓存
             if save_to_cache:
-                self.cached_factors['volume'] = result_df.copy()
-
-            # 8. 保存到数据库
-            try:
-                Mysql_Utils.data_from_dataframe_to_mysql(
-                    user=self.user,
-                    password=self.password,
-                    host=self.host,
-                    database=self.database,
-                    df=result_df,
-                    table_name="dwd_factor_volume_shrinkage",
-                    merge_on=['ymd', 'stock_code']
-                )
-                logger.info(f"缩量下跌因子已保存到 dwd_factor_volume_shrinkage，共{len(result_df)}条")
-            except Exception as e:
-                logger.error(f"保存缩量下跌因子失败：{str(e)}")
-
+                self.cached_factors['volume_shrink'] = result_df.copy()
             return result_df
 
         except Exception as e:
-            logger.error(f"计算缩量下跌因子失败：{str(e)}")
+            logger.error(f"计算连续缩量因子失败：{str(e)}")
             import traceback
             logger.error(traceback.format_exc())
-            return pd.DataFrame(columns=fixed_columns)
+            return pd.DataFrame(columns=['ymd', 'stock_code', 'volume_shrink_score'])
 
-
-    def explain_volume_shrinkage(self, stock_code, date):
+    def price_shrink_factor(self, start_date, end_date, max_streak=4,
+                            reverse=False, save_to_cache=True):
         """
-        详细解释某只股票某天的缩量下跌因子
-        使用 ods_stock_kline_daily_ts 表
-        """
-        try:
-            # 获取该股票的历史数据
-            target_date = pd.to_datetime(date)
-            start_dt = target_date - pd.Timedelta(days=100)
-
-            df = Mysql_Utils.data_from_mysql_to_dataframe(
-                user=self.user,
-                password=self.password,
-                host=self.host,
-                database=self.database,
-                table_name='ods_stock_kline_daily_ts',
-                start_date=start_dt.strftime('%Y%m%d'),
-                end_date=date,
-                cols=['stock_code', 'ymd', 'close', 'volume', 'change_pct']
-            )
-
-            if df.empty:
-                print(f"没有找到 {start_dt} ~ {date} 之间的数据")
-                return
-
-            df = df[df['stock_code'] == stock_code].sort_values('ymd')
-            df['ymd'] = pd.to_datetime(df['ymd'])
-
-            # 计算指标
-            df['is_down'] = df['change_pct'] < 0
-            df['volume_ma90'] = df['volume'].rolling(90).mean()
-            df['volume_ma5'] = df['volume'].rolling(5).mean()
-            df['volume_decrease'] = df['volume'].diff() < 0
-
-            # 计算连续天数
-            def count_consecutive(series):
-                count = 0
-                for val in series[::-1]:
-                    if val:
-                        count += 1
-                    else:
-                        break
-                return count
-
-            # 获取目标日期的数据
-            target_idx = df[df['ymd'] == target_date].index
-            if len(target_idx) == 0:
-                print(f"没有找到 {stock_code} 在 {date} 的数据")
-                return
-
-            target_idx = target_idx[0]
-            start_idx = max(0, target_idx - 4)
-
-            recent_down = df.loc[start_idx:target_idx, 'is_down']
-            recent_volume = df.loc[start_idx:target_idx, 'volume_decrease']
-
-            consecutive_down = count_consecutive(recent_down.values)
-            consecutive_volume = count_consecutive(recent_volume.values)
-
-            target = df.loc[target_idx]
-
-            print("=" * 70)
-            print(f"缩量下跌因子详解 - {stock_code} @ {date}")
-            print("=" * 70)
-
-            # 显示最近5天的K线
-            print("\n【最近5天走势】")
-            print(f"{'日期':<10} {'涨跌幅':>8} {'收盘':>8} {'成交量':>12} {'状态':>6}")
-            print("-" * 50)
-
-            recent = df.loc[max(0, target_idx - 4):target_idx]
-            for _, row in recent.iterrows():
-                status = "阴线" if row['is_down'] else "阳线"
-                print(f"{row['ymd'].strftime('%m-%d'):<10} "
-                      f"{row['change_pct']:>7.2f}% "
-                      f"{row['close']:>8.2f} "
-                      f"{row['volume']:>12.0f} "
-                      f"{status:>6}")
-
-            # 成交量分析
-            print("\n【成交量分析】")
-            if not pd.isna(target['volume_ma5']) and not pd.isna(target['volume_ma90']):
-                ratio = target['volume_ma5'] / target['volume_ma90']
-                print(f"  当前成交量: {target['volume']:.0f}")
-                print(f"  5日均量: {target['volume_ma5']:.0f}")
-                print(f"  90日均量: {target['volume_ma90']:.0f}")
-                print(f"  短期/长期均量比: {ratio:.2f}")
-
-                vol_score = 0
-                if target['volume_ma5'] < target['volume_ma90'] * 0.8:
-                    vol_score += 30
-                    print("  ✓ 条件1: 5日均量 < 90日均量80% (+30分)")
-                elif target['volume_ma5'] < target['volume_ma90']:
-                    vol_score += 20
-                    print("  ✓ 条件1: 5日均量 < 90日均量 (+20分)")
-                elif target['volume_ma5'] < target['volume_ma90'] * 1.2:
-                    vol_score += 10
-                    print("  ✓ 条件1: 5日均量 < 90日均量120% (+10分)")
-                else:
-                    print("  ✗ 条件1: 成交量未达标")
-
-                print(f"\n【连续缩量】")
-                print(f"  连续缩量天数: {consecutive_volume}")
-                if consecutive_volume >= 3:
-                    vol_score += 30
-                    print(f"  ✓ 条件2: 连续{consecutive_volume}天缩量 (+30分)")
-                elif consecutive_volume == 2:
-                    vol_score += 20
-                    print(f"  ✓ 条件2: 连续2天缩量 (+20分)")
-                elif consecutive_volume == 1:
-                    vol_score += 10
-                    print(f"  ✓ 条件2: 连续1天缩量 (+10分)")
-                else:
-                    print("  ✗ 条件2: 无连续缩量")
-
-                print(f"\n【成交量得分】: {min(vol_score, 60)}/60")
-
-                # 价格分析
-                print("\n【价格分析 - 连续阴线】")
-                print(f"  连续阴线天数: {consecutive_down}")
-
-                price_score = 0
-                if consecutive_down >= 3:
-                    price_score = 40
-                    print(f"  ✓ 连续{consecutive_down}天阴线 (+40分)")
-                elif consecutive_down == 2:
-                    price_score = 30
-                    print(f"  ✓ 连续2天阴线 (+30分)")
-                elif consecutive_down == 1:
-                    price_score = 20
-                    print(f"  ✓ 连续1天阴线 (+20分)")
-                else:
-                    print("  ✗ 无连续阴线")
-
-                print(f"\n【价格得分】: {price_score}/40")
-
-                # 综合得分
-                composite = vol_score + price_score
-                print(f"\n【综合得分】: {composite:.0f}/100")
-
-                if composite >= 80:
-                    print("【信号等级】: A - 强烈信号")
-                elif composite >= 60:
-                    print("【信号等级】: B - 明显信号")
-                elif composite >= 40:
-                    print("【信号等级】: C - 一般信号")
-                elif composite >= 20:
-                    print("【信号等级】: D - 弱信号")
-                else:
-                    print("【信号等级】: E - 无信号")
-
-            print("=" * 70)
-
-        except Exception as e:
-            print(f"分析失败: {str(e)}")
-            import traceback
-            traceback.print_exc()
-
-    def get_down_days(self, start_date, end_date):
-        """
-        获取每日的阴线标记
-        阴线定义：基于 ods_stock_kline_daily_ts 表中的 is_down 字段
-        is_down = 1 表示阴线（收盘价 < 开盘价）
-        Args:
-            start_date: 开始日期 (YYYYMMDD)
-            end_date: 结束日期 (YYYYMMDD)
-        Returns:
-            DataFrame: ymd, stock_code, is_down (True/False)
+        计算连续阴线因子百分制评分（0-100分）
+        source_table: ods_stock_kline_daily_ts.is_down（收盘价 < 开盘价，真阴线）
+        定义：连续阴线 = 连续 n 个交易日，每日均为阴线。
+        参数：
+            max_streak: 连阴天数封顶，默认 4 天（3~4 天为经验最优区：
+                        1~2 天太常见无区分度，5 天以上多为阴跌庄股）；
+        逻辑：
+            raw_score = min(截至当日连续阴线天数, max_streak)
+            每日截面上对 raw_score 排名映射到 [1,100]：
+                无阴线（raw=0）得 0 分；raw 越大得分越高；reverse=True 反向。
+        注意：
+            - 阴线判定用 K 线颜色（close<open），不是涨跌幅（change_pct<0）：
+              低开高走的票 change_pct<0 但是阳线，本因子不计入。
+              如需"收盘低于昨日"口径，把下方 cols 中的 'is_down' 换成 'change_pct'
+              并将条件改为 (change_pct < 0)；
+            - 停牌日无数据，打断连续计数，属合理处理。
         """
         try:
-            # 从 ods_stock_kline_daily_ts 表获取阴线数据
+            # ========== 1. 交易日与目标区间 ==========
+            query_start = (pd.to_datetime(start_date)
+                           - pd.Timedelta(days=max_streak * 2 + 20)).strftime('%Y%m%d')
+            all_days = self.get_trading_days(query_start, end_date)
+            if not all_days:
+                return pd.DataFrame(columns=['ymd', 'stock_code', 'price_shrink_score'])
+
+            start_idx = next((i for i, d in enumerate(all_days) if d >= start_date), None)
+            end_idx = next((i for i in range(len(all_days) - 1, -1, -1) if all_days[i] <= end_date), None)
+            if start_idx is None or end_idx is None:
+                return pd.DataFrame(columns=['ymd', 'stock_code', 'price_shrink_score'])
+
+            target_days = all_days[start_idx:end_idx + 1]
+            # 连阴计算需要回溯 max_streak 天
+            earliest_idx = max(0, start_idx - max_streak)
+            query_start_data = all_days[earliest_idx]
+
+            # ========== 2. 读取阴线标记（原 get_down_days 的逻辑内联） ==========
             down_df = Mysql_Utils.data_from_mysql_to_dataframe(
-                user=self.user,
-                password=self.password,
-                host=self.host,
-                database=self.database,
+                user=self.user, password=self.password, host=self.host, database=self.database,
                 table_name='ods_stock_kline_daily_ts',
-                start_date=start_date,
-                end_date=end_date,
+                start_date=query_start_data, end_date=end_date,
                 cols=['ymd', 'stock_code', 'is_down']
             )
-
             if down_df.empty:
-                logger.warning(f"阴线数据为空: {start_date}~{end_date}")
-                return pd.DataFrame(columns=['ymd', 'stock_code', 'is_down'])
+                logger.warning(f"阴线数据为空: {query_start_data}~{end_date}")
+                return pd.DataFrame(columns=['ymd', 'stock_code', 'price_shrink_score'])
 
-            # 将 is_down 从 0/1 转换为 False/True
-            down_df['is_down'] = down_df['is_down'].astype(bool)
+            down_df['ymd'] = pd.to_datetime(down_df['ymd']).dt.strftime('%Y%m%d')
+            down_df['is_down'] = down_df['is_down'].astype(float)
 
-            logger.info(f"获取阴线数据完成：共{len(down_df)}条记录")
+            # ========== 3. 事件矩阵 + 连续计数（向量化） ==========
+            event = down_df.pivot_table(index='ymd', columns='stock_code',
+                                        values='is_down', aggfunc='max')
+            event = event.reindex(index=all_days).fillna(0)
 
-            return down_df[['ymd', 'stock_code', 'is_down']]
+            def _streak(s):
+                return s * s.groupby((s == 0).cumsum()).cumsum()
+
+            streak = event.apply(_streak, axis=0)
+            raw = streak.clip(upper=max_streak)
+
+            # ========== 4. 截目标区间、转长格式、补全市场 ==========
+            target_raw = raw.loc[target_days]
+            long_df = (target_raw.rename_axis('ymd')
+                       .reset_index()
+                       .melt(id_vars='ymd', var_name='stock_code', value_name='raw_score'))
+
+            universe_df = Mysql_Utils.data_from_mysql_to_dataframe(
+                user=self.user, password=self.password, host=self.host, database=self.database,
+                table_name='ods_stock_code_daily_insight',
+                start_date=target_days[0], end_date=target_days[-1],
+                cols=['ymd', 'stock_code']
+            )
+            if universe_df.empty:
+                logger.warning("ods_stock_code_daily_insight 无数据，因子仅覆盖窗口内有记录的股票")
+            else:
+                universe_df['ymd'] = pd.to_datetime(universe_df['ymd']).dt.strftime('%Y%m%d')
+                universe_df = universe_df[['ymd', 'stock_code']].drop_duplicates()
+                long_df = universe_df.merge(long_df, on=['ymd', 'stock_code'], how='left')
+                long_df['raw_score'] = long_df['raw_score'].fillna(0)
+
+            # ========== 5. 每日截面排名 → [1,100]，无阴线=0 ==========
+            result_dfs = []
+            for date, date_df in long_df.groupby('ymd'):
+                date_df = date_df.copy()
+                valid_mask = date_df['raw_score'] > 0
+                if valid_mask.sum() > 0:
+                    valid = date_df.loc[valid_mask].copy()
+                    valid['raw_rank'] = valid['raw_score'].rank(method='min', ascending=True)
+                    max_rank = valid['raw_rank'].max()
+                    if max_rank == 1:
+                        valid['price_shrink_score'] = 100.0
+                    elif reverse:
+                        valid['price_shrink_score'] = (1 + 99 * (max_rank - valid['raw_rank'])
+                                                       / (max_rank - 1)).round(2)
+                    else:
+                        valid['price_shrink_score'] = (1 + 99 * (valid['raw_rank'] - 1)
+                                                       / (max_rank - 1)).round(2)
+                    date_df.loc[valid.index, 'price_shrink_score'] = valid['price_shrink_score']
+                date_df.loc[~valid_mask, 'price_shrink_score'] = 0.0
+                result_dfs.append(date_df[['ymd', 'stock_code', 'price_shrink_score']])
+
+            result_df = pd.concat(result_dfs, ignore_index=True)
+            logger.info(f"连续阴线因子计算完成：共{len(result_df)}条记录")
+
+            if save_to_cache:
+                self.cached_factors['price_shrink'] = result_df.copy()
+            return result_df
 
         except Exception as e:
-            logger.error(f"获取阴线数据失败：{str(e)}")
-            return pd.DataFrame(columns=['ymd', 'stock_code', 'is_down'])
+            logger.error(f"计算连续阴线因子失败：{str(e)}")
+            import traceback
+            logger.error(traceback.format_exc())
+            return pd.DataFrame(columns=['ymd', 'stock_code', 'price_shrink_score'])
+
 
     def aggregate_factors(self, start_date, end_date, factors=None):
         """
         因子汇总 - 直接写入MySQL，严格按照表结构
         """
-        import pandas as pd
-
         # 如果没有指定因子，用缓存中有的
         if factors is None:
             factors = list(self.cached_factors.keys())
@@ -793,14 +748,21 @@ class FactorLibrary:
 
     def setup(self):
 
-        #  pb 因子计算
-        self.pb_factor_score(start_date='20260901', end_date='20260928')
-        #
+        # #  pb 因子计算
+        # self.pb_factor_score(start_date='20260901', end_date='20260928')
+
         # #  涨停 因子计算
         # self.zt_factor_score(start_date='20260801', end_date='20260827')
 
-        #  股东数 因子计算
-        # self.shareholder_factor_score(start_date='20260801', end_date='20260828')
+        # #  股东数 因子计算
+        # self.shareholder_factor_score(start_date='20260801', end_date='20261024')
+
+        #  成交量缩量 因子计算
+        self.volume_shrink_factor('20260901', '20261024')  # 连续缩量
+
+        # #  日K连续阴线 因子计算
+        # self.price_shrink_factor('20260901', '20261024')  # 连续阴线
+
 
         # #  缩量因子计算
         # self.volume_shrinkage_factor(start_date='20240101', end_date='20260227')
