@@ -394,29 +394,39 @@ class FactorLibrary:
             return pd.DataFrame(columns=['ymd', 'stock_code', 'shareholder_score'])
 
     def volume_shrink_factor(self, start_date, end_date, baseline='ma20',
-                             max_streak=5, reverse=False, save_to_cache=True):
+                             min_streak=3, max_streak=5,
+                             reverse=False, save_to_cache=True):
         """
         计算连续缩量因子百分制评分（0-100分）
         source_table: dwd_stock_technical_indicators
-        定义：连续缩量 = 连续 n 个交易日，每日成交量均低于均量基准线
-              （不要求每日比前一日低，只看是否持续处于低量状态）。
+        定义：连续缩量 = 截至今日，连续 min_streak 个交易日以上，每日成交量均低于均量基准线；
+              窗口内一旦某天放量（超均线），连续计数立刻清零重新积累。
+        计算公式：
+            shortfall(t) = max(0, -volume_vs_maXX(t))        ← 当日低于均量的幅度(%)，未低于记 0
+            S(t)         = 截至今日连续低于均量的天数（放量日清零，封顶 max_streak）
+            raw(t)       = Σ_{lag=0}^{S(t)-1} shortfall(t-lag)  ← 只累计"当前连续段"的缩量深度
+            raw(t)       = 0，若 S(t) < min_streak               ← 新一段不足 min_streak 天判 0
         参数：
-            baseline: 均量基准线，'ma5'（最松）/ 'ma20'（推荐）/ 'ma60'（最严）。
-                      注意 vol_ma10 不在预计算表中，如需请自行 rolling 计算；
-            max_streak: 连缩天数封顶（防止极端长缩量垄断排名），默认 5 天；
-        逻辑：
-            raw_score = min(截至当日连续缩量天数, max_streak)
-            每日截面上对 raw_score 排名映射到 [1,100]：
-                无缩量（raw=0）的股票得 0 分；
-                raw 越大（连缩越久）得分越高；reverse=True 反向。
+            baseline: 均量基准线，'ma5'（最松）/ 'ma20'（推荐）。
+                      注意：偏离度只有 ma5/ma20 预计算，ma60 不可用；
+            min_streak: 连续缩量的最少天数，默认 3（放量打断后重新积累不足此天数 → 0 分）；
+            max_streak: 连续缩量累计封顶天数，默认 5（更早的缩量不再额外加分；
+                        想不清封顶可传大值如 20）；
+        每日截面上对 raw_score 排名映射到 [1,100]：
+            raw=0（未达 min_streak）得 0 分；raw 越大（缩量越深、连续越久）得分越高；
+            reverse=True 反向。
+        示例（每天缩量幅度 5%，min_streak=3）：
+            5天全缩        → S=5, raw=25，高分
+            缩缩放缩缩     → S=2, raw=0（第3天放量清零，新段不足3天）
+            5天全缩后又缩2天 → S=5(封顶), raw=最近5天累计，高分
         异常值处理：
-            - 停牌日无数据，打断连续计数（视为未缩量），属合理处理；
-            - 基准均线为 NULL（上市不足期）时该日不计缩量。
+            - 基准均线为 NULL（上市初期）视为未低于均量（不打断也不加分）；
+            - 停牌日无数据，视为段外（打断连续），属合理处理。
         """
         try:
-            baseline_col = {'ma5': 'vol_ma5', 'ma20': 'vol_ma20', 'ma60': 'vol_ma60'}.get(baseline)
-            if baseline_col is None:
-                raise ValueError(f"baseline 必须是 'ma5'/'ma20'/'ma60'，收到: {baseline}")
+            vs_col = {'ma5': 'volume_vs_ma5', 'ma20': 'volume_vs_ma20'}.get(baseline)
+            if vs_col is None:
+                raise ValueError(f"baseline 只支持 'ma5'/'ma20'（偏离度未预计算 ma60），收到: {baseline}")
 
             # ========== 1. 交易日与目标区间 ==========
             query_start = (pd.to_datetime(start_date)
@@ -431,35 +441,46 @@ class FactorLibrary:
                 return pd.DataFrame(columns=['ymd', 'stock_code', 'volume_shrink_score'])
 
             target_days = all_days[start_idx:end_idx + 1]
-            # 连缩计算需要回溯 max_streak 天
+            # 深度累计最多回溯 max_streak 天
             earliest_idx = max(0, start_idx - max_streak)
             query_start_data = all_days[earliest_idx]
 
-            # ========== 2. 读取均量数据 ==========
+            # ========== 2. 读取偏离度数据 ==========
             tech_df = Mysql_Utils.data_from_mysql_to_dataframe(
                 user=self.user, password=self.password, host=self.host, database=self.database,
                 table_name='dwd_stock_technical_indicators',
                 start_date=query_start_data, end_date=end_date,
-                cols=['ymd', 'stock_code', 'volume', baseline_col]
+                cols=['ymd', 'stock_code', vs_col]
             )
             if tech_df.empty:
                 return pd.DataFrame(columns=['ymd', 'stock_code', 'volume_shrink_score'])
 
             tech_df['ymd'] = pd.to_datetime(tech_df['ymd']).dt.strftime('%Y%m%d')
-            # 缩量日标记：当日量 < 基准均量（基准为 NULL 时不计）
-            tech_df['is_shrink'] = (tech_df['volume'] < tech_df[baseline_col]).astype(float)
-            tech_df.loc[tech_df[baseline_col].isna(), 'is_shrink'] = 0.0
+            # 低于均量的幅度：vs<0 时取 -vs（正数），否则 0；NULL 视为 0
+            tech_df['shortfall'] = (-tech_df[vs_col]).clip(lower=0).fillna(0)
+            # 当日是否在均量下方（NULL 计为否，不打断连续也不加分）
+            tech_df['is_below'] = (tech_df[vs_col] < 0).fillna(False).astype(float)
 
-            # ========== 3. 事件矩阵 + 连续计数（向量化） ==========
-            event = tech_df.pivot_table(index='ymd', columns='stock_code',
-                                        values='is_shrink', aggfunc='max')
-            event = event.reindex(index=all_days).fillna(0)
+            # ========== 3. 矩阵化：连续计数 S + 分段深度累计 ==========
+            short_m = tech_df.pivot_table(index='ymd', columns='stock_code',
+                                          values='shortfall', aggfunc='max')
+            short_m = short_m.reindex(index=all_days).fillna(0)
+            below_m = tech_df.pivot_table(index='ymd', columns='stock_code',
+                                          values='is_below', aggfunc='max')
+            below_m = below_m.reindex(index=all_days).fillna(0)
 
-            def _streak(s):
-                return s * s.groupby((s == 0).cumsum()).cumsum()
+            # S：连续低于均量的天数（放量日 below=0 → 连续计数清零），封顶 max_streak
+            S = below_m.apply(lambda s: s * s.groupby((s == 0).cumsum()).cumsum(), axis=0)
+            S = S.clip(upper=max_streak)
 
-            streak = event.apply(_streak, axis=0)
-            raw = streak.clip(upper=max_streak)
+            # 分段深度：只累加"当前连续段"内每天的 shortfall
+            # shortfall(t-lag) 计入 raw(t) 当且仅当 lag < S(t)（t-lag 还在当前段内）
+            raw = pd.DataFrame(0.0, index=all_days, columns=short_m.columns)
+            for lag in range(max_streak):
+                raw = raw.add(short_m.shift(lag).fillna(0) * (S > lag), fill_value=0)
+
+            # 连续段不足 min_streak 天 → 0 分
+            raw = raw.where(S >= min_streak, 0.0)
 
             # ========== 4. 截目标区间、转长格式、补全市场 ==========
             target_raw = raw.loc[target_days]
@@ -481,7 +502,7 @@ class FactorLibrary:
                 long_df = universe_df.merge(long_df, on=['ymd', 'stock_code'], how='left')
                 long_df['raw_score'] = long_df['raw_score'].fillna(0)
 
-            # ========== 5. 每日截面排名 → [1,100]，无缩量=0 ==========
+            # ========== 5. 每日截面排名 → [1,100]，raw=0 得 0 分 ==========
             result_dfs = []
             for date, date_df in long_df.groupby('ymd'):
                 date_df = date_df.copy()
@@ -515,25 +536,35 @@ class FactorLibrary:
             logger.error(traceback.format_exc())
             return pd.DataFrame(columns=['ymd', 'stock_code', 'volume_shrink_score'])
 
-    def price_shrink_factor(self, start_date, end_date, max_streak=4,
+
+    def price_shrink_factor(self, start_date, end_date,
+                            min_streak=3, max_streak=4,
                             reverse=False, save_to_cache=True):
         """
         计算连续阴线因子百分制评分（0-100分）
-        source_table: ods_stock_kline_daily_ts.is_down（收盘价 < 开盘价，真阴线）
-        定义：连续阴线 = 连续 n 个交易日，每日均为阴线。
+        source_table: ods_stock_kline_daily_ts（is_down + today_pct）
+        定义：连续阴线 = 截至今日，连续 min_streak 个交易日以上，每日均为阴线（close<open）；
+              一旦某天收阳，连续计数立刻清零重新积累。
+        计算公式：
+            down_depth(t) = max(0, -today_pct(t))            ← 当日阴线下跌幅度(%)，阳线记 0
+                            （today_pct = (close-open)/open*100，阴线日自带负值）
+            S(t)          = 截至今日连续阴线天数（阳线日清零，封顶 max_streak）
+            raw(t)        = Σ_{lag=0}^{S(t)-1} down_depth(t-lag)  ← 只累计"当前连阴段"的累计跌幅
+            raw(t)        = 0，若 S(t) < min_streak                  ← 新一段不足 min_streak 天判 0
         参数：
-            max_streak: 连阴天数封顶，默认 4 天（3~4 天为经验最优区：
+            min_streak: 连续阴线的最少天数，默认 3（3~4 天为经验最优区；
                         1~2 天太常见无区分度，5 天以上多为阴跌庄股）；
-        逻辑：
-            raw_score = min(截至当日连续阴线天数, max_streak)
-            每日截面上对 raw_score 排名映射到 [1,100]：
-                无阴线（raw=0）得 0 分；raw 越大得分越高；reverse=True 反向。
+            max_streak: 连阴累计封顶天数，默认 4（更早的阴线不再额外加分）；
+        每日截面上对 raw_score 排名映射到 [1,100]：
+            raw=0（未达 min_streak）得 0 分；raw 越大（跌得越深、连阴越久）得分越高；
+            reverse=True 反向（用于观察超跌反转）。
+        与旧版（按连阴天数封顶打分）的区别：
+            raw 为连续值（累计跌幅），消除"4连阴与8连阴同分"的并列；
+            且一根阳线即清零，避免"连阴中夹阳线"的票冒充纯连阴。
         注意：
-            - 阴线判定用 K 线颜色（close<open），不是涨跌幅（change_pct<0）：
-              低开高走的票 change_pct<0 但是阳线，本因子不计入。
-              如需"收盘低于昨日"口径，把下方 cols 中的 'is_down' 换成 'change_pct'
-              并将条件改为 (change_pct < 0)；
-            - 停牌日无数据，打断连续计数，属合理处理。
+            - 阴线判定用 K 线颜色（close<open），不是涨跌幅：低开高走的票
+              change_pct<0 但收阳，本因子不计入也不打断连阴；
+            - 停牌日无数据，视为段外（打断连续），属合理处理。
         """
         try:
             # ========== 1. 交易日与目标区间 ==========
@@ -549,34 +580,45 @@ class FactorLibrary:
                 return pd.DataFrame(columns=['ymd', 'stock_code', 'price_shrink_score'])
 
             target_days = all_days[start_idx:end_idx + 1]
-            # 连阴计算需要回溯 max_streak 天
+            # 深度累计最多回溯 max_streak 天
             earliest_idx = max(0, start_idx - max_streak)
             query_start_data = all_days[earliest_idx]
 
-            # ========== 2. 读取阴线标记（原 get_down_days 的逻辑内联） ==========
-            down_df = Mysql_Utils.data_from_mysql_to_dataframe(
+            # ========== 2. 读取阴线数据 ==========
+            kline_df = Mysql_Utils.data_from_mysql_to_dataframe(
                 user=self.user, password=self.password, host=self.host, database=self.database,
                 table_name='ods_stock_kline_daily_ts',
                 start_date=query_start_data, end_date=end_date,
-                cols=['ymd', 'stock_code', 'is_down']
+                cols=['ymd', 'stock_code', 'is_down', 'today_pct']
             )
-            if down_df.empty:
-                logger.warning(f"阴线数据为空: {query_start_data}~{end_date}")
+            if kline_df.empty:
                 return pd.DataFrame(columns=['ymd', 'stock_code', 'price_shrink_score'])
 
-            down_df['ymd'] = pd.to_datetime(down_df['ymd']).dt.strftime('%Y%m%d')
-            down_df['is_down'] = down_df['is_down'].astype(float)
+            kline_df['ymd'] = pd.to_datetime(kline_df['ymd']).dt.strftime('%Y%m%d')
+            # 阴线下跌幅度：阴线日 today_pct<0 取 -today_pct（正数），阳线记 0；NULL 视为 0
+            kline_df['down_depth'] = (-kline_df['today_pct']).clip(lower=0).fillna(0)
+            # 阴线标记（NULL 计为否）
+            kline_df['is_down_f'] = kline_df['is_down'].fillna(0).astype(float)
 
-            # ========== 3. 事件矩阵 + 连续计数（向量化） ==========
-            event = down_df.pivot_table(index='ymd', columns='stock_code',
-                                        values='is_down', aggfunc='max')
-            event = event.reindex(index=all_days).fillna(0)
+            # ========== 3. 矩阵化：连续计数 S + 分段深度累计 ==========
+            depth_m = kline_df.pivot_table(index='ymd', columns='stock_code',
+                                           values='down_depth', aggfunc='max')
+            depth_m = depth_m.reindex(index=all_days).fillna(0)
+            down_m = kline_df.pivot_table(index='ymd', columns='stock_code',
+                                          values='is_down_f', aggfunc='max')
+            down_m = down_m.reindex(index=all_days).fillna(0)
 
-            def _streak(s):
-                return s * s.groupby((s == 0).cumsum()).cumsum()
+            # S：连续阴线天数（阳线日 down=0 → 清零），封顶 max_streak
+            S = down_m.apply(lambda s: s * s.groupby((s == 0).cumsum()).cumsum(), axis=0)
+            S = S.clip(upper=max_streak)
 
-            streak = event.apply(_streak, axis=0)
-            raw = streak.clip(upper=max_streak)
+            # 分段深度：只累加"当前连阴段"内每天的跌幅
+            raw = pd.DataFrame(0.0, index=all_days, columns=depth_m.columns)
+            for lag in range(max_streak):
+                raw = raw.add(depth_m.shift(lag).fillna(0) * (S > lag), fill_value=0)
+
+            # 连阴段不足 min_streak 天 → 0 分
+            raw = raw.where(S >= min_streak, 0.0)
 
             # ========== 4. 截目标区间、转长格式、补全市场 ==========
             target_raw = raw.loc[target_days]
@@ -598,7 +640,7 @@ class FactorLibrary:
                 long_df = universe_df.merge(long_df, on=['ymd', 'stock_code'], how='left')
                 long_df['raw_score'] = long_df['raw_score'].fillna(0)
 
-            # ========== 5. 每日截面排名 → [1,100]，无阴线=0 ==========
+            # ========== 5. 每日截面排名 → [1,100]，raw=0 得 0 分 ==========
             result_dfs = []
             for date, date_df in long_df.groupby('ymd'):
                 date_df = date_df.copy()
