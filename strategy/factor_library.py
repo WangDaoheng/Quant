@@ -4,7 +4,7 @@ import numpy as np
 import logging
 import math
 from CommonProperties import Mysql_Utils
-from CommonProperties.Base_utils import timing_decorator, convert_ymd_format
+from CommonProperties.Base_utils import timing_decorator, script_run
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +49,7 @@ class FactorLibrary:
             return []
 
 
+    @timing_decorator
     def pb_factor_score(self, start_date, end_date, reverse=True, save_to_cache=True):
         """
         计算 PB 因子百分制评分
@@ -125,6 +126,7 @@ class FactorLibrary:
             return pd.DataFrame(columns=['ymd', 'stock_code', 'pb_score'])
 
 
+    @timing_decorator
     def zt_factor_score(self, start_date, end_date, lookback_days=10,
                         type_weight=None, decay='exp', half_life=5,
                         streak_bonus=5, max_streak=5,
@@ -294,6 +296,7 @@ class FactorLibrary:
             return pd.DataFrame(columns=['ymd', 'stock_code', 'zt_score'])
 
 
+    @timing_decorator
     def shareholder_factor_score(self, start_date, end_date, save_to_cache=True):
         """
         计算股东户数因子百分制评分（0-100分）
@@ -394,6 +397,7 @@ class FactorLibrary:
             return pd.DataFrame(columns=['ymd', 'stock_code', 'shareholder_score'])
 
 
+    @timing_decorator
     def volume_shrink_factor(self, start_date, end_date, baseline='ma20',
                              min_streak=3, max_streak=5,
                              reverse=False, save_to_cache=True):
@@ -540,6 +544,7 @@ class FactorLibrary:
             return pd.DataFrame(columns=['ymd', 'stock_code', 'volume_shrink_score'])
 
 
+    @timing_decorator
     def price_shrink_factor(self, start_date, end_date,
                             min_streak=3, max_streak=4,
                             reverse=False, save_to_cache=True):
@@ -677,6 +682,8 @@ class FactorLibrary:
             logger.error(traceback.format_exc())
             return pd.DataFrame(columns=['ymd', 'stock_code', 'price_shrink_score'])
 
+
+    @timing_decorator
     def shrink_down_combo_factor(self, start_date, end_date,
                                  baseline='ma20',
                                  min_streak_vol=3, max_streak_vol=5,
@@ -848,6 +855,8 @@ class FactorLibrary:
             logger.error(traceback.format_exc())
             return pd.DataFrame(columns=['ymd', 'stock_code', 'combo_score'])
 
+
+    @timing_decorator
     def aggregate_factors(self, start_date, end_date, weights=None, factors=None,
                           zero_fill_factors=('shrink_down',), save_to_mysql=True):
         """
@@ -981,31 +990,31 @@ class FactorLibrary:
             return pd.DataFrame()
 
 
+    @script_run(script_name="factor_library.py")
     def setup(self):
 
-        # #  pb 因子计算
-        # self.pb_factor_score(start_date='20260901', end_date='20260928')
+        start, end = '20260901', '20261031'
 
-        # #  涨停 因子计算
-        # self.zt_factor_score(start_date='20260801', end_date='20260827')
+        #  pb 因子计算
+        self.pb_factor_score(start_date=start, end_date=end)
 
-        # #  股东数 因子计算
-        # self.shareholder_factor_score(start_date='20260801', end_date='20261024')
+        #  涨停 因子计算
+        self.zt_factor_score(start_date=start, end_date=end)
 
-        # #  成交量缩量 因子计算
-        # self.volume_shrink_factor('20260901', '20261024')  # 连续缩量
+        #  股东数 因子计算
+        self.shareholder_factor_score(start_date=start, end_date=end)
 
-        # #  日K连续阴线 因子计算
-        # self.price_shrink_factor('20260901', '20261024')  # 连续阴线
+        #  成交量缩量 因子计算
+        self.volume_shrink_factor(start_date=start, end_date=end)  # 连续缩量
 
+        #  日K连续阴线 因子计算
+        self.price_shrink_factor(start_date=start, end_date=end)  # 连续阴线
 
         #  缩量且连阴线 因子计算
-        self.shrink_down_combo_factor('20260901', '20261024')  # 连续阴线
+        self.shrink_down_combo_factor(start_date=start, end_date=end)  # 连续阴线
 
-
-        # #  因子汇总
-        # self.aggregate_factors(start_date='20240101', end_date='20260227')
-
+        #  因子汇总
+        self.aggregate_factors(start_date=start, end_date=end)
 
 
 if __name__ == '__main__':
