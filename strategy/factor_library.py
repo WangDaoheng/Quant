@@ -5,9 +5,9 @@ import logging
 import math
 from CommonProperties import Mysql_Utils
 from CommonProperties.Base_utils import timing_decorator, script_run
-
+from CommonProperties import set_config
 logger = logging.getLogger(__name__)
-
+set_config.setup_logging_config()
 
 class FactorLibrary:
     """因子计算库：改为百分制输出"""
@@ -993,7 +993,7 @@ class FactorLibrary:
     @script_run(script_name="factor_library.py")
     def setup(self):
 
-        start, end = '20260901', '20261031'
+        start, end = '20260101', '20260831'
 
         #  pb 因子计算
         self.pb_factor_score(start_date=start, end_date=end)

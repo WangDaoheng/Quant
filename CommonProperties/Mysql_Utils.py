@@ -23,6 +23,19 @@ origin_database = base_properties.origin_mysql_database
 origin_host = base_properties.origin_mysql_host
 
 
+def _mysql_engine(user, password, host, database='quant'):
+    """统一的引擎工厂：带连接超时/读写超时/探活，防"静默断链挂死" """
+    db_url = f'mysql+pymysql://{user}:{password}@{host}:3306/{database}'
+    return create_engine(
+        db_url,
+        connect_args={
+            'connect_timeout': 30,   # 建连 30 秒不通即报错
+            'read_timeout': 300,     # recv 最长等 5 分钟（对 NAT 静默丢会话有效）
+            'write_timeout': 300,
+        },
+        pool_pre_ping=True,          # 取连接前探活，丢弃半死连接
+        pool_recycle=3600,           # 连接池 1 小时强制回收
+    )
 
 def check_data_written(total_rows, table_name, engine):
     """
@@ -78,8 +91,9 @@ def data_from_dataframe_to_mysql(user, password, host, database='quant', df=pd.D
         max_ymd_str = f"，最大日期为 {df['ymd'].max()}"
 
     # 分批插入
-    db_url = f'mysql+pymysql://{user}:{password}@{host}:3306/{database}'
-    engine = create_engine(db_url)
+    # db_url = f'mysql+pymysql://{user}:{password}@{host}:3306/{database}'
+    # engine = create_engine(db_url)
+    engine = _mysql_engine(user, password, host, database)
     columns = df.columns.tolist()
 
     # 修复1: 使用 :col_name 格式的占位符
@@ -109,70 +123,167 @@ def data_from_dataframe_to_mysql(user, password, host, database='quant', df=pd.D
     return inserted
 
 
-def data_from_mysql_to_dataframe(user, password, host, database='quant', table_name='', start_date=None, end_date=None, cols=None):
+# def data_from_mysql_to_dataframe(user, password, host, database='quant', table_name='', start_date=None, end_date=None, cols=None):
+#     """
+#     从 MySQL 表中读取数据到 DataFrame，同时进行最终的数据完整性检查和日志记录
+#     Args:
+#         table_name: MySQL 表名
+#         database: 数据库名称
+#         start_date: 起始日期
+#         end_date: 结束日期
+#         cols: 要选择的字段列表
+#
+#     Returns:
+#         df: 读取到的 DataFrame
+#     """
+#
+#     db_url = f'mysql+pymysql://{user}:{password}@{host}:3306/{database}'
+#     engine = create_engine(db_url)
+#
+#     # 构建 SELECT 语句
+#     if cols:
+#         selected_cols = ', '.join(cols)
+#     else:
+#         selected_cols = '*'
+#
+#     # 构建 WHERE 条件
+#     where_conditions = []
+#     if start_date:
+#         where_conditions.append(f"ymd >= '{start_date}'")
+#     if end_date:
+#         where_conditions.append(f"ymd <= '{end_date}'")
+#
+#     where_clause = " AND ".join(where_conditions)
+#
+#     # 读取 MySQL 表中的记录总数
+#     query_total = f"SELECT COUNT(*) FROM {table_name}"
+#     if where_clause:
+#         query_total += f" WHERE {where_clause}"
+#     total_rows = pd.read_sql(query_total, engine).iloc[0, 0]
+#
+#     # 读取数据的批量大小
+#     chunk_size = 10000
+#     chunks = []
+#
+#     try:
+#         for offset in range(0, total_rows, chunk_size):
+#             query = f"SELECT {selected_cols} FROM {table_name}"
+#             if where_clause:
+#                 query += f" WHERE {where_clause}"
+#             query += f" LIMIT {chunk_size} OFFSET {offset}"
+#             chunk = pd.read_sql(query, engine)
+#             chunks.append(chunk)
+#
+#         df = pd.concat(chunks, ignore_index=True)
+#
+#         # 最终的数据完整性检查
+#         if df.shape[0] == total_rows:
+#             logging.info(f"{host} 的 mysql表：{table_name} 数据读取成功且无遗漏，共 {total_rows} 行。")
+#         else:
+#             logging.warning(f"{table_name} 数据读取可能有问题，预期记录数为 {total_rows}，实际读取记录数为 {df.shape[0]}。")
+#
+#     except Exception as e:
+#         logging.error(f"从表：{table_name} 读取数据时发生错误: {e}")
+#         df = pd.DataFrame()  # 返回一个空的 DataFrame 以防出错时没有返回数据
+#
+#     return df
+
+def data_from_mysql_to_dataframe(user, password, host, database='quant', table_name='',
+                                 start_date=None, end_date=None, cols=None,
+                                 chunk_size=10000, max_retry=3):
     """
-    从 MySQL 表中读取数据到 DataFrame，同时进行最终的数据完整性检查和日志记录
-    Args:
-        table_name: MySQL 表名
-        database: 数据库名称
-        start_date: 起始日期
-        end_date: 结束日期
-        cols: 要选择的字段列表
-
-    Returns:
-        df: 读取到的 DataFrame
+    从 MySQL 表中读取数据到 DataFrame。
+    改进点（相对旧版）：
+    - 去掉 COUNT(*) 前置：按键分页读到空批/不满批即结束，避免大表 COUNT 全扫
+      （COUNT 是"链路沉默几分钟"触发 NAT 丢会话的元凶之一）；
+    - LIMIT/OFFSET 改为 (ymd, stock_code) 键集分页：每批走主键索引，不再重复扫；
+    - 读取失败断点重试：从最后成功的位置继续，不重复不遗漏；
+    - 对没有 stock_code 列的表（交易日历、行情温度等）自动回退 OFFSET 模式。
     """
+    engine = _mysql_engine(user, password, host, database)
 
-    db_url = f'mysql+pymysql://{user}:{password}@{host}:3306/{database}'
-    engine = create_engine(db_url)
+    selected_cols = ', '.join(cols) if cols else '*'
 
-    # 构建 SELECT 语句
-    if cols:
-        selected_cols = ', '.join(cols)
-    else:
-        selected_cols = '*'
-
-    # 构建 WHERE 条件
     where_conditions = []
     if start_date:
         where_conditions.append(f"ymd >= '{start_date}'")
     if end_date:
         where_conditions.append(f"ymd <= '{end_date}'")
-
     where_clause = " AND ".join(where_conditions)
+    prefix = f" WHERE {where_clause}" if where_clause else ""
 
-    # 读取 MySQL 表中的记录总数
-    query_total = f"SELECT COUNT(*) FROM {table_name}"
-    if where_clause:
-        query_total += f" WHERE {where_clause}"
-    total_rows = pd.read_sql(query_total, engine).iloc[0, 0]
+    # 判断表是否有 stock_code 列，决定分页方式
+    try:
+        col_check = pd.read_sql(
+            f"SELECT COUNT(*) FROM information_schema.COLUMNS "
+            f"WHERE TABLE_SCHEMA='{database}' AND TABLE_NAME='{table_name}' "
+            f"AND COLUMN_NAME='stock_code'", engine).iloc[0, 0]
+        has_stock_code = col_check > 0
+    except Exception:
+        has_stock_code = False   # 查询失败时保守回退
 
-    # 读取数据的批量大小
-    chunk_size = 10000
     chunks = []
+    total_rows = 0
+    last_ymd, last_code = None, None   # 键集分页断点
 
     try:
-        for offset in range(0, total_rows, chunk_size):
-            query = f"SELECT {selected_cols} FROM {table_name}"
-            if where_clause:
-                query += f" WHERE {where_clause}"
-            query += f" LIMIT {chunk_size} OFFSET {offset}"
-            chunk = pd.read_sql(query, engine)
-            chunks.append(chunk)
+        for attempt in range(max_retry):
+            try:
+                while True:
+                    if has_stock_code:
+                        if last_ymd is None:
+                            cond = prefix
+                        else:
+                            cond = (prefix +
+                                    f" AND (ymd > '{last_ymd}' OR "
+                                    f"(ymd = '{last_ymd}' AND stock_code > '{last_code}'))")
+                        query = (f"SELECT {selected_cols} FROM {table_name}{cond} "
+                                 f"ORDER BY ymd, stock_code LIMIT {chunk_size}")
+                    else:
+                        # 回退：OFFSET 模式（适用于交易日历等小表）
+                        query = (f"SELECT {selected_cols} FROM {table_name}{prefix} "
+                                 f"LIMIT {chunk_size} OFFSET {total_rows}")
 
-        df = pd.concat(chunks, ignore_index=True)
+                    chunk = pd.read_sql(query, engine)
 
-        # 最终的数据完整性检查
-        if df.shape[0] == total_rows:
-            logging.info(f"{host} 的 mysql表：{table_name} 数据读取成功且无遗漏，共 {total_rows} 行。")
-        else:
-            logging.warning(f"{table_name} 数据读取可能有问题，预期记录数为 {total_rows}，实际读取记录数为 {df.shape[0]}。")
+                    if chunk.empty:
+                        raise StopIteration   # 正常读完，跳出重试循环
+
+                    chunks.append(chunk)
+                    total_rows += len(chunk)
+
+                    if has_stock_code:
+                        last_ymd = str(chunk['ymd'].iloc[-1])
+                        last_code = str(chunk['stock_code'].iloc[-1])
+                        if len(chunk) < chunk_size:
+                            raise StopIteration
+                    else:
+                        if len(chunk) < chunk_size:
+                            raise StopIteration
+
+            except StopIteration:
+                break   # 正常读完
+
+            except Exception as e:
+                if attempt < max_retry - 1:
+                    logging.warning(f"读取 {table_name} 中断（{str(e)[:80]}），"
+                                    f"5 秒后从断点重试（第 {attempt + 1}/{max_retry - 1} 次）...")
+                    time.sleep(5)
+                    engine.dispose()
+                    engine = _mysql_engine(user, password, host, database)
+                    # last_ymd/last_code/total_rows 保持断点，循环继续
+                else:
+                    raise
+
+        df = pd.concat(chunks, ignore_index=True) if chunks else pd.DataFrame()
+        logging.info(f"{host} 的 mysql表：{table_name} 数据读取成功，共 {total_rows} 行。")
+        return df
 
     except Exception as e:
         logging.error(f"从表：{table_name} 读取数据时发生错误: {e}")
-        df = pd.DataFrame()  # 返回一个空的 DataFrame 以防出错时没有返回数据
-
-    return df
+        return pd.DataFrame()
+    finally:
+        engine.dispose()
 
 
 def data_from_mysql_to_dataframe_latest(user, password, host, database='quant', table_name='', cols=None):
@@ -187,8 +298,9 @@ def data_from_mysql_to_dataframe_latest(user, password, host, database='quant', 
         df: 读取到的 DataFrame
     """
 
-    db_url = f'mysql+pymysql://{user}:{password}@{host}:3306/{database}'
-    engine = create_engine(db_url)
+    # db_url = f'mysql+pymysql://{user}:{password}@{host}:3306/{database}'
+    # engine = create_engine(db_url)
+    engine = _mysql_engine(user, password, host, database)
 
     try:
         # 获取最新的 ymd 日期
@@ -250,8 +362,9 @@ def upsert_table(user, password, host, database, source_table, target_table, col
     :param columns: 需要更新或插入的列名列表（列表）
     """
     # 1. 构建数据库连接（原代码逻辑，无charset参数，解决TypeError错误）
-    db_url = f'mysql+pymysql://{user}:{password}@{host}:3306/{database}'
-    engine = create_engine(db_url)
+    # db_url = f'mysql+pymysql://{user}:{password}@{host}:3306/{database}'
+    # engine = create_engine(db_url)
+    engine = _mysql_engine(user, password, host, database)
 
     # 2. 构建列名、更新语句、查询语句（原代码逻辑，保持不变）
     columns_str = ", ".join(columns)
@@ -298,12 +411,14 @@ def cross_server_upsert_all(source_user, source_password, source_host, source_da
     """
 
     # 源服务器连接
-    source_db_url = f'mysql+pymysql://{source_user}:{source_password}@{source_host}:3306/{source_database}'
-    source_engine = create_engine(source_db_url)
+    # source_db_url = f'mysql+pymysql://{source_user}:{source_password}@{source_host}:3306/{source_database}'
+    # source_engine = create_engine(source_db_url)
+    source_engine = _mysql_engine(source_user, source_password, source_host, source_database)
 
     # 目标服务器连接
-    target_db_url = f'mysql+pymysql://{target_user}:{target_password}@{target_host}:3306/{target_database}'
-    target_engine = create_engine(target_db_url)
+    # target_db_url = f'mysql+pymysql://{target_user}:{target_password}@{target_host}:3306/{target_database}'
+    # target_engine = create_engine(target_db_url)
+    target_engine = _mysql_engine(target_user, target_password, target_host, target_database)
 
     # 从源服务器读取数据
     df = pd.read_sql_table(source_table, source_engine)
@@ -363,12 +478,14 @@ def cross_server_upsert_ymd(source_user, source_password, source_host, source_da
     """
 
     # 源服务器连接
-    source_db_url = f'mysql+pymysql://{source_user}:{source_password}@{source_host}:3306/{source_database}'
-    source_engine = create_engine(source_db_url)
+    # source_db_url = f'mysql+pymysql://{source_user}:{source_password}@{source_host}:3306/{source_database}'
+    # source_engine = create_engine(source_db_url)
+    source_engine = _mysql_engine(source_user, source_password, source_host, source_database)
 
     # 目标服务器连接
-    target_db_url = f'mysql+pymysql://{target_user}:{target_password}@{target_host}:3306/{target_database}'
-    target_engine = create_engine(target_db_url)
+    # target_db_url = f'mysql+pymysql://{target_user}:{target_password}@{target_host}:3306/{target_database}'
+    # target_engine = create_engine(target_db_url)
+    target_engine = _mysql_engine(target_user, target_password, target_host, target_database)
 
     # # 从源服务器读取数据
     # df = pd.read_sql_table(source_table, source_engine)
