@@ -17,6 +17,7 @@ from datas_prepare.C01_data_download_daily.download_akshare_data_afternoon impor
 from datas_prepare.C01_data_download_daily.download_tushare_data_afternoon import SaveTushareDailyData
 from datas_prepare.C04_data_DWD.calculate_DWD_datas import CalDWD
 from datas_prepare.C05_data_MART.calculate_MART_datas import CalDMART
+from strategy.factor_library import FactorLibrary
 
 import CommonProperties.set_config as set_config
 
@@ -30,6 +31,7 @@ class RunDataDaily:
         # self.save_vantage_now = SaveVantageData()
         self.dwd_cal = CalDWD()
         self.dmart_cal = CalDMART()
+        self.factor_library = FactorLibrary()
 
     def send_logfile_email(self):
         """
@@ -57,6 +59,9 @@ class RunDataDaily:
 
         #  执行 MART层逻辑
         self.dmart_cal.setup()
+
+        #  因子计算
+        self.factor_library.setup()
 
         #  发送邮件
         self.send_logfile_email()

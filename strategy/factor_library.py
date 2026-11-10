@@ -4,6 +4,7 @@ import numpy as np
 import logging
 import math
 from CommonProperties import Mysql_Utils
+from CommonProperties.DateUtility import DateUtility
 from CommonProperties.Base_utils import timing_decorator, script_run
 from CommonProperties import set_config
 logger = logging.getLogger(__name__)
@@ -993,7 +994,8 @@ class FactorLibrary:
     @script_run(script_name="factor_library.py")
     def setup(self):
 
-        start, end = '20260101', '20260831'
+        start = DateUtility.next_day(-5)
+        end = DateUtility.today()
 
         #  pb 因子计算
         self.pb_factor_score(start_date=start, end_date=end)

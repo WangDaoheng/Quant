@@ -911,8 +911,10 @@ class CalDWD:
         # 日期范围：默认当月，支持传入参数回填历史
         if not start_date:
             start_date = DateUtility.first_day_of_month()
+            start_date = '20261029'
         if not end_date:
             end_date = DateUtility.today()
+            end_date = '20261102'
 
         logging.info("=" * 60)
         logging.info(f"开始计算涨跌停数据（严格逻辑版），日期范围: {start_date} 至 {end_date}")
