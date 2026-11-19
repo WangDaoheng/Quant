@@ -278,7 +278,7 @@ class CalDWD:
 
 
     @timing_decorator
-    def cal_shareholder_num_event_batch(self, start_ymd='20210801', end_ymd=None):
+    def cal_shareholder_num_event_batch(self, start_ymd='20261107', end_ymd=None):
         """
         dwd_shareholder_num_event 历史数据批量更新
         高性能版：一次性读取 -> 内存向量化计算 -> 批量写入
@@ -911,10 +911,8 @@ class CalDWD:
         # 日期范围：默认当月，支持传入参数回填历史
         if not start_date:
             start_date = DateUtility.first_day_of_month()
-            start_date = '20261029'
         if not end_date:
             end_date = DateUtility.today()
-            end_date = '20261102'
 
         logging.info("=" * 60)
         logging.info(f"开始计算涨跌停数据（严格逻辑版），日期范围: {start_date} 至 {end_date}")
@@ -1223,11 +1221,11 @@ if __name__ == '__main__':
     save_insight_data.setup()
 
     # ===== 历史数据补录 =====
-    # #  补录 event 表历史数据
-    # save_insight_data.cal_shareholder_num_event_batch('20260918')
+    # # #  补录 event 表历史数据
+    # save_insight_data.cal_shareholder_num_event_batch()
 
     # #  补录 daily 宽表历史数据
-    # save_insight_data.cal_shareholder_num_daily_batch(start_ymd='20260701', end_ymd='20260720')
+    # save_insight_data.cal_shareholder_num_daily_batch(start_ymd='20261107', end_ymd='20261118')
 
     #  补录 base_info 历史数据
     # save_insight_data.cal_stock_base_info_batch('20260807')
