@@ -73,8 +73,7 @@ class TableDataExporterFull:
     MISSING_SUMMARY_EXCLUDE = {
         'ods_astock_industry_detail',        # 只在周五跑，日常缺失属正常
         'ods_stock_plate_redbook',
-        'dwd_factor_summary',
-        'dwd_factor_volume_shrinkage',
+        'dwd_factor_summary'
     }
 
     # 层级展示名称

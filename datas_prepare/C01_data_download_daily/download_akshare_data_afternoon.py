@@ -12,14 +12,6 @@ from CommonProperties.DateUtility import DateUtility
 from CommonProperties.Base_utils import timing_decorator, script_run
 from CommonProperties.set_config import setup_logging_config
 
-# ************************************************************************
-# 本代码的作用是周末使用akshare数据源下载历史数据, 写入mysql表
-# 需要下载的akshare数据表（从ODS层SQL定义）:
-# 2. ods_akshare_stock_zh_a_gdhs_detail_em 股票基本面数据_股东数据
-# 4. ods_akshare_stock_yjkb_em           股票基本面数据_业绩快报数据
-# 5. ods_akshare_stock_yjyg_em           股票基本面数据_业绩预告数据
-# 6. ods_akshare_stock_a_high_low_statistics 大盘情绪数据
-# ************************************************************************
 
 # 调用日志配置
 setup_logging_config()
