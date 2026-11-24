@@ -46,8 +46,8 @@ class SaveInsightData:
     def login(self):
         # 登陆前 初始化，没有密码可以访问进行自动化注册
         # https://findata-insight.htsc.com:9151/terminalWeb/#/signup
-        user = base_properties.user
-        password = base_properties.password
+        user = base_properties.insight_user
+        password = base_properties.insight_password
         common.login(market_service, user, password)
 
 
