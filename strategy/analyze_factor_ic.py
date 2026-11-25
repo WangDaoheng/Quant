@@ -207,7 +207,7 @@ if __name__ == '__main__':
     set_config.setup_logging_config()
 
     end_date = DateUtility.today()
-    start_date = DateUtility.first_day_of_month(-3)  # 最近3个月
+    start_date = DateUtility.first_day_of_month(-10)  # 最近3个月
 
     analyzer = FactorICAnalyzer()
     ic_df = analyzer.run(start_date, end_date, save_to_mysql=True)

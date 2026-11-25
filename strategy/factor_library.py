@@ -856,6 +856,240 @@ class FactorLibrary:
             logger.error(traceback.format_exc())
             return pd.DataFrame(columns=['ymd', 'stock_code', 'combo_score'])
 
+    @timing_decorator
+    def chip_concentration_score(self, start_date, end_date, reverse=False, save_to_cache=True):
+        """
+        计算筹码集中度因子百分制评分（0-100分）
+        source_table: ods_stock_chouma_insight
+        逻辑（静态密度）：
+            concentration(t) = (cost_85pct - cost_15pct) / (cost_85pct + cost_15pct)
+            物理含义：85%分位与15%分位持仓成本的相对宽度，越小说明筹码越密集
+            （业界标准口径，避免用 max/min 极值，抗异常成交）。
+            每日截面上对 concentration 排名映射到 [1,100]：
+            reverse=False（默认）：concentration 越小（越密集）→ 得分越高；
+            reverse=True：反向（用于检验密集是否反而是利空）。
+        异常值处理：
+            - cost_85pct <= cost_15pct 或缺失 → 当日该票不参与打分（0分）；
+            - 分母加 1e-6 防除零。
+        注意：集中度与低换手率天然相关，需与 volume_shrink 因子做相关性/增量检验。
+        """
+        try:
+            chouma_df = Mysql_Utils.data_from_mysql_to_dataframe(
+                user=self.user, password=self.password, host=self.host, database=self.database,
+                table_name='ods_stock_chouma_insight',
+                start_date=start_date, end_date=end_date,
+                cols=['ymd', 'stock_code', 'cost_15pct', 'cost_85pct']
+            )
+
+            if chouma_df.empty:
+                return pd.DataFrame(columns=['ymd', 'stock_code', 'chip_concentration_score'])
+
+            for col in ['cost_15pct', 'cost_85pct']:
+                chouma_df[col] = pd.to_numeric(chouma_df[col], errors='coerce')
+
+            # 有效样本：分位严格递增且为正
+            valid_mask = (chouma_df['cost_85pct'] > chouma_df['cost_15pct']) & \
+                         (chouma_df['cost_15pct'] > 0)
+            chouma_df = chouma_df[valid_mask].copy()
+
+            chouma_df['concentration'] = (
+                    (chouma_df['cost_85pct'] - chouma_df['cost_15pct']) /
+                    (chouma_df['cost_85pct'] + chouma_df['cost_15pct'] + 1e-6)
+            )
+
+            # 截面排名 → [1,100]
+            chouma_df['conc_rank'] = chouma_df.groupby('ymd')['concentration'].rank(
+                method='min', ascending=not reverse)
+            chouma_df['max_rank'] = chouma_df.groupby('ymd')['conc_rank'].transform('max')
+
+            chouma_df['chip_concentration_score'] = 100.0
+            mask_multi = chouma_df['max_rank'] > 1
+            chouma_df.loc[mask_multi, 'chip_concentration_score'] = (
+                    1 + 99 * (chouma_df.loc[mask_multi, 'conc_rank'] - 1)
+                    / (chouma_df.loc[mask_multi, 'max_rank'] - 1)
+            ).round(2)
+
+            result_df = chouma_df[['ymd', 'stock_code', 'chip_concentration_score']]
+
+            logger.info(f"筹码集中度因子计算完成：共{len(result_df)}条记录")
+
+            if save_to_cache:
+                self.cached_factors['chip_concentration'] = result_df.copy()
+
+            return result_df
+
+        except Exception as e:
+            logger.error(f"计算筹码集中度因子失败：{str(e)}")
+            return pd.DataFrame(columns=['ymd', 'stock_code', 'chip_concentration_score'])
+
+    @timing_decorator
+    def chip_low_position_score(self, start_date, end_date, save_to_cache=True):
+        """
+        计算筹码低位因子百分制评分（0-100分）
+        source_table: ods_stock_chouma_insight
+        逻辑（价格位置）：现价在筹码密集区中的相对位置
+            position(t) = (close - cost_15pct) / (cost_85pct - cost_15pct)
+            position ≈ 0：现价贴近密集区下沿（85%持仓者成本高于现价，深套区，潜在反弹）
+            position ≈ 1：现价贴近密集区上沿（获利抛压重）
+            每日截面上对 position 升序排名映射到 [1,100]（位置越低分越高）。
+        物理含义：贴近密集区下沿 = 上方全是套牢盘（抛压已释放），
+            且接近主力成本底线，是"低位"的筹码口径定义（与价格口径的"创新低"不同）。
+        异常值处理：
+            - 密集区宽度 <= 0（一字板长期票分位数重合）→ 该票当日0分；
+            - position 截断到 [0, 2]，防止停牌复牌跳变产生极端值主导排名。
+        """
+        try:
+            chouma_df = Mysql_Utils.data_from_mysql_to_dataframe(
+                user=self.user, password=self.password, host=self.host, database=self.database,
+                table_name='ods_stock_chouma_insight',
+                start_date=start_date, end_date=end_date,
+                cols=['ymd', 'stock_code', 'close', 'cost_15pct', 'cost_85pct']
+            )
+
+            if chouma_df.empty:
+                return pd.DataFrame(columns=['ymd', 'stock_code', 'chip_low_position_score'])
+
+            for col in ['close', 'cost_15pct', 'cost_85pct']:
+                chouma_df[col] = pd.to_numeric(chouma_df[col], errors='coerce')
+
+            width = chouma_df['cost_85pct'] - chouma_df['cost_15pct']
+            valid_mask = (width > 0) & (chouma_df['close'] > 0)
+            chouma_df = chouma_df[valid_mask].copy()
+
+            chouma_df['position'] = ((chouma_df['close'] - chouma_df['cost_15pct']) / width).clip(0, 2)
+
+            # 位置越低分越高
+            chouma_df['pos_rank'] = chouma_df.groupby('ymd')['position'].rank(method='min')
+            chouma_df['max_rank'] = chouma_df.groupby('ymd')['pos_rank'].transform('max')
+
+            chouma_df['chip_low_position_score'] = 100.0
+            mask_multi = chouma_df['max_rank'] > 1
+            chouma_df.loc[mask_multi, 'chip_low_position_score'] = (
+                    1 + 99 * (chouma_df.loc[mask_multi, 'max_rank'] - chouma_df.loc[mask_multi, 'pos_rank'])
+                    / (chouma_df.loc[mask_multi, 'max_rank'] - 1)
+            ).round(2)
+
+            result_df = chouma_df[['ymd', 'stock_code', 'chip_low_position_score']]
+
+            logger.info(f"筹码低位因子计算完成：共{len(result_df)}条记录")
+
+            if save_to_cache:
+                self.cached_factors['chip_low_position'] = result_df.copy()
+
+            return result_df
+
+        except Exception as e:
+            logger.error(f"计算筹码低位因子失败：{str(e)}")
+            return pd.DataFrame(columns=['ymd', 'stock_code', 'chip_low_position_score'])
+
+    @timing_decorator
+    def chip_gather_trend_score(self, start_date, end_date, lookback_days=20,
+                                min_history=10, save_to_cache=True):
+        """
+        计算筹码集中趋势因子百分制评分（0-100分）
+        source_table: ods_stock_chouma_insight
+        逻辑（动态集中）：近期筹码在低价区快速集中的趋势
+            第一步（集中度变化率）：
+                conc_chg(t) = concentration(t) / concentration(t-lookback) - 1
+                为负 = 密集区在收窄 = 筹码在集中
+                （用变化率而非差值，消除不同股价量级的影响）
+            第二步（低位确认，乘法交互而非硬过滤）：
+                用 chip_low_position 的思路：现价贴近密集区下沿 → 确认是"低位集中"
+                low_pos(t) = (close - cost_15pct) / (cost_85pct - cost_15pct)，截断[0,2]
+                raw(t) = (-conc_chg) × (2 - low_pos)    ← 集中越快、位置越低，raw 越大
+            第三步：每日截面对 raw 排名映射 [1,100]，无有效历史的股票0分。
+        参数：
+            lookback_days: 变化率窗口，默认20个交易日（约1个月吸筹周期）；
+            min_history: 要求至少有 lookback 窗口内 60% 的交易日有筹码数据，否则该票该日0分
+                （次新股筹码历史不足，不参与打分）。
+        物理含义：密集区收窄 + 现价贴近下沿 = 高位套牢盘割肉、新资金在低位承接
+            （散户割肉、主力吸筹的筹码口径画像）。
+        注意：
+            - 与静态密度因子（chip_concentration）区分开：本因子赚"变化"的钱，前者赚"结构"的钱；
+            - winner_rate 的变化率可作为备选/叠加指标，建议先单独检验再合成。
+        """
+        try:
+            # 回溯取数：算 lookback 日变化率需要向前多取数据
+            query_start = (pd.to_datetime(start_date)
+                           - pd.Timedelta(days=lookback_days * 2 + 20)).strftime('%Y%m%d')
+
+            chouma_df = Mysql_Utils.data_from_mysql_to_dataframe(
+                user=self.user, password=self.password, host=self.host, database=self.database,
+                table_name='ods_stock_chouma_insight',
+                start_date=query_start, end_date=end_date,
+                cols=['ymd', 'stock_code', 'close', 'cost_15pct', 'cost_85pct']
+            )
+
+            if chouma_df.empty:
+                return pd.DataFrame(columns=['ymd', 'stock_code', 'chip_gather_trend_score'])
+
+            for col in ['close', 'cost_15pct', 'cost_85pct']:
+                chouma_df[col] = pd.to_numeric(chouma_df[col], errors='coerce')
+
+            chouma_df['ymd'] = pd.to_datetime(chouma_df['ymd']).dt.strftime('%Y%m%d')
+            chouma_df = chouma_df.sort_values(['stock_code', 'ymd'])
+
+            # 有效样本
+            width = chouma_df['cost_85pct'] - chouma_df['cost_15pct']
+            valid_mask = (width > 0) & (chouma_df['close'] > 0)
+            chouma_df = chouma_df[valid_mask].copy()
+
+            # 集中度 + 价格位置
+            chouma_df['concentration'] = (width / (chouma_df['cost_85pct'] + chouma_df['cost_15pct'] + 1e-6))
+            chouma_df['low_pos'] = ((chouma_df['close'] - chouma_df['cost_15pct']) / width).clip(0, 2)
+
+            # 按股票分组算 lookback 日前的集中度（用 shift，而非 join 精确交易日，筹码数据逐日连续，够用）
+            chouma_df['conc_prev'] = chouma_df.groupby('stock_code')['concentration'].shift(lookback_days)
+
+            # 历史充足性检查：窗口内数据天数
+            chouma_df['has_data'] = chouma_df['conc_prev'].notna().astype(int)
+            chouma_df['hist_days'] = chouma_df.groupby('stock_code')['has_data'].transform(
+                lambda s: s.rolling(lookback_days, min_periods=1).sum()
+            )
+
+            valid_hist = chouma_df['hist_days'] >= lookback_days * 0.6
+
+            # 变化率（为负=集中），取负号使"集中"为正
+            conc_chg = chouma_df['concentration'] / (chouma_df['conc_prev'] + 1e-6) - 1
+            chouma_df['raw_score'] = (-conc_chg) * (2 - chouma_df['low_pos'])
+
+            # 只保留目标区间 + 历史充足 + 变化率有效的记录
+            chouma_df = chouma_df[
+                (chouma_df['ymd'] >= start_date) &
+                valid_hist &
+                chouma_df['raw_score'].notna()
+                ].copy()
+
+            if chouma_df.empty:
+                logger.warning("无有效筹码集中趋势数据")
+                return pd.DataFrame(columns=['ymd', 'stock_code', 'chip_gather_trend_score'])
+
+            # 截面排名 → [1,100]
+            chouma_df['raw_rank'] = chouma_df.groupby('ymd')['raw_score'].rank(method='min')
+            chouma_df['max_rank'] = chouma_df.groupby('ymd')['raw_rank'].transform('max')
+
+            chouma_df['chip_gather_trend_score'] = 100.0
+            mask_multi = chouma_df['max_rank'] > 1
+            chouma_df.loc[mask_multi, 'chip_gather_trend_score'] = (
+                    1 + 99 * (chouma_df.loc[mask_multi, 'raw_rank'] - 1)
+                    / (chouma_df.loc[mask_multi, 'max_rank'] - 1)
+            ).round(2)
+
+            result_df = chouma_df[['ymd', 'stock_code', 'chip_gather_trend_score']]
+
+            logger.info(f"筹码集中趋势因子计算完成：共{len(result_df)}条记录")
+
+            if save_to_cache:
+                self.cached_factors['chip_gather_trend'] = result_df.copy()
+
+            return result_df
+
+        except Exception as e:
+            logger.error(f"计算筹码集中趋势因子失败：{str(e)}")
+            import traceback
+            logger.error(traceback.format_exc())
+            return pd.DataFrame(columns=['ymd', 'stock_code', 'chip_gather_trend_score'])
+
 
     @timing_decorator
     def aggregate_factors(self, start_date, end_date, weights=None, factors=None,
