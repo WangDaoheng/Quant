@@ -684,177 +684,178 @@ class FactorLibrary:
             return pd.DataFrame(columns=['ymd', 'stock_code', 'price_shrink_score'])
 
 
-    @timing_decorator
-    def shrink_down_combo_factor(self, start_date, end_date,
-                                 baseline='ma20',
-                                 min_streak_vol=3, max_streak_vol=5,
-                                 min_streak_down=3, max_streak_down=4,
-                                 combine='geo',
-                                 reverse=False, save_to_cache=True):
-        """
-        计算"连缩量且连阴线"组合因子百分制评分（0-100分）
-        source_table: dwd_stock_technical_indicators（量） + ods_stock_kline_daily_ts（价）
-        定义（双条件同时满足才纳入）：
-            条件1（量）：截至今日连续 min_streak_vol 天以上，每日成交量低于均量基准线
-                        （放量日清零，深度=低于均量的幅度%累计，封顶 max_streak_vol 天）；
-            条件2（价）：截至今日连续 min_streak_down 天以上，每日均为阴线（close<open，
-                        阳线日清零，深度=阴线实体跌幅%累计，封顶 max_streak_down 天）；
-            任一端不满足 → 整体 0 分（不输出）。
-        计算公式（两步）：
-            第一步（两端各自的段内深度）：
-                raw_vol(t)  = Σ_{lag=0}^{S_vol(t)-1}  shortfall(t-lag)，S_vol  < min_streak_vol  记 0
-                raw_down(t) = Σ_{lag=0}^{S_down(t)-1} down_depth(t-lag)，S_down < min_streak_down 记 0
-            第二步（在双满足的股票内合成，先各自截面排名成 [1,100] 消除量纲）：
-                combine='geo'（默认）：combo = √(vol_pct × down_pct)，几何平均——
-                    强调"双强"，一边 100 一边 20 → 约 45 分，不会被单边拉高；
-                combine='mean'：combo = (vol_pct + down_pct) / 2，算术平均——容忍一端偏强；
-                combine='min'：combo = min(vol_pct, down_pct)——最严，取短板。
-        每日输出 combo_score ∈ [0,100]；reverse=True 在双满足集合内整体反向。
-        注意：
-            - 价端为 K 线颜色口径（阴线 is_down），假阳线（收阳但实际下跌）会打断连阴；
-            - 停牌日两端均无数据，同时打断两边的连续计数；
-            - 双条件都满足的股票通常每天只有几十到几百只（单条件可能上千），
-              输出不补全 0 分股票——"未双满足"与"很差"在此因子中同义；
-            - 若某交易日双满足的股票只有 1 只，该票 vol_pct/down_pct 直接给 100。
-        """
-        try:
-            import numpy as np
+    # @timing_decorator
+    # def shrink_down_combo_factor(self, start_date, end_date,
+    #                              baseline='ma20',
+    #                              min_streak_vol=3, max_streak_vol=5,
+    #                              min_streak_down=3, max_streak_down=4,
+    #                              combine='geo',
+    #                              reverse=False, save_to_cache=True):
+    #     """
+    #     计算"连缩量且连阴线"组合因子百分制评分（0-100分）
+    #     source_table: dwd_stock_technical_indicators（量） + ods_stock_kline_daily_ts（价）
+    #     定义（双条件同时满足才纳入）：
+    #         条件1（量）：截至今日连续 min_streak_vol 天以上，每日成交量低于均量基准线
+    #                     （放量日清零，深度=低于均量的幅度%累计，封顶 max_streak_vol 天）；
+    #         条件2（价）：截至今日连续 min_streak_down 天以上，每日均为阴线（close<open，
+    #                     阳线日清零，深度=阴线实体跌幅%累计，封顶 max_streak_down 天）；
+    #         任一端不满足 → 整体 0 分（不输出）。
+    #     计算公式（两步）：
+    #         第一步（两端各自的段内深度）：
+    #             raw_vol(t)  = Σ_{lag=0}^{S_vol(t)-1}  shortfall(t-lag)，S_vol  < min_streak_vol  记 0
+    #             raw_down(t) = Σ_{lag=0}^{S_down(t)-1} down_depth(t-lag)，S_down < min_streak_down 记 0
+    #         第二步（在双满足的股票内合成，先各自截面排名成 [1,100] 消除量纲）：
+    #             combine='geo'（默认）：combo = √(vol_pct × down_pct)，几何平均——
+    #                 强调"双强"，一边 100 一边 20 → 约 45 分，不会被单边拉高；
+    #             combine='mean'：combo = (vol_pct + down_pct) / 2，算术平均——容忍一端偏强；
+    #             combine='min'：combo = min(vol_pct, down_pct)——最严，取短板。
+    #     每日输出 combo_score ∈ [0,100]；reverse=True 在双满足集合内整体反向。
+    #     注意：
+    #         - 价端为 K 线颜色口径（阴线 is_down），假阳线（收阳但实际下跌）会打断连阴；
+    #         - 停牌日两端均无数据，同时打断两边的连续计数；
+    #         - 双条件都满足的股票通常每天只有几十到几百只（单条件可能上千），
+    #           输出不补全 0 分股票——"未双满足"与"很差"在此因子中同义；
+    #         - 若某交易日双满足的股票只有 1 只，该票 vol_pct/down_pct 直接给 100。
+    #     """
+    #     try:
+    #         import numpy as np
+    #
+    #         vs_col = {'ma5': 'volume_vs_ma5', 'ma20': 'volume_vs_ma20'}.get(baseline)
+    #         if vs_col is None:
+    #             raise ValueError(f"baseline 只支持 'ma5'/'ma20'，收到: {baseline}")
+    #         if combine not in ('geo', 'mean', 'min'):
+    #             raise ValueError(f"combine 必须是 'geo'/'mean'/'min'，收到: {combine}")
+    #
+    #         backtrack = max(max_streak_vol, max_streak_down)
+    #
+    #         # ========== 1. 交易日与目标区间 ==========
+    #         query_start = (pd.to_datetime(start_date)
+    #                        - pd.Timedelta(days=backtrack * 2 + 20)).strftime('%Y%m%d')
+    #         all_days = self.get_trading_days(query_start, end_date)
+    #         if not all_days:
+    #             return pd.DataFrame(columns=['ymd', 'stock_code', 'combo_score'])
+    #
+    #         start_idx = next((i for i, d in enumerate(all_days) if d >= start_date), None)
+    #         end_idx = next((i for i in range(len(all_days) - 1, -1, -1) if all_days[i] <= end_date), None)
+    #         if start_idx is None or end_idx is None:
+    #             return pd.DataFrame(columns=['ymd', 'stock_code', 'combo_score'])
+    #
+    #         target_days = all_days[start_idx:end_idx + 1]
+    #         earliest_idx = max(0, start_idx - backtrack)
+    #         query_start_data = all_days[earliest_idx]
+    #
+    #         # ========== 2a. 量端数据 ==========
+    #         tech_df = Mysql_Utils.data_from_mysql_to_dataframe(
+    #             user=self.user, password=self.password, host=self.host, database=self.database,
+    #             table_name='dwd_stock_technical_indicators',
+    #             start_date=query_start_data, end_date=end_date,
+    #             cols=['ymd', 'stock_code', vs_col]
+    #         )
+    #         if tech_df.empty:
+    #             return pd.DataFrame(columns=['ymd', 'stock_code', 'combo_score'])
+    #
+    #         tech_df['ymd'] = pd.to_datetime(tech_df['ymd']).dt.strftime('%Y%m%d')
+    #         tech_df['shortfall'] = (-tech_df[vs_col]).clip(lower=0).fillna(0)
+    #         tech_df['is_below'] = (tech_df[vs_col] < 0).fillna(False).astype(float)
+    #
+    #         # ========== 2b. 价端数据（K线颜色口径，含 today_pct 实体跌幅） ==========
+    #         kline_df = Mysql_Utils.data_from_mysql_to_dataframe(
+    #             user=self.user, password=self.password, host=self.host, database=self.database,
+    #             table_name='ods_stock_kline_daily_ts',
+    #             start_date=query_start_data, end_date=end_date,
+    #             cols=['ymd', 'stock_code', 'is_down', 'today_pct']
+    #         )
+    #         if kline_df.empty:
+    #             return pd.DataFrame(columns=['ymd', 'stock_code', 'combo_score'])
+    #
+    #         kline_df['ymd'] = pd.to_datetime(kline_df['ymd']).dt.strftime('%Y%m%d')
+    #         kline_df['down_depth'] = (-kline_df['today_pct']).clip(lower=0).fillna(0)
+    #         kline_df['is_down_f'] = kline_df['is_down'].fillna(0).astype(float)
+    #
+    #         # ========== 3. 两端矩阵 + 各自的 S / raw ==========
+    #         def _seg_depth(flag_m, depth_m, max_streak, min_streak):
+    #             """S 连续计数（清零+封顶）→ 当前段深度累计 → 不足 min_streak 判 0"""
+    #             S = flag_m.apply(lambda s: s * s.groupby((s == 0).cumsum()).cumsum(), axis=0)
+    #             S = S.clip(upper=max_streak)
+    #             raw = pd.DataFrame(0.0, index=flag_m.index, columns=flag_m.columns)
+    #             for lag in range(max_streak):
+    #                 raw = raw.add(depth_m.shift(lag).fillna(0) * (S > lag), fill_value=0)
+    #             return raw.where(S >= min_streak, 0.0)
+    #
+    #         short_m = tech_df.pivot_table(index='ymd', columns='stock_code',
+    #                                       values='shortfall', aggfunc='max')
+    #         short_m = short_m.reindex(index=all_days).fillna(0)
+    #         below_m = tech_df.pivot_table(index='ymd', columns='stock_code',
+    #                                       values='is_below', aggfunc='max')
+    #         below_m = below_m.reindex(index=all_days).fillna(0)
+    #
+    #         depth_m = kline_df.pivot_table(index='ymd', columns='stock_code',
+    #                                        values='down_depth', aggfunc='max')
+    #         depth_m = depth_m.reindex(index=all_days).fillna(0)
+    #         down_m = kline_df.pivot_table(index='ymd', columns='stock_code',
+    #                                       values='is_down_f', aggfunc='max')
+    #         down_m = down_m.reindex(index=all_days).fillna(0)
+    #
+    #         raw_vol = _seg_depth(below_m, short_m, max_streak_vol, min_streak_vol)
+    #         raw_down = _seg_depth(down_m, depth_m, max_streak_down, min_streak_down)
+    #
+    #         # ========== 4. 截目标区间、转长格式、双条件合并 ==========
+    #         vol_long = (raw_vol.loc[target_days].rename_axis('ymd').reset_index()
+    #                     .melt(id_vars='ymd', var_name='stock_code', value_name='raw_vol'))
+    #         down_long = (raw_down.loc[target_days].rename_axis('ymd').reset_index()
+    #                      .melt(id_vars='ymd', var_name='stock_code', value_name='raw_down'))
+    #
+    #         combo_long = vol_long.merge(down_long, on=['ymd', 'stock_code'], how='inner')
+    #         # 双条件门槛：任一端 raw=0（未达 min_streak 或无深度）→ 剔除
+    #         combo_long = combo_long[(combo_long['raw_vol'] > 0) & (combo_long['raw_down'] > 0)].copy()
+    #
+    #         if combo_long.empty:
+    #             logger.warning("无同时满足连缩与连阴的股票，组合因子输出为空")
+    #             result_df = pd.DataFrame(columns=['ymd', 'stock_code', 'combo_score'])
+    #         else:
+    #             # 在双满足集合内分别截面排名
+    #             combo_long['vol_rank'] = combo_long.groupby('ymd')['raw_vol'].rank(method='min')
+    #             combo_long['down_rank'] = combo_long.groupby('ymd')['raw_down'].rank(method='min')
+    #
+    #             # 各自映射到 [1,100]（向量化；当日仅 1 只时给满分，避免除零）
+    #             grp_v = combo_long.groupby('ymd')['vol_rank']
+    #             grp_d = combo_long.groupby('ymd')['down_rank']
+    #
+    #             combo_long['vol_pct'] = (1 + 99 * (combo_long['vol_rank'] - 1)
+    #                                      / (grp_v.transform('max') - 1)).round(2)
+    #             combo_long['down_pct'] = (1 + 99 * (combo_long['down_rank'] - 1)
+    #                                       / (grp_d.transform('max') - 1)).round(2)
+    #
+    #             combo_long.loc[grp_v.transform('max') == 1, 'vol_pct'] = 100.0
+    #             combo_long.loc[grp_d.transform('max') == 1, 'down_pct'] = 100.0
+    #
+    #             # 合成
+    #             if combine == 'geo':
+    #                 combo_long['combo_score'] = np.sqrt(combo_long['vol_pct']
+    #                                                     * combo_long['down_pct']).round(2)
+    #             elif combine == 'mean':
+    #                 combo_long['combo_score'] = ((combo_long['vol_pct']
+    #                                               + combo_long['down_pct']) / 2).round(2)
+    #             else:  # 'min'
+    #                 combo_long['combo_score'] = combo_long[['vol_pct', 'down_pct']].min(axis=1).round(2)
+    #
+    #             if reverse:
+    #                 combo_long['combo_score'] = (101 - combo_long['combo_score']).clip(1, 100).round(2)
+    #
+    #             result_df = combo_long[['ymd', 'stock_code', 'combo_score']]
+    #
+    #         logger.info(f"连缩量且连阴线组合因子计算完成：共{len(result_df)}条记录")
+    #
+    #         if save_to_cache:
+    #             self.cached_factors['shrink_down'] = result_df.copy()
+    #         return result_df
+    #
+    #     except Exception as e:
+    #         logger.error(f"计算组合因子失败：{str(e)}")
+    #         import traceback
+    #         logger.error(traceback.format_exc())
+    #         return pd.DataFrame(columns=['ymd', 'stock_code', 'combo_score'])
 
-            vs_col = {'ma5': 'volume_vs_ma5', 'ma20': 'volume_vs_ma20'}.get(baseline)
-            if vs_col is None:
-                raise ValueError(f"baseline 只支持 'ma5'/'ma20'，收到: {baseline}")
-            if combine not in ('geo', 'mean', 'min'):
-                raise ValueError(f"combine 必须是 'geo'/'mean'/'min'，收到: {combine}")
-
-            backtrack = max(max_streak_vol, max_streak_down)
-
-            # ========== 1. 交易日与目标区间 ==========
-            query_start = (pd.to_datetime(start_date)
-                           - pd.Timedelta(days=backtrack * 2 + 20)).strftime('%Y%m%d')
-            all_days = self.get_trading_days(query_start, end_date)
-            if not all_days:
-                return pd.DataFrame(columns=['ymd', 'stock_code', 'combo_score'])
-
-            start_idx = next((i for i, d in enumerate(all_days) if d >= start_date), None)
-            end_idx = next((i for i in range(len(all_days) - 1, -1, -1) if all_days[i] <= end_date), None)
-            if start_idx is None or end_idx is None:
-                return pd.DataFrame(columns=['ymd', 'stock_code', 'combo_score'])
-
-            target_days = all_days[start_idx:end_idx + 1]
-            earliest_idx = max(0, start_idx - backtrack)
-            query_start_data = all_days[earliest_idx]
-
-            # ========== 2a. 量端数据 ==========
-            tech_df = Mysql_Utils.data_from_mysql_to_dataframe(
-                user=self.user, password=self.password, host=self.host, database=self.database,
-                table_name='dwd_stock_technical_indicators',
-                start_date=query_start_data, end_date=end_date,
-                cols=['ymd', 'stock_code', vs_col]
-            )
-            if tech_df.empty:
-                return pd.DataFrame(columns=['ymd', 'stock_code', 'combo_score'])
-
-            tech_df['ymd'] = pd.to_datetime(tech_df['ymd']).dt.strftime('%Y%m%d')
-            tech_df['shortfall'] = (-tech_df[vs_col]).clip(lower=0).fillna(0)
-            tech_df['is_below'] = (tech_df[vs_col] < 0).fillna(False).astype(float)
-
-            # ========== 2b. 价端数据（K线颜色口径，含 today_pct 实体跌幅） ==========
-            kline_df = Mysql_Utils.data_from_mysql_to_dataframe(
-                user=self.user, password=self.password, host=self.host, database=self.database,
-                table_name='ods_stock_kline_daily_ts',
-                start_date=query_start_data, end_date=end_date,
-                cols=['ymd', 'stock_code', 'is_down', 'today_pct']
-            )
-            if kline_df.empty:
-                return pd.DataFrame(columns=['ymd', 'stock_code', 'combo_score'])
-
-            kline_df['ymd'] = pd.to_datetime(kline_df['ymd']).dt.strftime('%Y%m%d')
-            kline_df['down_depth'] = (-kline_df['today_pct']).clip(lower=0).fillna(0)
-            kline_df['is_down_f'] = kline_df['is_down'].fillna(0).astype(float)
-
-            # ========== 3. 两端矩阵 + 各自的 S / raw ==========
-            def _seg_depth(flag_m, depth_m, max_streak, min_streak):
-                """S 连续计数（清零+封顶）→ 当前段深度累计 → 不足 min_streak 判 0"""
-                S = flag_m.apply(lambda s: s * s.groupby((s == 0).cumsum()).cumsum(), axis=0)
-                S = S.clip(upper=max_streak)
-                raw = pd.DataFrame(0.0, index=flag_m.index, columns=flag_m.columns)
-                for lag in range(max_streak):
-                    raw = raw.add(depth_m.shift(lag).fillna(0) * (S > lag), fill_value=0)
-                return raw.where(S >= min_streak, 0.0)
-
-            short_m = tech_df.pivot_table(index='ymd', columns='stock_code',
-                                          values='shortfall', aggfunc='max')
-            short_m = short_m.reindex(index=all_days).fillna(0)
-            below_m = tech_df.pivot_table(index='ymd', columns='stock_code',
-                                          values='is_below', aggfunc='max')
-            below_m = below_m.reindex(index=all_days).fillna(0)
-
-            depth_m = kline_df.pivot_table(index='ymd', columns='stock_code',
-                                           values='down_depth', aggfunc='max')
-            depth_m = depth_m.reindex(index=all_days).fillna(0)
-            down_m = kline_df.pivot_table(index='ymd', columns='stock_code',
-                                          values='is_down_f', aggfunc='max')
-            down_m = down_m.reindex(index=all_days).fillna(0)
-
-            raw_vol = _seg_depth(below_m, short_m, max_streak_vol, min_streak_vol)
-            raw_down = _seg_depth(down_m, depth_m, max_streak_down, min_streak_down)
-
-            # ========== 4. 截目标区间、转长格式、双条件合并 ==========
-            vol_long = (raw_vol.loc[target_days].rename_axis('ymd').reset_index()
-                        .melt(id_vars='ymd', var_name='stock_code', value_name='raw_vol'))
-            down_long = (raw_down.loc[target_days].rename_axis('ymd').reset_index()
-                         .melt(id_vars='ymd', var_name='stock_code', value_name='raw_down'))
-
-            combo_long = vol_long.merge(down_long, on=['ymd', 'stock_code'], how='inner')
-            # 双条件门槛：任一端 raw=0（未达 min_streak 或无深度）→ 剔除
-            combo_long = combo_long[(combo_long['raw_vol'] > 0) & (combo_long['raw_down'] > 0)].copy()
-
-            if combo_long.empty:
-                logger.warning("无同时满足连缩与连阴的股票，组合因子输出为空")
-                result_df = pd.DataFrame(columns=['ymd', 'stock_code', 'combo_score'])
-            else:
-                # 在双满足集合内分别截面排名
-                combo_long['vol_rank'] = combo_long.groupby('ymd')['raw_vol'].rank(method='min')
-                combo_long['down_rank'] = combo_long.groupby('ymd')['raw_down'].rank(method='min')
-
-                # 各自映射到 [1,100]（向量化；当日仅 1 只时给满分，避免除零）
-                grp_v = combo_long.groupby('ymd')['vol_rank']
-                grp_d = combo_long.groupby('ymd')['down_rank']
-
-                combo_long['vol_pct'] = (1 + 99 * (combo_long['vol_rank'] - 1)
-                                         / (grp_v.transform('max') - 1)).round(2)
-                combo_long['down_pct'] = (1 + 99 * (combo_long['down_rank'] - 1)
-                                          / (grp_d.transform('max') - 1)).round(2)
-
-                combo_long.loc[grp_v.transform('max') == 1, 'vol_pct'] = 100.0
-                combo_long.loc[grp_d.transform('max') == 1, 'down_pct'] = 100.0
-
-                # 合成
-                if combine == 'geo':
-                    combo_long['combo_score'] = np.sqrt(combo_long['vol_pct']
-                                                        * combo_long['down_pct']).round(2)
-                elif combine == 'mean':
-                    combo_long['combo_score'] = ((combo_long['vol_pct']
-                                                  + combo_long['down_pct']) / 2).round(2)
-                else:  # 'min'
-                    combo_long['combo_score'] = combo_long[['vol_pct', 'down_pct']].min(axis=1).round(2)
-
-                if reverse:
-                    combo_long['combo_score'] = (101 - combo_long['combo_score']).clip(1, 100).round(2)
-
-                result_df = combo_long[['ymd', 'stock_code', 'combo_score']]
-
-            logger.info(f"连缩量且连阴线组合因子计算完成：共{len(result_df)}条记录")
-
-            if save_to_cache:
-                self.cached_factors['shrink_down'] = result_df.copy()
-            return result_df
-
-        except Exception as e:
-            logger.error(f"计算组合因子失败：{str(e)}")
-            import traceback
-            logger.error(traceback.format_exc())
-            return pd.DataFrame(columns=['ymd', 'stock_code', 'combo_score'])
 
     @timing_decorator
     def chip_concentration_score(self, start_date, end_date, reverse=False, save_to_cache=True):
@@ -1090,38 +1091,24 @@ class FactorLibrary:
             logger.error(traceback.format_exc())
             return pd.DataFrame(columns=['ymd', 'stock_code', 'chip_gather_trend_score'])
 
-
     @timing_decorator
-    def aggregate_factors(self, start_date, end_date, weights=None, factors=None,
-                          zero_fill_factors=('shrink_down',), save_to_mysql=True):
+    def aggregate_factors(self, start_date, end_date, factors=None, save_to_mysql=True):
         """
-        因子汇总：把缓存中的各因子得分合并成全市场宽表，计算多因子加权综合分，写入 dwd_factor_summary。
+        因子汇总：把缓存中的各【单因子】得分合并成全市场宽表，写入 dwd_factor_summary。
 
         处理流程：
         1) 【骨架】从 ods_stock_code_daily_insight（每日已上市股票码表，含 stock_name）取
-           start_date~end_date 的每日股票池——避免用单日静态名单（stocks_df）造成的
-           次新股幽灵行/退市股缺失；
+           start_date~end_date 的每日股票池——避免用单日静态名单造成的次新股幽灵行/退市股缺失；
         2) 【约定式合并】每个因子 DataFrame 遵守"3 列约定"（ymd, stock_code, 唯一得分列），
            逐因子 left join 到骨架，无手工列映射——新增因子无需改动本函数；
-           合并后得分列保持 NaN（区分"未满足/无数据"与"0 分"），composite 算完再统一填 0；
-        3) 【加权 composite】composite = Σ(w_f × score_f) / Σ(w_f)，两种缺失语义：
-            - zero_fill_factors（默认含 'shrink_down'）：门槛型因子，未出现在输出中
-              表示"未双满足"，缺失按 0 分计且权重照算（拉低 composite）；
-            - 其余因子：缺失表示"数据未知"（如股东数未披露），不计分也不计权重，
-              权重在同日有效因子间重新分配（不惩罚信息缺失）；
-        4) 【signal_level】由 composite 派生（A≥80/B≥60/C≥40/D≥20/E<20），
-           本列唯一写入方，语义为"综合分等级"；
-        5) 【落库】写入 dwd_factor_summary（merge_on ymd+stock_code，INSERT IGNORE 幂等）。
+           合并后得分列保持 NaN（区分"未满足/无数据"与"0 分"），落库前统一填 0；
+        3) 【落库】写入 dwd_factor_summary（merge_on ymd+stock_code，INSERT IGNORE 幂等）。
 
         参数：
-            weights: dict，如 {'zt': 0.3, 'pb': 0.2, 'shareholder': 0.2,
-                                'volume_shrink': 0.15, 'price_shrink': 0.1, 'shrink_down': 0.05}；
-                     None 表示对参与因子等权；weights 中未缓存的因子自动剔除并告警；
             factors: None 表示用缓存中全部因子；也可传名单只汇总指定因子；
-            zero_fill_factors: 缺失按 0 且权重照算的门槛型因子名单；
             save_to_mysql: False 时仅返回 DataFrame 便于调试，不写库。
         返回：
-            summary_df（骨架列 + 各因子得分列 + composite_score + signal_level）
+            summary_df（骨架列 + 各因子得分列）
         """
         try:
             # ========== 1. 骨架：每日已上市股票 ==========
@@ -1146,9 +1133,9 @@ class FactorLibrary:
                 logger.warning("缓存中没有可用因子，请先运行各因子函数")
                 return pd.DataFrame()
 
-            # ========== 3. 约定式合并各因子（向量化，无逐行循环） ==========
+            # ========== 3. 约定式合并各因子 ==========
             summary_df = skeleton.copy()
-            score_cols = {}  # 因子名 → 得分列名
+            score_cols = {}
             for name, df in available.items():
                 cols = [c for c in df.columns if c not in ('ymd', 'stock_code')]
                 if len(cols) != 1:
@@ -1164,50 +1151,15 @@ class FactorLibrary:
                 logger.warning("没有因子成功合并")
                 return pd.DataFrame()
 
-            # ========== 4. 加权 composite（区分两种缺失语义） ==========
-            if weights is None:
-                weights = {name: 1.0 for name in score_cols}  # 等权
-            use_weights = {k: w for k, w in weights.items() if k in score_cols}
-            skipped = set(weights) - set(use_weights)
-            if skipped:
-                logger.warning(f"以下因子未在缓存中，已剔除出合成: {skipped}")
-
-            contrib = pd.Series(0.0, index=summary_df.index)
-            wsum = pd.Series(0.0, index=summary_df.index)
-            for name, w in use_weights.items():
-                col = score_cols[name]
-                valid = summary_df[col].notna()
-                vals = summary_df[col].astype(float).fillna(0)
-                if name in zero_fill_factors:
-                    # 门槛型：缺失=未满足=0 分，权重照算（拉低总分）
-                    contrib += w * vals
-                    wsum += w
-                else:
-                    # 信息型：缺失=未知，权重在同日有效因子间重分配（不惩罚）
-                    contrib += w * vals * valid
-                    wsum += w * valid
-
-            summary_df['composite_score'] = (contrib / wsum.replace(0, np.nan)).clip(0, 100).round(2)
-            summary_df['composite_score'] = summary_df['composite_score'].fillna(0)
-
-            # ========== 5. signal_level：由 composite 派生（唯一写入方） ==========
-            summary_df['signal_level'] = pd.cut(
-                summary_df['composite_score'],
-                bins=[-1, 20, 40, 60, 80, 100],
-                labels=['E', 'D', 'C', 'B', 'A']
-            ).astype(str)
-
-            # ========== 6. 落库：得分列填 0 + 日期转 YYYY-MM-DD ==========
+            # ========== 4. 落库：得分列填 0 + 日期转 YYYY-MM-DD ==========
             for col in score_cols.values():
                 summary_df[col] = summary_df[col].fillna(0)
             summary_df['ymd'] = pd.to_datetime(summary_df['ymd'], format='%Y%m%d').dt.strftime('%Y-%m-%d')
 
-            logger.info(f"因子汇总完成：共{len(summary_df)}条，合成因子及权重: {use_weights}")
+            logger.info(f"因子汇总完成：共{len(summary_df)}条，因子列: {list(score_cols.values())}")
 
             if save_to_mysql:
-                out_cols = (['ymd', 'stock_code', 'stock_name']
-                            + list(score_cols.values())
-                            + ['composite_score', 'signal_level'])
+                out_cols = ['ymd', 'stock_code', 'stock_name'] + list(score_cols.values())
                 Mysql_Utils.data_from_dataframe_to_mysql(
                     user=self.user, password=self.password, host=self.host, database=self.database,
                     df=summary_df[out_cols],
@@ -1224,10 +1176,101 @@ class FactorLibrary:
             logger.error(traceback.format_exc())
             return pd.DataFrame()
 
+    @timing_decorator
+    def compose_composite(self, start_date, end_date, weights,
+                          zero_fill_factors=(),
+                          weights_version='w_default', save_to_mysql=True):
+        """
+        合成composite：从 dwd_factor_summary 读单因子得分，按指定权重加权。
+
+        与 aggregate_factors（计算+合并一体）的区别：
+        - 本函数只做"合成"，单因子得分必须已落库，秒级完成
+        - 换权重只需重跑本函数，不需要重算任何因子得分
+        - 结果写入 mart_composite_daily（带 weights_version），同一因子得分可并存多套权重方案
+
+        参数：
+            weights: dict，如 {'pb': 0.3, 'shareholder': 0.3, 'zt': -0.15, ...}
+            zero_fill_factors: 缺失按0且权重照算的门槛型因子名单（默认空，combo已改为派生）
+            weights_version: 权重方案标识，用于追溯和对比
+            save_to_mysql: False 时仅返回 DataFrame 便于调试
+        返回：
+            composite_df（ymd, stock_code, composite_score, signal_level, weights_version）
+        """
+        try:
+            # 读骨架+全部单因子得分
+            score_df = Mysql_Utils.data_from_mysql_to_dataframe(
+                user=self.user, password=self.password, host=self.host, database=self.database,
+                table_name='dwd_factor_summary',
+                start_date=start_date, end_date=end_date
+            )
+            if score_df.empty:
+                logger.warning("dwd_factor_summary 无数据")
+                return pd.DataFrame()
+
+            score_df['ymd'] = pd.to_datetime(score_df['ymd']).dt.strftime('%Y%m%d')
+
+            # 派生因子：缩量+连阴软合成（几何平均，替代已退役的硬门槛 combo）
+            vol_col, price_col = 'volume_shrink_score', 'price_shrink_score'
+            if vol_col in score_df.columns and price_col in score_df.columns:
+                vol = score_df[vol_col].astype(float).fillna(0)
+                price = score_df[price_col].astype(float).fillna(0)
+                score_df['shrink_down_score'] = np.sqrt(vol * price).round(2)
+                logger.info("已派生 shrink_down_score（几何平均软合成）")
+
+            # weights 的 key 映射到得分列名
+            contrib = pd.Series(0.0, index=score_df.index)
+            wsum = pd.Series(0.0, index=score_df.index)
+            used = {}
+
+            for name, w in weights.items():
+                col = f"{name}_score" if not name.endswith('_score') else name
+                if col not in score_df.columns:
+                    logger.warning(f"因子 {name}（列{col}）不在 dwd_factor_summary，已跳过")
+                    continue
+                used[name] = w
+                valid = score_df[col].notna() & (score_df[col] > 0)
+                vals = score_df[col].astype(float).fillna(0)
+                if name in zero_fill_factors:
+                    contrib += w * vals
+                    wsum += w
+                else:
+                    contrib += w * vals * valid
+                    wsum += w * valid
+
+            score_df['composite_score'] = (contrib / wsum.replace(0, np.nan)).clip(0, 100).round(2)
+            score_df['composite_score'] = score_df['composite_score'].fillna(0)
+            score_df['signal_level'] = pd.cut(
+                score_df['composite_score'],
+                bins=[-1, 20, 40, 60, 80, 100],
+                labels=['E', 'D', 'C', 'B', 'A']
+            ).astype(str)
+            score_df['weights_version'] = weights_version
+
+            out = score_df[['ymd', 'stock_code', 'composite_score', 'signal_level', 'weights_version']].copy()
+            out['ymd'] = pd.to_datetime(out['ymd'], format='%Y%m%d').dt.strftime('%Y-%m-%d')
+
+            logger.info(f"composite合成完成：版本 {weights_version}，权重 {used}")
+
+            if save_to_mysql:
+                Mysql_Utils.data_from_dataframe_to_mysql(
+                    user=self.user, password=self.password, host=self.host, database=self.database,
+                    df=out, table_name='mart_composite_daily',
+                    merge_on=['ymd', 'stock_code', 'weights_version']
+                )
+                logger.info(f"已保存到 mart_composite_daily")
+
+            return out
+
+        except Exception as e:
+            logger.error(f"composite合成失败：{str(e)}")
+            import traceback
+            logger.error(traceback.format_exc())
+            return pd.DataFrame()
+
 
     @script_run(script_name="factor_library.py")
     def setup(self):
-
+        """每日跑批：计算单因子 + 合成composite（生产权重版本）"""
         start = DateUtility.next_day(-5)
         end = DateUtility.today()
 
@@ -1241,16 +1284,35 @@ class FactorLibrary:
         self.shareholder_factor_score(start_date=start, end_date=end)
 
         #  成交量缩量 因子计算
-        self.volume_shrink_factor(start_date=start, end_date=end)  # 连续缩量
+        self.volume_shrink_factor(start_date=start, end_date=end)
 
         #  日K连续阴线 因子计算
-        self.price_shrink_factor(start_date=start, end_date=end)  # 连续阴线
+        self.price_shrink_factor(start_date=start, end_date=end)
 
-        #  缩量且连阴线 因子计算
-        self.shrink_down_combo_factor(start_date=start, end_date=end)  # 连续阴线
+        #  筹码分布 因子计算
+        self.chip_concentration_score(start_date=start, end_date=end)
+        self.chip_low_position_score(start_date=start, end_date=end)
+        self.chip_gather_trend_score(start_date=start, end_date=end)
 
-        #  因子汇总
+        #  因子汇总（只合并单因子，不合成composite）
         self.aggregate_factors(start_date=start, end_date=end)
+
+        #  composite 合成（当前生产权重）
+        self.compose_composite(
+            start_date=start, end_date=end,
+            weights={
+                'pb': 0.30,
+                'shareholder': 0.30,
+                'zt': -0.15,
+                'volume_shrink': 0.10,
+                'price_shrink': 0.10,
+                'shrink_down': 0.05,
+                'chip_concentration': 0.00,  # 等IC检验后再调
+                'chip_low_position': 0.00,
+                'chip_gather_trend': 0.00,
+            },
+            weights_version='w_v1'
+        )
 
 
 if __name__ == '__main__':

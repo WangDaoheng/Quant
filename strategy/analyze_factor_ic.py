@@ -1,5 +1,5 @@
 # strategy/analyze_factor_ic.py
-# 因子IC检验：验证因子得分与未来收益的相关性
+# 因子IC检验：单因子 + 各版本composite统一对比
 import pandas as pd
 import numpy as np
 from scipy import stats
@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 class FactorICAnalyzer:
-    """因子IC检验：验证因子得分与未来收益的相关性"""
+    """因子IC检验：单因子 + 各版本composite统一对比"""
 
     def __init__(self):
         self.user = base_properties.origin_mysql_user
@@ -22,23 +22,40 @@ class FactorICAnalyzer:
 
     @timing_decorator
     def load_factor_scores(self, start_date, end_date):
-        """加载因子得分"""
-        logger.info(f"加载因子得分: {start_date} ~ {end_date}")
+        """加载单因子得分（dwd_factor_summary）"""
+        logger.info(f"加载单因子得分: {start_date} ~ {end_date}")
 
         df = Mysql_Utils.data_from_mysql_to_dataframe(
             user=self.user, password=self.password, host=self.host, database=self.database,
             table_name='dwd_factor_summary',
-            start_date=start_date, end_date=end_date,
-            cols=['ymd', 'stock_code', 'pb_score', 'zt_score',
-                  'shareholder_score', 'composite_score', 'combo_score']
+            start_date=start_date, end_date=end_date
         )
 
         if df.empty:
-            logger.error("因子得分表为空")
+            logger.error("dwd_factor_summary 为空")
             return None
 
         df['ymd'] = pd.to_datetime(df['ymd']).dt.strftime('%Y%m%d')
-        logger.info(f"加载了 {len(df)} 条因子记录，覆盖 {df['ymd'].nunique()} 个交易日")
+        logger.info(f"加载了 {len(df)} 条记录，{df['ymd'].nunique()} 个交易日")
+        return df
+
+    @timing_decorator
+    def load_composite_scores(self, start_date, end_date):
+        """加载各版本composite得分（mart_composite_daily）"""
+        logger.info(f"加载composite得分: {start_date} ~ {end_date}")
+
+        df = Mysql_Utils.data_from_mysql_to_dataframe(
+            user=self.user, password=self.password, host=self.host, database=self.database,
+            table_name='mart_composite_daily',
+            start_date=start_date, end_date=end_date
+        )
+
+        if df.empty:
+            logger.warning("mart_composite_daily 为空，跳过composite IC")
+            return None
+
+        df['ymd'] = pd.to_datetime(df['ymd']).dt.strftime('%Y%m%d')
+        logger.info(f"加载了 {len(df)} 条记录，版本: {df['weights_version'].unique().tolist()}")
         return df
 
     @timing_decorator
@@ -46,7 +63,6 @@ class FactorICAnalyzer:
         """加载未来N日收益"""
         logger.info(f"加载行情数据: {start_date} ~ {end_date}")
 
-        # 多取数据用于计算未来收益（粗略按自然日*2）
         end_dt = pd.to_datetime(end_date) + pd.Timedelta(days=max(horizons) * 2 + 10)
         end_date_extended = end_dt.strftime('%Y%m%d')
 
@@ -64,7 +80,6 @@ class FactorICAnalyzer:
         kline_df['ymd'] = pd.to_datetime(kline_df['ymd']).dt.strftime('%Y%m%d')
         kline_df = kline_df.sort_values(['stock_code', 'ymd'])
 
-        # 计算未来N日收益（百分比）
         for h in horizons:
             kline_df[f'ret_{h}d'] = kline_df.groupby('stock_code')['close'].transform(
                 lambda x: x.shift(-h) / x - 1
@@ -73,127 +88,148 @@ class FactorICAnalyzer:
         logger.info(f"行情数据加载完成，共 {len(kline_df)} 条")
         return kline_df[['ymd', 'stock_code'] + [f'ret_{h}d' for h in horizons]]
 
-    @timing_decorator
-    def calculate_ic(self, factor_df, return_df, horizons=(1, 3, 5)):
-        """计算每日 RankIC（Spearman 相关系数）"""
-        # 合并因子和收益
-        merged = factor_df.merge(return_df, on=['ymd', 'stock_code'], how='inner')
-        logger.info(f"合并后数据量: {len(merged)}")
+    def _calc_daily_ic(self, score_df, return_df, score_col, horizons=(1, 3, 5)):
+        """通用：对某得分列按日算IC"""
+        merged = score_df[['ymd', 'stock_code', score_col]].merge(
+            return_df, on=['ymd', 'stock_code'], how='inner'
+        )
 
-        factor_cols = ['pb_score', 'zt_score', 'shareholder_score', 'composite_score', 'combo_score']
         ic_records = []
-
         for ymd, day_df in merged.groupby('ymd'):
             if len(day_df) < 100:
                 continue
+            for h in horizons:
+                ret_col = f'ret_{h}d'
+                valid = day_df[[score_col, ret_col]].dropna()
+                if len(valid) < 100:
+                    continue
+                ic, _ = stats.spearmanr(valid[score_col], valid[ret_col])
+                ic_records.append({
+                    'ymd': ymd, 'horizon': h,
+                    'ic_value': round(ic, 4),
+                    'stock_count': len(valid)
+                })
+        return pd.DataFrame(ic_records)
 
-            for factor in factor_cols:
-                for h in horizons:
-                    ret_col = f'ret_{h}d'
-                    valid = day_df[[factor, ret_col]].dropna()
+    @timing_decorator
+    def calculate_all_ic(self, factor_df, composite_df, return_df, horizons=(1, 3, 5)):
+        """计算所有IC：单因子 + 各版本composite"""
+        all_ic = []
 
-                    if len(valid) < 100:
-                        continue
+        # 1. 单因子 IC
+        if factor_df is not None:
+            factor_cols = [c for c in factor_df.columns if c.endswith('_score')]
+            logger.info(f"识别到单因子列: {factor_cols}")
 
-                    ic, _ = stats.spearmanr(valid[factor], valid[ret_col])
+            for col in factor_cols:
+                factor_name = col.replace('_score', '')
+                ic_df = self._calc_daily_ic(factor_df, return_df, col, horizons)
+                if not ic_df.empty:
+                    ic_df['factor_name'] = factor_name
+                    ic_df['factor_type'] = 'single'
+                    all_ic.append(ic_df)
 
-                    ic_records.append({
-                        'ymd': ymd,
-                        'factor_name': factor.replace('_score', ''),
-                        'horizon': h,
-                        'ic_value': round(ic, 4),
-                        'stock_count': len(valid)
-                    })
+        # 2. composite IC（按版本）
+        if composite_df is not None:
+            for version in composite_df['weights_version'].unique():
+                version_df = composite_df[composite_df['weights_version'] == version]
+                ic_df = self._calc_daily_ic(version_df, return_df, 'composite_score', horizons)
+                if not ic_df.empty:
+                    ic_df['factor_name'] = f'composite_{version}'
+                    ic_df['factor_type'] = 'composite'
+                    all_ic.append(ic_df)
 
-        ic_df = pd.DataFrame(ic_records)
-        logger.info(f"IC计算完成，共 {len(ic_df)} 条记录")
-        return ic_df
+        if not all_ic:
+            logger.error("无有效IC数据")
+            return None
+
+        result = pd.concat(all_ic, ignore_index=True)
+        logger.info(f"IC计算完成，共 {len(result)} 条记录")
+        return result
 
     @timing_decorator
     def save_to_mysql(self, ic_df):
-        """保存IC结果到 mart_factor_ic_daily"""
+        """保存IC结果"""
         if ic_df.empty:
             logger.warning("无IC数据可保存")
             return
 
-        # ymd 转回 DATE 格式
         out_df = ic_df.copy()
         out_df['ymd'] = pd.to_datetime(out_df['ymd'], format='%Y%m%d').dt.strftime('%Y-%m-%d')
 
         Mysql_Utils.data_from_dataframe_to_mysql(
             user=self.user, password=self.password, host=self.host, database=self.database,
-            df=out_df,
+            df=out_df[['ymd', 'factor_name', 'factor_type', 'horizon', 'ic_value', 'stock_count']],
             table_name='mart_factor_ic_daily',
-            merge_on=['ymd', 'factor_name', 'horizon']
+            merge_on=['ymd', 'factor_name', 'factor_type', 'horizon']
         )
-        logger.info(f"已保存 {len(out_df)} 条IC记录到 mart_factor_ic_daily")
+        logger.info(f"已保存 {len(out_df)} 条IC记录")
 
     @timing_decorator
     def print_report(self, ic_df):
-        """打印因子质量分析报告"""
-        print("\n" + "=" * 70)
-        print("因子IC检验报告")
-        print("=" * 70)
+        """打印对比报告"""
+        print("\n" + "=" * 75)
+        print("因子IC检验报告（单因子 vs 各版本composite）")
+        print("=" * 75)
 
-        for factor in ['pb', 'zt', 'shareholder', 'composite', 'combo']:
-            factor_data = ic_df[ic_df['factor_name'] == factor]
-            if factor_data.empty:
+        for ftype in ['single', 'composite']:
+            subset = ic_df[ic_df['factor_type'] == ftype]
+            if subset.empty:
                 continue
 
-            print(f"\n【{factor}】")
-            print("-" * 50)
-            print(f"{'周期':<6} {'IC均值':<10} {'ICIR':<10} {'IC>0占比':<12} {'样本数'}")
-            print("-" * 50)
+            title = "【单因子】" if ftype == 'single' else "【composite（按权重版本）】"
+            print(f"\n{title}")
+            print("-" * 75)
+            print(f"{'因子名':<25}{'周期':<6}{'IC均值':<10}{'ICIR':<10}{'IC>0占比':<12}{'样本'}")
+            print("-" * 75)
 
-            for h in (1, 3, 5):
-                sub = factor_data[factor_data['horizon'] == h]['ic_value'].dropna()
-                if len(sub) == 0:
-                    continue
+            for fname in subset['factor_name'].unique():
+                fdata = subset[subset['factor_name'] == fname]
+                for h in [1, 3, 5]:
+                    sub = fdata[fdata['horizon'] == h]['ic_value'].dropna()
+                    if len(sub) == 0:
+                        continue
+                    ic_mean, ic_std = sub.mean(), sub.std()
+                    icir = ic_mean / ic_std if ic_std > 0 else 0
+                    pos = (sub > 0).mean() * 100
 
-                ic_mean = sub.mean()
-                ic_std = sub.std()
-                icir = ic_mean / ic_std if ic_std > 0 else 0
-                pos_rate = (sub > 0).mean() * 100
+                    if abs(ic_mean) > 0.03 and icir > 0.3:
+                        rating = "✅"
+                    elif abs(ic_mean) > 0.02 and icir > 0.2:
+                        rating = "🟡"
+                    elif abs(ic_mean) > 0.01:
+                        rating = "🟠"
+                    else:
+                        rating = "🔴"
 
-                # 评级
-                if abs(ic_mean) > 0.03 and icir > 0.3:
-                    rating = "✅优秀"
-                elif abs(ic_mean) > 0.02 and icir > 0.2:
-                    rating = "🟡良好"
-                elif abs(ic_mean) > 0.01:
-                    rating = "🟠一般"
-                else:
-                    rating = "🔴无效"
+                    name_display = fname if h == 1 else ''
+                    print(f"{name_display:<25}{h}日    {ic_mean:<10.4f}{icir:<10.4f}{pos:<12.0f}%{len(sub)}  {rating}")
 
-                print(f"{h}日    {ic_mean:<10.4f} {icir:<10.4f} {pos_rate:<12.1f}% {len(sub)}  {rating}")
-
-        print("\n" + "=" * 70)
+        print("\n" + "=" * 75)
 
     @script_run(script_name="analyze_factor_ic.py")
     def run(self, start_date, end_date, save_to_mysql=True):
         """主流程"""
         logger.info("开始因子IC检验")
 
-        # 1. 加载因子得分
         factor_df = self.load_factor_scores(start_date, end_date)
-        if factor_df is None:
+        composite_df = self.load_composite_scores(start_date, end_date)
+
+        if factor_df is None and composite_df is None:
+            logger.error("无数据可分析")
             return None
 
-        # 2. 加载未来收益
         return_df = self.load_future_returns(start_date, end_date)
         if return_df is None:
             return None
 
-        # 3. 计算IC
-        ic_df = self.calculate_ic(factor_df, return_df)
+        ic_df = self.calculate_all_ic(factor_df, composite_df, return_df)
         if ic_df is None or ic_df.empty:
             logger.error("IC计算失败")
             return None
 
-        # 4. 打印报告
         self.print_report(ic_df)
 
-        # 5. 保存到MySQL
         if save_to_mysql:
             self.save_to_mysql(ic_df)
 
@@ -207,7 +243,7 @@ if __name__ == '__main__':
     set_config.setup_logging_config()
 
     end_date = DateUtility.today()
-    start_date = DateUtility.first_day_of_month(-10)  # 最近3个月
+    start_date = DateUtility.first_day_of_month(-10)
 
     analyzer = FactorICAnalyzer()
     ic_df = analyzer.run(start_date, end_date, save_to_mysql=True)
